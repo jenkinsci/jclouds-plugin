@@ -7,13 +7,19 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <groupId>org.jvnet.hudson.plugins</groupId>
-  <artifactId>rackspace-cloud</artifactId>
+  <groupId>hudson.plugins</groupId>
+  <artifactId>rackspace</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Hudson Rackspace Cloud plugin</name>
   <description>Allows Hudson to build using Rackspace Cloud Servers</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/Rackspace+Cloud+Plugin</url>
+  <properties>
+     <jclouds.test.user>${jclouds.rackspace.user}</jclouds.test.user>
+     <jclouds.test.key>${jclouds.rackspace.key}</jclouds.test.key>
+     <jclouds.test.initializer>org.jclouds.rackspace.cloudfiles.blobstore.integration.CloudFilesTestInitializer</jclouds.test.initializer>
+  </properties>
+
 
   <developers>
     <developer>
@@ -32,6 +38,10 @@
       <id>jclouds</id>
       <url>http://jclouds.googlecode.com/svn/repo</url>
     </repository>
+    <repository>
+      <id>jclouds-snapshot</id>
+      <url>http://jclouds.rimuhosting.com/maven2/snapshots</url>
+    </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
@@ -49,7 +59,7 @@
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-rackspace</artifactId>
-      <version>1.0-beta-4</version>
+      <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
   <build>
