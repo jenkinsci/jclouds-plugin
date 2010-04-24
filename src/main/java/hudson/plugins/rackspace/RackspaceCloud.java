@@ -11,8 +11,6 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import org.jclouds.compute.ComputeService;
@@ -21,8 +19,6 @@ import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-
-import org.jclouds.rackspace.cloudservers.CloudServersContextBuilder;
 
 
 /**
@@ -40,9 +36,8 @@ public class RackspaceCloud extends Cloud {
         this.user = user;
         this.secret = Secret.fromString(secret.trim());
     }
-
     private static final Logger LOGGER = Logger.getLogger(RackspaceCloud.class.getName());
-    
+
     public String getSecret() {
         return secret.getEncryptedValue();
     }
@@ -50,7 +45,6 @@ public class RackspaceCloud extends Cloud {
     public String getUser() {
         return user;
     }
-
 
     @Override
     public boolean canProvision(Label label) {
@@ -61,7 +55,6 @@ public class RackspaceCloud extends Cloud {
     public Collection<PlannedNode> provision(Label label, int i) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-
 
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
