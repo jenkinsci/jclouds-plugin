@@ -73,19 +73,21 @@ public class RackspaceCloud extends Cloud {
         public FormValidation doTestConnection(@QueryParameter String user,
                 @QueryParameter String secret) throws ServletException, IOException {
 
+            try {
+                ComputeServiceContext context = new ComputeServiceContextFactory().createContext("cloudservers", user, secret);
 
-            ComputeServiceContext context = new ComputeServiceContextFactory()
-               .createContext("cloudservers", user, secret);
+                ComputeService client = context.getComputeService();
 
-            ComputeService client = context.getComputeService();
+                //Set<? extends ComputeMetadata> nodes = Sets.newHashSet(connection.getNodes().values());
 
-            //Set<? extends ComputeMetadata> nodes = Sets.newHashSet(connection.getNodes().values());
-
-            for (ComputeMetadata node : client.getNodes().values()) {
-                LOGGER.info(node.getId());
-                LOGGER.info(node.getLocationId()); // where in the world is the node
+                for (ComputeMetadata node : client.getNodes().values()) {
+                    LOGGER.info(node.getId());
+                    LOGGER.info(node.getLocationId()); // where in the world is the node
+                }
+                return FormValidation.ok();
+            } catch (org.jclouds.rest.AuthorizationException ex) {
+                return FormValidation.error("Authentication Error: " + ex.getLocalizedMessage());
             }
-            return FormValidation.ok();
         }
     }
 }
