@@ -1,4 +1,4 @@
-package hudson.plugins.rackspace;
+package hudson.plugins.jclouds;
 
 import hudson.Extension;
 import hudson.model.Label;
@@ -25,18 +25,18 @@ import org.kohsuke.stapler.QueryParameter;
  *
  * @author mordred
  */
-public class RackspaceCloud extends Cloud {
+public class JClouds extends Cloud {
 
     private final String user;
     private final Secret secret;
 
     @DataBoundConstructor
-    public RackspaceCloud(String user, String secret) {
-        super("rackspace-" + user);
+    public JClouds(String user, String secret) {
+        super("jclouds-" + user);
         this.user = user;
         this.secret = Secret.fromString(secret.trim());
     }
-    private static final Logger LOGGER = Logger.getLogger(RackspaceCloud.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JClouds.class.getName());
 
     public String getSecret() {
         return secret.getEncryptedValue();
@@ -60,7 +60,7 @@ public class RackspaceCloud extends Cloud {
     public static class DescriptorImpl extends Descriptor<Cloud> {
 
         public String getDisplayName() {
-            return "Rackspace Cloud";
+            return "JClouds";
         }
 
         public FormValidation doTestConnection(@QueryParameter String user,

@@ -8,12 +8,12 @@
   </parent>
 
   <groupId>hudson.plugins</groupId>
-  <artifactId>rackspace</artifactId>
+  <artifactId>jclouds</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
-  <name>Hudson Rackspace Cloud plugin</name>
-  <description>Allows Hudson to build using Rackspace Cloud Servers</description>
-  <url>http://wiki.hudson-ci.org/display/HUDSON/Rackspace+Cloud+Plugin</url>
+  <name>Hudson jclouds Cloud plugin</name>
+  <description>Allows Hudson to build using Cloud Servers via jclouds</description>
+  <url>http://wiki.hudson-ci.org/display/HUDSON/jclouds+Cloud+Plugin</url>
   <properties>
      <jclouds.test.user>${jclouds.rackspace.user}</jclouds.test.user>
      <jclouds.test.key>${jclouds.rackspace.key}</jclouds.test.key>
@@ -58,7 +58,7 @@
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-rackspace</artifactId>
+      <artifactId>jclouds</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>

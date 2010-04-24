@@ -1,4 +1,4 @@
-package hudson.plugins.rackspace;
+package hudson.plugins.jclouds;
 
 import java.io.IOException;
 import junit.framework.Test;
@@ -36,9 +36,9 @@ public class SimpleTest extends TestCase {
      * Rigourous Test :-)
      */
     public void testApp() throws JAXBException, IOException {
-        @javax.inject.Named(value = "jclouds.rackspace.user")
+        @javax.inject.Named(value = "jclouds.jclouds.user")
         String user= "mordred";
-        @javax.inject.Named(value = "jclouds.rackspace.key")
+        @javax.inject.Named(value = "jclouds.jclouds.key")
         String secret = "";
 
         ComputeServiceContext context = new ComputeServiceContextFactory().createContext("cloudservers", user, secret);
