@@ -33,12 +33,15 @@ public class SimpleTest extends TestCase {
     }
 
     /**
-     * Rigourous Test :-)
+     * Rigorous Test :-)
      */
     public void testApp() throws JAXBException, IOException {
-        @javax.inject.Named(value = "jclouds.jclouds.user")
+        /**
+         * @TODO: How does this property injection shit work?
+         */
+        @javax.inject.Named(value = "jclouds.test.user")
         String user= "mordred";
-        @javax.inject.Named(value = "jclouds.jclouds.key")
+        @javax.inject.Named(value = "jclouds.test.key")
         String secret = "";
 
         ComputeServiceContext context = new ComputeServiceContextFactory().createContext("cloudservers", user, secret);

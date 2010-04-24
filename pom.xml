@@ -15,8 +15,8 @@
   <description>Allows Hudson to build using Cloud Servers via jclouds</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/jclouds+Cloud+Plugin</url>
   <properties>
-     <jclouds.test.user>${jclouds.rackspace.user}</jclouds.test.user>
-     <jclouds.test.key>${jclouds.rackspace.key}</jclouds.test.key>
+     <jclouds.test.user>${jclouds.jclouds.user}</jclouds.test.user>
+     <jclouds.test.key>${jclouds.jclouds.key}</jclouds.test.key>
      <jclouds.test.initializer>org.jclouds.rackspace.cloudfiles.blobstore.integration.CloudFilesTestInitializer</jclouds.test.initializer>
   </properties>
 
@@ -58,7 +58,7 @@
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
-      <artifactId>jclouds</artifactId>
+      <artifactId>jclouds-rackspace</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
