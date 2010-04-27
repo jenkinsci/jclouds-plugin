@@ -11,12 +11,16 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 
 import java.util.Collection;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
+import org.jclouds.compute.domain.Architecture;
 import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.domain.Image;
+import org.jclouds.compute.domain.Size;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -73,9 +77,28 @@ public class JClouds extends Cloud {
 
                 //Set<? extends ComputeMetadata> nodes = Sets.newHashSet(connection.getNodes().values());
 
+                for (Image image: client.getImages().values()) {
+                    LOGGER.info(image.getArchitecture().toString());
+                    LOGGER.info(image.getOsFamily().toString());
+                }
+                for (Size size: client.getSizes().values())
+                {
+                    LOGGER.log(Level.INFO, "size: {0}", size.toString());
+                    LOGGER.log(Level.INFO, "\tcores: {0}", size.getCores());
+                    LOGGER.log(Level.INFO, "\tdisk: {0}", size.getDisk());
+                    LOGGER.log(Level.INFO, "\tram: {0}", size.getRam());
+                    LOGGER.log(Level.INFO, "\tarchitectures");
+                    for (Architecture arch : size.getSupportedArchitectures())
+                    {
+                       LOGGER.log(Level.INFO, "\t\t{0}", arch.toString());
+                    }
+
+                }
                 for (ComputeMetadata node : client.getNodes().values()) {
-                    LOGGER.info(node.getId());
-                    LOGGER.info(node.getLocationId()); // where in the world is the node
+                    LOGGER.log(Level.INFO, "Node {0}:{1} in {2}", new Object[]{
+                                node.getId(),
+                                node.getName(),
+                                node.getLocation().getId()});
                 }
                 return FormValidation.ok();
             } catch (org.jclouds.rest.AuthorizationException ex) {
