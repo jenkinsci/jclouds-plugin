@@ -11,6 +11,7 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.ServletException;
@@ -21,6 +22,7 @@ import org.jclouds.compute.domain.Architecture;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.Size;
+import org.jclouds.compute.util.ComputeUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -67,11 +69,19 @@ public class JClouds extends Cloud {
             return "JClouds";
         }
 
-        public FormValidation doTestConnection(@QueryParameter String user,
+        public Set<String> getSupportedProviders() {
+
+            return ComputeUtils.getSupportedProviders();
+        }
+
+        public FormValidation doTestConnection(
+                @QueryParameter String provider,
+                @QueryParameter String user,
                 @QueryParameter String secret) throws ServletException, IOException {
 
             try {
-                ComputeServiceContext context = new ComputeServiceContextFactory().createContext("cloudservers", user, secret);
+                
+                ComputeServiceContext context = new ComputeServiceContextFactory().createContext(provider, user, secret);
 
                 ComputeService client = context.getComputeService();
 
@@ -99,6 +109,7 @@ public class JClouds extends Cloud {
                                 node.getId(),
                                 node.getName(),
                                 node.getLocation().getId()});
+            
                 }
                 return FormValidation.ok();
             } catch (org.jclouds.rest.AuthorizationException ex) {

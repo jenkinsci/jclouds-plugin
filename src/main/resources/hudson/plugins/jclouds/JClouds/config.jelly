@@ -1,5 +1,22 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="${%Cloud Provider}" field="provider">
+    <j:choose>
+      <j:set var="providers" value="${descriptor.supportedProviders}"/>
+      <j:when test="${empty(providers)}">
+        <!-- if provider list is not available, fall back to text box -->
+        <f:textbox />
+      </j:when>
+      <j:otherwise>
+        <select name="_.provider">
+          <j:forEach var="pname" items="${providers}">
+            <f:option value="${pname}" selected='${pname=="cloudservers"}'>${pname}</f:option>
+          </j:forEach>
+        </select>
+       </j:otherwise>
+    </j:choose>
+
+  </f:entry>
   <f:entry title="${%User ID}" field="user">
     <f:textbox />
   </f:entry>
@@ -7,5 +24,5 @@
     <f:password />
   </f:entry>
 
-  <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="user,secret" />
+  <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="provider,user,secret" />
 </j:jelly>
