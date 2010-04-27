@@ -23,6 +23,7 @@ import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.Size;
 import org.jclouds.compute.util.ComputeUtils;
+import org.jclouds.domain.Credentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -33,23 +34,28 @@ import org.kohsuke.stapler.QueryParameter;
  */
 public class JClouds extends Cloud {
 
+    private final String provider;
     private final String user;
     private final Secret secret;
 
     @DataBoundConstructor
-    public JClouds(String user, String secret) {
-        super("jclouds-" + user);
+    public JClouds(String provider, String user, String secret) {
+        super(String.format("jclouds-{0}-{1}", new Object[]{provider, user}));
+        this.provider = provider;
         this.user = user;
         this.secret = Secret.fromString(secret.trim());
     }
     private static final Logger LOGGER = Logger.getLogger(JClouds.class.getName());
 
-    public String getSecret() {
-        return secret.getEncryptedValue();
+    public String getProvider() {
+        return provider;
     }
 
     public String getUser() {
         return user;
+    }
+    public String getSecret() {
+        return secret.getEncryptedValue();
     }
 
     @Override
