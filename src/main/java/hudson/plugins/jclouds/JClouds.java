@@ -97,8 +97,10 @@ public class JClouds extends Cloud {
 
                 for (Image image : client.getImages().values()) {
                     if (image != null) {
-                        LOGGER.info(image.getArchitecture().toString());
-                        LOGGER.info(image.getOsFamily().toString());
+                        LOGGER.log(Level.INFO, "image: {0}|{1}", new Object[]{
+                            image.getArchitecture(),
+                            image.getOsFamily()
+                        });
                     }
                 }
                 for (Size size : client.getSizes().values()) {
@@ -122,6 +124,8 @@ public class JClouds extends Cloud {
                     }
                 }
                 return FormValidation.ok();
+            } catch (NullPointerException ex) {
+              throw ex;
             } catch (Exception from) {
                 for (Throwable ex : Throwables.getCausalChain(from)) {
                     LOGGER.log(Level.INFO, ex.getClass().getName());
