@@ -95,9 +95,11 @@ public class JClouds extends Cloud {
 
                 //Set<? extends ComputeMetadata> nodes = Sets.newHashSet(connection.getNodes().values());
 
-                for (Image image: client.getImages().values()) {
-                    LOGGER.info(image.getArchitecture().toString());
-                    LOGGER.info(image.getOsFamily().toString());
+                for (Image image : client.getImages().values()) {
+                    if (image != null) {
+                        LOGGER.info(image.getArchitecture().toString());
+                        LOGGER.info(image.getOsFamily().toString());
+                    }
                 }
                 for (Size size : client.getSizes().values()) {
                     if (size != null) {
