@@ -1,5 +1,7 @@
 package hudson.plugins.jclouds;
 
+import com.google.common.base.Throwables;
+import com.google.inject.ProvisionException;
 import hudson.Extension;
 import hudson.model.Label;
 import hudson.slaves.Cloud;
@@ -23,7 +25,7 @@ import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.Size;
 import org.jclouds.compute.util.ComputeUtils;
-import org.jclouds.domain.Credentials;
+import org.jclouds.rest.AuthorizationException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -83,7 +85,7 @@ public class JClouds extends Cloud {
         public FormValidation doTestConnection(
                 @QueryParameter String provider,
                 @QueryParameter String user,
-                @QueryParameter String secret) throws ServletException, IOException {
+                @QueryParameter String secret) throws ServletException, IOException, Exception {
 
             try {
                 
@@ -97,29 +99,45 @@ public class JClouds extends Cloud {
                     LOGGER.info(image.getArchitecture().toString());
                     LOGGER.info(image.getOsFamily().toString());
                 }
-                for (Size size: client.getSizes().values())
-                {
-                    LOGGER.log(Level.INFO, "size: {0}", size.toString());
-                    LOGGER.log(Level.INFO, "\tcores: {0}", size.getCores());
-                    LOGGER.log(Level.INFO, "\tdisk: {0}", size.getDisk());
-                    LOGGER.log(Level.INFO, "\tram: {0}", size.getRam());
-                    LOGGER.log(Level.INFO, "\tarchitectures");
-                    for (Architecture arch : size.getSupportedArchitectures())
-                    {
-                       LOGGER.log(Level.INFO, "\t\t{0}", arch.toString());
+                for (Size size : client.getSizes().values()) {
+                    if (size != null) {
+                        LOGGER.log(Level.INFO, "size: {0}", size.toString());
+                        LOGGER.log(Level.INFO, "\tcores: {0}", size.getCores());
+                        LOGGER.log(Level.INFO, "\tdisk: {0}", size.getDisk());
+                        LOGGER.log(Level.INFO, "\tram: {0}", size.getRam());
+                        LOGGER.log(Level.INFO, "\tarchitectures");
+                        for (Architecture arch : size.getSupportedArchitectures()) {
+                            LOGGER.log(Level.INFO, "\t\t{0}", arch.toString());
+                        }
                     }
-
                 }
                 for (ComputeMetadata node : client.getNodes().values()) {
-                    LOGGER.log(Level.INFO, "Node {0}:{1} in {2}", new Object[]{
-                                node.getId(),
-                                node.getName(),
-                                node.getLocation().getId()});
-            
+                    if (node != null) {
+                        LOGGER.log(Level.INFO, "Node {0}:{1} in {2}", new Object[]{
+                                    node.getId(),
+                                    node.getName(),
+                                    node.getLocation().getId()});
+                    }
                 }
                 return FormValidation.ok();
-            } catch (org.jclouds.rest.AuthorizationException ex) {
-                return FormValidation.error("Authentication Error: " + ex.getLocalizedMessage());
+            } catch (Exception from) {
+                for (Throwable ex : Throwables.getCausalChain(from)) {
+                    LOGGER.log(Level.INFO, ex.getClass().getName());
+                    if (ex instanceof AuthorizationException) {
+
+                        return FormValidation.error("Authentication Error: " + ex.getLocalizedMessage());
+                    } else if (ex instanceof ProvisionException) {
+                        LOGGER.log(Level.INFO, "Provision Error");
+                        for (Throwable prov : Throwables.getCausalChain(ex)) {
+                            LOGGER.log(Level.INFO, prov.getClass().getSimpleName());
+                            if (prov.getCause() instanceof AuthorizationException) {
+
+                                return FormValidation.error("Authentication Error: " + ex.getLocalizedMessage());
+                            }
+                        }
+                    }
+                }
+                return FormValidation.error("Catching Auth Exceptions is done broke");
             }
         }
     }
