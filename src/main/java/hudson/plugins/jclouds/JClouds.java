@@ -1,7 +1,6 @@
 package hudson.plugins.jclouds;
 
 import com.google.common.base.Throwables;
-import com.google.inject.ProvisionException;
 import hudson.Extension;
 import hudson.model.Label;
 import hudson.slaves.Cloud;
@@ -20,7 +19,6 @@ import javax.servlet.ServletException;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
-import org.jclouds.compute.domain.Architecture;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.Size;
@@ -73,6 +71,7 @@ public class JClouds extends Cloud {
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
 
+        @Override
         public String getDisplayName() {
             return "JClouds";
         }
@@ -97,22 +96,19 @@ public class JClouds extends Cloud {
 
                 for (Image image : client.getImages().values()) {
                     if (image != null) {
-                        LOGGER.log(Level.INFO, "image: {0}|{1}", new Object[]{
+                        LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}", new Object[]{
                             image.getArchitecture(),
-                            image.getOsFamily()
+                            image.getOsFamily(),
+                            image.getOsDescription(),
+                            image.getDescription()
                         });
+                        LOGGER.log(Level.INFO, "image: {0}", image.toString());
                     }
                 }
                 for (Size size : client.getSizes().values()) {
                     if (size != null) {
                         LOGGER.log(Level.INFO, "size: {0}", size.toString());
-                        LOGGER.log(Level.INFO, "\tcores: {0}", size.getCores());
-                        LOGGER.log(Level.INFO, "\tdisk: {0}", size.getDisk());
-                        LOGGER.log(Level.INFO, "\tram: {0}", size.getRam());
-                        LOGGER.log(Level.INFO, "\tarchitectures");
-                        for (Architecture arch : size.getSupportedArchitectures()) {
-                            LOGGER.log(Level.INFO, "\t\t{0}", arch.toString());
-                        }
+                  
                     }
                 }
                 for (ComputeMetadata node : client.getNodes().values()) {
@@ -125,26 +121,19 @@ public class JClouds extends Cloud {
                 }
                 return FormValidation.ok();
             } catch (NullPointerException ex) {
-              throw ex;
+                throw ex;
             } catch (Exception from) {
-                for (Throwable ex : Throwables.getCausalChain(from)) {
-                    LOGGER.log(Level.INFO, ex.getClass().getName());
-                    if (ex instanceof AuthorizationException) {
+               
+                if (from.getCause() instanceof AuthorizationException) {
 
-                        return FormValidation.error("Authentication Error: " + ex.getLocalizedMessage());
-                    } else if (ex instanceof ProvisionException) {
-                        LOGGER.log(Level.INFO, "Provision Error");
-                        for (Throwable prov : Throwables.getCausalChain(ex)) {
-                            LOGGER.log(Level.INFO, prov.getClass().getSimpleName());
-                            if (prov.getCause() instanceof AuthorizationException) {
+                    return FormValidation.error("Authentication Error: " + from.getLocalizedMessage());
 
-                                return FormValidation.error("Authentication Error: " + ex.getLocalizedMessage());
-                            }
-                        }
-                    }
+                } else {
+                    Throwables.propagate(from);
+
                 }
-                return FormValidation.error("Catching Auth Exceptions is done broke");
             }
+            return FormValidation.ok();
         }
     }
 }
