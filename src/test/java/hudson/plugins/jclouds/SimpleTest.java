@@ -1,5 +1,9 @@
 package hudson.plugins.jclouds;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.Set;
 import junit.framework.Test;
@@ -38,16 +42,19 @@ public class SimpleTest extends TestCase {
     /**
      * Rigorous Test :-)
      */
-    public void testApp() throws JAXBException, IOException {
+    public void testApp() throws IOException {
         /**
-         * @TODO: How does this property injection shit work?
+         * @TODO: How does this property injection work?
          */
         @javax.inject.Named(value = "jclouds.test.user")
         String user= "mordred";
         @javax.inject.Named(value = "jclouds.test.key")
         String secret = "";
 
-        
+        boolean gotException = false;
+
+            
+
         Set<String> providers= ComputeUtils.getSupportedProviders();
         
         try {
@@ -57,19 +64,15 @@ public class SimpleTest extends TestCase {
 
             //Set<? extends ComputeMetadata> nodes = Sets.newHashSet(connection.getNodes().values());
 
-            for (ComputeMetadata node : client.getNodes().values()) {
+            for (ComputeMetadata node : client.listNodes()) {
                 System.err.println(node.getId());
                 System.err.println(node.getLocation().getId()); // where in the world is the node
             }
-        } catch (RuntimeException ex) {
-            if (ex.getCause().getClass() == AuthorizationException.class) {
+        } catch (AuthorizationException ex) {
 
-                for (String prov : providers) {
-                    System.err.println(prov.toString());
-                }
-            } else {
-                throw ex;
-            }
+            gotException = true;
+
         }
+        assertTrue(gotException);
     }
 }

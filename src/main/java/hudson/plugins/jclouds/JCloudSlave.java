@@ -24,6 +24,7 @@
 
 package hudson.plugins.jclouds;
 
+import hudson.model.Computer;
 import hudson.model.Descriptor.FormException;
 import hudson.model.Node.Mode;
 import hudson.model.Slave;
@@ -32,7 +33,10 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import java.io.IOException;
 import java.util.List;
+import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeState;
+import org.jclouds.domain.Location;
 
 /**
  *
@@ -40,11 +44,29 @@ import org.jclouds.compute.domain.NodeMetadata;
  */
 public class JCloudSlave extends Slave {
 
+    private final Location location;
     private final NodeMetadata nodemeta;
 
-    public JCloudSlave(String name, String labelString, NodeMetadata nodemeta) throws FormException, IOException {
+    private transient ComputeService context = null;
+
+    public JCloudSlave(String name, Location location, String labelString, ComputeService context, NodeMetadata nodemeta) throws FormException, IOException {
 
         super(name, "description", "/remote/fs", 1, Mode.NORMAL, labelString, null, new JCloudRetentionStrategy(), null);
         this.nodemeta = nodemeta;
+        this.location = location;
+    }
+
+
+    @Override
+    public Computer createComputer() {
+        return new JCloudComputer(this, context);
+    }
+
+    NodeState getState() {
+        return nodemeta.getState();
+    }
+
+    NodeMetadata getMetadata() {
+        return nodemeta;
     }
 }

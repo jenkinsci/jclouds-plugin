@@ -1,5 +1,6 @@
 package hudson.plugins.jclouds;
 
+import com.thoughtworks.xstream.persistence.FileStreamStrategy;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -7,23 +8,25 @@ import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.TaskListener;
-import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.ListBoxModel;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.Architecture;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.rest.AuthorizationException;
+import org.jclouds.ssh.jsch.JschSshClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -33,25 +36,41 @@ import org.kohsuke.stapler.QueryParameter;
  */
 public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
-    private String slave;
-    private String description;
-    private String labels;
-    private String image;
+    private final String slave;
+    private final String description;
+    private final String remoteFS;
+    private final String labels;
+    private final String image;
+    private final String architectureString;
 
     private String numExecutors;
 
     private transient /*almost final*/ Set<Label> labelSet;
+    private transient Architecture architecture;
+
+
+    private final String initScript;
+    private final String userData;
+    private final String remoteAdmin;
+    private final String rootCommandPrefix;
 
     private transient JClouds parent;
 
     @DataBoundConstructor
-    public JCloudTemplate(String slave, String description, String labelString, String image, String numExecutors)
+    public JCloudTemplate(String slave, String description, String remoteFS, String labelString, String image,
+            String architectureString, String numExecutors, String initScript, String userData, String remoteAdmin, String rootCommandPrefix)
     {
         this.slave = slave;
         this.description = description;
+        this.remoteFS = remoteFS;
         this.labels = Util.fixNull(labelString);
         this.image = image;
+        this.architectureString = architectureString;
         this.numExecutors = numExecutors;
+        this.initScript = initScript;
+        this.userData = userData;
+        this.remoteAdmin = remoteAdmin;
+        this.rootCommandPrefix = rootCommandPrefix;
         readResolve();
     }
 
@@ -63,33 +82,30 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
      */
     protected final Object readResolve() {
         labelSet = Label.parse(labels);
+        architecture = Architecture.valueOf(architectureString);
         return this;
     }
-    
+
+
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public String getRemoteFS() {
+        return remoteFS;
     }
 
     public String getLabels() {
         return labels;
     }
 
-    public void setLabels(String labels) {
-        this.labels = labels;
+    public String getImage() {
+        return image;
     }
 
     public String getSlave() {
         return slave;
     }
-
-    public void setSlave(String slave) {
-        this.slave = slave;
-    }
-
 
     public int getNumExecutors() {
        
@@ -117,6 +133,17 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     public void setParent(JClouds parent) {
         this.parent = parent;
     }
+
+    public static String getSshKey() throws IOException {
+        File id_rsa_pub = new File(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
+        BufferedReader irp = new BufferedReader(new FileReader(id_rsa_pub));
+        String line = null;
+        String key = new String();
+        while ((line = irp.readLine()) != null) {
+            key += line;
+        }
+        return key;
+    }
     
     /**
      * Provisions a new Compute Service
@@ -131,27 +158,37 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             logger.println("Launching " + slave);
 
             ComputeService client = getParent().connect();
+            TemplateOptions options = new TemplateOptions();
+
+            options.runScript(initScript.getBytes());
+            options.inboundPorts(22, 8080);
+
+            options.authorizePublicKey(getSshKey());
+
             TemplateBuilder builder = client.templateBuilder();
 
+            builder.options(options);
+            builder.architecture(architecture);
+
             /* @TODO We should include our options here! */
-            Map<String, ? extends NodeMetadata> results = client.runNodesWithTag(slave, requestedWorkload, builder.build());
+            Set<? extends NodeMetadata> results = client.runNodesWithTag(slave, requestedWorkload, builder.build());
 
 
             /* Instance inst = ec2.runInstances(ami, 1, 1, Collections.<String>emptyList(), userData, keyPair.getKeyName(), type).getInstances().get(0);
             return newSlave(inst); */
-            return newSlaves(results);
+            return newSlaves(results, client);
         } catch (Descriptor.FormException e) {
             throw new AssertionError(); // we should have discovered all configuration issues upfront
         }
     }
 
-    private List<JCloudSlave> newSlaves(Map<String, ? extends NodeMetadata> nodes) throws Descriptor.FormException, IOException {
+    private List<JCloudSlave> newSlaves(Set<? extends NodeMetadata> nodes, ComputeService client) throws Descriptor.FormException, IOException {
 
         List<JCloudSlave> slaves = new ArrayList<JCloudSlave>(nodes.size());
-        for (String n : nodes.keySet())
+        for (NodeMetadata n : nodes)
         {
             /* @TODO: Actually create a real slave here */
-            slaves.add(new JCloudSlave(n, labels, nodes.get(n)));
+            slaves.add(new JCloudSlave(n.getId(), n.getLocation(), labels, client, n));
         }
         return slaves;
     }
@@ -191,7 +228,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
                 LOGGER.log(Level.INFO, "compute service problem {0}", ex.getLocalizedMessage());
                 return m;
             }
-            for (Image image : client.getImages().values()) {
+            for (Image image : client.listImages()) {
                 m.add(image.getDescription(), image.getId());
 
                     LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}", new Object[]{

@@ -1,6 +1,5 @@
 package hudson.plugins.jclouds;
 
-import com.google.common.base.Throwables;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Label;
@@ -14,6 +13,7 @@ import hudson.model.Node;
 import hudson.util.FormValidation;
 import hudson.util.StreamTaskListener;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 
 import java.util.Collection;
@@ -35,7 +35,6 @@ import org.jclouds.rest.AuthorizationException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-
 /**
  *
  * @author mordred
@@ -46,26 +45,25 @@ public class JClouds extends Cloud {
     private final String user;
     private final Secret secret;
     private List<JCloudTemplate> templates;
-
     /**
      * Upper bound on how many instances we may provision.
      */
     public final int instanceCap;
 
     @DataBoundConstructor
-    public JClouds(String provider, String user, String secret, String instanceCapStr,  List<JCloudTemplate> templates) {
+    public JClouds(String provider, String user, String secret, String instanceCapStr, List<JCloudTemplate> templates) {
         super(String.format("jclouds-{0}-{1}", new Object[]{provider, user}));
         this.provider = provider;
         this.user = user;
         this.secret = Secret.fromString(secret.trim());
-        if(instanceCapStr.equals(""))
+        if (instanceCapStr.equals("")) {
             this.instanceCap = Integer.MAX_VALUE;
-        else
+        } else {
             this.instanceCap = Integer.parseInt(instanceCapStr);
+        }
         this.templates = templates;
-        if(templates==null)
-        {
-            templates=Collections.emptyList();
+        if (templates == null) {
+            templates = Collections.emptyList();
         }
         readResolve();
 
@@ -79,7 +77,6 @@ public class JClouds extends Cloud {
         }
         return this;
     }
-
     private static final Logger LOGGER = Logger.getLogger(JClouds.class.getName());
 
     public String getProvider() {
@@ -89,15 +86,17 @@ public class JClouds extends Cloud {
     public String getUser() {
         return user;
     }
+
     public String getSecret() {
         return secret.getEncryptedValue();
     }
-    
+
     public String getInstanceCapStr() {
-        if(instanceCap==Integer.MAX_VALUE)
+        if (instanceCap == Integer.MAX_VALUE) {
             return "";
-        else
+        } else {
             return String.valueOf(instanceCap);
+        }
     }
 
     public List<JCloudTemplate> getTemplates() {
@@ -105,16 +104,20 @@ public class JClouds extends Cloud {
     }
 
     public JCloudTemplate getTemplate(String slave) {
-        for (JCloudTemplate t : templates)
-            if(t.getSlave().equals(slave))
+        for (JCloudTemplate t : templates) {
+            if (t.getSlave().equals(slave)) {
                 return t;
+            }
+        }
         return null;
     }
 
     public JCloudTemplate getTemplate(Label label) {
-        for (JCloudTemplate t : templates)
-            if(t.containsLabel(label))
+        for (JCloudTemplate t : templates) {
+            if (t.containsLabel(label)) {
                 return t;
+            }
+        }
         return null;
     }
 
@@ -126,7 +129,7 @@ public class JClouds extends Cloud {
      */
     public int countCurrentSlaves() throws AuthorizationException, Throwable {
         int n = 0;
-        for (ComputeMetadata node : connect().getNodes().values()) {
+        for (ComputeMetadata node : connect().listNodes()) {
             n++;
         }
         return n;
@@ -134,23 +137,21 @@ public class JClouds extends Cloud {
 
     @Override
     public boolean canProvision(Label label) {
-        return getTemplate(label)!=null;
+        return getTemplate(label) != null;
     }
 
-    private int calculateNodesToLaunch(int requestedWorkload)
-    {
+    private int calculateNodesToLaunch(int requestedWorkload) {
         int current = 0;
         try {
-           current = countCurrentSlaves();
+            current = countCurrentSlaves();
         } catch (Throwable ex) {
             return 0;
         }
-       if (current >= instanceCap)
-       {
-           return 0;
-       }
-       int remaining = instanceCap - current;
-       return remaining < requestedWorkload ? remaining : requestedWorkload;
+        if (current >= instanceCap) {
+            return 0;
+        }
+        int remaining = instanceCap - current;
+        return remaining < requestedWorkload ? remaining : requestedWorkload;
     }
 
     @Override
@@ -162,8 +163,9 @@ public class JClouds extends Cloud {
 
             /* How many nodes should we spawn? */
             int toLaunch = calculateNodesToLaunch(requestedWorkload);
-
-            List<JCloudSlave> slaves = t.provision(new StreamTaskListener(System.out), calculateNodesToLaunch(requestedWorkload));
+            StringWriter sw = new StringWriter();
+            List<JCloudSlave> slaves = t.provision(new StreamTaskListener(sw),
+                    calculateNodesToLaunch(requestedWorkload));
 
             List<PlannedNode> r = new ArrayList<PlannedNode>();
             for (final JCloudSlave slave : slaves) {
@@ -207,28 +209,37 @@ public class JClouds extends Cloud {
         return getComputeService(provider, user, secret.getEncryptedValue());
     }
 
-    public static ComputeService getComputeService(String provider, String user, String secret)
-            throws AuthorizationException, Throwable {
+    /**
+     * Gets the first {@link EC2Cloud} instance configured in the current Hudson, or null if no such thing exists.
+     */
+    public static JClouds get() {
+        return Hudson.getInstance().clouds.get(JClouds.class);
+    }
 
-        ComputeService client = null;
-        try {
-
-            ComputeServiceContext context = new ComputeServiceContextFactory().createContext(provider, user, secret);
-
-            client = context.getComputeService();
-            return client;
-
-        } catch (Exception from) {
-
-            if (from.getCause() instanceof AuthorizationException) {
-                throw new AuthorizationException(from.getCause());
-
-
-            } else {
-                Throwables.propagate(from);
-
+    /**
+     * Gets the named cloud
+     * @param name name of cloud to get
+     * @return JClouds instance matching name
+     */
+    public static JClouds get(String name) {
+        for (JClouds j : Hudson.getInstance().clouds.getAll(JClouds.class)) {
+            if (j.name.matches(name)) {
+                return j;
             }
         }
+        return null;
+    }
+
+    public static ComputeService getComputeService(String provider, String user, String secret)
+            throws AuthorizationException, IOException {
+
+        ComputeService client = null;
+
+
+        ComputeServiceContext context = new ComputeServiceContextFactory().createContext(provider, user, secret);
+
+        client = context.getComputeService();
+
         return client;
     }
 
@@ -260,7 +271,7 @@ public class JClouds extends Cloud {
             }
             //Set<? extends ComputeMetadata> nodes = Sets.newHashSet(connection.getNodes().values());
 
-            for (Image image : client.getImages().values()) {
+            for (Image image : client.listImages()) {
                 if (image != null) {
                     LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}:{4}", new Object[]{
                                 image.getArchitecture(),
@@ -271,13 +282,13 @@ public class JClouds extends Cloud {
                     LOGGER.log(Level.INFO, "image: {0}", image.toString());
                 }
             }
-            for (Size size : client.getSizes().values()) {
+            for (Size size : client.listSizes()) {
                 if (size != null) {
                     LOGGER.log(Level.INFO, "size: {0}", size.toString());
 
                 }
             }
-            for (ComputeMetadata node : client.getNodes().values()) {
+            for (ComputeMetadata node : client.listNodes()) {
                 if (node != null) {
                     LOGGER.log(Level.INFO, "Node {0}:{1} in {2}", new Object[]{
                                 node.getId(),

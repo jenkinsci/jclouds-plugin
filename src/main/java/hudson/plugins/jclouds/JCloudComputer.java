@@ -25,13 +25,67 @@
 package hudson.plugins.jclouds;
 
 import hudson.slaves.SlaveComputer;
+import java.io.PrintStream;
+import java.util.Map;
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.RunScriptOnNodesException;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeState;
+import org.jclouds.ssh.ExecResponse;
 
 /**
  *
  * @author mordred
  */
 public class JCloudComputer extends SlaveComputer {
-      public JCloudComputer(JCloudSlave slave) {
+
+    private transient ComputeService context = null;
+
+    public JCloudComputer(JCloudSlave slave, ComputeService context) {
         super(slave);
+        this.context = context;
+    }
+
+    @Override
+    public JCloudSlave getNode() {
+        return (JCloudSlave)super.getNode();
+    }
+
+    public String getInstanceId() {
+        return getName();
+    }
+
+    public NodeState getState() {
+        return ((JCloudSlave)super.getNode()).getState();
+    }
+
+    public NodeMetadata describeNode() {
+        return ((JCloudSlave)super.getNode()).getMetadata();
+    }
+
+    public int executeScript(String script, PrintStream logger) {
+
+        try {
+            if (context == null) {
+                context = JClouds.get().connect();
+            }
+            if (context != null) {
+                throw new Throwable("ComputeService is null. Major problem!");
+            }
+        } catch (Throwable ex) {
+            logger.print(ex.getLocalizedMessage());
+            return -1;
+        }
+
+        try {
+            ExecResponse ret = context.runScriptOnNodesWithTag(describeNode().getTag(), script.getBytes()).get(describeNode());
+            logger.print(ret.getOutput());
+            return ret.getExitCode();
+
+        } catch (RunScriptOnNodesException ex) {
+            logger.print(ex.getLocalizedMessage());
+            return -1;
+        }
+
     }
 }

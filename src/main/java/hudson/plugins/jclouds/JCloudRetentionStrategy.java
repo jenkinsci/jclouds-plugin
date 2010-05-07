@@ -24,6 +24,8 @@
 
 package hudson.plugins.jclouds;
 
+import hudson.model.Describable;
+import hudson.model.Descriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.TimeUnit2;
 import java.util.logging.Level;
@@ -61,5 +63,13 @@ public class JCloudRetentionStrategy extends RetentionStrategy<JCloudComputer> {
     @Override
     public void start(JCloudComputer c) {
         c.connect(false);
+    }
+
+    // no registration since this retention strategy is used only for EC2 nodes that we provision automatically.
+    // @Extension
+    public static class DescriptorImpl extends Descriptor<RetentionStrategy<?>> {
+        public String getDisplayName() {
+            return "JClouds";
+        }
     }
 }
