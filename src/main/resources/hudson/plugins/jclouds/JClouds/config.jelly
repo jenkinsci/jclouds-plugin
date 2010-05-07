@@ -23,6 +23,11 @@
   <f:entry title="${%Secret Key}" field="secret">
     <f:password />
   </f:entry>
+    <f:advanced>
+    <f:entry title="${%Instance Cap}" field="instanceCapStr">
+      <f:textbox />
+    </f:entry>
+  </f:advanced>
 
 
   <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="provider,user,secret" />
@@ -31,7 +36,7 @@
 <f:entry title="${%Slave Templates}" description="${%List of configurations to be launched as slaves}">
     <f:repeatable field="templates">
       <table width="100%">
-        <f:entry title="${%Name}" field="name">
+        <f:entry title="${%Slave Name}" field="slave">
           <f:textbox />
         </f:entry>
         <!--
