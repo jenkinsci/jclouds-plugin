@@ -51,10 +51,6 @@
           <f:textbox />
         </f:entry>
 
-        <f:entry title="${%Image}" field="image">
-          <f:select />
-        </f:entry>
-        
         <f:advanced>
           <f:entry title="${%Number of Executors}" field="numExecutors">
             <f:textbox />

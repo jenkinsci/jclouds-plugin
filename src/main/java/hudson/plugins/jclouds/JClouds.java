@@ -1,5 +1,6 @@
 package hudson.plugins.jclouds;
 
+import com.google.common.collect.ImmutableSet;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Label;
@@ -32,6 +33,7 @@ import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.Size;
 import org.jclouds.compute.util.ComputeUtils;
 import org.jclouds.rest.AuthorizationException;
+import org.jclouds.ssh.jsch.config.JschSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -236,7 +238,8 @@ public class JClouds extends Cloud {
         ComputeService client = null;
 
 
-        ComputeServiceContext context = new ComputeServiceContextFactory().createContext(provider, user, secret);
+        ComputeServiceContext context = new ComputeServiceContextFactory().createContext(provider, user, secret,
+                ImmutableSet.of(new JschSshClientModule()));
 
         client = context.getComputeService();
 

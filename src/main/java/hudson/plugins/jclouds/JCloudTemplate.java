@@ -14,17 +14,24 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.Architecture;
+import org.jclouds.compute.domain.ComputeType;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.OsFamily;
+import org.jclouds.compute.domain.Size;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.domain.Location;
+import org.jclouds.domain.ResourceMetadata;
 import org.jclouds.rest.AuthorizationException;
 import org.jclouds.ssh.jsch.JschSshClient;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -50,27 +57,29 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
 
     private final String initScript;
-    private final String userData;
+    /*private final String userData;
     private final String remoteAdmin;
-    private final String rootCommandPrefix;
+    private final String rootCommandPrefix;*/
 
     private transient JClouds parent;
 
     @DataBoundConstructor
-    public JCloudTemplate(String slave, String description, String remoteFS, String labelString, String image,
-            String architectureString, String numExecutors, String initScript, String userData, String remoteAdmin, String rootCommandPrefix)
+    public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labelString, /*String image, */
+            /*String architectureString, */ String numExecutors/* , String initScript, String userData, String remoteAdmin, String rootCommandPrefix*/)
     {
         this.slave = slave;
         this.description = description;
-        this.remoteFS = remoteFS;
+        this.remoteFS = "/var/lib/hudson";
         this.labels = Util.fixNull(labelString);
-        this.image = image;
-        this.architectureString = architectureString;
+        this.image = null;
+        this.architectureString = Architecture.X86_64.toString();
+       // this.image = image;
+      //  this.architectureString = architectureString;
         this.numExecutors = numExecutors;
-        this.initScript = initScript;
-        this.userData = userData;
+        this.initScript = "aptitude update;  aptitude install -y sun-sun-java6-jdk ; mkdir -p /var/lib/hudson";
+       /* this.userData = userData;
         this.remoteAdmin = remoteAdmin;
-        this.rootCommandPrefix = rootCommandPrefix;
+        this.rootCommandPrefix = rootCommandPrefix;*/
         readResolve();
     }
 
@@ -108,13 +117,22 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     }
 
     public int getNumExecutors() {
-       
+
+        if (numExecutors == null)
+            return 1;
         try {
             return Integer.parseInt(numExecutors);
         } catch (NumberFormatException e) {
             /*  @TODO: Make this based on number of CPUs (see EC2) */
             return 1;
         }
+    }
+
+    public Architecture getArchitecture() {
+        if (architecture == null) {
+            architecture= Architecture.valueOf(architectureString);
+        }
+        return architecture;
     }
 
     public void setNumExecutors(String numExecutors) {
@@ -165,10 +183,13 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
             options.authorizePublicKey(getSshKey());
 
+
             TemplateBuilder builder = client.templateBuilder();
 
             builder.options(options);
-            builder.architecture(architecture);
+            builder.architecture(getArchitecture());
+            builder.osFamily(OsFamily.UBUNTU);
+            builder.minRam(512);
 
             /* @TODO We should include our options here! */
             Set<? extends NodeMetadata> results = client.runNodesWithTag(slave, requestedWorkload, builder.build());
@@ -187,8 +208,9 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         List<JCloudSlave> slaves = new ArrayList<JCloudSlave>(nodes.size());
         for (NodeMetadata n : nodes)
         {
+
             /* @TODO: Actually create a real slave here */
-            slaves.add(new JCloudSlave(n.getId(), n.getLocation(), labels, client, n));
+            slaves.add(new JCloudSlave(n.getId(), getDescription(), getRemoteFS(), n.getLocation(), labels, client, n));
         }
         return slaves;
     }

@@ -49,9 +49,9 @@ public class JCloudSlave extends Slave {
 
     private transient ComputeService context = null;
 
-    public JCloudSlave(String name, Location location, String labelString, ComputeService context, NodeMetadata nodemeta) throws FormException, IOException {
+    public JCloudSlave(String name, String description, String remoteFS, Location location, String labelString, ComputeService context, NodeMetadata nodemeta) throws FormException, IOException {
 
-        super(name, "description", "/remote/fs", 1, Mode.NORMAL, labelString, null, new JCloudRetentionStrategy(), null);
+        super(name, description, remoteFS, 1, Mode.EXCLUSIVE, labelString, new JCloudCompuerLauncher(), new JCloudRetentionStrategy(), null);
         this.nodemeta = nodemeta;
         this.location = location;
     }
