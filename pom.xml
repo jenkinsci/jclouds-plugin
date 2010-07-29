@@ -18,6 +18,7 @@
      <jclouds.test.user>${jclouds.jclouds.user}</jclouds.test.user>
      <jclouds.test.key>${jclouds.jclouds.key}</jclouds.test.key>
      <jclouds.test.initializer>org.jclouds.rackspace.cloudfiles.blobstore.integration.CloudFilesTestInitializer</jclouds.test.initializer>
+    <jclouds.version>1.0-beta-6</jclouds.version>
   </properties>
 
 
@@ -41,14 +42,14 @@
     <repository>
       <id>jclouds-snapshot</id>
       <url>http://jclouds.rimuhosting.com/maven2/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+      </snapshots>
     </repository>
   </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>m.g.o-public</id>
-      <url>http://maven.glassfish.org/content/groups/public/</url>
-    </pluginRepository>
-  </pluginRepositories>
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
@@ -59,56 +60,44 @@
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-rackspace</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-rimuhosting</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-vcloud</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-gogrid</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-bluelock</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-terremark</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-aws</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-hostingdotcom</artifactId>
-      <version>1.0-SNAPSHOT</version>
+      <version>${jclouds.version}</version>
     </dependency>
   </dependencies>
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <source>1.6</source>
-          <target>1.6</target>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
     <reporting>
         <plugins>
             <plugin>

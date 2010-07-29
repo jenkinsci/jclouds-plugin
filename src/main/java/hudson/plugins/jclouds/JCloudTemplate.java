@@ -1,12 +1,12 @@
 package hudson.plugins.jclouds;
 
-import com.thoughtworks.xstream.persistence.FileStreamStrategy;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.Label;
+import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
 import java.io.BufferedReader;
@@ -14,26 +14,19 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.Architecture;
-import org.jclouds.compute.domain.ComputeType;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
-import org.jclouds.compute.domain.Size;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
-import org.jclouds.domain.Location;
-import org.jclouds.domain.ResourceMetadata;
 import org.jclouds.rest.AuthorizationException;
-import org.jclouds.ssh.jsch.JschSshClient;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -155,8 +148,8 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     public static String getSshKey() throws IOException {
         File id_rsa_pub = new File(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
         BufferedReader irp = new BufferedReader(new FileReader(id_rsa_pub));
-        String line = null;
-        String key = new String();
+        String line;
+        String key = "";
         while ((line = irp.readLine()) != null) {
             key += line;
         }
@@ -225,7 +218,6 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         return l==null || labelSet.contains(l);
     }
 
-    @Override
     public Descriptor<JCloudTemplate> getDescriptor() {
         return Hudson.getInstance().getDescriptor(getClass());
     }

@@ -175,7 +175,6 @@ public class JClouds extends Cloud {
                 r.add(new PlannedNode(t.getDescription(),
                         Computer.threadPoolForRemoting.submit(new Callable<Node>() {
 
-                    @Override
                     public Node call() throws Exception {
                         // TODO: record the output somewhere
                         try {
@@ -212,7 +211,7 @@ public class JClouds extends Cloud {
     }
 
     /**
-     * Gets the first {@link EC2Cloud} instance configured in the current Hudson, or null if no such thing exists.
+     * Gets the first {@link JClouds} instance configured in the current Hudson, or null if no such thing exists.
      */
     public static JClouds get() {
         return Hudson.getInstance().clouds.get(JClouds.class);

@@ -37,15 +37,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.concurrent.TimeUnit;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.Credentials;
 import org.jclouds.http.handlers.BackoffLimitedRetryHandler;
+import org.jclouds.net.IPSocket;
 import org.jclouds.predicates.RetryablePredicate;
-import org.jclouds.predicates.SocketOpen;
 import org.jclouds.ssh.SshClient;
 import org.jclouds.ssh.jsch.JschSshClient;
+import org.jclouds.ssh.jsch.predicates.InetSocketAddressConnect;
 
 /**
  *
@@ -103,9 +103,9 @@ public class JCloudCompuerLauncher extends ComputerLauncher  {
             logger.println("Copying slave.jar");
 
 
-            InetSocketAddress socket = new InetSocketAddress((InetAddress) computer.describeNode().getPublicAddresses().toArray()[0], 22);
-            Predicate<InetSocketAddress> socketOpen = new RetryablePredicate<InetSocketAddress>(
-                    new SocketOpen(), 180, 5, TimeUnit.SECONDS);
+            IPSocket socket = new IPSocket(computer.describeNode().getPublicAddresses().toArray(new String[0])[0], 22);
+            Predicate<IPSocket> socketOpen = new RetryablePredicate<IPSocket>(
+                    new InetSocketAddressConnect(), 180, 5, TimeUnit.SECONDS);
             socketOpen.apply(socket);
             Credentials instanceCredentials = computer.describeNode().getCredentials();
 
@@ -152,7 +152,7 @@ public class JCloudCompuerLauncher extends ComputerLauncher  {
     private Connection connectToSsh(NodeMetadata inst) throws InterruptedException {
         while(true) {
             try {
-                Connection conn = new Connection(((InetAddress)inst.getPublicAddresses().toArray()[0]).toString(),22);
+                Connection conn = new Connection(inst.getPublicAddresses().toArray()[0].toString(),22);
                 conn.connect();
 
                 return conn; // successfully connected

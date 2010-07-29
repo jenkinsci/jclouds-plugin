@@ -81,7 +81,6 @@ public class JCloudComputer extends SlaveComputer {
 
         try {
             ExecResponse ret = context.runScriptOnNodesMatching(new Predicate<NodeMetadata> () {
-                @Override
                 public boolean apply(NodeMetadata input) {
                     return input.equals(describeNode());
                 }
