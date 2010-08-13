@@ -1,22 +1,9 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
          xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:entry title="${%Cloud Provider}" field="provider">
-    <j:choose>
-      <j:set var="providers" value="${descriptor.supportedProviders}"/>
-      <j:when test="${empty(providers)}">
-        <!-- if provider list is not available, fall back to text box -->
-        <f:textbox />
-      </j:when>
-      <j:otherwise>
-        <select name="_.provider">
-          <j:forEach var="pname" items="${providers}">
-            <f:option value="${pname}" selected='${pname=="cloudservers"}'>${pname}</f:option>
-          </j:forEach>
-        </select>
-       </j:otherwise>
-    </j:choose>
 
-  </f:entry>
+
+  <st:include class="${descriptor.clazz}" page="config-entries.jelly" />
+
   <f:entry title="${%User ID}" field="user">
     <f:textbox />
   </f:entry>

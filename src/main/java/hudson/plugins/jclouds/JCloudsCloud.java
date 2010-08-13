@@ -1,9 +1,7 @@
 package hudson.plugins.jclouds;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Sets;
 
-import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Label;
 import hudson.slaves.Cloud;
@@ -43,7 +41,7 @@ import org.kohsuke.stapler.QueryParameter;
  *
  * @author mordred
  */
-public class JCloudsCloud extends Cloud {
+public abstract class JCloudsCloud extends Cloud {
 
     private final String provider;
     private final String user;
@@ -247,18 +245,9 @@ public class JCloudsCloud extends Cloud {
         return client;
     }
 
-    @Extension
-    public static final class DescriptorImpl extends Descriptor<Cloud> {
-    	
-        @Override
-        public String getDisplayName() {
-            return "JClouds";
-        }
 
-		public Set<String> getSupportedProviders() {
+    public abstract static class DescriptorImpl extends Descriptor<Cloud> {
 
-            return Sets.newLinkedHashSet(ComputeServiceUtils.getSupportedProviders());
-        }
 
 		public FormValidation doTestConnection(
                 @QueryParameter String provider,
