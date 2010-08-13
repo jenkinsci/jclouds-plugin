@@ -24,7 +24,6 @@
 
 package hudson.plugins.jclouds;
 
-import hudson.model.Describable;
 import hudson.model.Descriptor;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.TimeUnit2;

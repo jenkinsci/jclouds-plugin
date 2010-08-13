@@ -34,7 +34,6 @@ import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.Size;
 import org.jclouds.compute.util.ComputeServiceUtils;
-import org.jclouds.compute.util.ComputeUtils;
 import org.jclouds.rest.AuthorizationException;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -44,7 +43,7 @@ import org.kohsuke.stapler.QueryParameter;
  *
  * @author mordred
  */
-public class JClouds extends Cloud {
+public class JCloudsCloud extends Cloud {
 
     private final String provider;
     private final String user;
@@ -56,7 +55,7 @@ public class JClouds extends Cloud {
     public final int instanceCap;
 
     @DataBoundConstructor
-    public JClouds(String provider, String user, String secret, String instanceCapStr, List<JCloudTemplate> templates) {
+    public JCloudsCloud(String provider, String user, String secret, String instanceCapStr, List<JCloudTemplate> templates) {
         super(String.format("jclouds-{0}-{1}", new Object[]{provider, user}));
         this.provider = provider;
         this.user = user;
@@ -82,7 +81,7 @@ public class JClouds extends Cloud {
         }
         return this;
     }
-    private static final Logger LOGGER = Logger.getLogger(JClouds.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
     public String getProvider() {
         return provider;
@@ -135,7 +134,9 @@ public class JClouds extends Cloud {
     public int countCurrentSlaves() throws AuthorizationException, Throwable {
         int n = 0;
         for (ComputeMetadata node : connect().listNodes()) {
-            n++;
+        	if (node.getId() != null) {
+              n++;
+        	}
         }
         return n;
     }
@@ -166,8 +167,6 @@ public class JClouds extends Cloud {
 
             final JCloudTemplate t = getTemplate(label);
 
-            /* How many nodes should we spawn? */
-            int toLaunch = calculateNodesToLaunch(requestedWorkload);
             StringWriter sw = new StringWriter();
             List<JCloudSlave> slaves = t.provision(new StreamTaskListener(sw),
                     calculateNodesToLaunch(requestedWorkload));
@@ -214,10 +213,10 @@ public class JClouds extends Cloud {
     }
 
     /**
-     * Gets the first {@link JClouds} instance configured in the current Hudson, or null if no such thing exists.
+     * Gets the first {@link JCloudsCloud} instance configured in the current Hudson, or null if no such thing exists.
      */
-    public static JClouds get() {
-        return Hudson.getInstance().clouds.get(JClouds.class);
+    public static JCloudsCloud get() {
+        return Hudson.getInstance().clouds.get(JCloudsCloud.class);
     }
 
     /**
@@ -225,8 +224,8 @@ public class JClouds extends Cloud {
      * @param name name of cloud to get
      * @return JClouds instance matching name
      */
-    public static JClouds get(String name) {
-        for (JClouds j : Hudson.getInstance().clouds.getAll(JClouds.class)) {
+    public static JCloudsCloud get(String name) {
+        for (JCloudsCloud j : Hudson.getInstance().clouds.getAll(JCloudsCloud.class)) {
             if (j.name.matches(name)) {
                 return j;
             }
@@ -249,19 +248,19 @@ public class JClouds extends Cloud {
     }
 
     @Extension
-    public static class DescriptorImpl extends Descriptor<Cloud> {
-
+    public static final class DescriptorImpl extends Descriptor<Cloud> {
+    	
         @Override
         public String getDisplayName() {
             return "JClouds";
         }
 
-        public Set<String> getSupportedProviders() {
+		public Set<String> getSupportedProviders() {
 
             return Sets.newLinkedHashSet(ComputeServiceUtils.getSupportedProviders());
         }
 
-        public FormValidation doTestConnection(
+		public FormValidation doTestConnection(
                 @QueryParameter String provider,
                 @QueryParameter String user,
                 @QueryParameter String secret) throws ServletException, IOException, Throwable {
@@ -305,5 +304,5 @@ public class JClouds extends Cloud {
 
 
         }
-    }
+    };
 }

@@ -33,10 +33,8 @@ import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.Credentials;
@@ -53,11 +51,6 @@ import org.jclouds.ssh.jsch.predicates.InetSocketAddressConnect;
  * @author Monty Taylor
  */
 public class JCloudCompuerLauncher extends ComputerLauncher  {
-
-
-    private final int FAILED=-1;
-    private final int SAMEUSER=0;
-    private final int RECONNECT = -2;
 
     @Override
     public void launch(SlaveComputer _computer, TaskListener listener) {

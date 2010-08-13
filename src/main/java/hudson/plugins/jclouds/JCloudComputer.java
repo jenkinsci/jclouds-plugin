@@ -27,12 +27,10 @@ package hudson.plugins.jclouds;
 import com.google.common.base.Predicate;
 import hudson.slaves.SlaveComputer;
 import java.io.PrintStream;
-import java.util.Map;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunScriptOnNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
-import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.io.Payloads;
 import org.jclouds.ssh.ExecResponse;
 
@@ -70,7 +68,7 @@ public class JCloudComputer extends SlaveComputer {
 
         try {
             if (context == null) {
-                context = JClouds.get().connect();
+                context = JCloudsCloud.get().connect();
             }
             if (context != null) {
                 throw new Throwable("ComputeService is null. Major problem!");

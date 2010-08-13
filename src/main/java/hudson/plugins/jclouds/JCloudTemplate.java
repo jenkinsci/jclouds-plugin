@@ -2,7 +2,6 @@ package hudson.plugins.jclouds;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import com.thoughtworks.xstream.persistence.FileStreamStrategy;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -12,9 +11,7 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -29,6 +26,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.io.Payloads;
 import org.jclouds.rest.AuthorizationException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -57,7 +55,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     private final String remoteAdmin;
     private final String rootCommandPrefix;*/
 
-    private transient JClouds parent;
+    private transient JCloudsCloud parent;
 
     @DataBoundConstructor
     public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labelString, /*String image, */
@@ -80,7 +78,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     }
 
 
-    private static final Logger LOGGER = Logger.getLogger(JClouds.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
     /**
      * Initializes data structure that we don't persist.
@@ -135,16 +133,16 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         this.numExecutors = numExecutors;
     }
 
-    void buildTemplate(JClouds parent)
+    void buildTemplate(JCloudsCloud parent)
     {
         this.parent = parent;
     }
 
-    public JClouds getParent() {
+    public JCloudsCloud getParent() {
         return parent;
     }
 
-    public void setParent(JClouds parent) {
+    public void setParent(JCloudsCloud parent) {
         this.parent = parent;
     }
 
@@ -169,10 +167,10 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             ComputeService client = getParent().connect();
             TemplateOptions options = new TemplateOptions();
 
-            options.runScript(initScript.getBytes());
+            options.runScript(Payloads.newByteArrayPayload(initScript.getBytes()));
             options.inboundPorts(22, 8080);
 
-            options.authorizePublicKey(getSshKey());
+            options.authorizePublicKey(Payloads.newStringPayload(getSshKey()));
 
 
             TemplateBuilder builder = client.templateBuilder();
@@ -216,8 +214,9 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         return l==null || labelSet.contains(l);
     }
 
-    public Descriptor<JCloudTemplate> getDescriptor() {
-        return Hudson.getInstance().getDescriptor(getClass());
+	@SuppressWarnings("unchecked")
+	public Descriptor<JCloudTemplate> getDescriptor() {
+    	return Hudson.getInstance().getDescriptorOrDie(getClass());
     }
 
     @Extension
@@ -229,13 +228,13 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         }
 
 
-        public ListBoxModel doFillImageItems(@QueryParameter String provider, @QueryParameter String user, @QueryParameter String secret) {
+		public ListBoxModel doFillImageItems(@QueryParameter String provider, @QueryParameter String user, @QueryParameter String secret) {
 
             LOGGER.log(Level.INFO, "Enter doFillImageItems");
             ListBoxModel m = new ListBoxModel();
             ComputeService client = null;
             try {
-                client = JClouds.getComputeService(provider, user, secret);
+                client = JCloudsCloud.getComputeService(provider, user, secret);
             } catch (Throwable ex) {
                 LOGGER.log(Level.INFO, "compute service problem {0}", ex.getLocalizedMessage());
                 return m;
@@ -252,5 +251,5 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             }
             return m;
         }
-    }
+    };
 }

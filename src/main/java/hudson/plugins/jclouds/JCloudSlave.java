@@ -26,13 +26,8 @@ package hudson.plugins.jclouds;
 
 import hudson.model.Computer;
 import hudson.model.Descriptor.FormException;
-import hudson.model.Node.Mode;
 import hudson.model.Slave;
-import hudson.slaves.ComputerLauncher;
-import hudson.slaves.NodeProperty;
-import hudson.slaves.RetentionStrategy;
 import java.io.IOException;
-import java.util.List;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
@@ -44,7 +39,11 @@ import org.jclouds.domain.Location;
  */
 public class JCloudSlave extends Slave {
 
-    private final Location location;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 2806718926870936855L;
+	private final Location location;
     private final NodeMetadata nodemeta;
 
     private transient ComputeService context = null;
@@ -69,4 +68,9 @@ public class JCloudSlave extends Slave {
     NodeMetadata getMetadata() {
         return nodemeta;
     }
+
+
+	public Location getLocation() {
+		return location;
+	}
 }
