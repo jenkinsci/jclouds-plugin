@@ -1,5 +1,8 @@
 package hudson.plugins.jclouds;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+import com.thoughtworks.xstream.persistence.FileStreamStrategy;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -146,14 +149,9 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     }
 
     public static String getSshKey() throws IOException {
+
         File id_rsa_pub = new File(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
-        BufferedReader irp = new BufferedReader(new FileReader(id_rsa_pub));
-        String line;
-        String key = "";
-        while ((line = irp.readLine()) != null) {
-            key += line;
-        }
-        return key;
+        return Files.toString(id_rsa_pub, Charsets.UTF_8);
     }
     
     /**

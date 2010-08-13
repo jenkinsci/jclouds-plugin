@@ -1,6 +1,8 @@
 package hudson.plugins.jclouds;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Label;
@@ -31,6 +33,7 @@ import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.Size;
+import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.compute.util.ComputeUtils;
 import org.jclouds.rest.AuthorizationException;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
@@ -255,7 +258,7 @@ public class JClouds extends Cloud {
 
         public Set<String> getSupportedProviders() {
 
-            return ComputeUtils.getSupportedProviders();
+            return Sets.newLinkedHashSet(ComputeServiceUtils.getSupportedProviders());
         }
 
         public FormValidation doTestConnection(

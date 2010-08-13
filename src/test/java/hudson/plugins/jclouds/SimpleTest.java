@@ -10,11 +10,11 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-import javax.xml.bind.JAXBException;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.compute.util.ComputeUtils;
 import org.jclouds.rest.AuthorizationException;
 
@@ -55,7 +55,7 @@ public class SimpleTest extends TestCase {
 
             
 
-        Set<String> providers= ComputeUtils.getSupportedProviders();
+        Iterable<String> providers= ComputeServiceUtils.getSupportedProviders();
         
         try {
             ComputeServiceContext context = new ComputeServiceContextFactory().createContext("cloudservers", user, secret);

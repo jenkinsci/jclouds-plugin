@@ -41,6 +41,7 @@ import java.util.concurrent.TimeUnit;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.Credentials;
 import org.jclouds.http.handlers.BackoffLimitedRetryHandler;
+import org.jclouds.io.Payloads;
 import org.jclouds.net.IPSocket;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.ssh.SshClient;
@@ -110,10 +111,10 @@ public class JCloudCompuerLauncher extends ComputerLauncher  {
             Credentials instanceCredentials = computer.describeNode().getCredentials();
 
             sshClient = new JschSshClient(new BackoffLimitedRetryHandler(), socket, 60000,
-                    instanceCredentials.account, "", instanceCredentials.key.getBytes());
+                    instanceCredentials.identity, "", instanceCredentials.credential.getBytes());
             sshClient.connect();
 
-            sshClient.put("/tmp/slave.jar", new ByteArrayInputStream(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
+            sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
             sshClient.disconnect();
 
             logger.println("Copied jar");

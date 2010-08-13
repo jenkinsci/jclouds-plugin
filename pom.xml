@@ -18,7 +18,7 @@
      <jclouds.test.user>${jclouds.jclouds.user}</jclouds.test.user>
      <jclouds.test.key>${jclouds.jclouds.key}</jclouds.test.key>
      <jclouds.test.initializer>org.jclouds.rackspace.cloudfiles.blobstore.integration.CloudFilesTestInitializer</jclouds.test.initializer>
-    <jclouds.version>1.0-beta-6</jclouds.version>
+    <jclouds.version>1.0-SNAPSHOT</jclouds.version>
   </properties>
 
 

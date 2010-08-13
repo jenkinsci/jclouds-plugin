@@ -33,6 +33,7 @@ import org.jclouds.compute.RunScriptOnNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 import org.jclouds.compute.options.RunScriptOptions;
+import org.jclouds.io.Payloads;
 import org.jclouds.ssh.ExecResponse;
 
 /**
@@ -84,7 +85,7 @@ public class JCloudComputer extends SlaveComputer {
                 public boolean apply(NodeMetadata input) {
                     return input.equals(describeNode());
                 }
-            }, script.getBytes()).get(describeNode());
+            }, Payloads.newByteArrayPayload(script.getBytes())).get(describeNode());
             logger.print(ret.getOutput());
             return ret.getExitCode();
 
