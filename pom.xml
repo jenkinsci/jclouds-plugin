@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jvnet.hudson.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.371</version><!-- which version of Hudson is this plugin built against? -->
+    <version>1.371</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -15,12 +15,11 @@
   <description>Allows Hudson to build using Cloud Servers via jclouds</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/jclouds+Cloud+Plugin</url>
   <properties>
-     <jclouds.test.user>${jclouds.jclouds.user}</jclouds.test.user>
-     <jclouds.test.key>${jclouds.jclouds.key}</jclouds.test.key>
-     <jclouds.test.initializer>org.jclouds.rackspace.cloudfiles.blobstore.integration.CloudFilesTestInitializer</jclouds.test.initializer>
+    <jclouds.test.provider>PROVIDER_HERE</jclouds.test.provider>
+    <jclouds.test.identity>IDENTITY_HERE</jclouds.test.identity>
+    <jclouds.test.credential>CREDENTIAL_HERE</jclouds.test.credential>
     <jclouds.version>1.0-SNAPSHOT</jclouds.version>
   </properties>
-
 
   <developers>
     <developer>
@@ -51,50 +50,28 @@
     </repository>
   </repositories>
   <dependencies>
+<dependency>
+  <groupId>org.kohsuke.stapler</groupId>
+  <artifactId>stapler-jelly</artifactId>
+  <version>1.148</version>
+  <scope>provided</scope>
+  <exclusions>
+    <exclusion>
+      <groupId>com.google.collections</groupId>
+      <artifactId>google-collections</artifactId>
+    </exclusion>
+  </exclusions>
+</dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>3.8.1</version>
+      <groupId>org.testng</groupId>
+      <artifactId>testng</artifactId>
+      <version>5.10</version>
       <scope>test</scope>
+      <classifier>jdk15</classifier>
     </dependency>
     <dependency>
       <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-rackspace</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-rimuhosting</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-vcloud</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-gogrid</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-bluelock</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-terremark</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-aws</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.jclouds</groupId>
-      <artifactId>jclouds-hostingdotcom</artifactId>
+      <artifactId>jclouds-allcompute</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
   </dependencies>
@@ -109,4 +86,62 @@
             </plugin>
         </plugins>
     </reporting>
+  <build>
+    <finalName>${project.artifactId}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*LiveTest.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <profiles>
+    <profile>
+      <id>live</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>integration</id>
+                <phase>integration-test</phase>
+                <goals>
+                  <goal>test</goal>
+                </goals>
+                <configuration>
+                  <excludes>
+                  <exclude>none</exclude>
+                 </excludes>
+                 <includes>
+                   <include>**/*LiveTest.java</include>
+                 </includes>
+                 <systemProperties>
+                    <property>
+                      <name>jclouds.test.provider</name>
+                      <value>${jclouds.test.provider}</value>
+                    </property>
+                    <property>
+                      <name>jclouds.test.identity</name>
+                      <value>${jclouds.test.identity}</value>
+                    </property>
+                    <property>
+                      <name>jclouds.test.credential</name>
+                      <value>${jclouds.test.credential}</value>
+                    </property>
+                  </systemProperties>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
