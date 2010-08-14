@@ -4,12 +4,12 @@ import hudson.Extension;
 
 import java.util.List;
 
-public class RackspaceCloud extends JCloudsCloud {
+public class SlicehostCloud extends JCloudsCloud {
 	
 	
-    public RackspaceCloud(String user, String secret,
+    public SlicehostCloud(String user, String secret,
 			String instanceCapStr, List<JCloudTemplate> templates) {
-		super("rackspace", user, secret, instanceCapStr, templates);
+		super("slicehost", user, secret, instanceCapStr, templates);
     }
 
     @Extension
@@ -17,7 +17,7 @@ public class RackspaceCloud extends JCloudsCloud {
 
     	@Override
     	public String getDisplayName() {
-    		return "Rackspace";
+    		return "Slicehost";
     	}
     }
 
