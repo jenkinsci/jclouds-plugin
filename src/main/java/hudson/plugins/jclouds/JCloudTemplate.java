@@ -1,7 +1,11 @@
 package hudson.plugins.jclouds;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
+import static com.google.common.base.Charsets.UTF_8;
+import static com.google.common.base.Functions.toStringFunction;
+import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Sets.newLinkedHashSet;
+import static org.jclouds.io.Payloads.newByteArrayPayload;
+import static org.jclouds.io.Payloads.newStringPayload;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.Describable;
@@ -11,6 +15,7 @@ import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import hudson.util.ListBoxModel;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -19,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.Architecture;
 import org.jclouds.compute.domain.Image;
@@ -26,10 +32,13 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
-import org.jclouds.io.Payloads;
 import org.jclouds.rest.AuthorizationException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.io.Files;
 
 /**
  *
@@ -43,11 +52,13 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     private final String labels;
     private final String image;
     private final String architectureString;
+    private final String osFamilyString;
 
     private String numExecutors;
 
     private transient /*almost final*/ Set<Label> labelSet;
     private transient Architecture architecture;
+    private transient OsFamily os;
 
 
     private final String initScript;
@@ -58,15 +69,19 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     private transient JCloudsCloud parent;
 
     @DataBoundConstructor
-    public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labelString, /*String image, */
-            /*String architectureString, */ String numExecutors/* , String initScript, String userData, String remoteAdmin, String rootCommandPrefix*/)
+    public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labelString, String osFamilyString,
+    		/*String image, */
+            String architectureString, String numExecutors/* , String initScript, String userData, String remoteAdmin, String rootCommandPrefix*/)
     {
         this.slave = slave;
         this.description = description;
         this.remoteFS = "/var/lib/hudson";
         this.labels = Util.fixNull(labelString);
         this.image = null;
-        this.architectureString = Architecture.X86_64.toString();
+        this.architectureString = architectureString;
+        this.architecture = Architecture.valueOf(architectureString);
+        this.osFamilyString = osFamilyString;
+        this.os = OsFamily.valueOf(osFamilyString);
        // this.image = image;
       //  this.architectureString = architectureString;
         this.numExecutors = numExecutors;
@@ -149,7 +164,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     public static String getSshKey() throws IOException {
 
         File id_rsa_pub = new File(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
-        return Files.toString(id_rsa_pub, Charsets.UTF_8);
+        return Files.toString(id_rsa_pub, UTF_8);
     }
     
     /**
@@ -167,17 +182,17 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             ComputeService client = getParent().connect();
             TemplateOptions options = new TemplateOptions();
 
-            options.runScript(Payloads.newByteArrayPayload(initScript.getBytes()));
+            options.runScript(newByteArrayPayload(initScript.getBytes()));
             options.inboundPorts(22, 8080);
 
-            options.authorizePublicKey(Payloads.newStringPayload(getSshKey()));
+            options.authorizePublicKey(newStringPayload(getSshKey()));
 
 
             TemplateBuilder builder = client.templateBuilder();
 
             builder.options(options);
             builder.architecture(getArchitecture());
-            builder.osFamily(OsFamily.UBUNTU);
+            builder.osFamily(os);
             builder.minRam(512);
 
             /* @TODO We should include our options here! */
@@ -220,14 +235,37 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     }
 
     @Extension
-    public static final class DescriptorImpl extends Descriptor<JCloudTemplate> {
+    public static class DescriptorImpl extends Descriptor<JCloudTemplate> {
 
         @Override
         public String getDisplayName() {
             return null;
         }
 
+        public Set<String> getSupportedArchitectures() {
+        	return newLinkedHashSet(transform(ImmutableSet.of(Architecture.values()),toStringFunction()));
+        }
+        
+        public String getDefaultArchitecture() {
+        	return "X86_64";
+        }
 
+        public Set<String> getSupportedOsFamilies() {
+        	return newLinkedHashSet(transform(ImmutableSet.of(OsFamily.values()),new Function<OsFamily, String>(){
+
+				public String apply(OsFamily from) {
+					return from.name();
+				}
+        	
+        	}));
+        	
+        	
+        }
+
+        public String getDefaultOsFamily() {
+        	return "UBUNTU";
+        }
+        
 		public ListBoxModel doFillImageItems(@QueryParameter String provider, @QueryParameter String user, @QueryParameter String secret) {
 
             LOGGER.log(Level.INFO, "Enter doFillImageItems");

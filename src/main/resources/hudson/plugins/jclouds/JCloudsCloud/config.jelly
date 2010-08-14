@@ -38,6 +38,32 @@
           <f:textbox />
         </f:entry>
 
+  <f:entry title="${%Architecture}" field="architectureString">
+      <j:choose>
+        <j:set var="architectures" value="${descriptor.supportedArchitectures}"/>
+        <j:set var="defaultArchitecture" value="${descriptor.defaultArchitecture}"/>
+          <select name="_.architectureString">
+            <j:forEach var="aname" items="${architectures}">
+              <f:option value="${aname}"
+               selected='${aname==defaultArchitecture}'>${aname}</f:option>
+            </j:forEach>
+           </select>
+        </j:choose>
+   </f:entry>
+
+  <f:entry title="${%OS Family}" field="osFamilyString">
+      <j:choose>
+        <j:set var="osFamilies" value="${descriptor.supportedOsFamilies}"/>
+        <j:set var="defaultOsFamily" value="${descriptor.defaultOsFamily}"/>
+          <select name="_.osFamilyString">
+            <j:forEach var="osname" items="${osFamilies}">
+              <f:option value="${osname}"
+               selected='${osname==defaultOsFamily}'>${osname}</f:option>
+            </j:forEach>
+           </select>
+        </j:choose>
+   </f:entry>
+
         <f:advanced>
           <f:entry title="${%Number of Executors}" field="numExecutors">
             <f:textbox />
