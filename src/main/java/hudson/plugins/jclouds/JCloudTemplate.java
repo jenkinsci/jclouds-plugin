@@ -26,7 +26,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.Architecture;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
@@ -51,13 +50,12 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     private final String remoteFS;
     private final String labels;
     private final String image;
-    private final String architectureString;
+    private final String architecture;
     private final String osFamilyString;
 
     private String numExecutors;
 
     private transient /*almost final*/ Set<Label> labelSet;
-    private transient Architecture architecture;
     private transient OsFamily os;
 
 
@@ -78,8 +76,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         this.remoteFS = "/var/lib/hudson";
         this.labels = Util.fixNull(labelString);
         this.image = null;
-        this.architectureString = architectureString;
-        this.architecture = Architecture.valueOf(architectureString);
+        this.architecture = architectureString;
         this.osFamilyString = osFamilyString;
         this.os = OsFamily.valueOf(osFamilyString);
        // this.image = image;
@@ -100,7 +97,6 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
      */
     protected final Object readResolve() {
         labelSet = Label.parse(labels);
-        architecture = Architecture.valueOf(architectureString);
         return this;
     }
 
@@ -137,10 +133,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         }
     }
 
-    public Architecture getArchitecture() {
-        if (architecture == null) {
-            architecture= Architecture.valueOf(architectureString);
-        }
+    public String getArchitecture() {
         return architecture;
     }
 
@@ -191,8 +184,9 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             TemplateBuilder builder = client.templateBuilder();
 
             builder.options(options);
-            builder.architecture(getArchitecture());
             builder.osFamily(os);
+            builder.osArchMatches(architecture);
+            
             builder.minRam(512);
 
             /* @TODO We should include our options here! */
@@ -241,10 +235,6 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         public String getDisplayName() {
             return null;
         }
-
-        public Set<String> getSupportedArchitectures() {
-        	return newLinkedHashSet(transform(ImmutableSet.of(Architecture.values()),toStringFunction()));
-        }
         
         public String getDefaultArchitecture() {
         	return "X86_64";
@@ -281,9 +271,9 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
                 m.add(image.getDescription(), image.getId());
 
                     LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}", new Object[]{
-                                image.getArchitecture(),
-                                image.getOsFamily(),
-                                image.getOsDescription(),
+                                image.getOperatingSystem().getArch(),
+                                image.getOperatingSystem(),
+                                image.getOperatingSystem().getDescription(),
                                 image.getDescription()
                             });
             }

@@ -266,8 +266,8 @@ public class JCloudsCloud extends Cloud {
 
          for (Image image : client.listImages()) {
             if (image != null) {
-               LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}:{4}", new Object[] { image.getArchitecture(),
-                     image.getOsFamily(), image.getOsDescription(), image.getDescription(), image.getId() });
+               LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}:{4}", new Object[] { image.getOperatingSystem().getArch(),
+                     image.getOperatingSystem().getFamily(), image.getOperatingSystem().getDescription(), image.getDescription(), image.getId() });
                LOGGER.log(Level.INFO, "image: {0}", image.toString());
             }
          }

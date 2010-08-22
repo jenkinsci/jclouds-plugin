@@ -37,19 +37,9 @@
         <f:entry title="${%Labels}" field="labelString">
           <f:textbox />
         </f:entry>
-
-  <f:entry title="${%Architecture}" field="architectureString">
-      <j:choose>
-        <j:set var="architectures" value="${descriptor.supportedArchitectures}"/>
-        <j:set var="defaultArchitecture" value="${descriptor.defaultArchitecture}"/>
-          <select name="_.architectureString">
-            <j:forEach var="aname" items="${architectures}">
-              <f:option value="${aname}"
-               selected='${aname==defaultArchitecture}'>${aname}</f:option>
-            </j:forEach>
-           </select>
-        </j:choose>
-   </f:entry>
+        <f:entry title="${%Architecture}" field="architecture">
+          <f:textbox />
+        </f:entry>
 
   <f:entry title="${%OS Family}" field="osFamilyString">
       <j:choose>
