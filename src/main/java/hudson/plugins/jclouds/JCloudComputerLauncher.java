@@ -50,7 +50,7 @@ import org.jclouds.ssh.jsch.predicates.InetSocketAddressConnect;
  *
  * @author Monty Taylor
  */
-public class JCloudCompuerLauncher extends ComputerLauncher  {
+public class JCloudComputerLauncher extends ComputerLauncher  {
 
     @Override
     public void launch(SlaveComputer _computer, TaskListener listener) {
