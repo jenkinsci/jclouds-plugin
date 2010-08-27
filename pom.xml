@@ -40,7 +40,7 @@
     </repository>
     <repository>
       <id>jclouds-snapshot</id>
-      <url>http://jclouds.rimuhosting.com/maven2/snapshots</url>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
