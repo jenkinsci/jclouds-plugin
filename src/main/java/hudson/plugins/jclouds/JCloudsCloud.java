@@ -27,8 +27,8 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.Size;
 import org.jclouds.rest.AuthorizationException;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -271,7 +271,7 @@ public class JCloudsCloud extends Cloud {
                LOGGER.log(Level.INFO, "image: {0}", image.toString());
             }
          }
-         for (Size size : client.listSizes()) {
+         for (Hardware size : client.listHardwareProfiles()) {
             if (size != null) {
                LOGGER.log(Level.INFO, "size: {0}", size.toString());
 

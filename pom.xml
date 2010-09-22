@@ -18,7 +18,7 @@
     <jclouds.test.provider>PROVIDER_HERE</jclouds.test.provider>
     <jclouds.test.identity>IDENTITY_HERE</jclouds.test.identity>
     <jclouds.test.credential>CREDENTIAL_HERE</jclouds.test.credential>
-    <jclouds.version>1.0-SNAPSHOT</jclouds.version>
+    <jclouds.version>1.0-beta-7</jclouds.version>
   </properties>
 
   <developers>
