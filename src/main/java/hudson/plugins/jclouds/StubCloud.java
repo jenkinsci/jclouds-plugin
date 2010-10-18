@@ -6,13 +6,13 @@ import java.util.List;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class CloudServersCloud extends JCloudsCloud {
+public class StubCloud extends JCloudsCloud {
 	
 	
 	@DataBoundConstructor
-    public CloudServersCloud(String identity, String credential,
+    public StubCloud(String identity, String credential,
 			String instanceCapStr, List<JCloudTemplate> templates) {
-		super("cloudservers", identity, credential, instanceCapStr, templates);
+		super("stub", identity, credential, instanceCapStr, templates);
     }
 
     @Extension
@@ -20,7 +20,7 @@ public class CloudServersCloud extends JCloudsCloud {
 
     	@Override
     	public String getDisplayName() {
-    		return "Rackspace CloudServers";
+    		return "Stub for testing";
     	}
     }
 

@@ -15,10 +15,10 @@
   <description>Allows Hudson to build using Cloud Servers via jclouds</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/jclouds+Cloud+Plugin</url>
   <properties>
-    <jclouds.test.provider>PROVIDER_HERE</jclouds.test.provider>
-    <jclouds.test.identity>IDENTITY_HERE</jclouds.test.identity>
-    <jclouds.test.credential>CREDENTIAL_HERE</jclouds.test.credential>
-    <jclouds.version>1.0-beta-7</jclouds.version>
+    <jclouds.test.provider>stub</jclouds.test.provider>
+    <jclouds.test.identity>identity</jclouds.test.identity>
+    <jclouds.test.credential>credential</jclouds.test.credential>
+    <jclouds.version>1.0-SNAPSHOT</jclouds.version>
   </properties>
 
   <developers>

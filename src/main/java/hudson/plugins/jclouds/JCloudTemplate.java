@@ -60,7 +60,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
 
     private final String initScript;
-    /*private final String userData;
+    /*private final String identityData;
     private final String remoteAdmin;
     private final String rootCommandPrefix;*/
 
@@ -69,7 +69,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     @DataBoundConstructor
     public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labelString, String osFamilyString,
     		/*String image, */
-            String architectureString, String numExecutors/* , String initScript, String userData, String remoteAdmin, String rootCommandPrefix*/)
+            String architectureString, String numExecutors/* , String initScript, String identityData, String remoteAdmin, String rootCommandPrefix*/)
     {
         this.slave = slave;
         this.description = description;
@@ -83,7 +83,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
       //  this.architectureString = architectureString;
         this.numExecutors = numExecutors;
         this.initScript = "aptitude update;  aptitude install -y sun-sun-java6-jdk ; mkdir -p /var/lib/hudson";
-       /* this.userData = userData;
+       /* this.identityData = identityData;
         this.remoteAdmin = remoteAdmin;
         this.rootCommandPrefix = rootCommandPrefix;*/
         readResolve();
@@ -156,7 +156,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
     public static String getSshKey() throws IOException {
 
-        File id_rsa_pub = new File(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
+        File id_rsa_pub = new File(System.getProperty("identity.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
         return Files.toString(id_rsa_pub, UTF_8);
     }
     
@@ -193,7 +193,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             Set<? extends NodeMetadata> results = client.runNodesWithTag(slave, requestedWorkload, builder.build());
 
 
-            /* Instance inst = ec2.runInstances(ami, 1, 1, Collections.<String>emptyList(), userData, keyPair.getKeyName(), type).getInstances().get(0);
+            /* Instance inst = ec2.runInstances(ami, 1, 1, Collections.<String>emptyList(), identityData, keyPair.getKeyName(), type).getInstances().get(0);
             return newSlave(inst); */
             return newSlaves(results, client);
         } catch (Descriptor.FormException e) {
@@ -256,13 +256,13 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         	return "UBUNTU";
         }
         
-		public ListBoxModel doFillImageItems(@QueryParameter String provider, @QueryParameter String user, @QueryParameter String secret) {
+		public ListBoxModel doFillImageItems(@QueryParameter String provider, @QueryParameter String identity, @QueryParameter String credential) {
 
             LOGGER.log(Level.INFO, "Enter doFillImageItems");
             ListBoxModel m = new ListBoxModel();
             ComputeService client = null;
             try {
-                client = JCloudsCloud.getComputeService(provider, user, secret);
+                client = JCloudsCloud.getComputeService(provider, identity, credential);
             } catch (Throwable ex) {
                 LOGGER.log(Level.INFO, "compute service problem {0}", ex.getLocalizedMessage());
                 return m;

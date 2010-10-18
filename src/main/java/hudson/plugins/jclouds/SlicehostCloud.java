@@ -10,9 +10,9 @@ public class SlicehostCloud extends JCloudsCloud {
 	
 
 	@DataBoundConstructor
-    public SlicehostCloud(String user, String secret,
+    public SlicehostCloud(String identity, String credential,
 			String instanceCapStr, List<JCloudTemplate> templates) {
-		super("slicehost", user, secret, instanceCapStr, templates);
+		super("slicehost", identity, credential, instanceCapStr, templates);
     }
 
     @Extension

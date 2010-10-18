@@ -1,7 +1,7 @@
 package hudson.plugins.jclouds;
 
-import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.Computer;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
@@ -24,7 +24,6 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Hardware;
@@ -35,6 +34,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.inject.Module;
 
 /**
  * 
@@ -213,8 +213,8 @@ public class JCloudsCloud extends Cloud {
    }
 
    /**
-    * Gets the first {@link JCloudsCloud} instance configured in the current
-    * Hudson, or null if no such thing exists.
+    * Gets the first {@link JCloudsCloud} instance configured in the current Hudson, or null if no
+    * such thing exists.
     */
    public static JCloudsCloud get() {
       return Hudson.getInstance().clouds.get(JCloudsCloud.class);
@@ -239,14 +239,10 @@ public class JCloudsCloud extends Cloud {
    public static ComputeService getComputeService(String provider, String identity, String credential)
          throws AuthorizationException, IOException {
 
-      ComputeService client = null;
-
-      ComputeServiceContext context = new ComputeServiceContextFactory().createContext(provider, identity, credential,
-            ImmutableSet.of(new JschSshClientModule()));
-
-      client = context.getComputeService();
-
-      return client;
+      Iterable<Module> modules = "stub".equals(provider) ? ImmutableSet.<Module> of() : ImmutableSet
+            .<Module> of(new JschSshClientModule());
+      return new ComputeServiceContextFactory().createContext(provider, identity, credential, modules)
+            .getComputeService();
    }
 
    public static class DescriptorImpl extends Descriptor<Cloud> {
@@ -266,8 +262,9 @@ public class JCloudsCloud extends Cloud {
 
          for (Image image : client.listImages()) {
             if (image != null) {
-               LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}:{4}", new Object[] { image.getOperatingSystem().getArch(),
-                     image.getOperatingSystem().getFamily(), image.getOperatingSystem().getDescription(), image.getDescription(), image.getId() });
+               LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}:{4}", new Object[] {
+                     image.getOperatingSystem().getArch(), image.getOperatingSystem().getFamily(),
+                     image.getOperatingSystem().getDescription(), image.getDescription(), image.getId() });
                LOGGER.log(Level.INFO, "image: {0}", image.toString());
             }
          }

@@ -10,9 +10,9 @@ public class EucalyptusCloud extends JCloudsCloud {
 	
 
 	@DataBoundConstructor
-    public EucalyptusCloud(String user, String secret,
+    public EucalyptusCloud(String identity, String credential,
 			String instanceCapStr, List<JCloudTemplate> templates) {
-		super("eucalyptus", user, secret, instanceCapStr, templates);
+		super("eucalyptus", identity, credential, instanceCapStr, templates);
     }
 
     @Extension

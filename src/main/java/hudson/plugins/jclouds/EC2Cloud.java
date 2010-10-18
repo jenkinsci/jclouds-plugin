@@ -10,9 +10,9 @@ public class EC2Cloud extends JCloudsCloud {
 
 
 	   @DataBoundConstructor
-	   public EC2Cloud(String user, String secret,
+	   public EC2Cloud(String identity, String credential,
 				String instanceCapStr, List<JCloudTemplate> templates) {
-			super("ec2", user, secret, instanceCapStr, templates);
+			super("ec2", identity, credential, instanceCapStr, templates);
 	    }
 
 	    @Extension
