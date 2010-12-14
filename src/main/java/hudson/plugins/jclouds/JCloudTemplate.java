@@ -14,6 +14,7 @@ import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.model.TaskListener;
+import hudson.model.labels.LabelAtom;
 import hudson.util.ListBoxModel;
 
 import java.io.File;
@@ -55,7 +56,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
     private String numExecutors;
 
-    private transient /*almost final*/ Set<Label> labelSet;
+    private transient /*almost final*/ Set<LabelAtom> labelSet;
     private transient OsFamily os;
 
 
@@ -156,7 +157,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
     public static String getSshKey() throws IOException {
 
-        File id_rsa_pub = new File(System.getProperty("identity.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
+        File id_rsa_pub = new File(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
         return Files.toString(id_rsa_pub, UTF_8);
     }
     
@@ -178,14 +179,15 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             options.runScript(newByteArrayPayload(initScript.getBytes()));
             options.inboundPorts(22, 8080);
 
-            options.authorizePublicKey(newStringPayload(getSshKey()));
+            options.authorizePublicKey(getSshKey());
 
 
             TemplateBuilder builder = client.templateBuilder();
 
             builder.options(options);
             builder.osFamily(os);
-            builder.osArchMatches(architecture);
+//            builder.osArchMatches(architecture);
+            builder.locationId("ORD1");
             
             builder.minRam(512);
 
@@ -241,7 +243,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         }
 
         public Set<String> getSupportedOsFamilies() {
-        	return newLinkedHashSet(transform(ImmutableSet.of(OsFamily.values()),new Function<OsFamily, String>(){
+			return newLinkedHashSet(transform(ImmutableSet.copyOf(OsFamily.values()),new Function<OsFamily, String>(){
 
 				public String apply(OsFamily from) {
 					return from.name();

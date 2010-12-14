@@ -44,7 +44,7 @@ import org.jclouds.net.IPSocket;
 import org.jclouds.predicates.RetryablePredicate;
 import org.jclouds.ssh.SshClient;
 import org.jclouds.ssh.jsch.JschSshClient;
-import org.jclouds.ssh.jsch.predicates.InetSocketAddressConnect;
+import org.jclouds.predicates.InetSocketAddressConnect;
 
 /**
  *

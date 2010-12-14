@@ -1,6 +1,12 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
 xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
 xmlns:f="/lib/form">
-        <j:set var="provider" value="stub"/>
+    <j:set var="provider" value="stub"/>
+
+    <!--<input name="_.provider" value="${provider}" type="hidden" />-->
+    <f:invisibleEntry>
+        <f:textbox field="provider" value="${provider}" />
+    </f:invisibleEntry>
+
 </j:jelly>
 

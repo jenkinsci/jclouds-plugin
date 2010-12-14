@@ -44,7 +44,7 @@ public class JCloudsCloud extends Cloud {
 
    private final String provider;
    private final String identity;
-   private final Secret credential;
+   private final Secret credentials;
    private List<JCloudTemplate> templates;
    /**
     * Upper bound on how many instances we may provision.
@@ -52,12 +52,12 @@ public class JCloudsCloud extends Cloud {
    public final int instanceCap;
 
    @DataBoundConstructor
-   public JCloudsCloud(String provider, String identity, String credential, String instanceCapStr,
+   public JCloudsCloud(String provider, String identity, String credentials, String instanceCapStr,
          List<JCloudTemplate> templates) {
       super(String.format("jclouds-{0}-{1}", new Object[] { provider, identity }));
       this.provider = provider;
       this.identity = identity;
-      this.credential = Secret.fromString(credential.trim());
+      this.credentials = Secret.fromString(credentials.trim());
       if (instanceCapStr.equals("")) {
          this.instanceCap = Integer.MAX_VALUE;
       } else {
@@ -86,12 +86,12 @@ public class JCloudsCloud extends Cloud {
       return provider;
    }
 
-   public String getUser() {
+   public String getIdentity() {
       return identity;
    }
 
-   public String getSecret() {
-      return credential.getEncryptedValue();
+   public String getCredentials() {
+      return credentials.getPlainText();
    }
 
    public String getInstanceCapStr() {
@@ -209,7 +209,7 @@ public class JCloudsCloud extends Cloud {
    }
 
    protected ComputeService connect() throws AuthorizationException, Throwable {
-      return getComputeService(provider, identity, credential.getEncryptedValue());
+      return getComputeService(provider, identity, credentials.getPlainText());
    }
 
    /**

@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.jvnet.hudson.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.371</version>
+    <version>1.388</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -17,7 +17,7 @@
   <properties>
     <jclouds.test.provider>stub</jclouds.test.provider>
     <jclouds.test.identity>identity</jclouds.test.identity>
-    <jclouds.test.credential>credential</jclouds.test.credential>
+    <jclouds.test.credentials>credentials</jclouds.test.credentials>
     <jclouds.version>1.0-SNAPSHOT</jclouds.version>
   </properties>
 
@@ -53,7 +53,7 @@
 <dependency>
   <groupId>org.kohsuke.stapler</groupId>
   <artifactId>stapler-jelly</artifactId>
-  <version>1.148</version>
+  <version>1.154</version>
   <scope>provided</scope>
   <exclusions>
     <exclusion>
@@ -132,8 +132,8 @@
                       <value>${jclouds.test.identity}</value>
                     </property>
                     <property>
-                      <name>jclouds.test.credential</name>
-                      <value>${jclouds.test.credential}</value>
+                      <name>jclouds.test.credentials</name>
+                      <value>${jclouds.test.credentials}</value>
                     </property>
                   </systemProperties>
                 </configuration>

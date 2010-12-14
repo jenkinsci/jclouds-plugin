@@ -1,6 +1,30 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
 xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
 xmlns:f="/lib/form">
+    <j:set var="provider" value="ec2"/>
 
+    <f:invisibleEntry>
+        <f:textbox field="provider" value="${provider}" />
+    </f:invisibleEntry>
+
+    <f:entry title="${%Region}" field="region">
+      <f:enum>${it.displayName}</f:enum>
+    </f:entry>
+    <f:entry title="${%Access Key ID}" field="identity">
+      <f:textbox />
+    </f:entry>
+    <f:entry title="${%Secret Access Key}" field="credentials">
+      <f:password />
+    </f:entry>
+    <f:entry title="${%EC2 RSA Private Key}" field="privateKey">
+      <f:textarea />
+    </f:entry>
+    <f:advanced>
+      <f:entry title="${%Instance Cap}" field="instanceCapStr">
+        <f:textbox />
+      </f:entry>
+    </f:advanced>
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="region,secretKey,accessId,privateKey" />
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="provider,region,identity,credentials,privateKey" />
 </j:jelly>
 

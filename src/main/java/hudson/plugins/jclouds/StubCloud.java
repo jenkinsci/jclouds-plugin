@@ -8,11 +8,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class StubCloud extends JCloudsCloud {
 	
-	
-	@DataBoundConstructor
+	  @DataBoundConstructor
     public StubCloud(String identity, String credential,
 			String instanceCapStr, List<JCloudTemplate> templates) {
-		super("stub", identity, credential, instanceCapStr, templates);
+		  super("stub", identity, credential, instanceCapStr, templates);
     }
 
     @Extension
