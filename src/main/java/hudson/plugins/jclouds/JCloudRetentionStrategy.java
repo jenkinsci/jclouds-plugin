@@ -25,10 +25,14 @@
 package hudson.plugins.jclouds;
 
 import hudson.model.Descriptor;
+import hudson.model.Hudson;
+import hudson.slaves.OfflineCause;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.TimeUnit2;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.jvnet.localizer.Localizable;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -51,7 +55,7 @@ public class JCloudRetentionStrategy extends RetentionStrategy<JCloudComputer> {
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
             if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(30)) {
                 LOGGER.log(Level.INFO, "Disconnecting {0}", c.getName());
-                //c.getNode().terminate();
+                c.getNode().destroy();
             }
         }
         return 1;

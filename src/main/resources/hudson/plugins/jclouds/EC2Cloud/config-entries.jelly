@@ -7,24 +7,26 @@ xmlns:f="/lib/form">
         <f:textbox field="provider" value="${provider}" />
     </f:invisibleEntry>
 
+<!--
     <f:entry title="${%Region}" field="region">
       <f:enum>${it.displayName}</f:enum>
     </f:entry>
     <f:entry title="${%Access Key ID}" field="identity">
       <f:textbox />
     </f:entry>
-    <f:entry title="${%Secret Access Key}" field="credentials">
+    <f:entry title="${%Secret Access Key}" field="credential">
       <f:password />
     </f:entry>
+-->
     <f:entry title="${%EC2 RSA Private Key}" field="privateKey">
       <f:textarea />
     </f:entry>
-    <f:advanced>
-      <f:entry title="${%Instance Cap}" field="instanceCapStr">
-        <f:textbox />
-      </f:entry>
-    </f:advanced>
+
+    <!--<f:validateButton title="${%Test EC2 Connection}" progress="${%Testing EC2...}" method="testConnection" with="provider,identity,privateKey,credential" />-->
+
+<!--
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="region,secretKey,accessId,privateKey" />
-    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="provider,region,identity,credentials,privateKey" />
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="provider,region,identity,credential,privateKey" />
+-->
 </j:jelly>
 

@@ -63,9 +63,10 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
             PrintStream logger = listener.getLogger();
 
 
-            logger.println("Waiting for " + computer.getName() + "to launch");
+            logger.println("Waiting for " + computer.getName() + " to launch");
             OUTER:
             while (true) {
+                logger.println("State: " + computer.getState().toString());
                 switch (computer.getState()) {
                     case PENDING:
                         Thread.sleep(5000); // check every 5 secs
@@ -76,20 +77,28 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
                         // abort
                         logger.println("The instance " + computer.getInstanceId() + " appears to be shut down. Aborting launch.");
                         return;
+                    default:
+                        logger.println("Unknown state, waiting 5 seconds to check again");
+                        Thread.sleep(5000); // check every 5 secs
                 }
             }
 
 
-        logger.println(computer.getName() + " launched. Initializing hudson");
-
-
+            logger.println(computer.getName() + " launched. Initializing hudson");
 
             // TODO: parse the version number. maven-enforcer-plugin might help
             logger.println("Verifying that java exists");
-            
-            if(computer.executeScript("java -fullversion", logger) != 0) {
+
+            int ret = computer.executeScript("java -fullversion", logger);
+            logger.println("java -fullversion returned: " + ret);
+            if(ret != 0) {
                 logger.println("Java not found! Please install java as part of your node initialization");
             }
+/*
+            if(computer.executeScript("ls -altr", logger) != 0) {
+                logger.println("Java not found! Please install java as part of your node initialization");
+            }
+*/
 
             // TODO: on Windows with ec2-sshd, this scp command ends up just putting slave.jar as c:\tmp
             // bug in ec2-sshd?
@@ -102,11 +111,12 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
                     new InetSocketAddressConnect(), 180, 5, TimeUnit.SECONDS);
             socketOpen.apply(socket);
             Credentials instanceCredentials = computer.describeNode().getCredentials();
+            logger.println("Connecting");
 
             sshClient = new JschSshClient(new BackoffLimitedRetryHandler(), socket, 60000,
-                    instanceCredentials.identity, "", instanceCredentials.credential.getBytes());
+                    instanceCredentials.identity, instanceCredentials.credential, null); //instanceCredentials.credential.getBytes());
             sshClient.connect();
-
+            logger.println("Transferring" );
             sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
             sshClient.disconnect();
 
@@ -115,6 +125,13 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
 
             logger.println("Launching slave agent");
 
+            logger.println("java -jar /tmp/slave.jar returned: " + ret);
+            ret = computer.executeScript("java -jar /tmp/slave.jar", logger);
+            if( ret != 0) {
+                logger.println("Could not execute slave");
+            }
+
+/*
             final Connection conn = connectToSsh(computer.describeNode());
             final Session sess = conn.openSession();
             
@@ -127,6 +144,7 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
                     conn.close();
                 }
             });
+*/
             successful = true;
         } catch (IOException e) {
             e.printStackTrace(listener.error(e.getLocalizedMessage()));
@@ -135,9 +153,14 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
 
 
         } finally {
+            PrintStream logger = listener.getLogger();
+            logger.println("In finally");
+
             if (sshClient != null && !successful) {
                 sshClient.disconnect();
             }
+            logger.println("End of finally");
+
         }
 
     }

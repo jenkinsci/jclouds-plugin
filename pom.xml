@@ -17,7 +17,7 @@
   <properties>
     <jclouds.test.provider>stub</jclouds.test.provider>
     <jclouds.test.identity>identity</jclouds.test.identity>
-    <jclouds.test.credentials>credentials</jclouds.test.credentials>
+    <jclouds.test.credential>credential</jclouds.test.credential>
     <jclouds.version>1.0-SNAPSHOT</jclouds.version>
   </properties>
 
@@ -72,6 +72,11 @@
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-allcompute</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jclouds</groupId>
+      <artifactId>jclouds-enterprise</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
   </dependencies>
@@ -132,8 +137,8 @@
                       <value>${jclouds.test.identity}</value>
                     </property>
                     <property>
-                      <name>jclouds.test.credentials</name>
-                      <value>${jclouds.test.credentials}</value>
+                      <name>jclouds.test.credential</name>
+                      <value>${jclouds.test.credential}</value>
                     </property>
                   </systemProperties>
                 </configuration>

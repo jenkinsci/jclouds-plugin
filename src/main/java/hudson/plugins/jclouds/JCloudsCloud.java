@@ -13,10 +13,8 @@ import hudson.util.StreamTaskListener;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -24,17 +22,23 @@ import java.util.logging.Logger;
 import javax.servlet.ServletException;
 
 import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
+import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.config.ConsoleLoggingModule;
 import org.jclouds.rest.AuthorizationException;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
-import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+
+import static org.jclouds.Constants.*;
 
 /**
  * 
@@ -44,20 +48,29 @@ public class JCloudsCloud extends Cloud {
 
    private final String provider;
    private final String identity;
-   private final Secret credentials;
+   private final Secret credential;
+   private final String privateKey;
+
    private List<JCloudTemplate> templates;
    /**
     * Upper bound on how many instances we may provision.
     */
    public final int instanceCap;
 
-   @DataBoundConstructor
-   public JCloudsCloud(String provider, String identity, String credentials, String instanceCapStr,
+   public JCloudsCloud(String provider, String identity, String credential, String instanceCapStr,
          List<JCloudTemplate> templates) {
-      super(String.format("jclouds-{0}-{1}", new Object[] { provider, identity }));
+      this(provider, identity, credential, null, instanceCapStr, templates);
+   }
+
+   public JCloudsCloud(String provider, String identity, String credential, String privateKey, String instanceCapStr,
+         List<JCloudTemplate> templates) {
+      super(String.format("jclouds-%s-%s", new Object[] { provider, identity }));
       this.provider = provider;
       this.identity = identity;
-      this.credentials = Secret.fromString(credentials.trim());
+      this.credential = Secret.fromString(credential.trim());
+      this.privateKey = privateKey;
+
+
       if (instanceCapStr.equals("")) {
          this.instanceCap = Integer.MAX_VALUE;
       } else {
@@ -90,8 +103,8 @@ public class JCloudsCloud extends Cloud {
       return identity;
    }
 
-   public String getCredentials() {
-      return credentials.getPlainText();
+   public String getCredential() {
+      return credential.getPlainText();
    }
 
    public String getInstanceCapStr() {
@@ -159,6 +172,38 @@ public class JCloudsCloud extends Cloud {
       return remaining < requestedWorkload ? remaining : requestedWorkload;
    }
 
+  public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String slave) throws ServletException, IOException {
+      checkPermission(PROVISION);
+      if(slave ==null) {
+          sendError("The 'slave' query parameter is missing",req,rsp);
+          return;
+      }
+      JCloudTemplate t = getTemplate(slave);
+      if(t==null) {
+          sendError("No such AMI: "+ slave,req,rsp);
+          return;
+      }
+
+      StringWriter sw = new StringWriter();
+      StreamTaskListener listener = new StreamTaskListener(sw);
+      try {
+/*
+          List<JCloudSlave> nodes = t.provision(listener, 1);
+          for (JCloudSlave node : nodes) {
+            Hudson.getInstance().addNode(node);
+          }
+*/
+          JCloudSlave node = t.provision(listener);
+          Hudson.getInstance().addNode(node);
+          rsp.sendRedirect2(req.getContextPath() + "/computer/" +node.getNodeName());
+      } catch (Exception e) {
+          e.printStackTrace(listener.error(e.getMessage()));
+          sendError(sw.toString(),req,rsp);
+      } catch (Throwable throwable) {
+        throwable.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+      }
+  }
+
    @Override
    public Collection<PlannedNode> provision(Label label, int requestedWorkload) {
 
@@ -209,7 +254,7 @@ public class JCloudsCloud extends Cloud {
    }
 
    protected ComputeService connect() throws AuthorizationException, Throwable {
-      return getComputeService(provider, identity, credentials.getPlainText());
+      return getComputeService(provider, identity, credential.getPlainText());
    }
 
    /**
@@ -239,13 +284,32 @@ public class JCloudsCloud extends Cloud {
    public static ComputeService getComputeService(String provider, String identity, String credential)
          throws AuthorizationException, IOException {
 
-      Iterable<Module> modules = "stub".equals(provider) ? ImmutableSet.<Module> of() : ImmutableSet
-            .<Module> of(new JschSshClientModule());
-      return new ComputeServiceContextFactory().createContext(provider, identity, credential, modules)
-            .getComputeService();
+       Properties overrides = new Properties();
+       overrides.setProperty(PROPERTY_MAX_CONNECTIONS_PER_CONTEXT, 20 + "");
+       overrides.setProperty(PROPERTY_MAX_CONNECTIONS_PER_HOST, 0 + "");
+       overrides.setProperty(PROPERTY_CONNECTION_TIMEOUT, 5000 + "");
+       overrides.setProperty(PROPERTY_SO_TIMEOUT, 5000 + "");
+       overrides.setProperty(PROPERTY_IO_WORKER_THREADS, 20 + "");
+       // unlimited user threads
+       overrides.setProperty(PROPERTY_USER_THREADS, 0 + "");
+
+
+       Iterable<Module> modules = ImmutableSet.<Module> of(new JschSshClientModule(),
+                                                      new ConsoleLoggingModule(),
+                                                      new EnterpriseConfigurationModule());
+/*
+       Iterable<Module> modules = "stub".equals(provider) ? ImmutableSet.<Module> of() : ImmutableSet
+           .<Module> of(new JschSshClientModule());
+*/
+       return new ComputeServiceContextFactory().createContext(provider, identity, credential, modules, overrides)
+           .getComputeService();
    }
 
-   public static class DescriptorImpl extends Descriptor<Cloud> {
+  public String getPrivateKey() {
+    return privateKey;
+  }
+
+  public static class DescriptorImpl extends Descriptor<Cloud> {
 
       public FormValidation doTestConnection(@QueryParameter String provider, @QueryParameter String identity,
             @QueryParameter String credential) throws ServletException, IOException, Throwable {
@@ -280,7 +344,7 @@ public class JCloudsCloud extends Cloud {
                      node.getLocation().getId() });
             }
          }
-         return FormValidation.ok();
+         return FormValidation.ok("This is a valid configuration");
 
       }
 

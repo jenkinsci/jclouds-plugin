@@ -1,12 +1,12 @@
 package hudson.plugins.jclouds;
 
 import static com.google.common.base.Charsets.UTF_8;
-import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Sets.newLinkedHashSet;
 import static org.jclouds.io.Payloads.newByteArrayPayload;
-import static org.jclouds.io.Payloads.newStringPayload;
+
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.Util;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
@@ -32,6 +32,8 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.domain.Location;
+import org.jclouds.io.Payloads;
 import org.jclouds.rest.AuthorizationException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -50,14 +52,15 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     private final String description;
     private final String remoteFS;
     private final String labels;
-    private final String image;
+    private final String imageId;
     private final String architecture;
-    private final String osFamilyString;
+    private final String osFamily;
 
     private String numExecutors;
 
     private transient /*almost final*/ Set<LabelAtom> labelSet;
     private transient OsFamily os;
+    private transient Image image;
 
 
     private final String initScript;
@@ -67,26 +70,26 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
     private transient JCloudsCloud parent;
 
-    @DataBoundConstructor
-    public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labelString, String osFamilyString,
+  @DataBoundConstructor
+    public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labels, String osFamily, String imageId,
     		/*String image, */
-            String architectureString, String numExecutors/* , String initScript, String identityData, String remoteAdmin, String rootCommandPrefix*/)
+            String architecture, String numExecutors/* , String initScript, String identityData, String remoteAdmin, String rootCommandPrefix*/)
     {
         this.slave = slave;
         this.description = description;
         this.remoteFS = "/var/lib/hudson";
-        this.labels = Util.fixNull(labelString);
-        this.image = null;
-        this.architecture = architectureString;
-        this.osFamilyString = osFamilyString;
-        this.os = OsFamily.valueOf(osFamilyString);
+        this.labels = Util.fixNull(labels);
+//        this.image = Image;
+        this.imageId = imageId;
+        this.architecture = architecture;
+        this.osFamily = osFamily;
+        this.os = OsFamily.valueOf(osFamily);
        // this.image = image;
-      //  this.architectureString = architectureString;
         this.numExecutors = numExecutors;
-        this.initScript = "aptitude update;  aptitude install -y sun-sun-java6-jdk ; mkdir -p /var/lib/hudson";
-       /* this.identityData = identityData;
-        this.remoteAdmin = remoteAdmin;
-        this.rootCommandPrefix = rootCommandPrefix;*/
+        this.initScript = "aptitude update;  aptitude install -y openjdk-6-jdk ; mkdir -p /var/lib/hudson";
+//        this.identityData = identityData;
+//        this.remoteAdmin = remoteAdmin;
+//        this.rootCommandPrefix = rootCommandPrefix;
         readResolve();
     }
 
@@ -114,8 +117,8 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         return labels;
     }
 
-    public String getImage() {
-        return image;
+    public String getImageId() {
+        return imageId;
     }
 
     public String getSlave() {
@@ -138,6 +141,16 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         return architecture;
     }
 
+    public OsFamily getOsFamily() {
+      return (os!=null?os:OsFamily.valueOf(osFamily));
+    }
+
+/*
+    public String getOsFamily() {
+      return os.toString();
+    }
+*/
+
     public void setNumExecutors(String numExecutors) {
         this.numExecutors = numExecutors;
     }
@@ -158,6 +171,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     public static String getSshKey() throws IOException {
 
         File id_rsa_pub = new File(System.getProperty("user.home") + File.separator + ".ssh" + File.separator + "id_rsa.pub");
+        System.out.println("RSA Public Key: " + Files.toString(id_rsa_pub, UTF_8));
         return Files.toString(id_rsa_pub, UTF_8);
     }
     
@@ -173,26 +187,35 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         try {
             logger.println("Launching " + slave);
 
-            ComputeService client = getParent().connect();
-            TemplateOptions options = new TemplateOptions();
+          ComputeService client = getParent().connect();
+          TemplateOptions options = client.templateOptions()
+              .blockUntilRunning(false)
+              .blockOnComplete(false)
+//              .inboundPorts(22)
+              .authorizePublicKey(getSshKey())
+              .runScript( Payloads.newByteArrayPayload( initScript.getBytes() ));
 
-            options.runScript(newByteArrayPayload(initScript.getBytes()));
-            options.inboundPorts(22, 8080);
+//            options.runScript(newByteArrayPayload(initScript.getBytes()));
+//            options.inboundPorts(22, 8080);
 
-            options.authorizePublicKey(getSshKey());
+//            options.authorizePublicKey(getSshKey());
 
 
-            TemplateBuilder builder = client.templateBuilder();
+            TemplateBuilder builder = client.templateBuilder()
+                .options(options)
+                .osFamily(OsFamily.valueOf(osFamily))
+                .minRam(512);
 
-            builder.options(options);
-            builder.osFamily(os);
+//            builder.options(options);
+//            builder.osFamily(OsFamily.valueOf(osFamily));
 //            builder.osArchMatches(architecture);
-            builder.locationId("ORD1");
+//            builder.locationId("ORD1");  //TODO: Store and use location from config screen
             
-            builder.minRam(512);
+//            builder.minRam(512);
 
             /* @TODO We should include our options here! */
             Set<? extends NodeMetadata> results = client.runNodesWithTag(slave, requestedWorkload, builder.build());
+
 
 
             /* Instance inst = ec2.runInstances(ami, 1, 1, Collections.<String>emptyList(), identityData, keyPair.getKeyName(), type).getInstances().get(0);
@@ -202,6 +225,15 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             throw new AssertionError(); // we should have discovered all configuration issues upfront
         }
     }
+    /**
+     * Provisions a new Compute Service
+     *
+     * @return always non-null. This needs to be then added to {@link Hudson#addNode(Node)}.
+     */
+
+    public JCloudSlave provision(TaskListener listener) throws AuthorizationException, Throwable {
+      return this.provision(listener, 1).get(0);
+    }
 
     private List<JCloudSlave> newSlaves(Set<? extends NodeMetadata> nodes, ComputeService client) throws Descriptor.FormException, IOException {
 
@@ -210,7 +242,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         {
 
             /* @TODO: Actually create a real slave here */
-            slaves.add(new JCloudSlave(n.getId(), getDescription(), getRemoteFS(), n.getLocation(), labels, client, n));
+            slaves.add(new JCloudSlave(parent.getProvider(), n.getId(), getDescription(), getRemoteFS(), n.getLocation(), labels, client, n));
         }
         return slaves;
     }
@@ -258,9 +290,9 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         	return "UBUNTU";
         }
         
-		public ListBoxModel doFillImageItems(@QueryParameter String provider, @QueryParameter String identity, @QueryParameter String credential) {
+		public ListBoxModel doFillImageIdItems(@RelativePath("..") @QueryParameter String provider, @RelativePath("..") @QueryParameter String identity, @RelativePath("..") @QueryParameter String credential) {
 
-            LOGGER.log(Level.INFO, "Enter doFillImageItems");
+            LOGGER.log(Level.INFO, "Enter doFillImageItems {0}", provider + identity + credential);
             ListBoxModel m = new ListBoxModel();
             ComputeService client = null;
             try {
@@ -270,16 +302,41 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
                 return m;
             }
             for (Image image : client.listImages()) {
-                m.add(image.getDescription(), image.getId());
+                m.add(image.getOperatingSystem().getDescription(), image.getId());
 
                     LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}", new Object[]{
-                                image.getOperatingSystem().getArch(),
-                                image.getOperatingSystem(),
-                                image.getOperatingSystem().getDescription(),
-                                image.getDescription()
-                            });
+                        image.getOperatingSystem().getArch(),
+                        image.getOperatingSystem(),
+                        image.getOperatingSystem().getDescription(),
+                        image.getDescription()
+                    });
             }
             return m;
         }
+
+/*
+      public ListBoxModel doFillLocationItems(@RelativePath("..") @QueryParameter String provider, @RelativePath("..") @QueryParameter String identity, @RelativePath("..") @QueryParameter String credential) {
+
+        ListBoxModel m = new ListBoxModel();
+        ComputeService client = null;
+        try {
+          client = JCloudsCloud.getComputeService(provider, identity, credential);
+        } catch (Throwable ex) {
+          LOGGER.log(Level.SEVERE, "compute service problem {0}", ex.getLocalizedMessage());
+          return m;
+        }
+
+        for (Location location : client.listAssignableLocations()) {
+          m.add(location.getDescription(), location.getId());
+
+          LOGGER.log(Level.FINE, "location: {0}|{1}", new Object[]{
+              location.getId(),
+              location.getDescription()
+          });
+        }
+        return m;
+      }
+*/
     };
+
 }

@@ -7,5 +7,10 @@ xmlns:f="/lib/form">
         <f:textbox field="provider" value="${provider}" />
     </f:invisibleEntry>
 
+    <f:entry title="${%RSA Private Key}" field="privateKey">
+      <f:textarea />
+    </f:entry>
+
+
 </j:jelly>
 

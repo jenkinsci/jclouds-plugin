@@ -8,11 +8,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 
 public class EC2Cloud extends JCloudsCloud {
 
-
   @DataBoundConstructor
-  public EC2Cloud(String identity, String credential,
+  public EC2Cloud(String identity, String credential, String privateKey,
                   String instanceCapStr, List<JCloudTemplate> templates) {
-    super("ec2", identity, credential, instanceCapStr, templates);
+    super("ec2", identity, credential, privateKey, instanceCapStr, templates);
   }
 
   @Extension
@@ -20,7 +19,7 @@ public class EC2Cloud extends JCloudsCloud {
 
     @Override
     public String getDisplayName() {
-      return "EC2";
+      return "JClouds - EC2";
     }
   }
 }
