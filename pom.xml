@@ -18,7 +18,7 @@
     <jclouds.test.provider>stub</jclouds.test.provider>
     <jclouds.test.identity>identity</jclouds.test.identity>
     <jclouds.test.credential>credential</jclouds.test.credential>
-    <jclouds.version>1.0-SNAPSHOT</jclouds.version>
+    <jclouds.version>1.0-beta-9b</jclouds.version>
   </properties>
 
   <developers>
@@ -50,18 +50,18 @@
     </repository>
   </repositories>
   <dependencies>
-<dependency>
-  <groupId>org.kohsuke.stapler</groupId>
-  <artifactId>stapler-jelly</artifactId>
-  <version>1.154</version>
-  <scope>provided</scope>
-  <exclusions>
-    <exclusion>
-      <groupId>com.google.collections</groupId>
-      <artifactId>google-collections</artifactId>
-    </exclusion>
-  </exclusions>
-</dependency>
+    <dependency>
+      <groupId>org.kohsuke.stapler</groupId>
+      <artifactId>stapler-jelly</artifactId>
+      <version>1.154</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.collections</groupId>
+          <artifactId>google-collections</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
@@ -75,8 +75,13 @@
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.jclouds</groupId>
+      <groupId>org.jclouds.driver</groupId>
       <artifactId>jclouds-enterprise</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jclouds.driver</groupId>
+      <artifactId>jclouds-jsch</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
   </dependencies>

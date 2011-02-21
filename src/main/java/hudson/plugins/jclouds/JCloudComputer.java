@@ -35,7 +35,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.io.Payloads;
-import org.jclouds.ssh.ExecResponse;
+import org.jclouds.compute.domain.ExecResponse;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 
