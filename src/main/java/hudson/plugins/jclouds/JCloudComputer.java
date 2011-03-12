@@ -34,7 +34,7 @@ import org.jclouds.compute.RunScriptOnNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 import org.jclouds.compute.options.RunScriptOptions;
-import org.jclouds.io.Payloads;
+import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.compute.domain.ExecResponse;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
@@ -100,13 +100,12 @@ public class JCloudComputer extends SlaveComputer {
                 public boolean apply(NodeMetadata input) {
                     return input.equals(describeNode());
                 }
-            }, Payloads.newByteArrayPayload(script.getBytes()), RunScriptOptions.Builder.nameTask("jcloudsscript" + System.currentTimeMillis()).blockOnComplete( true )).get( describeNode() );
+            }, Statements.exec(script), RunScriptOptions.Builder.nameTask("jcloudsscript" + System.currentTimeMillis()).blockOnComplete( true )).get( describeNode() );
 
             logger.println("stdout: " + ret.getOutput());
             logger.println("stderr: " + ret.getError());
 
-//            return ret.getExitCode();
-            return 0;
+            return ret.getExitCode();
 
         } catch (RunScriptOnNodesException ex) {
             logger.print(ex.getLocalizedMessage());

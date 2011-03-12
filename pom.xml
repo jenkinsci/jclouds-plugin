@@ -26,28 +26,20 @@
       <name>Monty Taylor</name>
       <email>mordred@inaugust.com</email>
     </developer>
+    <developer>
+      <id>jclouds</id>
+      <name>Adrian Cole</name>
+      <email>adrian@jclouds.org</email>
+    </developer>
   </developers>
 
   <repositories>
     <repository>
-      <id>m.g.o-public</id>
-      <url>http://maven.glassfish.org/content/groups/public/</url>
-    </repository>
-    <repository>
-      <id>jclouds</id>
-      <url>http://jclouds.googlecode.com/svn/repo</url>
-    </repository>
-    <repository>
-      <id>jclouds-snapshot</id>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
+      <id>maven.jenkins-ci.org</id>
+      <url>http://maven.jenkins-ci.org/content/repositories/releases</url>
     </repository>
   </repositories>
+
   <dependencies>
     <dependency>
       <groupId>org.kohsuke.stapler</groupId>
@@ -79,9 +71,19 @@
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.jclouds</groupId>
+      <artifactId>jclouds-scriptbuilder</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.jclouds.driver</groupId>
       <artifactId>jclouds-jsch</artifactId>
       <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jsch</artifactId>
+      <version>0.1.44-1</version>
     </dependency>
   </dependencies>
     <reporting>
@@ -98,6 +100,25 @@
   <build>
     <finalName>${project.artifactId}</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.jvnet.hudson.tools</groupId>
+        <artifactId>maven-hpi-plugin</artifactId>
+        <version>1.54</version>
+<dependencies>
+    <dependency>
+      <groupId>org.kohsuke.stapler</groupId>
+      <artifactId>stapler-jelly</artifactId>
+      <version>1.154</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.collections</groupId>
+          <artifactId>google-collections</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+  </dependencies>
+</plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>

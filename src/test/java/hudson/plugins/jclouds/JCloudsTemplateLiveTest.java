@@ -1,7 +1,6 @@
 package hudson.plugins.jclouds;
 
 import static org.testng.Assert.assertEquals;
-import hudson.util.FormValidation;
 
 
 import java.util.Set;

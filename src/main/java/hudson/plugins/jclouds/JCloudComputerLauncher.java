@@ -25,8 +25,9 @@
 package hudson.plugins.jclouds;
 
 import com.google.common.base.Predicate;
+import com.google.common.io.NullOutputStream;
+import com.jcraft.jsch.JSch;
 import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.Session;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.TaskListener;
@@ -84,21 +85,24 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
             }
 
 
-            logger.println(computer.getName() + " launched. Initializing hudson");
+            logger.println(computer.getInstanceId() + " launched. Initializing hudson");
 
             // TODO: parse the version number. maven-enforcer-plugin might help
             logger.println("Verifying that java exists");
 
-            int ret = computer.executeScript("java -fullversion", logger);
-            logger.println("java -fullversion returned: " + ret);
+            int ret;
+
+            //TODO: Need to add this to the slave template config but that isn't working yet
+            // This java instance is just to get the slave.jar working, build Java versions can be pushed by Jenkins
+            ret = computer.executeScript("apt-get update; apt-get install -y openjdk-6-jdk", logger);
+            if(ret != 0) {
+                logger.println("Could not install Java on this platform");
+            }
+
+            ret = computer.executeScript("java -fullversion", logger);
             if(ret != 0) {
                 logger.println("Java not found! Please install java as part of your node initialization");
             }
-/*
-            if(computer.executeScript("ls -altr", logger) != 0) {
-                logger.println("Java not found! Please install java as part of your node initialization");
-            }
-*/
 
             // TODO: on Windows with ec2-sshd, this scp command ends up just putting slave.jar as c:\tmp
             // bug in ec2-sshd?
@@ -114,37 +118,36 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
             logger.println("Connecting");
 
             sshClient = new JschSshClient(new BackoffLimitedRetryHandler(), socket, 60000,
-                    instanceCredentials.identity, instanceCredentials.credential, null); //instanceCredentials.credential.getBytes());
+                    instanceCredentials.identity, instanceCredentials.credential, null);
+
             sshClient.connect();
-            logger.println("Transferring" );
-            sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
-            sshClient.disconnect();
+            logger.println( "Transferring" );
+            sshClient.put( "/tmp/slave.jar",
+                           Payloads.newByteArrayPayload( Hudson.getInstance().getJnlpJars( "slave.jar" ).readFully() ) );
+//            sshClient.disconnect();
 
             logger.println("Copied jar");
 
 
             logger.println("Launching slave agent");
 
-            logger.println("java -jar /tmp/slave.jar returned: " + ret);
             ret = computer.executeScript("java -jar /tmp/slave.jar", logger);
+            logger.println("java -jar /tmp/slave.jar returned: " + ret);
             if( ret != 0) {
                 logger.println("Could not execute slave");
             }
 
-/*
-            final Connection conn = connectToSsh(computer.describeNode());
-            final Session sess = conn.openSession();
-            
             // @TODO jvmopts: sess.execCommand("java " + computer.getNode().jvmopts + " -jar /tmp/slave.jar");
-            sess.execCommand("java -jar /tmp/slave.jar");
-            computer.setChannel(sess.getStdout(), sess.getStdin(), logger, new Channel.Listener() {
+            computer.executeScript( "java -jar /tmp/slave.jar", logger );
+/*
+            computer.setChannel(listener.getLogger(), <need OutputStream here>,  listener, new Channel.Listener() {
                 @Override
                 public void onClosed(Channel channel, IOException cause) {
-                    sess.close();
-                    conn.close();
+                    sshClient.disconnect();
                 }
             });
 */
+            sshClient.disconnect();
             successful = true;
         } catch (IOException e) {
             e.printStackTrace(listener.error(e.getLocalizedMessage()));
@@ -166,6 +169,7 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
     }
 
 
+/*
     private Connection connectToSsh(NodeMetadata inst) throws InterruptedException {
         while(true) {
             try {
@@ -179,6 +183,7 @@ public class JCloudComputerLauncher extends ComputerLauncher  {
             }
         }
     }
+*/
 
     @Override
     public Descriptor<ComputerLauncher> getDescriptor() {

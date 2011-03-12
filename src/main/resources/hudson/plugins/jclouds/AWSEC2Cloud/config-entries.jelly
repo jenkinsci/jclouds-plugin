@@ -1,7 +1,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
 xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
 xmlns:f="/lib/form">
-    <j:set var="provider" value="ec2"/>
+    <j:set var="provider" value="aws-ec2"/>
 
     <f:invisibleEntry>
         <f:textbox field="provider" value="${provider}" />

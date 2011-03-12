@@ -3,7 +3,6 @@ package hudson.plugins.jclouds;
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Sets.newLinkedHashSet;
-import static org.jclouds.io.Payloads.newByteArrayPayload;
 
 import hudson.Extension;
 import hudson.RelativePath;
@@ -35,6 +34,7 @@ import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.Location;
 import org.jclouds.io.Payloads;
 import org.jclouds.rest.AuthorizationException;
+import org.jclouds.scriptbuilder.domain.Statements;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -199,7 +199,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
               .blockOnComplete(false)
 //              .inboundPorts(22)
               .authorizePublicKey(getSshKey())
-              .runScript( Payloads.newByteArrayPayload( initScript.getBytes() ));
+              .runScript(Statements.exec( initScript ));
 
 //            options.runScript(newByteArrayPayload(initScript.getBytes()));
 //            options.inboundPorts(22, 8080);
@@ -210,7 +210,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             TemplateBuilder builder = client.templateBuilder()
                 .options(options)
                 .osFamily(OsFamily.valueOf(osFamily))
-                .minRam(512)
+                .imageId( imageId )
                 .locationId( location );
 
 //            builder.options(options);
@@ -221,7 +221,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 //            builder.minRam(512);
 
             /* @TODO We should include our options here! */
-            Set<? extends NodeMetadata> results = client.createNodesInGroup(slave, requestedWorkload, builder.build());
+            Set<? extends NodeMetadata> results = client.createNodesInGroup( slave, requestedWorkload, builder.build() );
 
 
 
@@ -247,8 +247,6 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
         List<JCloudSlave> slaves = new ArrayList<JCloudSlave>(nodes.size());
         for (NodeMetadata n : nodes)
         {
-
-            /* @TODO: Actually create a real slave here */
             slaves.add(new JCloudSlave(parent.getProvider(), n.getId(), getDescription(), getRemoteFS(), n.getLocation(), labels, client, n));
         }
         return slaves;
