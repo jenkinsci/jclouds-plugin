@@ -1,10 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.jvnet.hudson.plugins</groupId>
+    <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>1.371</version>
-    <relativePath>../pom.xml</relativePath>
+    <version>1.397</version>
   </parent>
 
   <groupId>hudson.plugins</groupId>
@@ -50,18 +49,18 @@
     </repository>
   </repositories>
   <dependencies>
-<dependency>
-  <groupId>org.kohsuke.stapler</groupId>
-  <artifactId>stapler-jelly</artifactId>
-  <version>1.148</version>
-  <scope>provided</scope>
-  <exclusions>
-    <exclusion>
-      <groupId>com.google.collections</groupId>
-      <artifactId>google-collections</artifactId>
-    </exclusion>
-  </exclusions>
-</dependency>
+    <dependency>
+      <groupId>org.kohsuke.stapler</groupId>
+      <artifactId>stapler-jelly</artifactId>
+      <version>1.154</version>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.collections</groupId>
+          <artifactId>google-collections</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>org.testng</groupId>
       <artifactId>testng</artifactId>
@@ -72,6 +71,16 @@
     <dependency>
       <groupId>org.jclouds</groupId>
       <artifactId>jclouds-allcompute</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jclouds.driver</groupId>
+      <artifactId>jclouds-enterprise</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jclouds.driver</groupId>
+      <artifactId>jclouds-jsch</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
   </dependencies>

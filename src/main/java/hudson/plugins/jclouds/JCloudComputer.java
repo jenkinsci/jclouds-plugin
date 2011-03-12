@@ -26,13 +26,18 @@ package hudson.plugins.jclouds;
 
 import com.google.common.base.Predicate;
 import hudson.slaves.SlaveComputer;
+
+import java.io.IOException;
 import java.io.PrintStream;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunScriptOnNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
+import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.io.Payloads;
-import org.jclouds.ssh.ExecResponse;
+import org.jclouds.compute.domain.ExecResponse;
+import org.kohsuke.stapler.HttpRedirect;
+import org.kohsuke.stapler.HttpResponse;
 
 /**
  *
@@ -57,12 +62,24 @@ public class JCloudComputer extends SlaveComputer {
     }
 
     public NodeState getState() {
-        return ((JCloudSlave)super.getNode()).getState();
+        return getNode().getState();
     }
 
     public NodeMetadata describeNode() {
-        return ((JCloudSlave)super.getNode()).getMetadata();
+        return getNode().getMetadata();
     }
+
+    /**
+     * When the slave is deleted, terminate the instance.
+     */
+    @Override
+    public HttpResponse doDoDelete() throws IOException
+    {
+        checkPermission(DELETE);
+        getNode().destroy();
+        return new HttpRedirect("..");
+    }
+
 
     public int executeScript(String script, PrintStream logger) {
 
@@ -70,7 +87,7 @@ public class JCloudComputer extends SlaveComputer {
             if (context == null) {
                 context = JCloudsCloud.get().connect();
             }
-            if (context != null) {
+            if (context == null) {
                 throw new Throwable("ComputeService is null. Major problem!");
             }
         } catch (Throwable ex) {
@@ -83,11 +100,18 @@ public class JCloudComputer extends SlaveComputer {
                 public boolean apply(NodeMetadata input) {
                     return input.equals(describeNode());
                 }
-            }, Payloads.newByteArrayPayload(script.getBytes())).get(describeNode());
-            logger.print(ret.getOutput());
-            return ret.getExitCode();
+            }, Payloads.newByteArrayPayload(script.getBytes()), RunScriptOptions.Builder.nameTask("jcloudsscript" + System.currentTimeMillis()).blockOnComplete( true )).get( describeNode() );
+
+            logger.println("stdout: " + ret.getOutput());
+            logger.println("stderr: " + ret.getError());
+
+//            return ret.getExitCode();
+            return 0;
 
         } catch (RunScriptOnNodesException ex) {
+            logger.print(ex.getLocalizedMessage());
+            return -1;
+        }catch (Exception ex) {
             logger.print(ex.getLocalizedMessage());
             return -1;
         }

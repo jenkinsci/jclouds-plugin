@@ -26,8 +26,12 @@ package hudson.plugins.jclouds;
 
 import hudson.model.Computer;
 import hudson.model.Descriptor.FormException;
+import hudson.model.Hudson;
 import hudson.model.Slave;
 import java.io.IOException;
+import java.util.Collections;
+
+import hudson.slaves.NodeProperty;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
@@ -39,20 +43,18 @@ import org.jclouds.domain.Location;
  */
 public class JCloudSlave extends Slave {
 
-    /**
-	 * 
-	 */
 	private static final long serialVersionUID = 2806718926870936855L;
-	private final Location location;
-    private final NodeMetadata nodemeta;
-
+    private transient NodeMetadata nodemeta;
     private transient ComputeService context = null;
+    public String nodeId;
+    public String provider;
 
-    public JCloudSlave(String name, String description, String remoteFS, Location location, String labelString, ComputeService context, NodeMetadata nodemeta) throws FormException, IOException {
-
-        super(name, description, remoteFS, 1, Mode.EXCLUSIVE, labelString, new JCloudComputerLauncher(), new JCloudRetentionStrategy(), null);
+    public JCloudSlave(String provider, String name, String description, String remoteFS, Location location, String labelString, ComputeService context, NodeMetadata nodemeta) throws FormException, IOException {
+        super(name, description, remoteFS, 1, Mode.EXCLUSIVE, labelString, new JCloudComputerLauncher(), new JCloudRetentionStrategy(), Collections.<NodeProperty<?>>emptyList());
         this.nodemeta = nodemeta;
-        this.location = location;
+        this.context = context;
+        this.nodeId = nodemeta.getId();
+        this.provider = provider;
     }
 
 
@@ -61,16 +63,44 @@ public class JCloudSlave extends Slave {
         return new JCloudComputer(this, context);
     }
 
+    public void destroy() {
+        try {
+            if (context == null) {
+                context = JCloudsCloud.get(provider).connect();
+            }
+            if (context == null) {
+                throw new Throwable("ComputeService is null. Major problem!");
+            }
+        } catch (Throwable ex) {
+            return;
+//            return -1;
+        }
+
+        context.destroyNode( nodemeta.getId() );
+        try
+        {
+            Hudson.getInstance().removeNode( this );
+        }
+        catch ( IOException e )
+        {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+    }
+
     NodeState getState() {
-        return nodemeta.getState();
+      return getMetadata().getState();
     }
 
     NodeMetadata getMetadata() {
-        return nodemeta;
+      nodemeta = context.getNodeMetadata(nodemeta.getId());
+      return nodemeta;
     }
 
+    public Location getLocation() {
+        return nodemeta.getLocation();
+    }
 
-	public Location getLocation() {
-		return location;
-	}
+    public String getNodeId() {
+        return nodeId;
+    }
 }
