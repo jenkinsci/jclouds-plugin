@@ -13,7 +13,8 @@ public class CloudServersCloud extends JCloudsCloud {
   @DataBoundConstructor
   public CloudServersCloud(String identity, String credential, String privateKey,
                            String instanceCapStr, List<JCloudTemplate> templates) {
-    super("cloudservers", identity, credential, privateKey, instanceCapStr, templates);
+    // cloudserver-us here needs to come from jelly
+    super("cloudservers-us", identity, credential, privateKey, instanceCapStr, templates);
   }
 
   @Extension

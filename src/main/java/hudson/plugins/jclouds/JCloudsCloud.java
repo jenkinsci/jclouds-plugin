@@ -64,7 +64,7 @@ public class JCloudsCloud extends Cloud {
 
    public JCloudsCloud(String provider, String identity, String credential, String privateKey, String instanceCapStr,
          List<JCloudTemplate> templates) {
-      super(String.format("jclouds-%s-%s", new Object[] { provider, identity }));
+      super(String.format("jclouds-%s-%s", provider, identity));
       this.provider = provider;
       this.identity = identity;
       this.credential = Secret.fromString(credential.trim());
@@ -324,6 +324,7 @@ public class JCloudsCloud extends Cloud {
          // Set<? extends ComputeMetadata> nodes =
          // Sets.newHashSet(connection.getNodes().values());
 
+/*
          for (Image image : client.listImages()) {
             if (image != null) {
                LOGGER.log(Level.INFO, "image: {0}|{1}|{2}:{3}:{4}", new Object[] {
@@ -344,6 +345,7 @@ public class JCloudsCloud extends Cloud {
                      node.getLocation().getId() });
             }
          }
+*/
          return FormValidation.ok("This is a valid configuration");
 
       }

@@ -1,15 +1,15 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
-xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
-xmlns:f="/lib/form">
-    <j:set var="provider" value="cloudservers"/>
+         xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson"
+         xmlns:f="/lib/form">
+  <j:set var="provider" value="cloudservers-us"/>
 
-    <f:invisibleEntry>
-        <f:textbox field="provider" value="${provider}" />
-    </f:invisibleEntry>
+  <f:invisibleEntry>
+    <f:textbox field="provider" value="${provider}" />
+  </f:invisibleEntry>
 
-    <f:entry title="${%RSA Private Key}" field="privateKey">
-      <f:textarea />
-    </f:entry>
+  <f:entry title="${%RSA Private Key}" field="privateKey">
+    <f:textarea />
+  </f:entry>
 
 
 </j:jelly>

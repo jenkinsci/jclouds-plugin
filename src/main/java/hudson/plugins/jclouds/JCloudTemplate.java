@@ -50,6 +50,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
     private final String slave;
     private final String description;
+    private final String location;
     private final String remoteFS;
     private final String labels;
     private final String imageId;
@@ -71,12 +72,13 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
     private transient JCloudsCloud parent;
 
   @DataBoundConstructor
-    public JCloudTemplate(String slave, String description, /*String remoteFS,*/ String labels, String osFamily, String imageId,
+    public JCloudTemplate(String slave, String description, String location, /*String remoteFS,*/ String labels, String osFamily, String imageId,
     		/*String image, */
             String architecture, String numExecutors/* , String initScript, String identityData, String remoteAdmin, String rootCommandPrefix*/)
     {
         this.slave = slave;
         this.description = description;
+        this.location = location;
         this.remoteFS = "/var/lib/hudson";
         this.labels = Util.fixNull(labels);
 //        this.image = Image;
@@ -107,6 +109,10 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getLocation() {
+        return location;
     }
 
     public String getRemoteFS() {
@@ -204,7 +210,8 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             TemplateBuilder builder = client.templateBuilder()
                 .options(options)
                 .osFamily(OsFamily.valueOf(osFamily))
-                .minRam(512);
+                .minRam(512)
+                .locationId( location );
 
 //            builder.options(options);
 //            builder.osFamily(OsFamily.valueOf(osFamily));
@@ -214,7 +221,7 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
 //            builder.minRam(512);
 
             /* @TODO We should include our options here! */
-            Set<? extends NodeMetadata> results = client.runNodesWithTag(slave, requestedWorkload, builder.build());
+            Set<? extends NodeMetadata> results = client.createNodesInGroup(slave, requestedWorkload, builder.build());
 
 
 
@@ -314,9 +321,9 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
             return m;
         }
 
-/*
       public ListBoxModel doFillLocationItems(@RelativePath("..") @QueryParameter String provider, @RelativePath("..") @QueryParameter String identity, @RelativePath("..") @QueryParameter String credential) {
 
+        LOGGER.log(Level.INFO, "Enter doFillLocationItems {0}", provider + identity + credential);
         ListBoxModel m = new ListBoxModel();
         ComputeService client = null;
         try {
@@ -326,17 +333,18 @@ public class JCloudTemplate implements Describable<JCloudTemplate>  {
           return m;
         }
 
+        LOGGER.log(Level.INFO, "Populate Location {0}", provider + identity + credential);
+
         for (Location location : client.listAssignableLocations()) {
           m.add(location.getDescription(), location.getId());
 
-          LOGGER.log(Level.FINE, "location: {0}|{1}", new Object[]{
+          LOGGER.log(Level.INFO, "location: {0}|{1}", new Object[]{
               location.getId(),
               location.getDescription()
           });
         }
         return m;
       }
-*/
-    };
+    }
 
 }

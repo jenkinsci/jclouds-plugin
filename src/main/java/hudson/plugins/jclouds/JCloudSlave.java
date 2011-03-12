@@ -96,11 +96,11 @@ public class JCloudSlave extends Slave {
       return nodemeta;
     }
 
-	public Location getLocation() {
-		return nodemeta.getLocation();
-	}
+    public Location getLocation() {
+        return nodemeta.getLocation();
+    }
 
-	public String getNodeId() {
-		return nodeId;
-	}
+    public String getNodeId() {
+        return nodeId;
+    }
 }
