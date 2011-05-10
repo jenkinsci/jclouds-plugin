@@ -11,7 +11,8 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Hudson jclouds Cloud plugin</name>
-  <description>Allows Hudson to build using Cloud Servers via jclouds</description>
+  <description>Allows Hudson to build using Cloud Servers via
+  jclouds</description>
   <url>http://wiki.hudson-ci.org/display/HUDSON/jclouds+Cloud+Plugin</url>
   <properties>
     <jclouds.test.provider>stub</jclouds.test.provider>
@@ -19,6 +20,13 @@
     <jclouds.test.credential>credential</jclouds.test.credential>
     <jclouds.version>1.0-SNAPSHOT</jclouds.version>
   </properties>
+
+  <distributionManagement>
+    <repository>
+      <id>maven.jenkins-ci.org</id>
+      <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
+    </repository>
+  </distributionManagement>
 
   <developers>
     <developer>
@@ -39,6 +47,12 @@
       <url>http://maven.jenkins-ci.org/content/repositories/releases</url>
     </repository>
   </repositories>
+
+  <scm>
+    <connection>scm:git:git://github.com/jenkinsci/jclouds-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/jclouds-plugin.git</developerConnection>
+    <url>http://github.com/jenkinsci/jclouds-plugin</url>
+  </scm>
 
   <dependencies>
     <dependency>
@@ -86,17 +100,19 @@
       <version>0.1.44-1</version>
     </dependency>
   </dependencies>
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <configLocation>config/sun_checks.xml</configLocation>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <configuration>
+          <configLocation>config/sun_checks.xml</configLocation>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+
   <build>
     <finalName>${project.artifactId}</finalName>
     <plugins>
@@ -104,21 +120,20 @@
         <groupId>org.jvnet.hudson.tools</groupId>
         <artifactId>maven-hpi-plugin</artifactId>
         <version>1.54</version>
-<dependencies>
-    <dependency>
-      <groupId>org.kohsuke.stapler</groupId>
-      <artifactId>stapler-jelly</artifactId>
-      <version>1.154</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.collections</groupId>
-          <artifactId>google-collections</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-  </dependencies>
-</plugin>
+	<dependencies>
+	  <dependency>
+	    <groupId>org.kohsuke.stapler</groupId>
+	    <artifactId>stapler-jelly</artifactId>
+	    <version>1.154</version>
+	    <exclusions>
+              <exclusion>
+		<groupId>com.google.collections</groupId>
+		<artifactId>google-collections</artifactId>
+              </exclusion>
+	    </exclusions>
+	  </dependency>
+	</dependencies>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -130,6 +145,7 @@
       </plugin>
     </plugins>
   </build>
+
   <profiles>
     <profile>
       <id>live</id>
@@ -174,4 +190,5 @@
       </build>
     </profile>
   </profiles>
+
 </project>
