@@ -26,21 +26,20 @@ package hudson.plugins.jclouds;
 
 import com.google.common.base.Predicate;
 import hudson.slaves.SlaveComputer;
-
-import java.io.IOException;
-import java.io.PrintStream;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunScriptOnNodesException;
+import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.scriptbuilder.domain.Statements;
-import org.jclouds.compute.domain.ExecResponse;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 
+import java.io.IOException;
+import java.io.PrintStream;
+
 /**
- *
  * @author mordred
  */
 public class JCloudComputer extends SlaveComputer {
@@ -54,7 +53,7 @@ public class JCloudComputer extends SlaveComputer {
 
     @Override
     public JCloudSlave getNode() {
-        return (JCloudSlave)super.getNode();
+        return (JCloudSlave) super.getNode();
     }
 
     public String getInstanceId() {
@@ -73,13 +72,11 @@ public class JCloudComputer extends SlaveComputer {
      * When the slave is deleted, terminate the instance.
      */
     @Override
-    public HttpResponse doDoDelete() throws IOException
-    {
+    public HttpResponse doDoDelete() throws IOException {
         checkPermission(DELETE);
         getNode().destroy();
         return new HttpRedirect("..");
     }
-
 
     public int executeScript(String script, PrintStream logger) {
 
@@ -96,11 +93,11 @@ public class JCloudComputer extends SlaveComputer {
         }
 
         try {
-            ExecResponse ret = context.runScriptOnNodesMatching(new Predicate<NodeMetadata> () {
+            ExecResponse ret = context.runScriptOnNodesMatching(new Predicate<NodeMetadata>() {
                 public boolean apply(NodeMetadata input) {
                     return input.equals(describeNode());
                 }
-            }, Statements.exec(script), RunScriptOptions.Builder.nameTask("jcloudsscript" + System.currentTimeMillis()).blockOnComplete( true )).get( describeNode() );
+            }, Statements.exec(script), RunScriptOptions.Builder.nameTask("jcloudsscript" + System.currentTimeMillis()).blockOnComplete(true)).get(describeNode());
 
             logger.println("stdout: " + ret.getOutput());
             logger.println("stderr: " + ret.getError());
@@ -110,7 +107,7 @@ public class JCloudComputer extends SlaveComputer {
         } catch (RunScriptOnNodesException ex) {
             logger.print(ex.getLocalizedMessage());
             return -1;
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             logger.print(ex.getLocalizedMessage());
             return -1;
         }

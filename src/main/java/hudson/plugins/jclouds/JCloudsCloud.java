@@ -44,7 +44,7 @@ import com.google.common.collect.ImmutableSet.Builder;
 import com.google.inject.Module;
 
 /**
- * 
+ *
  * @author mordred
  */
 public class JCloudsCloud extends Cloud {
@@ -67,7 +67,7 @@ public class JCloudsCloud extends Cloud {
 
    public JCloudsCloud(String provider, String identity, String credential, String privateKey, String instanceCapStr,
             List<JCloudTemplate> templates) {
-      super(String.format("jclouds-%s-%s", new Object[] { provider, identity }));
+      super(String.format("jclouds-%s-%s", provider, identity));
       this.provider = provider;
       this.identity = identity;
       this.credential = Secret.fromString(credential.trim());
@@ -141,7 +141,7 @@ public class JCloudsCloud extends Cloud {
 
    /**
     * Counts the number of instances currently running.
-    * 
+    *
     * <p>
     * This includes those instances that may be started outside Hudson.
     */
@@ -270,7 +270,7 @@ public class JCloudsCloud extends Cloud {
 
    /**
     * Gets the named cloud
-    * 
+    *
     * @param name
     *           name of cloud to get
     * @return JClouds instance matching name

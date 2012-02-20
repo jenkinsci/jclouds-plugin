@@ -19,7 +19,7 @@
         <jclouds.test.provider>stub</jclouds.test.provider>
         <jclouds.test.identity>identity</jclouds.test.identity>
         <jclouds.test.credential>credential</jclouds.test.credential>
-        <jclouds.version>1.3.1</jclouds.version>
+        <jclouds.version>1.2.2</jclouds.version>
         <jsch.version>0.1.46</jsch.version>
         <stapler.jelly.version>1.178</stapler.jelly.version>
         <testng.version>5.10</testng.version>
@@ -50,12 +50,6 @@
             <artifactId>stapler-jelly</artifactId>
             <version>${stapler.jelly.version}</version>
             <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.collections</groupId>
-                    <artifactId>google-collections</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.testng</groupId>
@@ -129,12 +123,6 @@
                         <groupId>org.kohsuke.stapler</groupId>
                         <artifactId>stapler-jelly</artifactId>
                         <version>${stapler.jelly.version}</version>
-                        <exclusions>
-                            <exclusion>
-                                <groupId>com.google.collections</groupId>
-                                <artifactId>google-collections</artifactId>
-                            </exclusion>
-                        </exclusions>
                     </dependency>
 
                 </dependencies>
