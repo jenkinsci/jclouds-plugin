@@ -5,11 +5,11 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.453-SNAPSHOT</version>
+        <version>1.454</version>
     </parent>
 
-    <groupId>hudson.plugins</groupId>
-    <artifactId>jclouds</artifactId>
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>jclouds-jenkins</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <name>Jenkins JClouds plugin</name>
@@ -20,11 +20,12 @@
         <jclouds.test.provider>stub</jclouds.test.provider>
         <jclouds.test.identity>identity</jclouds.test.identity>
         <jclouds.test.credential>credential</jclouds.test.credential>
-        <jclouds.version>1.4.0-rc.2</jclouds.version>
+        <jclouds.version>1.4.0-rc.3</jclouds.version>
         <jsch.version>0.1.46</jsch.version>
         <stapler.jelly.version>1.178</stapler.jelly.version>
         <testng.version>5.10</testng.version>
         <hpi.plugin.version>1.79</hpi.plugin.version>
+
     </properties>
 
     <developers>
@@ -91,32 +92,6 @@
         </dependency>
     </dependencies>
 
-
-    <repositories>
-        <repository>
-            <id>m.g.o-public</id>
-            <url>http://maven.glassfish.org/content/groups/public/</url>
-        </repository>
-    </repositories>
-
-    <pluginRepositories>
-        <pluginRepository>
-            <id>m.g.o-public</id>
-            <url>http://maven.glassfish.org/content/groups/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
-
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-checkstyle-plugin</artifactId>
-                <configuration>
-                    <configLocation>config/sun_checks.xml</configLocation>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
     <build>
         <finalName>${project.artifactId}</finalName>
         <plugins>
@@ -144,6 +119,22 @@
             </plugin>
         </plugins>
     </build>
+
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <profiles>
         <profile>
             <id>live</id>

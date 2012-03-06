@@ -3,13 +3,15 @@ package jenkins.plugins.jclouds;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
+import hudson.Extension;
 import hudson.model.Computer;
+import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
+import hudson.util.FormValidation;
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -20,6 +22,8 @@ import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.jclouds.sshj.config.SshjSshClientModule;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,15 +45,33 @@ public class JCloudsCloud extends Cloud {
 
     private static final Logger logger = Logger.getLogger(JCloudsCloud.class.getName());
     private ComputeService compute;
+    private final String providerName;
+    private final String identity;
+    private final String credential;
 
 
-    protected JCloudsCloud(String name) {
-        super(name);
+    @DataBoundConstructor
+    public JCloudsCloud(final String id, final String providerName, String identity, String credential) {
+        super(id);
+        this.providerName = providerName;
+        this.identity = identity;
+        this.credential = credential;
+    }
+
+    public String getProviderName() {
+        return providerName;
+    }
+
+    public String getIdentity() {
+        return identity;
+    }
+
+    public String getCredential() {
+        return credential;
     }
 
     @Override
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
-        logger.info("In == JCloudsCloud provision " + label);
         List<NodeProvisioner.PlannedNode> nodes = new ArrayList<NodeProvisioner.PlannedNode>();
         nodes.add(new NodeProvisioner.PlannedNode("jclouds-node-1",
                 Computer.threadPoolForRemoting.submit(new Callable<Node>() {
@@ -68,13 +90,12 @@ public class JCloudsCloud extends Cloud {
         Properties properties = new Properties();
         properties.setProperty(PROPERTY_REGIONS, "us-east-1");
         properties.setProperty("jclouds.ec2.ami-query", "owner-id=137112412989;state=available;image-type=machine");
-        properties.setProperty("jclouds.ec2.cc-ami-query", "");
         // example of injecting a ssh implementation
         Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
                 new EnterpriseConfigurationModule());
 
         this.compute = new ComputeServiceContextFactory()
-                .createContext("aws-ec2", IDENTITY, CREDENTIAL , modules, properties).getComputeService();
+                .createContext(this.providerName, this.identity, this.credential, modules, properties).getComputeService();
         return createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
 
     }
@@ -113,5 +134,31 @@ public class JCloudsCloud extends Cloud {
     @Override
     public boolean canProvision(Label label) {
         return true;
+    }
+
+    @Extension
+    public static class DescriptorImpl extends Descriptor<Cloud> {
+
+        /**
+         * Human readable name of this kind of configurable object.
+         */
+        @Override
+        public String getDisplayName() {
+            return "Cloud (JClouds)";
+        }
+
+        //Fields
+        public FormValidation doCheckProviderName(@QueryParameter String value) {
+            return FormValidation.validateBase64(value, false, false, "Please enter a provider name - e.g, aws-ec2 or glesys");
+        }
+
+        public FormValidation doCheckCredential(@QueryParameter String value) {
+            return FormValidation.validateBase64(value, false, false, "Credential can't be empty");
+        }
+
+        public FormValidation doCheckIdentity(@QueryParameter String value) {
+            return FormValidation.validateBase64(value, false, false, "Identity can't be empty");
+        }
+
     }
 }
