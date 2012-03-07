@@ -1,5 +1,6 @@
 package jenkins.plugins.jclouds;
 
+import hudson.model.Descriptor;
 import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
@@ -18,13 +19,15 @@ public class JCloudsLauncher extends ComputerLauncher {
         return true;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
 
         LOGGER.info("In === JCloudsLauncher - launch " + computer);
 
+    }
+
+    @Override
+    public Descriptor<ComputerLauncher> getDescriptor() {
+        throw new UnsupportedOperationException();
     }
 }

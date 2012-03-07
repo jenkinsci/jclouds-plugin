@@ -6,6 +6,7 @@ import com.google.inject.Module;
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
+import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
@@ -24,7 +25,11 @@ import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
 
+import javax.servlet.ServletException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -49,10 +54,14 @@ public class JCloudsCloud extends Cloud {
     private final String identity;
     private final String credential;
 
+    public static JCloudsCloud get() {
+        return Hudson.getInstance().clouds.get(JCloudsCloud.class);
+    }
+
 
     @DataBoundConstructor
-    public JCloudsCloud(final String id, final String providerName, String identity, String credential) {
-        super(id);
+    public JCloudsCloud(final String providerName, String identity, String credential) {
+        super("jclouds");
         this.providerName = providerName;
         this.identity = identity;
         this.credential = credential;
@@ -70,6 +79,18 @@ public class JCloudsCloud extends Cloud {
         return credential;
     }
 
+
+    //Called from computerSet.jelly
+    public void doProvision(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException {
+        //TODO - Add more parameters
+        logger.info("Provision a new node - on demand");
+
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
         List<NodeProvisioner.PlannedNode> nodes = new ArrayList<NodeProvisioner.PlannedNode>();

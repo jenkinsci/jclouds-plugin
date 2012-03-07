@@ -12,9 +12,14 @@ public class JCloudsComputer extends SlaveComputer {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
 
+
     public JCloudsComputer(Slave slave) {
         super(slave);
     }
 
+    @Override
+    public Slave getNode() {
+        return super.getNode();
+    }
 
 }

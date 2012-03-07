@@ -7,6 +7,7 @@ import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.logging.Logger;
 public class JCloudsSlave extends Slave {
     private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
 
+    @DataBoundConstructor
     public JCloudsSlave(String name,
                         String nodeDescription,
                         String remoteFS,
@@ -29,7 +31,7 @@ public class JCloudsSlave extends Slave {
 
     @Override
     public Computer createComputer() {
-        LOGGER.info("In === JCloudsSlave.createComputer");
+        LOGGER.info("Creating a JClouds Slave Computer");
         return new JCloudsComputer(this);
     }
 
