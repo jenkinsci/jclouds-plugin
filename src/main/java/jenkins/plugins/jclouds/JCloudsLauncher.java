@@ -21,9 +21,8 @@ public class JCloudsLauncher extends ComputerLauncher {
 
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-
-        LOGGER.info("In === JCloudsLauncher - launch " + computer);
-
+        super.launch(computer, listener);
+        System.out.println("LAUNCH!!!!!!!!");
     }
 
     @Override

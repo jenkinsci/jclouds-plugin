@@ -55,7 +55,7 @@ public class JCloudsCloud extends Cloud {
 
     private final String identity;
     private final String credential;
-    private ComputeService compute;
+    private transient ComputeService compute;
 
     public static JCloudsCloud get() {
         return Hudson.getInstance().clouds.get(JCloudsCloud.class);
@@ -66,8 +66,12 @@ public class JCloudsCloud extends Cloud {
         super("jclouds");
         this.identity = identity;
         this.credential = credential;
+        Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
+                new EnterpriseConfigurationModule());
+
+        //Do we really need to create context here ?
         this.compute = new ComputeServiceContextFactory()
-                .createContext(providerName, this.identity, this.credential).getComputeService();
+                .createContext("aws-ec2", this.identity, this.credential, modules).getComputeService();
     }
 
 
@@ -85,8 +89,12 @@ public class JCloudsCloud extends Cloud {
     }
 
     //Called from computerSet.jelly
-    public void doProvision(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException {
-        System.out.println("doProvision");
+    public void doProvision(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException, Descriptor.FormException {
+        NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
+        JCloudsSlave node = new JCloudsSlave(nodeMetadata);
+        Hudson.getInstance().addNode(node);
+        rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
+        logger.info("New Node Created");
     }
 
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
@@ -94,9 +102,8 @@ public class JCloudsCloud extends Cloud {
         nodes.add(new NodeProvisioner.PlannedNode("jclouds-node-1",
                 Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                     public Node call() throws Exception {
-                        logger.info("Provision the node here");
-                        NodeMetadata nodeMetadata = initComputeAndCreateANode();
-                        return null;
+                        NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
+                        return new JCloudsSlave(nodeMetadata);
                     }
                 }), 1));
         return nodes;
@@ -131,14 +138,6 @@ public class JCloudsCloud extends Cloud {
         throw propagate(e);
     }
 
-    private NodeMetadata initComputeAndCreateANode() {
-        Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
-                new EnterpriseConfigurationModule());
-
-        return createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
-
-    }
-
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
 
@@ -167,10 +166,6 @@ public class JCloudsCloud extends Cloud {
             return candidates;
         }
 
-        //Fields
-        public FormValidation doCheckProviderName(@QueryParameter String value) {
-            return FormValidation.validateBase64(value, false, false, "Please enter a provider name - e.g, aws-ec2 or glesys");
-        }
 
         public FormValidation doCheckCredential(@QueryParameter String value) {
             return FormValidation.validateBase64(value, false, false, "Credential can't be empty");
