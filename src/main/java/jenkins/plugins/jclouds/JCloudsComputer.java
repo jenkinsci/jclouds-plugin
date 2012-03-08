@@ -2,7 +2,10 @@ package jenkins.plugins.jclouds;
 
 import hudson.model.Slave;
 import hudson.slaves.SlaveComputer;
+import org.kohsuke.stapler.HttpRedirect;
+import org.kohsuke.stapler.HttpResponse;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -22,4 +25,13 @@ public class JCloudsComputer extends SlaveComputer {
         return super.getNode();
     }
 
+    /**
+     * Really deletes the slave, by terminating the instance.
+     */
+    @Override
+    public HttpResponse doDoDelete() throws IOException {
+        JCloudsSlave slave = (JCloudsSlave) getNode();
+        slave.terminate();
+        return new HttpRedirect("..");
+    }
 }

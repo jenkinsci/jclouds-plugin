@@ -51,10 +51,12 @@ import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
  */
 public class JCloudsCloud extends Cloud {
 
-    private static final Logger logger = Logger.getLogger(JCloudsCloud.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
     private final String identity;
     private final String credential;
+    private String providerName;
+
     private transient ComputeService compute;
 
     public static JCloudsCloud get() {
@@ -66,6 +68,7 @@ public class JCloudsCloud extends Cloud {
         super("jclouds");
         this.identity = identity;
         this.credential = credential;
+        this.providerName = providerName;
         Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
                 new EnterpriseConfigurationModule());
 
@@ -74,6 +77,9 @@ public class JCloudsCloud extends Cloud {
                 .createContext("aws-ec2", this.identity, this.credential, modules).getComputeService();
     }
 
+    public ComputeService getCompute() {
+        return compute;
+    }
 
     public String getIdentity() {
         return identity;
@@ -83,6 +89,10 @@ public class JCloudsCloud extends Cloud {
         return credential;
     }
 
+    public String getProviderName() {
+        return providerName;
+    }
+
     @Override
     public boolean canProvision(Label label) {
         return true;
@@ -90,16 +100,19 @@ public class JCloudsCloud extends Cloud {
 
     //Called from computerSet.jelly
     public void doProvision(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException, Descriptor.FormException {
+        LOGGER.info("Provisioning new node");
         NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
+
         JCloudsSlave node = new JCloudsSlave(nodeMetadata);
         Hudson.getInstance().addNode(node);
-        rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
-        logger.info("New Node Created");
+        rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getLabelString());
+
     }
 
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
+        LOGGER.info("Provisioning new node with label " + label.getName() + ", excessWorkload: " + excessWorkload);
         List<NodeProvisioner.PlannedNode> nodes = new ArrayList<NodeProvisioner.PlannedNode>();
-        nodes.add(new NodeProvisioner.PlannedNode("jclouds-node-1",
+        nodes.add(new NodeProvisioner.PlannedNode(label.getName(),
                 Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                     public Node call() throws Exception {
                         NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
@@ -120,12 +133,12 @@ public class JCloudsCloud extends Cloud {
         Statement bootstrap = newStatementList(AdminAccess.standard(), InstallJDK.fromURL());
         template.getOptions().inboundPorts(22, port).userMetadata(userMetadata).runScript(bootstrap);
 
-        logger.info("creating jclouds node");
+        LOGGER.info("creating jclouds node");
 
         try {
 
             NodeMetadata node = getOnlyElement(compute.createNodesInGroup(group, 1, template));
-            logger.info(node.getHostname() + " created");
+            LOGGER.info(node.getHostname() + " created");
             return node;
         } catch (RunNodesException e) {
             throw destroyBadNodesAndPropagate(e);
@@ -155,7 +168,7 @@ public class JCloudsCloud extends Cloud {
 
             Iterable<String> matchedProviders = Iterables.filter(supportedProviders, new Predicate<String>() {
                 public boolean apply(@Nullable String input) {
-                    return input.startsWith(value.toLowerCase());
+                    return input != null && input.startsWith(value.toLowerCase());
                 }
             });
 
@@ -166,13 +179,16 @@ public class JCloudsCloud extends Cloud {
             return candidates;
         }
 
+        public FormValidation doCheckProviderName(@QueryParameter String value) {
+            return FormValidation.validateRequired(value);
+        }
 
         public FormValidation doCheckCredential(@QueryParameter String value) {
-            return FormValidation.validateBase64(value, false, false, "Credential can't be empty");
+            return FormValidation.validateRequired(value);
         }
 
         public FormValidation doCheckIdentity(@QueryParameter String value) {
-            return FormValidation.validateBase64(value, false, false, "Identity can't be empty");
+            return FormValidation.validateRequired(value);
         }
     }
 }

@@ -7,10 +7,12 @@ import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
+import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -19,20 +21,7 @@ import java.util.logging.Logger;
  */
 public class JCloudsSlave extends Slave {
     private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
-
-
-    public JCloudsSlave(NodeMetadata metadata) throws IOException, Descriptor.FormException {
-        this(metadata.getName(),
-                "jclouds-jenkins-node",
-                "/jenkins",
-                "1",
-                Mode.NORMAL,
-                "labelString",
-                new JCloudsLauncher(),
-                new JCloudsRetentionStrategy(),
-                null);
-    }
-
+    private NodeMetadata nodeMetaData;
 
     @DataBoundConstructor
     public JCloudsSlave(String name,
@@ -47,15 +36,53 @@ public class JCloudsSlave extends Slave {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
     }
 
+    /**
+     * Constructs a new slave from JCloud's NodeMetadata
+     *
+     * @param metadata - JCloudsNodeMetadata
+     * @throws IOException
+     * @throws Descriptor.FormException
+     */
+    public JCloudsSlave(NodeMetadata metadata) throws IOException, Descriptor.FormException {
+        this(metadata.getName(),
+                "jclouds-jenkins-node",
+                "/jenkins",
+                "1",
+                Mode.NORMAL,
+                "labelString",
+                new JCloudsLauncher(),
+                new JCloudsRetentionStrategy(),
+                Collections.<NodeProperty<?>>emptyList());
+        this.nodeMetaData = metadata;
+    }
+
+    /**
+     * Get Jclouds NodeMetadata associated with this Slave.
+     * @return {@link NodeMetadata}
+     */
+    public NodeMetadata getNodeMetaData() {
+        return nodeMetaData;
+    }
 
     @Override
     public Computer createComputer() {
-        LOGGER.info("Creating a JClouds Slave Computer");
+        LOGGER.info("Creating a new JClouds Slave");
         return new JCloudsComputer(this);
+    }
+
+    /**
+     * Destroy the node
+     */
+    public void terminate() {
+        //TODO don't delete it completely, take offline if needed.
+        LOGGER.info("Terminating the Slave : " + getNodeName());
+        final ComputeService compute = JCloudsCloud.get().getCompute();
+        compute.destroyNode(getNodeMetaData().getId());
     }
 
     @Extension
     public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {
+
         @Override
         public String getDisplayName() {
             return "JClouds Slave";
@@ -66,4 +93,6 @@ public class JCloudsSlave extends Slave {
             return false;
         }
     }
+
+
 }

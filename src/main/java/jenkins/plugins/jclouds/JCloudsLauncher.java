@@ -20,13 +20,16 @@ public class JCloudsLauncher extends ComputerLauncher {
     }
 
     @Override
-    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
-        super.launch(computer, listener);
-        System.out.println("LAUNCH!!!!!!!!");
+    public void launch(SlaveComputer _computer, TaskListener listener) throws IOException, InterruptedException {
+        //TODO Launch the slave, and set channel
+        LOGGER.info("TODO: :: Launching jclouds slave");
+
     }
 
     @Override
     public Descriptor<ComputerLauncher> getDescriptor() {
         throw new UnsupportedOperationException();
     }
+
+
 }
