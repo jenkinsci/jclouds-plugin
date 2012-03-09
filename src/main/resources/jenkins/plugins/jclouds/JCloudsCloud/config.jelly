@@ -9,5 +9,12 @@
     <f:entry title="Credential" field="credential">
         <f:textbox/>
     </f:entry>
-    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential" />
+
+    <f:entry title="RSA Private Key" field="privateKey">
+        <f:textarea/>
+    </f:entry>
+
+
+
+    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,privateKey" />
 </j:jelly>

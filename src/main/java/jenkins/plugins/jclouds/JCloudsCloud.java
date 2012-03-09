@@ -20,13 +20,16 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.io.Payloads;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
+import org.jclouds.ssh.SshClient;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -35,7 +38,9 @@ import org.kohsuke.stapler.StaplerResponse;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -59,17 +64,19 @@ public class JCloudsCloud extends Cloud {
     private String providerName;
 
     private transient ComputeService compute;
+    private String privateKey;
 
     public static JCloudsCloud get() {
         return Hudson.getInstance().clouds.get(JCloudsCloud.class);
     }
 
     @DataBoundConstructor
-    public JCloudsCloud(final String providerName, final String identity, final String credential) {
+    public JCloudsCloud(final String providerName, final String identity, final String credential, final String privateKey) {
         super("jclouds");
         this.identity = identity;
         this.credential = credential;
         this.providerName = providerName;
+        this.privateKey = privateKey;
         Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
                 new EnterpriseConfigurationModule());
 
@@ -94,6 +101,10 @@ public class JCloudsCloud extends Cloud {
         return providerName;
     }
 
+    public String getPrivateKey() {
+        return privateKey;
+    }
+
     @Override
     public boolean canProvision(Label label) {
         return true;
@@ -102,8 +113,7 @@ public class JCloudsCloud extends Cloud {
     //Called from computerSet.jelly
     public void doProvision(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException, Descriptor.FormException {
         LOGGER.info("Provisioning new node");
-        NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
-
+        NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512, this.getPrivateKey());
         JCloudsSlave node = new JCloudsSlave(nodeMetadata);
         Hudson.getInstance().addNode(node);
         rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getLabelString());
@@ -116,34 +126,50 @@ public class JCloudsCloud extends Cloud {
         nodes.add(new NodeProvisioner.PlannedNode(label.getName(),
                 Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                     public Node call() throws Exception {
-                        NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
+                        NodeMetadata nodeMetadata =
+                                createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512, JCloudsCloud.this.getPrivateKey());
                         return new JCloudsSlave(nodeMetadata);
                     }
                 }), 1));
         return nodes;
     }
 
-    private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam(String group, int port, int minRam) {
+    private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam(String group, int port, int minRam, String privateKey) {
         ImmutableMap<String, String> userMetadata = ImmutableMap.<String, String>of("Name", group);
 
         // we want everything as defaults except ram
         Template defaultTemplate = compute.templateBuilder().build();
         Template template = compute.templateBuilder().fromTemplate(defaultTemplate).minRam(minRam).build();
 
-        // setup the template to customize the node with jdk, etc. also opening ports.
+        // setup the template to customize the node with jdk, etc. also opening ports
+//        AdminAccess.builder().installAdminPrivateKey(false)
         Statement bootstrap = newStatementList(AdminAccess.standard(), InstallJDK.fromURL());
         template.getOptions().inboundPorts(22, port).userMetadata(userMetadata).runScript(bootstrap);
 
+        NodeMetadata node = null;
         LOGGER.info("creating jclouds node");
+        SshClient sshClient = null;
 
         try {
+            node = getOnlyElement(compute.createNodesInGroup(group, 1, template));
+            sshClient = compute.getContext().utils().sshForNode().apply(NodeMetadataBuilder.fromNodeMetadata(node).credentials(node.getCredentials()).build());
 
-            NodeMetadata node = getOnlyElement(compute.createNodesInGroup(group, 1, template));
+            sshClient.connect();
+            sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
+
             LOGGER.info(node.getHostname() + " created");
             return node;
         } catch (RunNodesException e) {
             throw destroyBadNodesAndPropagate(e);
+        } catch (IOException e) {
+            LOGGER.severe("Can't copy slave jar to the instance");
+        } finally {
+            if (sshClient != null) {
+                sshClient.disconnect();
+            }
         }
+        //Check if node is null and throw
+        return node;
     }
 
     private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
@@ -165,7 +191,15 @@ public class JCloudsCloud extends Cloud {
 
         public FormValidation doTestConnection(@QueryParameter String providerName,
                                                @QueryParameter String identity,
-                                               @QueryParameter String credential) {
+                                               @QueryParameter String credential,
+                                               @QueryParameter String privateKey) {
+            if (identity == null)
+                return FormValidation.error("Invalid (AccessId).");
+            if (credential == null)
+                return FormValidation.error("Invalid credential (secret key).");
+            if (privateKey == null)
+                return FormValidation.error("Private key is not specified. Click 'Generate Key' to generate one.");
+
 
             Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
                     new EnterpriseConfigurationModule());
@@ -186,6 +220,23 @@ public class JCloudsCloud extends Cloud {
                 }
             }
             return result;
+        }
+
+        public FormValidation doCheckPrivateKey(@QueryParameter String value) throws IOException, ServletException {
+            boolean hasStart = false, hasEnd = false;
+            BufferedReader br = new BufferedReader(new StringReader(value));
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.equals("-----BEGIN RSA PRIVATE KEY-----"))
+                    hasStart = true;
+                if (line.equals("-----END RSA PRIVATE KEY-----"))
+                    hasEnd = true;
+            }
+            if (!hasStart)
+                return FormValidation.error("This doesn't look like a private key at all");
+            if (!hasEnd)
+                return FormValidation.error("The private key is missing the trailing 'END RSA PRIVATE KEY' marker. Copy&paste error?");
+            return FormValidation.ok();
         }
 
         public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {

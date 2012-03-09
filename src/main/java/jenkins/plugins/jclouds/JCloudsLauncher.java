@@ -20,9 +20,10 @@ public class JCloudsLauncher extends ComputerLauncher {
     }
 
     @Override
-    public void launch(SlaveComputer _computer, TaskListener listener) throws IOException, InterruptedException {
+    public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
         //TODO Launch the slave, and set channel
         LOGGER.info("TODO: :: Launching jclouds slave");
+        JCloudsComputer jComputer = (JCloudsComputer) computer;
 
     }
 
