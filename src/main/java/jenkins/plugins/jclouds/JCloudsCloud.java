@@ -16,6 +16,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -74,7 +75,7 @@ public class JCloudsCloud extends Cloud {
 
         //Do we really need to create context here ?
         this.compute = new ComputeServiceContextFactory()
-                .createContext("aws-ec2", this.identity, this.credential, modules).getComputeService();
+                .createContext(this.providerName, this.identity, this.credential, modules).getComputeService();
     }
 
     public ComputeService getCompute() {
@@ -160,6 +161,31 @@ public class JCloudsCloud extends Cloud {
         @Override
         public String getDisplayName() {
             return "Cloud (JClouds)";
+        }
+
+        public FormValidation doTestConnection(@QueryParameter String providerName,
+                                               @QueryParameter String identity,
+                                               @QueryParameter String credential) {
+
+            Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
+                    new EnterpriseConfigurationModule());
+            FormValidation result = FormValidation.ok("Connection succeeded!");
+            ComputeService computeService = null;
+            try {
+
+                ComputeServiceContext context = new ComputeServiceContextFactory()
+                        .createContext(providerName, identity, credential, modules);
+                computeService = context.getComputeService();
+                computeService.listNodes();
+                //TODO Catch only exceptions that re really thrown.
+            } catch (Exception ex) {
+                result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getLocalizedMessage());
+            } finally {
+                if (computeService != null) {
+                    computeService.getContext().close();
+                }
+            }
+            return result;
         }
 
         public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
