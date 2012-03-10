@@ -20,13 +20,10 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.crypto.SshKeys;
-import org.jclouds.domain.LoginCredentials;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.io.Payload;
 import org.jclouds.io.Payloads;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.scriptbuilder.domain.Statement;
@@ -128,10 +125,10 @@ public class JCloudsCloud extends Cloud {
     //Called from computerSet.jelly
     public void doProvision(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException, Descriptor.FormException {
         LOGGER.info("Provisioning new node");
-        NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512, this.getPrivateKey());
+        NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
         JCloudsSlave node = new JCloudsSlave(nodeMetadata);
         Hudson.getInstance().addNode(node);
-        rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getLabelString());
+        rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
 
     }
 
@@ -142,15 +139,15 @@ public class JCloudsCloud extends Cloud {
                 Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                     public Node call() throws Exception {
                         NodeMetadata nodeMetadata =
-                                createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512, JCloudsCloud.this.getPrivateKey());
+                                createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000, 512);
                         return new JCloudsSlave(nodeMetadata);
                     }
                 }), 1));
         return nodes;
     }
 
-    private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam(String group, int port, int minRam, String privateKey) {
-        LOGGER.info("creating jclouds nodeMetadata");
+    private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam(String group, int port, int minRam) {
+        LOGGER.info("creating jclouds node");
 
         ImmutableMap<String, String> userMetadata = ImmutableMap.<String, String>of("Name", group);
 
@@ -158,31 +155,29 @@ public class JCloudsCloud extends Cloud {
         Template template = getCompute().templateBuilder().fromTemplate(defaultTemplate).minRam(minRam).build();
 
         // setup the template to customize the nodeMetadata with jdk, etc. also opening ports
-        AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins").adminPublicKey(this.publicKey).build();
+        AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
+                .installAdminPrivateKey(false)
+                .adminPrivateKey(this.getPrivateKey())
+                .authorizeAdminPublicKey(true)
+                .adminPublicKey(this.getPublicKey())
+                .build();
+
         Statement bootstrap = newStatementList(adminAccess, InstallJDK.fromURL());
 
-        template.getOptions().inboundPorts(22, port).userMetadata(userMetadata).runScript(bootstrap);
+        template.getOptions()
+                .inboundPorts(22, port)
+                .userMetadata(userMetadata)
+                .runScript(bootstrap);
 
         NodeMetadata nodeMetadata = null;
-        SshClient sshClient = null;
+
 
         try {
             nodeMetadata = getOnlyElement(getCompute().createNodesInGroup(group, 1, template));
-            LoginCredentials loginCredentials = LoginCredentials.builder().user("jenkins").privateKey(privateKey).build();
-            sshClient = getCompute().getContext().utils().sshForNode().apply(NodeMetadataBuilder.fromNodeMetadata(nodeMetadata).credentials(loginCredentials).build());
-            sshClient.connect();
-            sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
-            LOGGER.info(nodeMetadata.getHostname() + " created");
-
         } catch (RunNodesException e) {
             throw destroyBadNodesAndPropagate(e);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (sshClient != null) {
-                sshClient.disconnect();
-            }
         }
+
         //Check if nodeMetadata is null and throw
         return nodeMetadata;
     }
@@ -284,6 +279,7 @@ public class JCloudsCloud extends Cloud {
         public FormValidation doCheckProviderName(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
         }
+
         public FormValidation doCheckPublicKey(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
         }
