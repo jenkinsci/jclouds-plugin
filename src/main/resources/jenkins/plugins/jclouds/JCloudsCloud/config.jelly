@@ -14,6 +14,12 @@
         <f:textarea/>
     </f:entry>
 
-    <f:validateButton title="${%Generate Key}" progress="${%Generate...}" method="generateKey" with="identity,credential" />
-    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,privateKey" />
+    <f:entry title="Public Key" field="publicKey">
+        <f:textarea/>
+    </f:entry>
+
+    <f:validateButton title="${%Generate Key Pair}" progress="${%Generate...}" method="generateKeyPair"
+                      with="identity,credential"/>
+    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection"
+                      with="providerName,identity,credential,privateKey"/>
 </j:jelly>

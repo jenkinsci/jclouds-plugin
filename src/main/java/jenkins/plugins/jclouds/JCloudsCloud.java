@@ -26,6 +26,8 @@ import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.io.Payload;
+import org.jclouds.io.Payloads;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
@@ -42,13 +44,11 @@ import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Throwables.propagate;
@@ -64,22 +64,28 @@ public class JCloudsCloud extends Cloud {
 
     private final String identity;
     private final String credential;
-    private String providerName;
+    private final String providerName;
 
-    private String privateKey;
+    private final String privateKey;
     private transient ComputeService compute;
+    private final String publicKey;
 
     public static JCloudsCloud get() {
         return Hudson.getInstance().clouds.get(JCloudsCloud.class);
     }
 
     @DataBoundConstructor
-    public JCloudsCloud(final String providerName, final String identity, final String credential, final String privateKey) {
+    public JCloudsCloud(final String providerName,
+                        final String identity,
+                        final String credential,
+                        final String privateKey,
+                        final String publicKey) {
         super("jclouds");
         this.identity = identity;
         this.credential = credential;
         this.providerName = providerName;
         this.privateKey = privateKey;
+        this.publicKey = publicKey;
 
     }
 
@@ -108,6 +114,10 @@ public class JCloudsCloud extends Cloud {
 
     public String getPrivateKey() {
         return privateKey;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
     }
 
     @Override
@@ -144,14 +154,12 @@ public class JCloudsCloud extends Cloud {
 
         ImmutableMap<String, String> userMetadata = ImmutableMap.<String, String>of("Name", group);
 
-        // we want everything as defaults except ram
         Template defaultTemplate = getCompute().templateBuilder().build();
         Template template = getCompute().templateBuilder().fromTemplate(defaultTemplate).minRam(minRam).build();
 
         // setup the template to customize the nodeMetadata with jdk, etc. also opening ports
-        AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins").adminPrivateKey(privateKey).build();
+        AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins").adminPublicKey(this.publicKey).build();
         Statement bootstrap = newStatementList(adminAccess, InstallJDK.fromURL());
-
 
         template.getOptions().inboundPorts(22, port).userMetadata(userMetadata).runScript(bootstrap);
 
@@ -163,12 +171,13 @@ public class JCloudsCloud extends Cloud {
             LoginCredentials loginCredentials = LoginCredentials.builder().user("jenkins").privateKey(privateKey).build();
             sshClient = getCompute().getContext().utils().sshForNode().apply(NodeMetadataBuilder.fromNodeMetadata(nodeMetadata).credentials(loginCredentials).build());
             sshClient.connect();
-            //sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
-
+            sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
             LOGGER.info(nodeMetadata.getHostname() + " created");
 
         } catch (RunNodesException e) {
             throw destroyBadNodesAndPropagate(e);
+        } catch (IOException e) {
+            e.printStackTrace();
         } finally {
             if (sshClient != null) {
                 sshClient.disconnect();
@@ -228,11 +237,14 @@ public class JCloudsCloud extends Cloud {
             return result;
         }
 
-        public FormValidation doGenerateKey(StaplerResponse rsp, String identity, String credential) throws IOException, ServletException {
+        public FormValidation doGenerateKeyPair(StaplerResponse rsp, String identity, String credential) throws IOException, ServletException {
             Map<String, String> keyPair = SshKeys.generate();
-            rsp.addHeader("script", "findPreviousFormItem(button,'privateKey').value='" + keyPair.get("private").replace("\n", "\\n") + "'");
-            return FormValidation.ok("Generated Key Succesfully!");
+            rsp.addHeader("script", "findPreviousFormItem(button,'privateKey').value='" + keyPair.get("private").replace("\n", "\\n") + "';" +
+                    "findPreviousFormItem(button,'publicKey').value='" + keyPair.get("public").replace("\n", "\\n") + "';"
+            );
+            return FormValidation.ok("Successfully generated private Key!");
         }
+
         public FormValidation doCheckPrivateKey(@QueryParameter String value) throws IOException, ServletException {
             boolean hasStart = false, hasEnd = false;
             BufferedReader br = new BufferedReader(new StringReader(value));
@@ -249,7 +261,6 @@ public class JCloudsCloud extends Cloud {
                 return FormValidation.error("The private key is missing the trailing 'END RSA PRIVATE KEY' marker. Copy&paste error?");
             if (SshKeys.fingerprintPrivateKey(value) == null)
                 return FormValidation.error("Invalid private key, please check again or click on 'Generate Key' to generate a new key");
-
             return FormValidation.ok();
         }
 
@@ -271,6 +282,9 @@ public class JCloudsCloud extends Cloud {
         }
 
         public FormValidation doCheckProviderName(@QueryParameter String value) {
+            return FormValidation.validateRequired(value);
+        }
+        public FormValidation doCheckPublicKey(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
         }
 
