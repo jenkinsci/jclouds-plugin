@@ -14,7 +14,6 @@
         <f:textarea/>
     </f:entry>
 
-
-
+    <f:validateButton title="${%Generate Key}" progress="${%Generate...}" method="generateKey" with="identity,credential" />
     <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,privateKey" />
 </j:jelly>

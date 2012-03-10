@@ -23,8 +23,9 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.util.ComputeServiceUtils;
+import org.jclouds.crypto.SshKeys;
+import org.jclouds.domain.LoginCredentials;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.io.Payloads;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
@@ -41,11 +42,13 @@ import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static com.google.common.base.Throwables.propagate;
@@ -63,8 +66,8 @@ public class JCloudsCloud extends Cloud {
     private final String credential;
     private String providerName;
 
-    private transient ComputeService compute;
     private String privateKey;
+    private transient ComputeService compute;
 
     public static JCloudsCloud get() {
         return Hudson.getInstance().clouds.get(JCloudsCloud.class);
@@ -77,15 +80,17 @@ public class JCloudsCloud extends Cloud {
         this.credential = credential;
         this.providerName = providerName;
         this.privateKey = privateKey;
-        Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
-                new EnterpriseConfigurationModule());
 
-        //Do we really need to create context here ?
-        this.compute = new ComputeServiceContextFactory()
-                .createContext(this.providerName, this.identity, this.credential, modules).getComputeService();
     }
 
     public ComputeService getCompute() {
+
+        if (this.compute == null) {
+            Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
+                    new EnterpriseConfigurationModule());
+            this.compute = new ComputeServiceContextFactory()
+                    .createContext(this.providerName, this.identity, this.credential, modules).getComputeService();
+        }
         return compute;
     }
 
@@ -135,46 +140,47 @@ public class JCloudsCloud extends Cloud {
     }
 
     private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam(String group, int port, int minRam, String privateKey) {
+        LOGGER.info("creating jclouds nodeMetadata");
+
         ImmutableMap<String, String> userMetadata = ImmutableMap.<String, String>of("Name", group);
 
         // we want everything as defaults except ram
-        Template defaultTemplate = compute.templateBuilder().build();
-        Template template = compute.templateBuilder().fromTemplate(defaultTemplate).minRam(minRam).build();
+        Template defaultTemplate = getCompute().templateBuilder().build();
+        Template template = getCompute().templateBuilder().fromTemplate(defaultTemplate).minRam(minRam).build();
 
-        // setup the template to customize the node with jdk, etc. also opening ports
-//        AdminAccess.builder().installAdminPrivateKey(false)
-        Statement bootstrap = newStatementList(AdminAccess.standard(), InstallJDK.fromURL());
+        // setup the template to customize the nodeMetadata with jdk, etc. also opening ports
+        AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins").adminPrivateKey(privateKey).build();
+        Statement bootstrap = newStatementList(adminAccess, InstallJDK.fromURL());
+
+
         template.getOptions().inboundPorts(22, port).userMetadata(userMetadata).runScript(bootstrap);
 
-        NodeMetadata node = null;
-        LOGGER.info("creating jclouds node");
+        NodeMetadata nodeMetadata = null;
         SshClient sshClient = null;
 
         try {
-            node = getOnlyElement(compute.createNodesInGroup(group, 1, template));
-            sshClient = compute.getContext().utils().sshForNode().apply(NodeMetadataBuilder.fromNodeMetadata(node).credentials(node.getCredentials()).build());
-
+            nodeMetadata = getOnlyElement(getCompute().createNodesInGroup(group, 1, template));
+            LoginCredentials loginCredentials = LoginCredentials.builder().user("jenkins").privateKey(privateKey).build();
+            sshClient = getCompute().getContext().utils().sshForNode().apply(NodeMetadataBuilder.fromNodeMetadata(nodeMetadata).credentials(loginCredentials).build());
             sshClient.connect();
-            sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
+            //sshClient.put("/tmp/slave.jar", Payloads.newByteArrayPayload(Hudson.getInstance().getJnlpJars("slave.jar").readFully()));
 
-            LOGGER.info(node.getHostname() + " created");
-            return node;
+            LOGGER.info(nodeMetadata.getHostname() + " created");
+
         } catch (RunNodesException e) {
             throw destroyBadNodesAndPropagate(e);
-        } catch (IOException e) {
-            LOGGER.severe("Can't copy slave jar to the instance");
         } finally {
             if (sshClient != null) {
                 sshClient.disconnect();
             }
         }
-        //Check if node is null and throw
-        return node;
+        //Check if nodeMetadata is null and throw
+        return nodeMetadata;
     }
 
     private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
         for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet())
-            compute.destroyNode(nodeError.getKey().getId());
+            getCompute().destroyNode(nodeError.getKey().getId());
         throw propagate(e);
     }
 
@@ -222,6 +228,11 @@ public class JCloudsCloud extends Cloud {
             return result;
         }
 
+        public FormValidation doGenerateKey(StaplerResponse rsp, String identity, String credential) throws IOException, ServletException {
+            Map<String, String> keyPair = SshKeys.generate();
+            rsp.addHeader("script", "findPreviousFormItem(button,'privateKey').value='" + keyPair.get("private").replace("\n", "\\n") + "'");
+            return FormValidation.ok("Generated Key Succesfully!");
+        }
         public FormValidation doCheckPrivateKey(@QueryParameter String value) throws IOException, ServletException {
             boolean hasStart = false, hasEnd = false;
             BufferedReader br = new BufferedReader(new StringReader(value));
@@ -236,6 +247,9 @@ public class JCloudsCloud extends Cloud {
                 return FormValidation.error("This doesn't look like a private key at all");
             if (!hasEnd)
                 return FormValidation.error("The private key is missing the trailing 'END RSA PRIVATE KEY' marker. Copy&paste error?");
+            if (SshKeys.fingerprintPrivateKey(value) == null)
+                return FormValidation.error("Invalid private key, please check again or click on 'Generate Key' to generate a new key");
+
             return FormValidation.ok();
         }
 
