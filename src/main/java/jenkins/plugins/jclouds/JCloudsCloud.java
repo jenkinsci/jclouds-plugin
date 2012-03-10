@@ -1,10 +1,8 @@
 package jenkins.plugins.jclouds;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.inject.Module;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 import hudson.Extension;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
@@ -15,29 +13,7 @@ import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
-import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.ComputeServiceContext;
-import org.jclouds.compute.ComputeServiceContextFactory;
-import org.jclouds.compute.RunNodesException;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.util.ComputeServiceUtils;
-import org.jclouds.crypto.SshKeys;
-import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.io.Payloads;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.scriptbuilder.domain.Statement;
-import org.jclouds.scriptbuilder.statements.java.InstallJDK;
-import org.jclouds.scriptbuilder.statements.login.AdminAccess;
-import org.jclouds.ssh.SshClient;
-import org.jclouds.sshj.config.SshjSshClientModule;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
-import javax.annotation.Nullable;
-import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -48,9 +24,34 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
+import javax.annotation.Nullable;
+import javax.servlet.ServletException;
+
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.ComputeServiceContext;
+import org.jclouds.compute.ComputeServiceContextFactory;
+import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.util.ComputeServiceUtils;
+import org.jclouds.crypto.SshKeys;
+import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
+import org.jclouds.scriptbuilder.domain.Statement;
+import org.jclouds.scriptbuilder.domain.Statements;
+import org.jclouds.scriptbuilder.statements.java.InstallJDK;
+import org.jclouds.scriptbuilder.statements.login.AdminAccess;
+import org.jclouds.sshj.config.SshjSshClientModule;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.inject.Module;
 
 /**
  * @author Vijay Kiran
@@ -156,13 +157,17 @@ public class JCloudsCloud extends Cloud {
 
         // setup the template to customize the nodeMetadata with jdk, etc. also opening ports
         AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
-                .installAdminPrivateKey(false)
-                .adminPrivateKey(this.getPrivateKey())
+                .installAdminPrivateKey(false) // no need
+                .grantSudoToAdminUser(false) // no need
+                .adminPrivateKey(this.getPrivateKey()) // temporary due to jclouds bug
                 .authorizeAdminPublicKey(true)
                 .adminPublicKey(this.getPublicKey())
                 .build();
 
-        Statement bootstrap = newStatementList(adminAccess, InstallJDK.fromURL());
+        // probably some missing configuration somewhere
+        Statement dunnoWhyWeNeedThis = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
+        
+        Statement bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, dunnoWhyWeNeedThis);
 
         template.getOptions()
                 .inboundPorts(22, port)
@@ -179,7 +184,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         //Check if nodeMetadata is null and throw
-        return nodeMetadata;
+      return nodeMetadata;
     }
 
     private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
