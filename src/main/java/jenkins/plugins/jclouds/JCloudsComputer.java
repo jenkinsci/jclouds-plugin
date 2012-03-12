@@ -1,5 +1,6 @@
 package jenkins.plugins.jclouds;
 
+import hudson.model.Hudson;
 import hudson.model.Slave;
 import hudson.slaves.SlaveComputer;
 import org.kohsuke.stapler.HttpRedirect;
@@ -32,6 +33,7 @@ public class JCloudsComputer extends SlaveComputer {
     public HttpResponse doDoDelete() throws IOException {
         JCloudsSlave slave = (JCloudsSlave) getNode();
         slave.terminate();
+        Hudson.getInstance().removeNode(slave);
         return new HttpRedirect("..");
     }
 }
