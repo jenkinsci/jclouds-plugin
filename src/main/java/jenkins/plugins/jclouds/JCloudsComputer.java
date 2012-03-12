@@ -31,6 +31,7 @@ public class JCloudsComputer extends SlaveComputer {
      */
     @Override
     public HttpResponse doDoDelete() throws IOException {
+        LOGGER.info("Terminating " + getName()  + " slave");
         JCloudsSlave slave = (JCloudsSlave) getNode();
         slave.terminate();
         Hudson.getInstance().removeNode(slave);
