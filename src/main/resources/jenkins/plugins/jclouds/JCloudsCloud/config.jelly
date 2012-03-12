@@ -3,6 +3,10 @@
     <f:entry title="Provider Name" field="providerName">
         <f:textbox/>
     </f:entry>
+    <f:entry title="End Point URL" field="endPointUrl">
+        <f:textbox/>
+    </f:entry>
+
     <f:entry title="Identity" field="identity">
         <f:textbox/>
     </f:entry>
@@ -17,6 +21,7 @@
     <f:entry title="Public Key" field="publicKey">
         <f:textarea/>
     </f:entry>
+
 
     <f:validateButton title="${%Generate Key Pair}" progress="${%Generate...}" method="generateKeyPair"
                       with="identity,credential"/>

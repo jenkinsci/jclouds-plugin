@@ -1,8 +1,10 @@
 package jenkins.plugins.jclouds;
 
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.inject.Module;
 import hudson.Extension;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
@@ -13,20 +15,7 @@ import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.logging.Logger;
-
-import javax.annotation.Nullable;
-import javax.servlet.ServletException;
-
+import org.jclouds.Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
@@ -47,11 +36,22 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.inject.Module;
+import javax.annotation.Nullable;
+import javax.servlet.ServletException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.logging.Logger;
+
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 /**
  * @author Vijay Kiran
@@ -67,6 +67,7 @@ public class JCloudsCloud extends Cloud {
     private final String privateKey;
     private transient ComputeService compute;
     private final String publicKey;
+    private final String endPointUrl;
 
     public static JCloudsCloud get() {
         return Hudson.getInstance().clouds.get(JCloudsCloud.class);
@@ -77,23 +78,28 @@ public class JCloudsCloud extends Cloud {
                         final String identity,
                         final String credential,
                         final String privateKey,
-                        final String publicKey) {
+                        final String publicKey,
+                        final String endPointUrl) {
         super("jclouds");
         this.identity = identity;
         this.credential = credential;
         this.providerName = providerName;
         this.privateKey = privateKey;
         this.publicKey = publicKey;
+        this.endPointUrl = endPointUrl;
 
     }
 
     public ComputeService getCompute() {
-
         if (this.compute == null) {
+            Properties overrides = new Properties();
+            if (this.getEndPointUrl() != null && !this.getEndPointUrl().equals("")) {
+                overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.getEndPointUrl());
+            }
             Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
                     new EnterpriseConfigurationModule());
             this.compute = new ComputeServiceContextFactory()
-                    .createContext(this.providerName, this.identity, this.credential, modules).getComputeService();
+                    .createContext(this.providerName, this.identity, this.credential, modules, overrides).getComputeService();
         }
         return compute;
     }
@@ -116,6 +122,10 @@ public class JCloudsCloud extends Cloud {
 
     public String getPublicKey() {
         return publicKey;
+    }
+
+    public String getEndPointUrl() {
+        return endPointUrl;
     }
 
     @Override
@@ -150,6 +160,9 @@ public class JCloudsCloud extends Cloud {
     private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam(String group, int port, int minRam) {
         LOGGER.info("creating jclouds node");
 
+        Properties properties = new Properties();
+
+
         ImmutableMap<String, String> userMetadata = ImmutableMap.<String, String>of("Name", group);
 
         Template defaultTemplate = getCompute().templateBuilder().build();
@@ -166,7 +179,7 @@ public class JCloudsCloud extends Cloud {
 
         // probably some missing configuration somewhere
         Statement dunnoWhyWeNeedThis = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
-        
+
         Statement bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, dunnoWhyWeNeedThis);
 
         template.getOptions()
@@ -184,7 +197,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         //Check if nodeMetadata is null and throw
-      return nodeMetadata;
+        return nodeMetadata;
     }
 
     private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
@@ -224,6 +237,7 @@ public class JCloudsCloud extends Cloud {
 
                 ComputeServiceContext context = new ComputeServiceContextFactory()
                         .createContext(providerName, identity, credential, modules);
+
                 computeService = context.getComputeService();
                 computeService.listNodes();
                 //TODO Catch only exceptions that re really thrown.
@@ -236,6 +250,7 @@ public class JCloudsCloud extends Cloud {
             }
             return result;
         }
+
 
         public FormValidation doGenerateKeyPair(StaplerResponse rsp, String identity, String credential) throws IOException, ServletException {
             Map<String, String> keyPair = SshKeys.generate();
@@ -295,6 +310,13 @@ public class JCloudsCloud extends Cloud {
 
         public FormValidation doCheckIdentity(@QueryParameter String value) {
             return FormValidation.validateRequired(value);
+        }
+
+        public FormValidation doCheckEndPointUrl(@QueryParameter String value) {
+            if (!value.isEmpty() && !value.startsWith("http")) {
+                return FormValidation.error("The endpoint must be an URL");
+            }
+            return FormValidation.ok();
         }
     }
 }
