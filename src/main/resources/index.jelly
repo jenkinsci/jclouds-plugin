@@ -1,4 +1,3 @@
 <div>
-  This plugin integrates Hudson with
-  Rackspace Cloud or anything jclouds can talk to.
+    Allows Jenkins to build using Cloud Servers via JClouds.
 </div>
