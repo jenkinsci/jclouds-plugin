@@ -1,0 +1,13 @@
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
+    <j:if test="${it.hasPermission(it.PROVISION)}">
+        <tr>
+            <td/>
+            <td colspan="${monitors.size()+2}">
+                <f:form action="${rootURL}/cloud/jclouds/provision" method="post" name="provision">
+                    <input type="submit" class="jclouds-provision-button" value="Provision JClouds-Cloud slave instance"/>
+                </f:form>
+            </td>
+        </tr>
+    </j:if>
+</j:jelly>
