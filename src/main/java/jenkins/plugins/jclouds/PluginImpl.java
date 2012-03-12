@@ -14,7 +14,6 @@ public class PluginImpl extends Plugin implements Describable<PluginImpl> {
 
     @Override
     public void start() throws Exception {
-        //TODO : Register Converters if needed.
         load();
     }
 

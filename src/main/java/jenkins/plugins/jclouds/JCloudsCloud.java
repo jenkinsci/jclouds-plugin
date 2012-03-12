@@ -178,9 +178,9 @@ public class JCloudsCloud extends Cloud {
                 .build();
 
         // probably some missing configuration somewhere
-        Statement dunnoWhyWeNeedThis = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
+        Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
 
-        Statement bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, dunnoWhyWeNeedThis);
+        Statement bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, jenkinsDirStatement);
 
         template.getOptions()
                 .inboundPorts(22, port)
@@ -240,7 +240,6 @@ public class JCloudsCloud extends Cloud {
 
                 computeService = context.getComputeService();
                 computeService.listNodes();
-                //TODO Catch only exceptions that re really thrown.
             } catch (Exception ex) {
                 result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getLocalizedMessage());
             } finally {
@@ -316,7 +315,7 @@ public class JCloudsCloud extends Cloud {
             if (!value.isEmpty() && !value.startsWith("http")) {
                 return FormValidation.error("The endpoint must be an URL");
             }
-            return FormValidation.ok();
+           return FormValidation.ok();
         }
     }
 }

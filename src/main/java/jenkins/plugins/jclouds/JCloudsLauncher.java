@@ -114,7 +114,6 @@ public class JCloudsLauncher extends ComputerLauncher {
         while (true) {
             try {
 
-                //TODO: Vijay! this looks ugly, clean up.
                 final String[] addresses = nodeMetadata.getPublicAddresses().toArray(new String[nodeMetadata.getPublicAddresses().size()]);
                 String host = addresses[0];
                 if ("0.0.0.0".equals(host)) {
@@ -122,7 +121,6 @@ public class JCloudsLauncher extends ComputerLauncher {
                     throw new IOException("goto sleep");
                 }
 
-                //TODO : WARNING! Hardcoded port.
                 logger.println("Connecting to " + host + " on port " + 22 + ". ");
                 Connection conn = new Connection(host, 22);
                 conn.connect(new ServerHostKeyVerifier() {

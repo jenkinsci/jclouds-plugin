@@ -74,7 +74,6 @@ public class JCloudsSlave extends Slave {
      * Destroy the node
      */
     public void terminate() {
-        //TODO don't delete it completely, take offline if needed.
         LOGGER.info("Terminating the Slave : " + getNodeName());
         final ComputeService compute = JCloudsCloud.get().getCompute();
         compute.destroyNode(getNodeMetaData().getId());

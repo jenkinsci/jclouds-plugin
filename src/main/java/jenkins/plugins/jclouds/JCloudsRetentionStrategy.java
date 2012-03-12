@@ -9,9 +9,7 @@ import hudson.slaves.RetentionStrategy;
 public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer> {
     @Override
     public long check(JCloudsComputer c) {
-        //TODO: Fix this - Vijay
-        System.out.println("Checking computer " + c.getName());
-        return 0;
+    return 0;
     }
 
     /**
