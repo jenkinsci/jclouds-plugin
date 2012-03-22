@@ -22,6 +22,10 @@
         <f:textarea/>
     </f:entry>
 
+    <f:entry title="OS Family" field="osFamily">
+        <f:textbox />
+    </f:entry>
+
     <f:entry title="RAM (MB)" field="ram">
         <f:textbox default="512"/>
     </f:entry>
