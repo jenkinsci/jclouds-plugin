@@ -21,6 +21,7 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.crypto.SshKeys;
@@ -70,6 +71,7 @@ public class JCloudsCloud extends Cloud {
    private final String endPointUrl;
    private final int ram;
    private final double cores;
+   private final String osFamily;
 
    public static JCloudsCloud get() {
       return Hudson.getInstance().clouds.get(JCloudsCloud.class);
@@ -83,7 +85,8 @@ public class JCloudsCloud extends Cloud {
                        final String publicKey,
                        final String endPointUrl,
                        final double cores,
-                       final int ram) {
+                       final int ram,
+                       final String osFamily) {
       super("jclouds");
       this.identity = identity;
       this.credential = credential;
@@ -93,6 +96,7 @@ public class JCloudsCloud extends Cloud {
       this.endPointUrl = endPointUrl;
       this.ram = ram;
       this.cores = cores;
+      this.osFamily = osFamily;
 
    }
 
@@ -132,6 +136,10 @@ public class JCloudsCloud extends Cloud {
 
    public String getEndPointUrl() {
       return endPointUrl;
+   }
+
+   public String getOsFamily() {
+      return osFamily;
    }
 
    @Override
@@ -184,6 +192,7 @@ public class JCloudsCloud extends Cloud {
             .fromTemplate(defaultTemplate)
             .minRam(ram)
             .minCores(cores)
+            .osFamily(OsFamily.fromValue(osFamily))
             .build();
 
       // setup the template to customize the nodeMetadata with jdk, etc. also opening ports
@@ -309,6 +318,22 @@ public class JCloudsCloud extends Cloud {
          AutoCompletionCandidates candidates = new AutoCompletionCandidates();
          for (String matchedProvider : matchedProviders) {
             candidates.add(matchedProvider);
+         }
+         return candidates;
+      }
+
+      public AutoCompletionCandidates doAutoCompleteOsFamily(@QueryParameter final String value) {
+
+         List<OsFamily> matchedOsFamilies = new ArrayList<OsFamily>();
+         for (OsFamily osFamily : OsFamily.values()) {
+            if(osFamily.toString().contains(value)) {
+               matchedOsFamilies.add(osFamily);
+            }
+         }
+
+         AutoCompletionCandidates candidates = new AutoCompletionCandidates();
+         for (OsFamily matchedOs : matchedOsFamilies) {
+            candidates.add(matchedOs.toString());
          }
          return candidates;
       }
