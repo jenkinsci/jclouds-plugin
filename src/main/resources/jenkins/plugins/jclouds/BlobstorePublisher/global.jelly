@@ -1,0 +1,31 @@
+<j:jelly xmlns:j="jelly:core"
+         xmlns:f="/lib/form">
+    <!-- nothing to configure -->
+    <f:section title="JClouds Cloud Storage Settings">
+        <f:entry title="Profiles" description="Profiles for publishing to Cloud Storage">
+            <f:repeatable var="profile" items="${descriptor.profiles}">
+                <table width="100%">
+                    <f:entry title="Profile name">
+                        <f:textbox name="name" value="${profile.name}"/>
+                    </f:entry>
+                    <f:entry title="Provider Name">
+                        <f:textbox name="name" value="${profile.providerName}"/>
+                    </f:entry>
+                    <f:entry title="Identity">
+                        <f:textbox name="identity" value="${profile.identity}"/>
+                    </f:entry>
+                    <f:entry title="Credential" >
+                        <input class="setting-input" name="credential"
+                               type="password" value="${profile.credential}" />
+                    </f:entry>
+
+                    <f:entry title="">
+                        <div align="right">
+                            <f:repeatableDeleteButton/>
+                        </div>
+                    </f:entry>
+                </table>
+            </f:repeatable>
+        </f:entry>
+    </f:section>
+</j:jelly>

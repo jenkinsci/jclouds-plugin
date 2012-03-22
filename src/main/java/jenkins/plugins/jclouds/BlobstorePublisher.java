@@ -1,0 +1,166 @@
+package jenkins.plugins.jclouds;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.Util;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.AutoCompletionCandidates;
+import hudson.model.BuildListener;
+import hudson.model.Describable;
+import hudson.model.Result;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Publisher;
+import hudson.tasks.Recorder;
+import hudson.util.CopyOnWriteList;
+import hudson.util.FormValidation;
+import org.apache.commons.lang.StringUtils;
+import org.jclouds.compute.util.ComputeServiceUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+
+import javax.annotation.Nullable;
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.List;
+import java.util.logging.Logger;
+import org.jclouds.blobstore.util.BlobStoreUtils;
+
+
+/**
+ *
+ * Publishes artifacts to Blobstore configured using JClouds
+ *
+ * @author Vijay Kiran
+ */
+public class BlobstorePublisher extends Recorder implements Describable<Publisher> {
+
+
+   private String profileName;
+   @Extension
+   public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+   private List<BlobStoreEntry> entries;
+
+
+   @DataBoundConstructor
+   public BlobstorePublisher() {
+      super();
+   }
+
+   public BlobstorePublisher(String profileName) {
+      super();
+      if (profileName == null) {
+         // defaults to the first one
+      }
+      this.profileName = profileName;
+   }
+
+   public List<BlobStoreEntry> getEntries() {
+      return entries;
+   }
+
+   public BlobstoreProfile getProfile() {
+      BlobstoreProfile[] profiles = DESCRIPTOR.getProfiles();
+
+      if (profileName == null && profiles.length > 0)
+         // default
+         return profiles[0];
+
+      for (BlobstoreProfile profile : profiles) {
+         if (profile.getName().equals(profileName))
+            return profile;
+      }
+      return null;
+   }
+
+   public String getName() {
+      return this.profileName;
+   }
+
+   public void setName(String profileName) {
+      this.profileName = profileName;
+   }
+
+   protected void log(final PrintStream logger, final String message) {
+      logger.println(StringUtils.defaultString(getDescriptor().getDisplayName()) + " " + message);
+   }
+
+   @Override
+   public boolean perform(AbstractBuild<?, ?> build,
+                          Launcher launcher,
+                          BuildListener listener)
+         throws InterruptedException, IOException {
+
+      //TODO Vijay: Perform build step (Upload) based on result
+
+      if (build.getResult() == Result.FAILURE) {
+         // build failed. don't post
+         return true;
+      }
+      return true;
+   }
+
+   public BuildStepMonitor getRequiredMonitorService() {
+      return BuildStepMonitor.STEP;
+   }
+
+   public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+
+      private final CopyOnWriteList<BlobstoreProfile> profiles = new CopyOnWriteList<BlobstoreProfile>();
+      private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
+
+      public DescriptorImpl(Class<? extends Publisher> clazz) {
+         super(clazz);
+         load();
+      }
+
+      public DescriptorImpl() {
+         this(BlobstorePublisher.class);
+      }
+
+      @Override
+      public String getDisplayName() {
+         return "Publish artifacts to JClouds Clouds Storage ";
+      }
+
+
+      @Override
+      public BlobstorePublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
+         //TODO Vijay: Update Bind Parameters
+         BlobstorePublisher pub = new BlobstorePublisher();
+         req.bindParameters(pub, "jcbs.");
+         return pub;
+      }
+
+      @Override
+      public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
+         save();
+         return true;
+      }
+
+      public BlobstoreProfile[] getProfiles() {
+         return profiles.toArray(new BlobstoreProfile[0]);
+      }
+
+      public FormValidation doLoginCheck(final StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
+         String name = Util.fixEmpty(req.getParameter("name"));
+         if (name == null) {// name is not entered yet
+            return FormValidation.ok();
+         }
+         BlobstoreProfile profile = new BlobstoreProfile(name, req.getParameter("accessKey"), req.getParameter("secretKey"));
+         return FormValidation.ok();
+      }
+
+      @Override
+      public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+         return true;
+      }
+
+   }
+}
