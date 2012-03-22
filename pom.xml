@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.455</version>
+        <version>1.456</version>
     </parent>
 
     <groupId>org.jenkins-ci.plugins</groupId>
@@ -67,6 +67,11 @@
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-allblobstore</artifactId>
+            <version>${jclouds.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.jclouds.driver</groupId>
             <artifactId>jclouds-enterprise</artifactId>
             <version>${jclouds.version}</version>
@@ -100,6 +105,11 @@
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
             <version>${jsr305.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-allblobstore</artifactId>
+            <version>1.5.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
