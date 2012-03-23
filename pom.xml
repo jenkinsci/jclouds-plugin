@@ -62,6 +62,16 @@
             <classifier>jdk15</classifier>
         </dependency>
         <dependency>
+            <groupId>org.jclouds.labs</groupId>
+            <artifactId>hpcloud-objectstorage</artifactId>
+            <version>${jclouds.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds.labs</groupId>
+            <artifactId>hpcloud-compute</artifactId>
+            <version>${jclouds.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.jclouds</groupId>
             <artifactId>jclouds-allcompute</artifactId>
             <version>${jclouds.version}</version>
