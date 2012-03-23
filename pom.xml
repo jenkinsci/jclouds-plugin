@@ -20,7 +20,7 @@
         <jclouds.test.provider>stub</jclouds.test.provider>
         <jclouds.test.identity>identity</jclouds.test.identity>
         <jclouds.test.credential>credential</jclouds.test.credential>
-        <jclouds.version>1.5.0-SNAPSHOT</jclouds.version>
+        <jclouds.version>1.5.0-alpha.1</jclouds.version>
         <jsch.version>0.1.46</jsch.version>
         <stapler.jelly.version>1.178</stapler.jelly.version>
         <testng.version>5.10</testng.version>
