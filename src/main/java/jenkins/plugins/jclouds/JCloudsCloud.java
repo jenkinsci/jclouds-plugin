@@ -1,6 +1,7 @@
 package jenkins.plugins.jclouds;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
@@ -23,6 +24,7 @@ import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
@@ -188,12 +190,16 @@ public class JCloudsCloud extends Cloud {
       ImmutableMap<String, String> userMetadata = ImmutableMap.<String, String>of("Name", group);
 
       Template defaultTemplate = getCompute().templateBuilder().build();
-      Template template = getCompute().templateBuilder()
+      TemplateBuilder templateBuilder = getCompute().templateBuilder()
             .fromTemplate(defaultTemplate)
             .minRam(ram)
-            .minCores(cores)
-            .osFamily(OsFamily.fromValue(osFamily))
-            .build();
+            .minCores(cores);
+
+      if (!Strings.isNullOrEmpty(osFamily)) {
+         templateBuilder.osFamily(OsFamily.valueOf(osFamily));
+      }
+
+      Template template = templateBuilder.build();
 
       // setup the template to customize the nodeMetadata with jdk, etc. also opening ports
       AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
@@ -326,7 +332,7 @@ public class JCloudsCloud extends Cloud {
 
          List<OsFamily> matchedOsFamilies = new ArrayList<OsFamily>();
          for (OsFamily osFamily : OsFamily.values()) {
-            if(osFamily.toString().contains(value)) {
+            if (osFamily.toString().contains(value)) {
                matchedOsFamilies.add(osFamily);
             }
          }

@@ -20,6 +20,10 @@ public class JCloudsComputer extends SlaveComputer {
     public JCloudsComputer(Slave slave) {
         super(slave);
     }
+   
+   public String getInstanceId() {
+      return getName();
+   }
 
     @Override
     public Slave getNode() {

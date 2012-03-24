@@ -18,7 +18,6 @@
                         <input class="setting-input" name="credential"
                                type="password" value="${profile.credential}" />
                     </f:entry>
-
                     <f:entry title="">
                         <div align="right">
                             <f:repeatableDeleteButton/>
