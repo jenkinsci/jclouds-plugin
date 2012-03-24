@@ -74,13 +74,15 @@ public class JCloudsCloud extends Cloud {
    private final int ram;
    private final double cores;
    private final String osFamily;
+   private final String profile;
 
    public static JCloudsCloud get() {
       return Hudson.getInstance().clouds.get(JCloudsCloud.class);
    }
 
    @DataBoundConstructor
-   public JCloudsCloud(final String providerName,
+   public JCloudsCloud(final String profile,
+                       final String providerName,
                        final String identity,
                        final String credential,
                        final String privateKey,
@@ -90,9 +92,10 @@ public class JCloudsCloud extends Cloud {
                        final int ram,
                        final String osFamily) {
       super("jclouds");
+      this.profile = profile;
+      this.providerName = providerName;
       this.identity = identity;
       this.credential = credential;
-      this.providerName = providerName;
       this.privateKey = privateKey;
       this.publicKey = publicKey;
       this.endPointUrl = endPointUrl;
@@ -114,6 +117,10 @@ public class JCloudsCloud extends Cloud {
                .createContext(this.providerName, this.identity, this.credential, modules, overrides).getComputeService();
       }
       return compute;
+   }
+
+   public String getProfile() {
+      return profile;
    }
 
    public String getIdentity() {
@@ -342,6 +349,11 @@ public class JCloudsCloud extends Cloud {
             candidates.add(matchedOs.toString());
          }
          return candidates;
+      }
+
+
+      public FormValidation doCheckProfile(@QueryParameter String value) {
+         return FormValidation.validateRequired(value);
       }
 
       public FormValidation doCheckProviderName(@QueryParameter String value) {

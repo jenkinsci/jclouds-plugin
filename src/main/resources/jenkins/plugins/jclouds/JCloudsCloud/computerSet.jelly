@@ -5,7 +5,7 @@
             <td/>
             <td colspan="${monitors.size()+2}">
                 <f:form action="${rootURL}/cloud/jclouds/provision" method="post" name="provision">
-                    <input type="submit" class="jclouds-provision-button" value="Provision JClouds-Cloud slave instance"/>
+                    <input type="submit" class="jclouds-provision-button" value="Provision JClouds Slave instance"/>
                 </f:form>
             </td>
         </tr>
