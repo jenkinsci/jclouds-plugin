@@ -106,11 +106,6 @@
             <artifactId>jsr305</artifactId>
             <version>${jsr305.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.jclouds</groupId>
-            <artifactId>jclouds-allblobstore</artifactId>
-            <version>1.5.0-SNAPSHOT</version>
-        </dependency>
     </dependencies>
 
 
