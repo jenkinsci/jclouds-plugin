@@ -22,6 +22,7 @@ import org.kohsuke.stapler.StaplerResponse;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -37,7 +38,7 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
    private String profileName;
    @Extension
    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-   private List<BlobStoreEntry> entries;
+   private final List<BlobStoreEntry> entries = new ArrayList<BlobStoreEntry>();
 
 
    @DataBoundConstructor
