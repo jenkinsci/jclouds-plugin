@@ -3,7 +3,7 @@
     <f:entry title="JClouds Cloud Storage profile">
         <select class="setting-input" name="jcblobstore.name" description="Select configured Cloud Storage profile.Check global jenkins config for defining access properties for this profile">
             <j:forEach var="s" items="${descriptor.profiles}">
-                <f:option selected="${s.name==instance.name}">${s.name}</f:option>
+                <f:option selected="${s.name==instance.profileName}">${s.profileName}</f:option>
             </j:forEach>
         </select>
     </f:entry>
