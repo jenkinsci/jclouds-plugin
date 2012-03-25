@@ -7,44 +7,39 @@ import java.io.IOException;
 
 
 public class BlobstoreProfile {
-   private String name;
-   private String accessKey;
-   private String secretKey;
 
-   public BlobstoreProfile() {
-   }
+   private String profileName;
+   private String providerName;
+   private String identity;
+   private String credential;
 
    @DataBoundConstructor
-   public BlobstoreProfile(String name, String accessKey, String secretKey) {
-      this.name = name;
-      this.accessKey = accessKey;
-      this.secretKey = secretKey;
+   public BlobstoreProfile(final String profileName,
+                           final String providerName,
+                           final String identity,
+                           final String credential) {
+      this.profileName = profileName;
+      this.providerName = providerName;
+      this.identity = identity;
+      this.credential = credential;
    }
 
-   public final String getAccessKey() {
-      return accessKey;
+
+   public String getProfileName() {
+      return profileName;
    }
 
-   public void setAccessKey(String accessKey) {
-      this.accessKey = accessKey;
+   public String getProviderName() {
+      return providerName;
    }
 
-   public final String getSecretKey() {
-      return secretKey;
+   public String getIdentity() {
+      return identity;
    }
 
-   public void setSecretKey(String secretKey) {
-      this.secretKey = secretKey;
+   public String getCredential() {
+      return credential;
    }
-
-   public final String getName() {
-      return this.name;
-   }
-
-   public void setName(String name) {
-      this.name = name;
-   }
-
 
    public void upload(String bucketName, FilePath filePath) throws IOException, InterruptedException {
       if (filePath.isDirectory()) {

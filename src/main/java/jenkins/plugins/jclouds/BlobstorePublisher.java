@@ -1,13 +1,10 @@
 package jenkins.plugins.jclouds;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.AutoCompletionCandidates;
 import hudson.model.BuildListener;
 import hudson.model.Describable;
 import hudson.model.Result;
@@ -18,23 +15,18 @@ import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import org.apache.commons.lang.StringUtils;
-import org.jclouds.compute.util.ComputeServiceUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.logging.Logger;
-import org.jclouds.blobstore.util.BlobStoreUtils;
 
 
 /**
- *
  * Publishes artifacts to Blobstore configured using JClouds
  *
  * @author Vijay Kiran
@@ -56,7 +48,7 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
    public BlobstorePublisher(String profileName) {
       super();
       if (profileName == null) {
-         // defaults to the first one
+         // TODO Set default as the first one
       }
       this.profileName = profileName;
    }
@@ -73,7 +65,7 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
          return profiles[0];
 
       for (BlobstoreProfile profile : profiles) {
-         if (profile.getName().equals(profileName))
+         if (profile.getProfileName().equals(profileName))
             return profile;
       }
       return null;
@@ -132,14 +124,15 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
 
       @Override
       public BlobstorePublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
-         //TODO Vijay: Update Bind Parameters
-         BlobstorePublisher pub = new BlobstorePublisher();
-         req.bindParameters(pub, "jcbs.");
-         return pub;
+         BlobstorePublisher blobstorePublisher = new BlobstorePublisher();
+         req.bindParameters(blobstorePublisher, "jcblobstore.");
+         blobstorePublisher.getEntries().addAll(req.bindParametersToList(BlobStoreEntry.class, "jcblobstore.entry."));
+         return blobstorePublisher;
       }
 
       @Override
       public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
+         profiles.replaceBy(req.bindParametersToList(BlobstoreProfile.class, "jcblobstore."));
          save();
          return true;
       }
@@ -153,7 +146,10 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
          if (name == null) {// name is not entered yet
             return FormValidation.ok();
          }
-         BlobstoreProfile profile = new BlobstoreProfile(name, req.getParameter("accessKey"), req.getParameter("secretKey"));
+         BlobstoreProfile profile = new BlobstoreProfile(name,
+               req.getParameter("providerName"),
+               req.getParameter("identity"),
+               req.getParameter("credential"));
          return FormValidation.ok();
       }
 

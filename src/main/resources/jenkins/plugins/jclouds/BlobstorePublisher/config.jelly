@@ -1,7 +1,7 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
     <f:entry title="JClouds Cloud Storage profile">
-        <select class="setting-input" name="name" description="Select configured Cloud Storage profile.Check global hudson config for defining access properties for this profile">
+        <select class="setting-input" name="jcblobstore.name" description="Select configured Cloud Storage profile.Check global jenkins config for defining access properties for this profile">
             <j:forEach var="s" items="${descriptor.profiles}">
                 <f:option selected="${s.name==instance.name}">${s.name}</f:option>
             </j:forEach>
@@ -13,11 +13,11 @@
         <f:repeatable var="e" items="${instance.entries}">
             <table width="100%">
                 <f:entry title="Source">
-                    <input class="setting-input" name="entry.sourceFile"
+                    <input class="setting-input" name="jcblobstore.entry.sourceFile"
                            type="text" value="${e.sourceFile}" />
                 </f:entry>
                 <f:entry title="Destination Container">
-                    <input class="setting-input" name="entry.container"
+                    <input class="setting-input" name="jcblobstore.entry.container"
                            type="text" value="${e.container}" />
                 </f:entry>
                 <f:entry title="">

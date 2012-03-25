@@ -91,7 +91,7 @@ public class JCloudsCloud extends Cloud {
                        final double cores,
                        final int ram,
                        final String osFamily) {
-      super("jclouds");
+      super(profile);
       this.profile = profile;
       this.providerName = providerName;
       this.identity = identity;

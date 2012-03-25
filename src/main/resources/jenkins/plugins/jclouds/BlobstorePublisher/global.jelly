@@ -6,16 +6,16 @@
             <f:repeatable var="profile" items="${descriptor.profiles}">
                 <table width="100%">
                     <f:entry title="Profile name">
-                        <f:textbox name="name" value="${profile.name}"/>
+                        <f:textbox name="jcblobstore.profileName" value="${profile.profileName}"/>
                     </f:entry>
                     <f:entry title="Provider Name">
-                        <f:textbox name="name" value="${profile.providerName}"/>
+                        <f:textbox name="jcblobstore.providerName" value="${profile.providerName}"/>
                     </f:entry>
                     <f:entry title="Identity">
-                        <f:textbox name="identity" value="${profile.identity}"/>
+                        <f:textbox name="jcblobstore.identity" value="${profile.identity}"/>
                     </f:entry>
                     <f:entry title="Credential" >
-                        <input class="setting-input" name="credential"
+                        <input class="setting-input" name="jcblobstore.credential"
                                type="password" value="${profile.credential}" />
                     </f:entry>
                     <f:entry title="">
