@@ -1,6 +1,7 @@
 package jenkins.plugins.jclouds;
 
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.Util;
 import hudson.model.AbstractBuild;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 
@@ -32,8 +34,9 @@ import java.util.logging.Logger;
  *
  * @author Vijay Kiran
  */
-public class BlobstorePublisher extends Recorder implements Describable<Publisher> {
+public class BlobStorePublisher extends Recorder implements Describable<Publisher> {
 
+   private static final Logger LOGGER = Logger.getLogger(BlobStorePublisher.class.getName());
 
    private String profileName;
    @Extension
@@ -42,14 +45,17 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
 
 
    @DataBoundConstructor
-   public BlobstorePublisher() {
+   public BlobStorePublisher() {
       super();
    }
 
-   public BlobstorePublisher(String profileName) {
+   public BlobStorePublisher(String profileName) {
       super();
       if (profileName == null) {
-         // TODO Set default as the first one
+         // defaults to the first one
+         BlobStoreProfile[] sites = DESCRIPTOR.getProfiles();
+         if (sites.length > 0)
+            profileName = sites[0].getProfileName();
       }
       this.profileName = profileName;
    }
@@ -58,14 +64,14 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
       return entries;
    }
 
-   public BlobstoreProfile getProfile() {
-      BlobstoreProfile[] profiles = DESCRIPTOR.getProfiles();
+   public BlobStoreProfile getProfile() {
+      BlobStoreProfile[] profiles = DESCRIPTOR.getProfiles();
 
       if (profileName == null && profiles.length > 0)
          // default
          return profiles[0];
 
-      for (BlobstoreProfile profile : profiles) {
+      for (BlobStoreProfile profile : profiles) {
          if (profile.getProfileName().equals(profileName))
             return profile;
       }
@@ -90,12 +96,45 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
                           BuildListener listener)
          throws InterruptedException, IOException {
 
-      //TODO Vijay: Perform build step (Upload) based on result
-
       if (build.getResult() == Result.FAILURE) {
          // build failed. don't post
+         LOGGER.info("Build failed, not publishing any files to blobstore");
          return true;
       }
+      BlobStoreProfile blobStoreProfile = getProfile();
+      if (blobStoreProfile == null) {
+         log(listener.getLogger(), "No JClouds Blob Store blobStoreProfile is configured.");
+         build.setResult(Result.UNSTABLE);
+         return true;
+      }
+      log(listener.getLogger(), "Using JClouds blobStoreProfile: " + blobStoreProfile.getProfileName());
+      try {
+         Map<String, String> envVars = build.getEnvironment(listener);
+
+         for (BlobStoreEntry blobStoreEntry : entries) {
+            String expanded = Util.replaceMacro(blobStoreEntry.sourceFile, envVars);
+            FilePath ws = build.getWorkspace();
+            FilePath[] paths = ws.list(expanded);
+
+            if (paths.length == 0) {
+               // try to do error diagnostics
+               log(listener.getLogger(), "No file(s) found: " + expanded);
+               String error = ws.validateAntFileMask(expanded);
+               if (error != null)
+                  log(listener.getLogger(), error);
+            }
+            for (FilePath src : paths) {
+               log(listener.getLogger(), "container=" + blobStoreEntry.container + ", file=" + src.getName());
+               blobStoreProfile.upload(blobStoreEntry.container, src);
+            }
+         }
+      } catch (IOException e) {
+         LOGGER.severe("Failed to upload files to Blob Store: " + e.getMessage());
+         e.printStackTrace(listener.error("Failed to upload files"));
+         build.setResult(Result.UNSTABLE);
+      }
+
+
       return true;
    }
 
@@ -105,7 +144,7 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
 
    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-      private final CopyOnWriteList<BlobstoreProfile> profiles = new CopyOnWriteList<BlobstoreProfile>();
+      private final CopyOnWriteList<BlobStoreProfile> profiles = new CopyOnWriteList<BlobStoreProfile>();
       private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
 
       public DescriptorImpl(Class<? extends Publisher> clazz) {
@@ -114,7 +153,7 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
       }
 
       public DescriptorImpl() {
-         this(BlobstorePublisher.class);
+         this(BlobStorePublisher.class);
       }
 
       @Override
@@ -124,8 +163,8 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
 
 
       @Override
-      public BlobstorePublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
-         BlobstorePublisher blobstorePublisher = new BlobstorePublisher();
+      public BlobStorePublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
+         BlobStorePublisher blobstorePublisher = new BlobStorePublisher();
          req.bindParameters(blobstorePublisher, "jcblobstore.");
          blobstorePublisher.getEntries().addAll(req.bindParametersToList(BlobStoreEntry.class, "jcblobstore.entry."));
          return blobstorePublisher;
@@ -133,13 +172,13 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
 
       @Override
       public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
-         profiles.replaceBy(req.bindParametersToList(BlobstoreProfile.class, "jcblobstore."));
+         profiles.replaceBy(req.bindParametersToList(BlobStoreProfile.class, "jcblobstore."));
          save();
          return true;
       }
 
-      public BlobstoreProfile[] getProfiles() {
-         return profiles.toArray(new BlobstoreProfile[0]);
+      public BlobStoreProfile[] getProfiles() {
+         return profiles.toArray(new BlobStoreProfile[0]);
       }
 
       public FormValidation doLoginCheck(final StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
@@ -147,7 +186,7 @@ public class BlobstorePublisher extends Recorder implements Describable<Publishe
          if (name == null) {// name is not entered yet
             return FormValidation.ok();
          }
-         BlobstoreProfile profile = new BlobstoreProfile(name,
+         BlobStoreProfile profile = new BlobStoreProfile(name,
                req.getParameter("providerName"),
                req.getParameter("identity"),
                req.getParameter("credential"));
