@@ -1,0 +1,30 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
+    <l:layout norefresh="true" permission="${app.ADMINISTER}" title="${it.name} Configuration">
+        <st:include page="sidepanel.jelly"/>
+        <l:main-panel>
+            <f:form method="post" action="configSubmit" name="config">
+                <j:set var="instance" value="${it.node}" />
+                <j:set var="descriptor" value="${instance.descriptor}" />
+
+                <f:entry title="${%Instance ID}" field="instanceId">
+                    <f:textbox />
+                </f:entry>
+
+                <f:entry title="${%Description}" help="/help/system-config/master-slave/description.html">
+                    <f:textbox field="nodeDescription" />
+                </f:entry>
+
+
+                <f:entry title="${%Labels}" field="labelString">
+                    <f:textbox />
+                </f:entry>
+
+                <f:descriptorList title="${%Node Properties}" descriptors="${h.getNodePropertyDescriptors(descriptor.clazz)}" field="nodeProperties" />
+
+                <f:block>
+                    <f:submit value="${%Save}"/>
+                </f:block>
+            </f:form>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>
