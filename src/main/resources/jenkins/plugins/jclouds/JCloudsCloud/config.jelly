@@ -1,5 +1,8 @@
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form">
+    <f:entry title="Profile" field="profile">
+        <f:textbox/>
+    </f:entry>
     <f:entry title="Provider Name" field="providerName">
         <f:textbox/>
     </f:entry>
@@ -20,6 +23,18 @@
 
     <f:entry title="Public Key" field="publicKey">
         <f:textarea/>
+    </f:entry>
+
+    <f:entry title="OS Family" field="osFamily">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry title="RAM (MB)" field="ram">
+        <f:textbox default="512"/>
+    </f:entry>
+
+    <f:entry title="No.of Cores" field="cores">
+        <f:textbox default="1"/>
     </f:entry>
 
 
