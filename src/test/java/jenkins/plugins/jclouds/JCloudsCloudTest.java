@@ -1,21 +1,18 @@
 package jenkins.plugins.jclouds;
 
-import com.gargoylesoftware.htmlunit.Page;
 import com.gargoylesoftware.htmlunit.WebAssert;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.jvnet.hudson.test.HudsonTestCase;
-import org.xml.sax.SAXException;
-
-import java.io.IOException;
 
 /**
  * @author Vijay Kiran
  */
-public class JCloudsCloudConfigurationUITest extends HudsonTestCase {
+public class JCloudsCloudTest extends HudsonTestCase {
 
-   public void testConfigurationUI() throws IOException, SAXException {
+
+   public void testConfigurationUI() throws Exception {
       HtmlPage page = new WebClient().goTo("configure");
       final String pageText = page.asText();
       assertTrue("Cloud Section must be present in the global configuration ", pageText.contains("Cloud"));
@@ -47,4 +44,19 @@ public class JCloudsCloudConfigurationUITest extends HudsonTestCase {
       assertNotNull(deleteCloudButton);
 
    }
+
+   public void testConfigRoundtrip() throws Exception {
+
+      JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey",
+            "endPointUrl", 2.5, 512, "UNIX");
+
+      hudson.clouds.add(original);
+      submit(createWebClient().goTo("configure").getFormByName("config"));
+
+      assertEqualBeans(original,
+            hudson.clouds.iterator().next(),
+            "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,cores,ram,osFamily");
+   }
+
+
 }
