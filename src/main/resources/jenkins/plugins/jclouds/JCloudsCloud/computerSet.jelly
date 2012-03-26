@@ -8,20 +8,6 @@
 
                 <f:form action="${rootURL}/cloud/${it.name}/provision" method="post" name="provision">
                     <input type="submit" class="jclouds-provision-button" value="${%Provision via JClouds}"/>
-                    <select name="ami">
-                        <j:forEach var="t" items="${it.templates}">
-                            <option value="${t.ami}">${t.displayName}</option>
-                        </j:forEach>
-                    </select>
-                    <st:once>
-                        <script>
-                            Behaviour.register({
-                                ".jclouds-provision-button":function (e) {
-                                    new YAHOO.widget.Button(e, { type:"menu", menu:e.nextSibling });
-                                }
-                            });
-                        </script>
-                    </st:once>
                 </f:form>
             </td>
         </tr>
