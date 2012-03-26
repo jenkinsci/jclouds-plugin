@@ -14,31 +14,32 @@ import java.util.logging.Logger;
  */
 public class JCloudsComputer extends SlaveComputer {
 
-    private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
+   private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
 
 
-    public JCloudsComputer(Slave slave) {
-        super(slave);
-    }
-   
+   public JCloudsComputer(Slave slave) {
+      super(slave);
+   }
+
    public String getInstanceId() {
       return getName();
    }
 
-    @Override
-    public Slave getNode() {
-        return super.getNode();
-    }
+   @Override
+   public Slave getNode() {
+      return super.getNode();
+   }
 
-    /**
-     * Really deletes the slave, by terminating the instance.
-     */
-    @Override
-    public HttpResponse doDoDelete() throws IOException {
-        LOGGER.info("Terminating " + getName()  + " slave");
-        JCloudsSlave slave = (JCloudsSlave) getNode();
-        slave.terminate();
-        Hudson.getInstance().removeNode(slave);
-        return new HttpRedirect("..");
-    }
+   /**
+    * Really deletes the slave, by terminating the instance.
+    */
+   @Override
+   public HttpResponse doDoDelete() throws IOException {
+      LOGGER.info("Terminating " + getName() + " slave");
+      JCloudsSlave slave = (JCloudsSlave) getNode();
+      slave.getChannel().close();
+      slave.terminate();
+      Hudson.getInstance().removeNode(slave);
+      return new HttpRedirect("..");
+   }
 }
