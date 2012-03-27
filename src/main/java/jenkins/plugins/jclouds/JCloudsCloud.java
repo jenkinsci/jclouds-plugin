@@ -260,7 +260,8 @@ public class JCloudsCloud extends Cloud {
       public FormValidation doTestConnection(@QueryParameter String providerName,
                                              @QueryParameter String identity,
                                              @QueryParameter String credential,
-                                             @QueryParameter String privateKey) {
+                                             @QueryParameter String privateKey,
+                                             @QueryParameter String endPointUrl) {
          if (identity == null)
             return FormValidation.error("Invalid (AccessId).");
          if (credential == null)
@@ -274,9 +275,14 @@ public class JCloudsCloud extends Cloud {
          FormValidation result = FormValidation.ok("Connection succeeded!");
          ComputeService computeService = null;
          try {
+            Properties overrides = new Properties();
+            if (endPointUrl != null) {
+               System.out.println(endPointUrl);
+               overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
+            }
 
             ComputeServiceContext context = new ComputeServiceContextFactory()
-                  .createContext(providerName, identity, credential, modules);
+                  .createContext(providerName, identity, credential, modules, overrides);
 
             computeService = context.getComputeService();
             computeService.listNodes();
