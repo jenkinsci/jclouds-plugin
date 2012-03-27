@@ -1,8 +1,7 @@
 package jenkins.plugins.jclouds;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Module;
@@ -16,23 +15,15 @@ import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
+import hudson.util.StreamTaskListener;
 import org.jclouds.Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
-import org.jclouds.compute.RunNodesException;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.OsFamily;
-import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.scriptbuilder.domain.Statement;
-import org.jclouds.scriptbuilder.domain.Statements;
-import org.jclouds.scriptbuilder.statements.java.InstallJDK;
-import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -44,17 +35,15 @@ import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
-
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 /**
  * @author Vijay Kiran
@@ -71,10 +60,8 @@ public class JCloudsCloud extends Cloud {
    private transient ComputeService compute;
    private final String publicKey;
    private final String endPointUrl;
-   private final int ram;
-   private final double cores;
-   private final String osFamily;
    private final String profile;
+   private final List<JCloudsSlaveTemplate> templates;
 
    public static JCloudsCloud get() {
       return Hudson.getInstance().clouds.get(JCloudsCloud.class);
@@ -88,9 +75,7 @@ public class JCloudsCloud extends Cloud {
                        final String privateKey,
                        final String publicKey,
                        final String endPointUrl,
-                       final double cores,
-                       final int ram,
-                       final String osFamily) {
+                       final List<JCloudsSlaveTemplate> templates) {
       super(profile);
       this.profile = profile;
       this.providerName = providerName;
@@ -99,10 +84,15 @@ public class JCloudsCloud extends Cloud {
       this.privateKey = privateKey;
       this.publicKey = publicKey;
       this.endPointUrl = endPointUrl;
-      this.ram = ram;
-      this.cores = cores;
-      this.osFamily = osFamily;
+      this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
 
+
+   }
+
+   protected Object readResolve() {
+      for (JCloudsSlaveTemplate template : templates)
+         template.cloud = this;
+      return this;
    }
 
    public ComputeService getCompute() {
@@ -147,29 +137,53 @@ public class JCloudsCloud extends Cloud {
       return endPointUrl;
    }
 
-   public String getOsFamily() {
-      return osFamily;
+
+   public List<JCloudsSlaveTemplate> getTemplates() {
+      return Collections.unmodifiableList(templates);
    }
 
    @Override
-   public boolean canProvision(Label label) {
-      return true;
+   public boolean canProvision(final Label label) {
+      return getTemplate(label) != null;
    }
 
-   public int getRam() {
-      return ram;
+
+   public JCloudsSlaveTemplate getTemplate(String name) {
+      for (JCloudsSlaveTemplate t : templates)
+         if (t.getName().equals(name))
+            return t;
+      return null;
    }
 
-   public double getCores() {
-      return cores;
+   /**
+    * Gets {@link JCloudsSlaveTemplate} that has the matching {@link Label}.
+    */
+   public JCloudsSlaveTemplate getTemplate(Label label) {
+      for (JCloudsSlaveTemplate t : templates)
+         if (label == null || label.matches(t.getLabelSet()))
+            return t;
+      return null;
    }
 
-   //Called from computerSet.jelly
-   public void doProvision(StaplerRequest req, StaplerResponse rsp) throws ServletException, IOException, Descriptor.FormException {
-      LOGGER.info("Provisioning new node");
-      NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000);
-      JCloudsSlave node = new JCloudsSlave(nodeMetadata);
+
+   public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String name) throws ServletException, IOException, Descriptor.FormException {
+      checkPermission(PROVISION);
+      if (name == null) {
+         sendError("The 'ami' query parameter is missing", req, rsp);
+         return;
+      }
+      JCloudsSlaveTemplate t = getTemplate(name);
+      if (t == null) {
+         sendError("No such AMI: " + name, req, rsp);
+         return;
+      }
+
+      StringWriter sw = new StringWriter();
+      StreamTaskListener listener = new StreamTaskListener(sw);
+
+      JCloudsSlave node = t.provision(listener);
       Hudson.getInstance().addNode(node);
+
       rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
 
    }
@@ -180,71 +194,15 @@ public class JCloudsCloud extends Cloud {
       nodes.add(new NodeProvisioner.PlannedNode(label.getName(),
             Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                public Node call() throws Exception {
-                  NodeMetadata nodeMetadata =
-                        createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000);
-                  return new JCloudsSlave(nodeMetadata);
+//                  NodeMetadata nodeMetadata =
+//                        createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000);
+                  // return new JCloudsSlave(nodeMetadata);
+                  return null;
                }
             }), 1));
       return nodes;
    }
 
-   private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam(String group, int port) {
-      LOGGER.info("creating jclouds node");
-
-      Properties properties = new Properties();
-
-
-      ImmutableMap<String, String> userMetadata = ImmutableMap.<String, String>of("Name", group);
-
-      Template defaultTemplate = getCompute().templateBuilder().build();
-      TemplateBuilder templateBuilder = getCompute().templateBuilder()
-            .fromTemplate(defaultTemplate)
-            .minRam(ram)
-            .minCores(cores);
-
-      if (!Strings.isNullOrEmpty(osFamily)) {
-         templateBuilder.osFamily(OsFamily.valueOf(osFamily));
-      }
-
-      Template template = templateBuilder.build();
-
-      // setup the template to customize the nodeMetadata with jdk, etc. also opening ports
-      AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
-            .installAdminPrivateKey(false) // no need
-            .grantSudoToAdminUser(false) // no need
-            .adminPrivateKey(this.getPrivateKey()) // temporary due to jclouds bug
-            .authorizeAdminPublicKey(true)
-            .adminPublicKey(this.getPublicKey())
-            .build();
-
-      // probably some missing configuration somewhere
-      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
-
-      Statement bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, jenkinsDirStatement);
-
-      template.getOptions()
-            .inboundPorts(22, port)
-            .userMetadata(userMetadata)
-            .runScript(bootstrap);
-
-      NodeMetadata nodeMetadata = null;
-
-
-      try {
-         nodeMetadata = getOnlyElement(getCompute().createNodesInGroup(group, 1, template));
-      } catch (RunNodesException e) {
-         throw destroyBadNodesAndPropagate(e);
-      }
-
-      //Check if nodeMetadata is null and throw
-      return nodeMetadata;
-   }
-
-   private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
-      for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet())
-         getCompute().destroyNode(nodeError.getKey().getId());
-      throw propagate(e);
-   }
 
    @Extension
    public static class DescriptorImpl extends Descriptor<Cloud> {
@@ -335,23 +293,6 @@ public class JCloudsCloud extends Cloud {
          return candidates;
       }
 
-      public AutoCompletionCandidates doAutoCompleteOsFamily(@QueryParameter final String value) {
-
-         List<OsFamily> matchedOsFamilies = new ArrayList<OsFamily>();
-         for (OsFamily osFamily : OsFamily.values()) {
-            if (osFamily.toString().contains(value)) {
-               matchedOsFamilies.add(osFamily);
-            }
-         }
-
-         AutoCompletionCandidates candidates = new AutoCompletionCandidates();
-         for (OsFamily matchedOs : matchedOsFamilies) {
-            candidates.add(matchedOs.toString());
-         }
-         return candidates;
-      }
-
-
       public FormValidation doCheckProfile(@QueryParameter String value) {
          return FormValidation.validateRequired(value);
       }
@@ -369,14 +310,6 @@ public class JCloudsCloud extends Cloud {
       }
 
       public FormValidation doCheckIdentity(@QueryParameter String value) {
-         return FormValidation.validateRequired(value);
-      }
-
-      public FormValidation doCheckCores(@QueryParameter String value) {
-         return FormValidation.validateRequired(value);
-      }
-
-      public FormValidation doCheckRam(@QueryParameter String value) {
          return FormValidation.validateRequired(value);
       }
 

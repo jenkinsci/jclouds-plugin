@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
+ * Jenkins Slave node  - managed by JClouds.
+ *
  * @author Vijay Kiran
  */
 public class JCloudsSlave extends Slave {
@@ -79,6 +81,7 @@ public class JCloudsSlave extends Slave {
       final ComputeService compute = JCloudsCloud.get().getCompute();
       compute.destroyNode(getNodeMetaData().getId());
    }
+
 
    @Extension
    public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {
