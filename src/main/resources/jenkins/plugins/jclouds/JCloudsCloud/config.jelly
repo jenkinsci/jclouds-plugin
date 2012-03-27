@@ -41,5 +41,5 @@
     <f:validateButton title="${%Generate Key Pair}" progress="${%Generate...}" method="generateKeyPair"
                       with="identity,credential"/>
     <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection"
-                      with="providerName,identity,credential,privateKey"/>
+                      with="providerName,identity,credential,privateKey,endPointUrl"/>
 </j:jelly>
