@@ -42,7 +42,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    private double cores;
    private int ram;
    private String osFamily;
-   private String labels;
+   private String labelString;
    private String name;
    private String description;
    private String osVersion;
@@ -65,7 +65,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       this.ram = ram;
       this.osFamily = Util.fixNull(osFamily);
       this.osVersion = Util.fixNull(osVersion);
-      this.labels = Util.fixNull(labelString);
+      this.labelString = Util.fixNull(labelString);
       this.description = Util.fixNull(description);
       parseLabels();
    }
@@ -86,8 +86,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       return osVersion;
    }
 
-   public String getLabels() {
-      return labels;
+   public String getLabelString() {
+      return labelString;
    }
 
    public String getName() {
@@ -111,7 +111,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
     * Initializes data structure that we don't persist.
     */
    protected Object parseLabels() {
-      labelSet = Label.parse(labels);
+      labelSet = Label.parse(labelString);
       return this;
    }
 
@@ -119,7 +119,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       LOGGER.info("Provisioning new node");
       NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningWithMinRam(name);
       try {
-         return new JCloudsSlave(nodeMetadata, labels, description);
+         return new JCloudsSlave(nodeMetadata, labelString, description);
       } catch (Descriptor.FormException e) {
          throw new AssertionError("Invalid configuration " + e.getMessage());
       }
