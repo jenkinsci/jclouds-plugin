@@ -45,13 +45,13 @@ public class JCloudsSlave extends Slave {
     * @throws IOException
     * @throws Descriptor.FormException
     */
-   public JCloudsSlave(NodeMetadata metadata) throws IOException, Descriptor.FormException {
+   public JCloudsSlave(NodeMetadata metadata, final String labelString, final String description) throws IOException, Descriptor.FormException {
       this(metadata.getName(),
-            "jclouds-jenkins-node",
+            description,
             "/jenkins",
             "1",
             Mode.NORMAL,
-            "labelString",
+            labelString,
             new JCloudsLauncher(),
             new JCloudsRetentionStrategy(),
             Collections.<NodeProperty<?>>emptyList());
