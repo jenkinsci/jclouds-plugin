@@ -286,7 +286,7 @@ public class JCloudsCloud extends Cloud {
             computeService = context.getComputeService();
             computeService.listNodes();
          } catch (Exception ex) {
-            result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getLocalizedMessage());
+            result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getMessage());
          } finally {
             if (computeService != null) {
                computeService.getContext().close();
