@@ -169,12 +169,12 @@ public class JCloudsCloud extends Cloud {
    public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String name) throws ServletException, IOException, Descriptor.FormException {
       checkPermission(PROVISION);
       if (name == null) {
-         sendError("The 'ami' query parameter is missing", req, rsp);
+         sendError("The slave template name query parameter is missing", req, rsp);
          return;
       }
       JCloudsSlaveTemplate t = getTemplate(name);
       if (t == null) {
-         sendError("No such AMI: " + name, req, rsp);
+         sendError("No such slave template with name : " + name, req, rsp);
          return;
       }
 
