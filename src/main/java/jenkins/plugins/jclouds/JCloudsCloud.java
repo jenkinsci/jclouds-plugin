@@ -276,8 +276,7 @@ public class JCloudsCloud extends Cloud {
          ComputeService computeService = null;
          try {
             Properties overrides = new Properties();
-            if (endPointUrl != null) {
-               System.out.println(endPointUrl);
+            if (!Strings.isNullOrEmpty(endPointUrl)) {
                overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
             }
 
