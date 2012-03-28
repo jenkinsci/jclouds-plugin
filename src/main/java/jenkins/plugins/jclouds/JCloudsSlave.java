@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
+ * Jenkins Slave node  - managed by JClouds.
+ *
  * @author Vijay Kiran
  */
 public class JCloudsSlave extends Slave {
@@ -43,13 +45,13 @@ public class JCloudsSlave extends Slave {
     * @throws IOException
     * @throws Descriptor.FormException
     */
-   public JCloudsSlave(NodeMetadata metadata) throws IOException, Descriptor.FormException {
+   public JCloudsSlave(NodeMetadata metadata, final String labelString, final String description) throws IOException, Descriptor.FormException {
       this(metadata.getName(),
-            "jclouds-jenkins-node",
+            description,
             "/jenkins",
             "1",
             Mode.NORMAL,
-            "labelString",
+            labelString,
             new JCloudsLauncher(),
             new JCloudsRetentionStrategy(),
             Collections.<NodeProperty<?>>emptyList());
@@ -79,6 +81,7 @@ public class JCloudsSlave extends Slave {
       final ComputeService compute = JCloudsCloud.get().getCompute();
       compute.destroyNode(getNodeMetaData().getId());
    }
+
 
    @Extension
    public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {

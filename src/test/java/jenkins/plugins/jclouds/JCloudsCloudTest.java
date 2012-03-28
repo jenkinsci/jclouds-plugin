@@ -6,11 +6,12 @@ import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.jvnet.hudson.test.HudsonTestCase;
 
+import java.util.Collections;
+
 /**
  * @author Vijay Kiran
  */
 public class JCloudsCloudTest extends HudsonTestCase {
-
 
    public void testConfigurationUI() throws Exception {
       HtmlPage page = new WebClient().goTo("configure");
@@ -28,10 +29,6 @@ public class JCloudsCloudTest extends HudsonTestCase {
       WebAssert.assertInputPresent(page2, "_.endPointUrl");
       WebAssert.assertInputPresent(page2, "_.identity");
       WebAssert.assertInputPresent(page2, "_.credential");
-      WebAssert.assertInputPresent(page2, "_.osFamily");
-      WebAssert.assertInputContainsValue(page2, "_.ram", "512");
-      WebAssert.assertInputContainsValue(page2, "_.cores", "1");
-
 
       HtmlForm configForm2 = page2.getFormByName("config");
       assertNotNull(configForm2.getTextAreaByName("_.privateKey"));
@@ -48,14 +45,14 @@ public class JCloudsCloudTest extends HudsonTestCase {
    public void testConfigRoundtrip() throws Exception {
 
       JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey",
-            "endPointUrl", 2.5, 512, "UNIX");
+            "endPointUrl", Collections.<JCloudsSlaveTemplate>emptyList());
 
       hudson.clouds.add(original);
       submit(createWebClient().goTo("configure").getFormByName("config"));
 
       assertEqualBeans(original,
             hudson.clouds.iterator().next(),
-            "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,cores,ram,osFamily");
+            "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl");
    }
 
 

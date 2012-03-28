@@ -26,8 +26,8 @@ public class JCloudsComputer extends SlaveComputer {
    }
 
    @Override
-   public Slave getNode() {
-      return super.getNode();
+   public JCloudsSlave getNode() {
+      return (JCloudsSlave) super.getNode();
    }
 
    /**
@@ -36,8 +36,10 @@ public class JCloudsComputer extends SlaveComputer {
    @Override
    public HttpResponse doDoDelete() throws IOException {
       LOGGER.info("Terminating " + getName() + " slave");
-      JCloudsSlave slave = (JCloudsSlave) getNode();
-      slave.getChannel().close();
+      JCloudsSlave slave = getNode();
+      if (slave.getChannel() != null) {
+         slave.getChannel().close();
+      }
       slave.terminate();
       Hudson.getInstance().removeNode(slave);
       return new HttpRedirect("..");
