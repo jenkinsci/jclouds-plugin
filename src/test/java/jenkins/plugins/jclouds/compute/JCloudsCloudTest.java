@@ -1,9 +1,11 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.compute;
 
 import com.gargoylesoftware.htmlunit.WebAssert;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import jenkins.plugins.jclouds.compute.JCloudsCloud;
+import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.util.Collections;

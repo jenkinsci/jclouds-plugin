@@ -1,4 +1,4 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.compute;
 
 import hudson.Extension;
 import hudson.model.Computer;
@@ -67,6 +67,9 @@ public class JCloudsSlave extends Slave {
       return nodeMetaData;
    }
 
+   /**
+    * {@inheritDoc}
+    */
    @Override
    public Computer createComputer() {
       LOGGER.info("Creating a new JClouds Slave");
@@ -74,7 +77,8 @@ public class JCloudsSlave extends Slave {
    }
 
    /**
-    * Destroy the node
+    * Destroy the node calls {@link ComputeService#destroyNode}
+    *
     */
    public void terminate() {
       LOGGER.info("Terminating the Slave : " + getNodeName());
@@ -91,6 +95,11 @@ public class JCloudsSlave extends Slave {
          return "JClouds Slave";
       }
 
+
+      /**
+       * Returns
+       *
+       */
       @Override
       public boolean isInstantiable() {
          return false;
