@@ -24,8 +24,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -160,11 +158,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
 
       Statement bootstrap = null;
-      try {
-         bootstrap = newStatementList(InstallJDK.fromURL(new URI("http://vijaykiran.com/files/jdk.tgz")), adminAccess, jenkinsDirStatement);
-      } catch (URISyntaxException e) {
-         e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-      }
+      bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, jenkinsDirStatement);
 
       template.getOptions()
             .inboundPorts(22)
