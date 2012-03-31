@@ -14,7 +14,6 @@
                     <f:textbox field="nodeDescription" />
                 </f:entry>
 
-
                 <f:entry title="${%Labels}" field="labelString">
                     <f:textbox />
                 </f:entry>
