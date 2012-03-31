@@ -158,7 +158,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
 
       Statement bootstrap = null;
-      bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, jenkinsDirStatement);
+      bootstrap = newStatementList(InstallJDK.fromOpenJDK(), adminAccess, jenkinsDirStatement);
 
       template.getOptions()
             .inboundPorts(22)
