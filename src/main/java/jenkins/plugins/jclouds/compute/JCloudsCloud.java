@@ -1,4 +1,4 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.compute;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
@@ -46,6 +46,7 @@ import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 /**
+ * The JClouds version of the Jenkins Cloud.
  * @author Vijay Kiran
  */
 public class JCloudsCloud extends Cloud {
@@ -156,7 +157,7 @@ public class JCloudsCloud extends Cloud {
    }
 
    /**
-    * Gets {@link JCloudsSlaveTemplate} that has the matching {@link Label}.
+    * Gets {@link jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate} that has the matching {@link Label}.
     */
    public JCloudsSlaveTemplate getTemplate(Label label) {
       for (JCloudsSlaveTemplate t : templates)

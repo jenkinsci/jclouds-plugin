@@ -1,4 +1,4 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.compute;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -157,7 +157,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       // probably some missing configuration somewhere
       Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
 
-      Statement bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, jenkinsDirStatement);
+      Statement bootstrap = null;
+      bootstrap = newStatementList(InstallJDK.fromURL(), adminAccess, jenkinsDirStatement);
 
       template.getOptions()
             .inboundPorts(22)
