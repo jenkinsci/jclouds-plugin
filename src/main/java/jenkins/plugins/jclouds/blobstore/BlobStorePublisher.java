@@ -1,4 +1,4 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.blobstore;
 
 import hudson.Extension;
 import hudson.FilePath;
@@ -49,6 +49,11 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
       super();
    }
 
+   /**
+    * Create a new Blobstore publisher for the cofigured profile identified by profileName
+    *
+    * @param profileName - the name of the configured profile name
+    */
    public BlobStorePublisher(String profileName) {
       super();
       if (profileName == null) {
@@ -60,10 +65,18 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
       this.profileName = profileName;
    }
 
+   /**
+    * Get list of entries to be uploaded.
+    *
+    * @return
+    */
    public List<BlobStoreEntry> getEntries() {
       return entries;
    }
 
+   /**
+    * @return - current profile for a profileName or returns the first one if the profileName isn't configured
+    */
    public BlobStoreProfile getProfile() {
       BlobStoreProfile[] profiles = DESCRIPTOR.getProfiles();
 
@@ -90,6 +103,22 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
       logger.println(StringUtils.defaultString(getDescriptor().getDisplayName()) + " " + message);
    }
 
+   /**
+    * Perform the build step of uploading the configured file entries to the blobstore.
+    * <p/>
+    * <ul>
+    * <li>If the build result is failure, will not do anything except logging the stuff.</li>
+    * <li>If the blobstore profile isn't configured, or the uploading failed, the build is set to be unstable.</li>
+    * <li>If the upload is succesful, the build is set to be stable.</li>
+    * </ul>
+    *
+    * @param build    - reference to curerent build.
+    * @param launcher - {@link Launcher}
+    * @param listener - {@link BuildListener}
+    * @return Always returns to indicate that build can continue, so we won't block other steps.
+    * @throws InterruptedException
+    * @throws IOException
+    */
    @Override
    public boolean perform(AbstractBuild<?, ?> build,
                           Launcher launcher,
@@ -138,10 +167,17 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
       return true;
    }
 
+   /**
+    * @{see BuildStepMonitor#STEP}
+    * @return BuildStepMonitor.STEP
+    */
    public BuildStepMonitor getRequiredMonitorService() {
       return BuildStepMonitor.STEP;
    }
 
+   /**
+    * {@see hudson.model.Descriptor}
+    */
    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
       private final CopyOnWriteList<BlobStoreProfile> profiles = new CopyOnWriteList<BlobStoreProfile>();

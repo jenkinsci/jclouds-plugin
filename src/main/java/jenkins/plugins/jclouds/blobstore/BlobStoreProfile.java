@@ -1,4 +1,4 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.blobstore;
 
 import hudson.FilePath;
 import org.jclouds.blobstore.BlobStore;
@@ -12,6 +12,8 @@ import java.util.logging.Logger;
 
 /**
  * Model class for Blobstore profile. User can configure multiple profiles to upload artifacts to different providers.
+ *
+ * @author Vijay Kiran
  */
 public class BlobStoreProfile {
 
@@ -33,23 +35,50 @@ public class BlobStoreProfile {
       this.credential = credential;
    }
 
-
+   /**
+    * Configured profile.
+    *
+    * @return - name of the profile.
+    */
    public String getProfileName() {
       return profileName;
    }
 
+   /**
+    * Provider Name as per the JClouds Blobstore supported providers.
+    *
+    * @return - providerName String
+    */
    public String getProviderName() {
       return providerName;
    }
 
+   /**
+    * Cloud provider identity.
+    *
+    * @return
+    */
    public String getIdentity() {
       return identity;
    }
 
+   /**
+    * Cloud provider credential.
+    *
+    * @return
+    */
    public String getCredential() {
       return credential;
    }
 
+   /**
+    * Upload the specified file from the {@param filePath} to container
+    *
+    * @param container - The container where the file need to uploaded.
+    * @param filePath  - the {@link FilePath} of the file which needs to be uploaded.
+    * @throws IOException
+    * @throws InterruptedException
+    */
    public void upload(String container, FilePath filePath) throws IOException, InterruptedException {
       if (filePath.isDirectory()) {
          throw new IOException(filePath + " is a directory");

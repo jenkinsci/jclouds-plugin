@@ -7,7 +7,7 @@
             <td colspan="${monitors.size()+2}">
 
                 <f:form action="${rootURL}/cloud/${it.name}/provision" method="post" name="provision">
-                    <input type="submit" class="jclouds-provision-button" value="${%Provision via JClouds}"/>
+                    <input type="submit" class="jclouds-provision-button" value="${%Provision via JClouds} - ${it.name}"/>
                     <select name="name">
                         <j:forEach var="t" items="${it.templates}">
                             <option value="${t.name}">${t.name}</option>

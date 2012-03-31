@@ -1,4 +1,4 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.compute;
 
 import hudson.slaves.RetentionStrategy;
 

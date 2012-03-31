@@ -1,4 +1,4 @@
-package jenkins.plugins.jclouds;
+package jenkins.plugins.jclouds.compute;
 
 import hudson.model.Hudson;
 import hudson.model.Slave;
@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
+ * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.
  * @author Vijay Kiran
  */
 public class JCloudsComputer extends SlaveComputer {
