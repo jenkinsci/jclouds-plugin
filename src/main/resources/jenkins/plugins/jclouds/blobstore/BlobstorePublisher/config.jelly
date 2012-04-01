@@ -1,7 +1,8 @@
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
 
     <f:entry title="JClouds Cloud Storage profile">
-        <select class="setting-input" name="jcblobstore.name" description="Select configured Cloud Storage profile.Check global jenkins config for defining access properties for this profile">
+        <select class="setting-input" name="jcblobstore.name"
+                description="Select configured Cloud Storage profile.Check global jenkins config for defining access properties for this profile">
             <j:forEach var="s" items="${descriptor.profiles}">
                 <f:option selected="${s.name==instance.profileName}">${s.profileName}</f:option>
             </j:forEach>
@@ -14,15 +15,15 @@
             <table width="100%">
                 <f:entry title="Source">
                     <input class="setting-input" name="jcblobstore.entry.sourceFile"
-                           type="text" value="${e.sourceFile}" />
+                           type="text" value="${e.sourceFile}"/>
                 </f:entry>
                 <f:entry title="Destination Container">
                     <input class="setting-input" name="jcblobstore.entry.container"
-                           type="text" value="${e.container}" />
+                           type="text" value="${e.container}"/>
                 </f:entry>
                 <f:entry title="">
                     <div align="right">
-                        <f:repeatableDeleteButton />
+                        <f:repeatableDeleteButton/>
                     </div>
                 </f:entry>
             </table>

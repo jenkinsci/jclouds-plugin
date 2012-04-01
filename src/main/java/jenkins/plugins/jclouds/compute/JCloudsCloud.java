@@ -275,7 +275,7 @@ public class JCloudsCloud extends Cloud {
                hasEnd = true;
          }
          if (!hasStart)
-            return FormValidation.error("This doesn't look like a private key at all");
+            return FormValidation.error("Please make sure that the private key starts with '-----BEGIN RSA PRIVATE KEY-----'");
          if (!hasEnd)
             return FormValidation.error("The private key is missing the trailing 'END RSA PRIVATE KEY' marker. Copy&paste error?");
          if (SshKeys.fingerprintPrivateKey(value) == null)
