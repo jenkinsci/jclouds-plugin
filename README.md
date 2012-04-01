@@ -48,6 +48,36 @@ The above command will start jenkins with JClouds plugin pre-configured.
 * Verify that you have a button with `Provision via JClouds - {YOUR PROFILE NAME} drop down with the slave template name you configured.
 * Click on the slave and see if your slave launched succesfully (please wait until the operation completes).
 
+### Executing build on the slave
+* To run your build on the newly configured slave computer, just enable the `Restrict where this project can be run` option in the build configuration page.
+* Enter the label which you choose for the instance template in the `Label Expression` text field. This should auto-complete labels for you.
+* Click save the save the configuration options.
+* Schedule the build to check whether the build is executed on the selected slave template.
 
 
-                                                                                
+## Adding a Blobstore Profile for storing build artifacts
+
+The plugin also provides a way to store your build artifacts on JClouds supported cloud storage providers. You can configure multiple
+blobstore profiles and configure the build to copy different files/artifacts to the specified container. Here's how you configure the same.
+
+* Goto Jenkins Configuration Page
+* Click Ad under the section `JClouds Cloud Storage Settings`
+* Provide the configuration Options:
+  - Profile Name: name of the profile e.g. aws-storage
+  - Provider Name: [JClouds Supported Provider Name](http://www.jclouds.org/documentation/userguide/blobstore-guide)
+  - Identity : your accessId
+  - Credential: your secret key
+* You can add multiple providers by clicking on Add.
+* Click Save on the bottom of the page, to save the settings.
+
+### Enabling publishing artifacts after a build
+After you configure a cloudstorage provider, you can enable the publishing file by enabling it under `Post-build Actions` in the build job configuration page.
+* Click on the checkbox `Publish artifacts to JClouds Clouds Storage`
+* You should now see a dropdown with configured storage profiles. Select the one you want to use for this build.
+* Click on Add button next to `Files to upload`.
+* Add the sourcd file path (relative to workspace) 
+* Add the destination container name.
+* Repeat to add more files if you want to copy.
+* Click save.
+
+When the build is complete and succesful, the configured files will be published to the configured blobstore.
