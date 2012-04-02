@@ -12,10 +12,12 @@ import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.RunScriptOnNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.predicates.NodePredicates;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
@@ -46,6 +48,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    private String name;
    private String description;
    private String osVersion;
+   private String initScript;
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
@@ -58,7 +61,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
                                final String osFamily,
                                final String osVersion,
                                final String labelString,
-                               final String description) {
+                               final String description,
+                               final String initScript) {
 
       this.name = name;
       this.cores = cores;
@@ -67,6 +71,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       this.osVersion = Util.fixNull(osVersion);
       this.labelString = Util.fixNull(labelString);
       this.description = Util.fixNull(description);
+      this.initScript = Util.fixNull(initScript);
       parseLabels();
    }
 
@@ -107,6 +112,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       return labelSet;
    }
 
+   public String getInitScript() {
+      return initScript;
+   }
+
    /**
     * Initializes data structure that we don't persist.
     */
@@ -118,6 +127,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    public JCloudsSlave provision(TaskListener listener) throws IOException {
       LOGGER.info("Provisioning new node");
       NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningWithMinRam(name);
+
+
+
       try {
          return new JCloudsSlave(nodeMetadata, labelString, description);
       } catch (Descriptor.FormException e) {
@@ -154,11 +166,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
             .adminPublicKey(getCloud().getPublicKey())
             .build();
 
-      // probably some missing configuration somewhere
+      // Jenkins needs /jenkins dir.
       Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
 
-      Statement bootstrap = null;
-      bootstrap = newStatementList(InstallJDK.fromOpenJDK(), adminAccess, jenkinsDirStatement);
+      Statement bootstrap = newStatementList(InstallJDK.fromOpenJDK(), adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
 
       template.getOptions()
             .inboundPorts(22)
