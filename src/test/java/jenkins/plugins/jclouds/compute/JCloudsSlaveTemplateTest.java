@@ -1,7 +1,5 @@
 package jenkins.plugins.jclouds.compute;
 
-import jenkins.plugins.jclouds.compute.JCloudsCloud;
-import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 import java.util.ArrayList;
@@ -14,7 +12,10 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
 
    public void testConfigRoundtrip() throws Exception {
       String name = "testSlave";
-      JCloudsSlaveTemplate originalTemplate = new JCloudsSlaveTemplate(name, 1, 512, "osFamily", "osVersion", "jclouds-slave-type1 jclouds-type2", "BLAH BLAH");
+      JCloudsSlaveTemplate originalTemplate = new JCloudsSlaveTemplate(name, 1, 512, "osFamily",
+            "osVersion", "jclouds-slave-type1 jclouds-type2", "Description",
+            "initScript");
+
       List<JCloudsSlaveTemplate> templates = new ArrayList<JCloudsSlaveTemplate>();
       templates.add(originalTemplate);
 
@@ -29,8 +30,9 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
             "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl");
 
       assertEqualBeans(originalTemplate,
-            ((JCloudsCloud)hudson.clouds.iterator().next()).getTemplate(name),
-            "name");
+            ((JCloudsCloud) hudson.clouds.iterator().next()).getTemplate(name),
+            "name,cores,ram,osFamily,osVersion,labelString,description,initScript");
+
    }
 
 }
