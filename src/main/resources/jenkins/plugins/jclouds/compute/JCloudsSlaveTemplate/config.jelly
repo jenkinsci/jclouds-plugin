@@ -29,6 +29,10 @@
         <f:textbox/>
     </f:entry>
 
+    <f:entry title="Init Script" field="initScript">
+        <f:textarea />
+    </f:entry>
+
     <f:entry title="">
         <div align="right">
             <f:repeatableDeleteButton/>

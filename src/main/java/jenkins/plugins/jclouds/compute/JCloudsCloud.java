@@ -59,11 +59,11 @@ public class JCloudsCloud extends Cloud {
    private final String providerName;
 
    private final String privateKey;
-   private transient ComputeService compute;
    private final String publicKey;
    private final String endPointUrl;
    private final String profile;
    private final List<JCloudsSlaveTemplate> templates;
+   private transient ComputeService compute;
 
    public static JCloudsCloud get() {
       return Hudson.getInstance().clouds.get(JCloudsCloud.class);
