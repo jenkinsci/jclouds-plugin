@@ -72,17 +72,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
                                final String description,
                                final String initScript) {
 
-      this.name = name;
-      this.imageId = imageId;
-      this.hardwareId = hardwareId;
-      this.cores = cores;
-      this.ram = ram;
-      this.osFamily = Util.fixNull(osFamily);
-      this.osVersion = Util.fixNull(osVersion);
-      this.labelString = Util.fixNull(labelString);
-      this.description = Util.fixNull(description);
-      this.initScript = Util.fixNull(initScript);
-      parseLabels();
+       this.name = Util.fixEmptyAndTrim(name);
+       this.imageId = Util.fixEmptyAndTrim(imageId);
+       this.hardwareId = Util.fixEmptyAndTrim(hardwareId);
+       this.cores = cores;
+       this.ram = ram;
+       this.osFamily = Util.fixNull(osFamily);
+       this.osVersion = Util.fixNull(osVersion);
+       this.labelString = Util.fixNull(labelString);
+       this.description = Util.fixNull(description);
+       this.initScript = Util.fixNull(initScript);
+       parseLabels();
    }
 
    public double getCores() {
@@ -271,6 +271,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
             return FormValidation.error("Image Id shouldn't be empty");
          }
 
+         // Remove empty text/whitespace from the fields.
+         providerName = Util.fixEmptyAndTrim(providerName);
+         identity = Util.fixEmptyAndTrim(identity);
+         credential = Util.fixEmptyAndTrim(credential);
+         imageId = Util.fixEmptyAndTrim(imageId);
+
          FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
          ComputeService computeService = null;
          try {
@@ -314,6 +320,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
          if (Strings.isNullOrEmpty(hardwareId)) {
             return FormValidation.error("Hardware Id shouldn't be empty");
          }
+
+         // Remove empty text/whitespace from the fields.
+         providerName = Util.fixEmptyAndTrim(providerName);
+         identity = Util.fixEmptyAndTrim(identity);
+         credential = Util.fixEmptyAndTrim(credential);
+         hardwareId = Util.fixEmptyAndTrim(hardwareId);
 
          FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
          ComputeService computeService = null;
