@@ -17,6 +17,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.StreamTaskListener;
+import hudson.Util;
 import org.jclouds.Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
@@ -79,13 +80,13 @@ public class JCloudsCloud extends Cloud {
                        final String endPointUrl,
                        final List<JCloudsSlaveTemplate> templates) {
       super(profile);
-      this.profile = profile;
-      this.providerName = providerName;
-      this.identity = identity;
-      this.credential = credential;
+      this.profile = Util.fixEmptyAndTrim(profile);
+      this.providerName = Util.fixEmptyAndTrim(providerName);
+      this.identity = Util.fixEmptyAndTrim(identity);
+      this.credential = Util.fixEmptyAndTrim(credential);
       this.privateKey = privateKey;
       this.publicKey = publicKey;
-      this.endPointUrl = endPointUrl;
+      this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
       this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
       setCloudForTemplates();
 
@@ -229,6 +230,12 @@ public class JCloudsCloud extends Cloud {
          if (privateKey == null)
             return FormValidation.error("Private key is not specified. Click 'Generate Key' to generate one.");
 
+
+         // Remove empty text/whitespace from the fields.
+         providerName = Util.fixEmptyAndTrim(providerName);
+         identity = Util.fixEmptyAndTrim(identity);
+         credential = Util.fixEmptyAndTrim(credential);
+         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
          Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
                new EnterpriseConfigurationModule());
