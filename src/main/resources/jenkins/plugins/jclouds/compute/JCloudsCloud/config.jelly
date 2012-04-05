@@ -24,13 +24,11 @@
     <f:entry title="Public Key" field="publicKey">
         <f:textarea/>
     </f:entry>
-
     <f:entry title="Cloud Instance Templates" description="${%List of Cloud Instances to be launched as slaves}">
         <f:repeatable field="templates">
             <st:include page="config.jelly" class="${descriptor.clazz}"/>
         </f:repeatable>
     </f:entry>
-
 
     <f:validateButton title="${%Generate Key Pair}" progress="${%Generate...}" method="generateKeyPair"
                       with="identity,credential"/>
