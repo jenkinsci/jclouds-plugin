@@ -70,7 +70,7 @@ blobstore profiles and configure the build to copy different files/artifacts to 
 * You can add multiple providers by clicking on Add.
 * Click Save on the bottom of the page, to save the settings.
 
-### Enabling publishing artifacts after a build
+### Publishing artifacts after a build
 After you configure a cloudstorage provider, you can enable the publishing file by enabling it under `Post-build Actions` in the build job configuration page.
 * Click on the checkbox `Publish artifacts to JClouds Clouds Storage`
 * You should now see a dropdown with configured storage profiles. Select the one you want to use for this build.
