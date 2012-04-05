@@ -4,20 +4,24 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import hudson.Extension;
 import hudson.Util;
+import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
+import jenkins.model.Jenkins;
+import org.apache.commons.lang.StringUtils;
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.RunNodesException;
-import org.jclouds.compute.RunScriptOnNodesException;
+import org.jclouds.compute.domain.Hardware;
+import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
-import org.jclouds.compute.predicates.NodePredicates;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
@@ -41,11 +45,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
    private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
 
+   private String name;
+   private String imageId;
+   private String hardwareId;
    private double cores;
    private int ram;
    private String osFamily;
    private String labelString;
-   private String name;
    private String description;
    private String osVersion;
    private String initScript;
@@ -56,6 +62,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
    @DataBoundConstructor
    public JCloudsSlaveTemplate(final String name,
+                               final String imageId,
+                               final String hardwareId,
                                final double cores,
                                final int ram,
                                final String osFamily,
@@ -65,6 +73,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
                                final String initScript) {
 
       this.name = name;
+      this.imageId = imageId;
+      this.hardwareId = hardwareId;
       this.cores = cores;
       this.ram = ram;
       this.osFamily = Util.fixNull(osFamily);
@@ -126,8 +136,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
    public JCloudsSlave provision(TaskListener listener) throws IOException {
       LOGGER.info("Provisioning new node");
-      NodeMetadata nodeMetadata = createNodeWithAdminUserAndJDKInGroupOpeningWithMinRam(name);
-
+      NodeMetadata nodeMetadata = createNodeWithJdk();
 
 
       try {
@@ -140,22 +149,38 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    }
 
 
-   private NodeMetadata createNodeWithAdminUserAndJDKInGroupOpeningWithMinRam(String group) {
+   private NodeMetadata createNodeWithJdk() {
       LOGGER.info("creating jclouds node");
 
-      ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", group);
+      ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
 
-      Template defaultTemplate = getCloud().getCompute().templateBuilder().build();
-      TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder()
-            .fromTemplate(defaultTemplate)
-            .minRam(ram)
-            .minCores(cores);
 
-      if (!Strings.isNullOrEmpty(osFamily)) {
-         templateBuilder.osFamily(OsFamily.valueOf(osFamily));
+      TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
+
+
+      if (!Strings.isNullOrEmpty(imageId)) {
+         LOGGER.info("Setting image id to " + imageId);
+         templateBuilder.imageId(imageId);
+      } else {
+         if (!Strings.isNullOrEmpty(osFamily)) {
+            LOGGER.info("Setting osFamily to " + osFamily);
+            templateBuilder.osFamily(OsFamily.valueOf(osFamily));
+         }
+         if (!Strings.isNullOrEmpty(osVersion)) {
+            LOGGER.info("Setting osVersion to " + osVersion);
+            templateBuilder.osVersionMatches(osVersion);
+         }
       }
 
-      org.jclouds.compute.domain.Template template = templateBuilder.build();
+
+      if (!Strings.isNullOrEmpty((hardwareId))) {
+         LOGGER.info("Setting hardware Id to " + hardwareId);
+      } else {
+         LOGGER.info("Setting minRam " + ram + " and minCores " + cores);
+         templateBuilder.minCores(cores).minRam(ram);
+      }
+
+      Template template = templateBuilder.build();
 
       // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
       AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
@@ -165,6 +190,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
             .authorizeAdminPublicKey(true)
             .adminPublicKey(getCloud().getPublicKey())
             .build();
+
 
       // Jenkins needs /jenkins dir.
       Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
@@ -180,7 +206,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
 
       try {
-         nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(group, 1, template));
+         nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
       } catch (RunNodesException e) {
          throw destroyBadNodesAndPropagate(e);
       }
@@ -197,7 +223,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
 
    public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
-      return Hudson.getInstance().getDescriptor(getClass());
+      return Jenkins.getInstance().getDescriptor(getClass());
    }
 
    @Extension
@@ -214,6 +240,107 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
       public FormValidation doCheckRam(@QueryParameter String value) {
          return FormValidation.validateRequired(value);
+      }
+
+      public AutoCompletionCandidates doAutoCompleteOsFamily(@QueryParameter final String value) {
+         OsFamily[] osFamilies = OsFamily.values();
+
+         AutoCompletionCandidates candidates = new AutoCompletionCandidates();
+         for (OsFamily osFamily : osFamilies) {
+            if (StringUtils.containsIgnoreCase(osFamily.toString(), value)) {
+               candidates.add(osFamily.toString().toUpperCase());
+            }
+         }
+         return candidates;
+      }
+
+
+      public FormValidation doValidateImageId(
+            @QueryParameter String providerName,
+            @QueryParameter String identity,
+            @QueryParameter String credential,
+            @QueryParameter String imageId) {
+
+         if (Strings.isNullOrEmpty(identity))
+            return FormValidation.error("Invalid identity (AccessId).");
+         if (Strings.isNullOrEmpty(credential))
+            return FormValidation.error("Invalid credential (secret key).");
+         if (Strings.isNullOrEmpty(providerName))
+            return FormValidation.error("Provider Name shouldn't be empty");
+         if (Strings.isNullOrEmpty(imageId)) {
+            return FormValidation.error("Image Id shouldn't be empty");
+         }
+
+         FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
+         ComputeService computeService = null;
+         try {
+            computeService = new ComputeServiceContextFactory()
+                  .createContext(providerName, identity, credential).getComputeService();
+            Set<? extends Image> images = computeService.listImages();
+            for (Image image : images) {
+               if (!image.getId().equals(imageId)) {
+                  if (image.getId().contains(imageId)) {
+                     return FormValidation.warning("Sorry cannot find the image id, " +
+                           "Did you mean: " + image.getId() + "?\n" + image);
+                  }
+               } else {
+                  return FormValidation.ok("Image Id is valid.");
+               }
+            }
+
+         } catch (Exception ex) {
+            result = FormValidation.error("Unable to check the image id, " +
+                  "please check if the credentials you provided are correct.", ex);
+         } finally {
+            if (computeService != null) {
+               computeService.getContext().close();
+            }
+         }
+         return result;
+      }
+
+      public FormValidation doValidateHardwareId(
+            @QueryParameter String providerName,
+            @QueryParameter String identity,
+            @QueryParameter String credential,
+            @QueryParameter String hardwareId) {
+
+         if (Strings.isNullOrEmpty(identity))
+            return FormValidation.error("Invalid identity (AccessId).");
+         if (Strings.isNullOrEmpty(credential))
+            return FormValidation.error("Invalid credential (secret key).");
+         if (Strings.isNullOrEmpty(providerName))
+            return FormValidation.error("Provider Name shouldn't be empty");
+         if (Strings.isNullOrEmpty(hardwareId)) {
+            return FormValidation.error("Hardware Id shouldn't be empty");
+         }
+
+         FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
+         ComputeService computeService = null;
+         try {
+            computeService = new ComputeServiceContextFactory()
+                  .createContext(providerName, identity, credential).getComputeService();
+            Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
+            for (Hardware hardware : hardwareProfiles) {
+               if (!hardware.getId().equals(hardwareId)) {
+                  if (hardware.getId().contains(hardwareId)) {
+                     return FormValidation.warning("Sorry cannot find the hardware id, " +
+                           "Did you mean: " + hardware.getId() +  "?\n" + hardware);
+                  }
+               } else {
+                  return FormValidation.ok("Hardware Id is valid.");
+               }
+            }
+
+         } catch (Exception ex) {
+            result = FormValidation.error("Unable to check the hardware id, " +
+                  "please check if the credentials you provided are correct.", ex);
+         } finally {
+            if (computeService != null) {
+               computeService.getContext().close();
+            }
+         }
+         return result;
       }
    }
 }
