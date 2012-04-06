@@ -37,13 +37,20 @@ The above command will start jenkins with JClouds plugin pre-configured.
 * Fill in configuration options:
   - Name : the name of the instance template e.g. aws-jenkins-slave
   - Description: notes/comments for your reference.
+  
+  - Image ID: Image ID to use for this slave template, such as EC2 AMIs. Note that EC2 AMIs must include the region as well, e.g., "us-east-1/ami-00000".
+  or
   - OSFamily: Specify the OSFamily - leave empty for default for a cloud provider
   - OS Version : Specify the OSVersion - leave empty for default for a cloud provider
+
+  - Hardware ID: Hardware ID on provider for this slave template, such as "t1.micro" on AWS EC2.
+  or
   - RAM : in MB
   - No. of Cores: number of virtual processor cores.
+
   - Labels: (space-separated) labels/tags that you can use to attach a build to this slave template
 
-* Click Save to sve the configuration changes.
+* Click Save to save the configuration changes.
 * Goto Jenkins' home page, click on `Build Executor Status` link on the sidebar.
 * Verify that you have a button with `Provision via JClouds - {YOUR PROFILE NAME} drop down with the slave template name you configured.
 * Click on the slave and see if your slave launched succesfully (please wait until the operation completes).
