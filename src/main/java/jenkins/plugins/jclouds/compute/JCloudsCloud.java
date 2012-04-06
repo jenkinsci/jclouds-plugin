@@ -55,16 +55,16 @@ public class JCloudsCloud extends Cloud {
 
    private static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
-   private final String identity;
-   private final String credential;
-   private final String providerName;
+   public final String identity;
+   public final String credential;
+   public final String providerName;
 
-   private final String privateKey;
-   private final String publicKey;
-   private final String endPointUrl;
-   private final String profile;
-   private int instanceCap;
-   private final List<JCloudsSlaveTemplate> templates;
+   public final String privateKey;
+   public final String publicKey;
+   public final String endPointUrl;
+   public final String profile;
+   public int instanceCap;
+   public final List<JCloudsSlaveTemplate> templates;
    private transient ComputeService compute;
 
    public static JCloudsCloud get() {
@@ -104,8 +104,8 @@ public class JCloudsCloud extends Cloud {
    public ComputeService getCompute() {
       if (this.compute == null) {
          Properties overrides = new Properties();
-         if (this.getEndPointUrl() != null && !this.getEndPointUrl().equals("")) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.getEndPointUrl());
+         if (!Strings.isNullOrEmpty(this.endPointUrl)) {
+            overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
          }
          Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
                new EnterpriseConfigurationModule());
@@ -113,38 +113,6 @@ public class JCloudsCloud extends Cloud {
                .createContext(this.providerName, this.identity, this.credential, modules, overrides).getComputeService();
       }
       return compute;
-   }
-
-   public String getProfile() {
-      return profile;
-   }
-
-   public String getIdentity() {
-      return identity;
-   }
-
-   public String getCredential() {
-      return credential;
-   }
-
-   public String getProviderName() {
-      return providerName;
-   }
-
-   public String getPrivateKey() {
-      return privateKey;
-   }
-
-   public String getPublicKey() {
-      return publicKey;
-   }
-
-   public String getEndPointUrl() {
-      return endPointUrl;
-   }
-
-   public int getInstanceCap() {
-      return instanceCap;
    }
 
    public List<JCloudsSlaveTemplate> getTemplates() {
@@ -156,7 +124,7 @@ public class JCloudsCloud extends Cloud {
     */
    @Override
    public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
-      throw new RuntimeException("Auto Provisioning Not implemented yet.");
+      throw new UnsupportedOperationException("Auto Provisioning Not implemented yet.");
    }
 
    @Override
@@ -167,7 +135,7 @@ public class JCloudsCloud extends Cloud {
 
    public JCloudsSlaveTemplate getTemplate(String name) {
       for (JCloudsSlaveTemplate t : templates)
-         if (t.getName().equals(name))
+         if (t.name.equals(name))
             return t;
       return null;
    }
@@ -217,7 +185,7 @@ public class JCloudsCloud extends Cloud {
          Hudson.getInstance().addNode(node);
          rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
       } else {
-         sendError("Instance cap for this cloud is now reached for cloud profile: " + getProfile()
+         sendError("Instance cap for this cloud is now reached for cloud profile: " + profile
                + " for template type " + name, req, rsp);
       }
    }

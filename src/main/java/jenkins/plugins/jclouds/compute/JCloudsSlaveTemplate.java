@@ -45,17 +45,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
    private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
 
-   private String name;
-   private String imageId;
-   private String hardwareId;
-   private double cores;
-   private int ram;
-   private String osFamily;
-   private String labelString;
-   private String description;
-   private String osVersion;
-   private String initScript;
-   private String numExecutors;
+   public final String name;
+   public final String imageId;
+   public final String hardwareId;
+   public final double cores;
+   public final int ram;
+   public final String osFamily;
+   public final String labelString;
+   public final String description;
+   public final String osVersion;
+   public final String initScript;
+   public final String numExecutors;
    public boolean stopOnTerminate;
    private transient Set<LabelAtom> labelSet;
 
@@ -92,51 +92,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        parseLabels();
    }
 
-   public double getCores() {
-      return cores;
-   }
-
-   public int getRam() {
-      return ram;
-   }
-
-   public String getOsFamily() {
-      return osFamily;
-   }
-
-   public String getOsVersion() {
-      return osVersion;
-   }
-
-   public String getLabelString() {
-      return labelString;
-   }
-
-   public String getName() {
-      return name;
-   }
-
-   public String getDescription() {
-      return description;
-   }
 
    public JCloudsCloud getCloud() {
       return cloud;
    }
-
-
-   public Set getLabelSet() {
-      return labelSet;
-   }
-
-   public String getInitScript() {
-      return initScript;
-   }
-
-   public String getNumExecutors() {
-       return numExecutors;
-   }
-       
 
    /**
     * Initializes data structure that we don't persist.
@@ -144,6 +103,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    protected Object parseLabels() {
       labelSet = Label.parse(labelString);
       return this;
+   }
+
+   public Set<LabelAtom> getLabelSet() {
+      return labelSet;
    }
 
    public JCloudsSlave provision(TaskListener listener) throws IOException {
@@ -190,9 +153,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
             .installAdminPrivateKey(false) // no need
             .grantSudoToAdminUser(false) // no need
-            .adminPrivateKey(getCloud().getPrivateKey()) // temporary due to jclouds bug
+            .adminPrivateKey(JCloudsCloud.get().privateKey) // temporary due to jclouds bug
             .authorizeAdminPublicKey(true)
-            .adminPublicKey(getCloud().getPublicKey())
+            .adminPublicKey(JCloudsCloud.get().publicKey)
             .build();
 
 

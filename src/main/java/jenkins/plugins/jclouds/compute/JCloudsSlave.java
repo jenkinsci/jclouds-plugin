@@ -94,11 +94,11 @@ public class JCloudsSlave extends Slave {
        if (stopOnTerminate) {
            LOGGER.info("Suspending the Slave : " + getNodeName());
            final ComputeService compute = JCloudsCloud.get().getCompute();
-           compute.suspendNode(getNodeMetaData().getId());
+           compute.suspendNode(nodeMetaData.getId());
        } else {
            LOGGER.info("Terminating the Slave : " + getNodeName());
            final ComputeService compute = JCloudsCloud.get().getCompute();
-           compute.destroyNode(getNodeMetaData().getId());
+           compute.destroyNode(nodeMetaData.getId());
        }
    }
 
