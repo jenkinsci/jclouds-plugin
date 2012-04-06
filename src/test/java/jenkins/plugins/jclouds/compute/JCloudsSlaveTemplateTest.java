@@ -14,7 +14,7 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
       String name = "testSlave";
       JCloudsSlaveTemplate originalTemplate = new JCloudsSlaveTemplate(name, "imageId", "hardwareId", 1, 512, "osFamily",
                                                                        "osVersion", "jclouds-slave-type1 jclouds-type2", "Description",
-                                                                       "initScript", "1");
+                                                                       "initScript", "1", false);
 
       List<JCloudsSlaveTemplate> templates = new ArrayList<JCloudsSlaveTemplate>();
       templates.add(originalTemplate);
@@ -31,7 +31,7 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
 
       assertEqualBeans(originalTemplate,
             ((JCloudsCloud) hudson.clouds.iterator().next()).getTemplate(name),
-            "name,cores,ram,osFamily,osVersion,labelString,description,initScript");
+            "name,cores,ram,osFamily,osVersion,labelString,description,initScript,numExecutors,stopOnTerminate");
 
    }
 

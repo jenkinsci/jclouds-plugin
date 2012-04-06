@@ -51,6 +51,10 @@
         <f:textarea />
     </f:entry>
 
+    <f:entry title="${%Stop on Terminate}" field="stopOnTerminate">
+      <f:checkbox />
+    </f:entry>
+
     <f:entry title="">
         <div align="right">
             <f:repeatableDeleteButton/>
