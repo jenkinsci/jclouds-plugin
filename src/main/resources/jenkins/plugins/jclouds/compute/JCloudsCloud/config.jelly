@@ -13,6 +13,11 @@
     <f:entry title="Identity" field="identity">
         <f:textbox/>
     </f:entry>
+
+    <f:entry title="Max. No. of Instances" field="instanceCap">
+        <f:textbox/>
+    </f:entry>
+
     <f:entry title="Credential" field="credential">
         <f:textbox/>
     </f:entry>
