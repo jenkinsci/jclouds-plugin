@@ -22,9 +22,10 @@ import java.util.logging.Logger;
  * @author Vijay Kiran
  */
 public class JCloudsSlave extends Slave {
-   private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
-   private NodeMetadata nodeMetaData;
-
+    private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
+    private NodeMetadata nodeMetaData;
+    public final boolean stopOnTerminate;
+    
    @DataBoundConstructor
    public JCloudsSlave(String name,
                        String nodeDescription,
@@ -34,27 +35,36 @@ public class JCloudsSlave extends Slave {
                        String labelString,
                        ComputerLauncher launcher,
                        RetentionStrategy retentionStrategy,
-                       List<? extends NodeProperty<?>> nodeProperties) throws Descriptor.FormException, IOException {
+                       List<? extends NodeProperty<?>> nodeProperties,
+                       boolean stopOnTerminate) throws Descriptor.FormException, IOException {
       super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
+      this.stopOnTerminate = stopOnTerminate;
    }
 
    /**
     * Constructs a new slave from JCloud's NodeMetadata
     *
     * @param metadata - JCloudsNodeMetadata
+    * @param labelString - Label(s) for this slave.
+    * @param description - Description of this slave.
+    * @param numExecutors - Number of executors for this slave.
+    * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
     * @throws IOException
     * @throws Descriptor.FormException
     */
-   public JCloudsSlave(NodeMetadata metadata, final String labelString, final String description) throws IOException, Descriptor.FormException {
+    public JCloudsSlave(NodeMetadata metadata, final String labelString,
+                        final String description, final String numExecutors,
+                        final boolean stopOnTerminate) throws IOException, Descriptor.FormException {
       this(metadata.getName(),
-            description,
-            "/jenkins",
-            "1",
-            Mode.NORMAL,
-            labelString,
-            new JCloudsLauncher(),
-            new JCloudsRetentionStrategy(),
-            Collections.<NodeProperty<?>>emptyList());
+           description,
+           "/jenkins",
+           numExecutors,
+           Mode.NORMAL,
+           labelString,
+           new JCloudsLauncher(),
+           new JCloudsRetentionStrategy(),
+           Collections.<NodeProperty<?>>emptyList(),
+           stopOnTerminate);
       this.nodeMetaData = metadata;
    }
 
@@ -81,9 +91,15 @@ public class JCloudsSlave extends Slave {
     *
     */
    public void terminate() {
-      LOGGER.info("Terminating the Slave : " + getNodeName());
-      final ComputeService compute = JCloudsCloud.get().getCompute();
-      compute.destroyNode(getNodeMetaData().getId());
+       if (stopOnTerminate) {
+           LOGGER.info("Suspending the Slave : " + getNodeName());
+           final ComputeService compute = JCloudsCloud.get().getCompute();
+           compute.suspendNode(getNodeMetaData().getId());
+       } else {
+           LOGGER.info("Terminating the Slave : " + getNodeName());
+           final ComputeService compute = JCloudsCloud.get().getCompute();
+           compute.destroyNode(getNodeMetaData().getId());
+       }
    }
 
 
