@@ -22,7 +22,7 @@ import java.util.logging.Logger;
  * @author Vijay Kiran
  */
 public class JCloudsSlave extends Slave {
-    private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JCloudsSlave.class.getName());
     private NodeMetadata nodeMetaData;
     public final boolean stopOnTerminate;
     
@@ -113,14 +113,11 @@ public class JCloudsSlave extends Slave {
 
 
       /**
-       * Returns
-       *
+       * {@inheritDoc}
        */
       @Override
       public boolean isInstantiable() {
          return false;
       }
    }
-
-
 }

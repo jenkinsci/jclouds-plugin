@@ -149,8 +149,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    public JCloudsSlave provision(TaskListener listener) throws IOException {
       LOGGER.info("Provisioning new node");
       NodeMetadata nodeMetadata = createNodeWithJdk();
-
-
       try {
           return new JCloudsSlave(nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
       } catch (Descriptor.FormException e) {
@@ -165,11 +163,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       LOGGER.info("creating jclouds node");
 
       ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
-
-
       TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
-
-
       if (!Strings.isNullOrEmpty(imageId)) {
          LOGGER.info("Setting image id to " + imageId);
          templateBuilder.imageId(imageId);
@@ -183,8 +177,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
             templateBuilder.osVersionMatches(osVersion);
          }
       }
-
-
       if (!Strings.isNullOrEmpty((hardwareId))) {
          LOGGER.info("Setting hardware Id to " + hardwareId);
       } else {
