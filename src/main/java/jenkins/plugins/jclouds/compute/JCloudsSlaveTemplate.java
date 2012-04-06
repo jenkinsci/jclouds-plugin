@@ -55,6 +55,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    private String description;
    private String osVersion;
    private String initScript;
+   private String numExecutors;
+   public boolean stopOnTerminate;
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
@@ -70,7 +72,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
                                final String osVersion,
                                final String labelString,
                                final String description,
-                               final String initScript) {
+                               final String initScript,
+                               final String numExecutors,
+                               final boolean stopOnTerminate) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -82,6 +86,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        this.labelString = Util.fixNull(labelString);
        this.description = Util.fixNull(description);
        this.initScript = Util.fixNull(initScript);
+       this.numExecutors = Util.fixNull(numExecutors);
+       this.stopOnTerminate = stopOnTerminate;
+       
        parseLabels();
    }
 
@@ -126,6 +133,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       return initScript;
    }
 
+   public String getNumExecutors() {
+       return numExecutors;
+   }
+       
+
    /**
     * Initializes data structure that we don't persist.
     */
@@ -140,7 +152,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
 
       try {
-         return new JCloudsSlave(nodeMetadata, labelString, description);
+          return new JCloudsSlave(nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
       } catch (Descriptor.FormException e) {
          throw new AssertionError("Invalid configuration " + e.getMessage());
       }
@@ -254,6 +266,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
          return candidates;
       }
 
+      public FormValidation doCheckNumExecutors(@QueryParameter String value) {
+          return FormValidation.validatePositiveInteger(value);
+      }
 
       public FormValidation doValidateImageId(
             @QueryParameter String providerName,
