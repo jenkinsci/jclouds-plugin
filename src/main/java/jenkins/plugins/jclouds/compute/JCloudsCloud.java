@@ -3,12 +3,13 @@ package jenkins.plugins.jclouds.compute;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.inject.Module;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
-import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.Label;
@@ -17,7 +18,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.util.FormValidation;
 import hudson.util.StreamTaskListener;
-import hudson.Util;
+import jenkins.model.Jenkins;
 import org.jclouds.Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
@@ -38,17 +39,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
 /**
  * The JClouds version of the Jenkins Cloud.
+ *
  * @author Vijay Kiran
  */
 public class JCloudsCloud extends Cloud {
@@ -63,6 +63,7 @@ public class JCloudsCloud extends Cloud {
    private final String publicKey;
    private final String endPointUrl;
    private final String profile;
+   private int instanceCap;
    private final List<JCloudsSlaveTemplate> templates;
    private transient ComputeService compute;
 
@@ -78,6 +79,7 @@ public class JCloudsCloud extends Cloud {
                        final String privateKey,
                        final String publicKey,
                        final String endPointUrl,
+                       final int instanceCap,
                        final List<JCloudsSlaveTemplate> templates) {
       super(profile);
       this.profile = Util.fixEmptyAndTrim(profile);
@@ -87,6 +89,7 @@ public class JCloudsCloud extends Cloud {
       this.privateKey = privateKey;
       this.publicKey = publicKey;
       this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+      this.instanceCap = instanceCap;
       this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
       setCloudForTemplates();
 
@@ -140,9 +143,20 @@ public class JCloudsCloud extends Cloud {
       return endPointUrl;
    }
 
+   public int getInstanceCap() {
+      return instanceCap;
+   }
 
    public List<JCloudsSlaveTemplate> getTemplates() {
       return Collections.unmodifiableList(templates);
+   }
+
+   /**
+    * {@inheritDoc}
+    */
+   @Override
+   public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
+      throw new RuntimeException("Auto Provisioning Not implemented yet.");
    }
 
    @Override
@@ -168,7 +182,15 @@ public class JCloudsCloud extends Cloud {
       return null;
    }
 
-
+   /**
+    * Provisions a new node manually (by clicking a button in the computer list)
+    * @param req {@link StaplerRequest}
+    * @param rsp {@link StaplerResponse}
+    * @param name Name of the template to provision
+    * @throws ServletException
+    * @throws IOException
+    * @throws Descriptor.FormException
+    */
    public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String name) throws ServletException, IOException, Descriptor.FormException {
       checkPermission(PROVISION);
       if (name == null) {
@@ -181,29 +203,23 @@ public class JCloudsCloud extends Cloud {
          return;
       }
 
-      StringWriter sw = new StringWriter();
-      StreamTaskListener listener = new StreamTaskListener(sw);
+      Collection<Node> jcloudsNodes = Collections2.filter(Jenkins.getInstance().getNodes(), new Predicate<Node>() {
+         public boolean apply(@Nullable Node node) {
+            //TODO Need to check if the node status should be taken into consideration for determining the instace cap
+            return node != null && JCloudsSlave.class.isInstance(node);
+         }
+      });
 
-      JCloudsSlave node = t.provision(listener);
-      Hudson.getInstance().addNode(node);
-
-      rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
-
-   }
-
-   public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
-      LOGGER.info("Provisioning new node with label " + label.getName() + ", excessWorkload: " + excessWorkload);
-      List<NodeProvisioner.PlannedNode> nodes = new ArrayList<NodeProvisioner.PlannedNode>();
-      nodes.add(new NodeProvisioner.PlannedNode(label.getName(),
-            Computer.threadPoolForRemoting.submit(new Callable<Node>() {
-               public Node call() throws Exception {
-//                  NodeMetadata nodeMetadata =
-//                        createNodeWithAdminUserAndJDKInGroupOpeningPortAndMinRam("jenkins", 8000);
-                  // return new JCloudsSlave(nodeMetadata);
-                  return null;
-               }
-            }), 1));
-      return nodes;
+      if (jcloudsNodes.size() < instanceCap) {
+         StringWriter sw = new StringWriter();
+         StreamTaskListener listener = new StreamTaskListener(sw);
+         JCloudsSlave node = t.provision(listener);
+         Hudson.getInstance().addNode(node);
+         rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
+      } else {
+         sendError("Instance cap for this cloud is now reached for cloud profile: " + getProfile()
+               + " for template type " + name, req, rsp);
+      }
    }
 
 
@@ -325,6 +341,10 @@ public class JCloudsCloud extends Cloud {
 
       public FormValidation doCheckIdentity(@QueryParameter String value) {
          return FormValidation.validateRequired(value);
+      }
+
+      public FormValidation doCheckInstanceCap(@QueryParameter String value) {
+         return FormValidation.validatePositiveInteger(value);
       }
 
       public FormValidation doCheckEndPointUrl(@QueryParameter String value) {
