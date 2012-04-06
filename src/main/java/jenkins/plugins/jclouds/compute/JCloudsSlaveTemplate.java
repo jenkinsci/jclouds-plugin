@@ -56,6 +56,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    private String osVersion;
    private String initScript;
    private String numExecutors;
+   public boolean stopOnTerminate;
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
@@ -72,7 +73,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
                                final String labelString,
                                final String description,
                                final String initScript,
-                               final String numExecutors) {
+                               final String numExecutors,
+                               final boolean stopOnTerminate) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -85,7 +87,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        this.description = Util.fixNull(description);
        this.initScript = Util.fixNull(initScript);
        this.numExecutors = Util.fixNull(numExecutors);
-
+       this.stopOnTerminate = stopOnTerminate;
+       
        parseLabels();
    }
 
@@ -149,7 +152,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
 
       try {
-          return new JCloudsSlave(nodeMetadata, labelString, description, numExecutors);
+          return new JCloudsSlave(nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
       } catch (Descriptor.FormException e) {
          throw new AssertionError("Invalid configuration " + e.getMessage());
       }

@@ -26,7 +26,7 @@ The above command will start jenkins with JClouds plugin pre-configured.
 * Click on `Cloud (JClouds)`
 * Fill in the configuration options
   - Profile : the name of the profile e.g, aws-slave-profile
-  - Provider Name: type first two characters and you'll get an auto-completed provider name (e.g. aws-ec2 or hpclou-compute)
+  - Provider Name: type first two characters and you'll get an auto-completed provider name (e.g. aws-ec2 or hpcloud-compute)
   - End Point URL: if your provider API needs an endpoint configuration, add it here, otherwise leave it empty.
   - Identity : your accessId
   - Credential: your secret key
@@ -50,6 +50,8 @@ The above command will start jenkins with JClouds plugin pre-configured.
   - No. of Cores: number of virtual processor cores.
 
   - Labels: (space-separated) labels/tags that you can use to attach a build to this slave template
+  - Init Script: A shell script to be run when the slave is created.
+  - Stop on Terminate: If true, suspend slaves rather than terminating them.
 
 * Click Save to save the configuration changes.
 * Goto Jenkins' home page, click on `Build Executor Status` link on the sidebar.
