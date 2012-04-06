@@ -19,6 +19,10 @@
     <f:validateButton title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
                       with="providerName,identity,credential,imageId"/>
 
+    <f:entry title="Number of Executors" field="numExecutors">
+        <f:textbox/>
+    </f:entry>
+
     <f:entry title="Description" field="description">
         <f:textarea/>
     </f:entry>

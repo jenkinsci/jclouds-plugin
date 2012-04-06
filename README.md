@@ -36,6 +36,7 @@ The above command will start jenkins with JClouds plugin pre-configured.
 * Add Cloud Instance Template by clicking on the Add button
 * Fill in configuration options:
   - Name : the name of the instance template e.g. aws-jenkins-slave
+  - Number of Executors: How many executors each slave created from this template should have.
   - Description: notes/comments for your reference.
   
   - Image ID: Image ID to use for this slave template, such as EC2 AMIs. Note that EC2 AMIs must include the region as well, e.g., "us-east-1/ami-00000".

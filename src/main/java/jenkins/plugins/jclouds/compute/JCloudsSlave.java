@@ -42,19 +42,22 @@ public class JCloudsSlave extends Slave {
     * Constructs a new slave from JCloud's NodeMetadata
     *
     * @param metadata - JCloudsNodeMetadata
+    * @param labelString - Label(s) for this slave.
+    * @param description - Description of this slave.
+    * @param numExecutors - Number of executors for this slave.
     * @throws IOException
     * @throws Descriptor.FormException
     */
-   public JCloudsSlave(NodeMetadata metadata, final String labelString, final String description) throws IOException, Descriptor.FormException {
+    public JCloudsSlave(NodeMetadata metadata, final String labelString, final String description, final String numExecutors) throws IOException, Descriptor.FormException {
       this(metadata.getName(),
-            description,
-            "/jenkins",
-            "1",
-            Mode.NORMAL,
-            labelString,
-            new JCloudsLauncher(),
-            new JCloudsRetentionStrategy(),
-            Collections.<NodeProperty<?>>emptyList());
+           description,
+           "/jenkins",
+           numExecutors,
+           Mode.NORMAL,
+           labelString,
+           new JCloudsLauncher(),
+           new JCloudsRetentionStrategy(),
+           Collections.<NodeProperty<?>>emptyList());
       this.nodeMetaData = metadata;
    }
 
