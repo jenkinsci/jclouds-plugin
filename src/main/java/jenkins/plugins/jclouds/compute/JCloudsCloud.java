@@ -70,30 +70,29 @@ public class JCloudsCloud extends Cloud {
    public static JCloudsCloud get() {
       return Hudson.getInstance().clouds.get(JCloudsCloud.class);
    }
-
-   @DataBoundConstructor
-   public JCloudsCloud(final String profile,
-                       final String providerName,
-                       final String identity,
-                       final String credential,
-                       final String privateKey,
-                       final String publicKey,
-                       final String endPointUrl,
-                       final int instanceCap,
-                       final List<JCloudsSlaveTemplate> templates) {
-      super(profile);
-      this.profile = Util.fixEmptyAndTrim(profile);
-      this.providerName = Util.fixEmptyAndTrim(providerName);
-      this.identity = Util.fixEmptyAndTrim(identity);
-      this.credential = Util.fixEmptyAndTrim(credential);
-      this.privateKey = privateKey;
-      this.publicKey = publicKey;
-      this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-      this.instanceCap = instanceCap;
-      this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
-      setCloudForTemplates();
-
-   }
+    
+    @DataBoundConstructor
+    public JCloudsCloud(final String profile,
+                        final String providerName,
+                        final String identity,
+                        final String credential,
+                        final String privateKey,
+                        final String publicKey,
+                        final String endPointUrl,
+                        final int instanceCap,
+                        final List<JCloudsSlaveTemplate> templates) {
+        super(Util.fixEmptyAndTrim(profile));
+        this.profile = Util.fixEmptyAndTrim(profile);
+        this.providerName = Util.fixEmptyAndTrim(providerName);
+        this.identity = Util.fixEmptyAndTrim(identity);
+        this.credential = Util.fixEmptyAndTrim(credential);
+        this.privateKey = privateKey;
+        this.publicKey = publicKey;
+        this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+        this.instanceCap = instanceCap;
+        this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
+        setCloudForTemplates();
+    }
 
    protected Object setCloudForTemplates() {
       for (JCloudsSlaveTemplate template : templates)
@@ -174,7 +173,7 @@ public class JCloudsCloud extends Cloud {
       Collection<Node> jcloudsNodes = Collections2.filter(Jenkins.getInstance().getNodes(), new Predicate<Node>() {
          public boolean apply(@Nullable Node node) {
             //TODO Need to check if the node status should be taken into consideration for determining the instace cap
-            return node != null && JCloudsSlave.class.isInstance(node);
+             return node != null && JCloudsSlave.class.isInstance(node) && ((JCloudsSlave)node).getCloudName().equals(profile);
          }
       });
 
