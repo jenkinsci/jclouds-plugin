@@ -89,7 +89,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        this.numExecutors = Util.fixNull(numExecutors);
        this.stopOnTerminate = stopOnTerminate;
        
-       parseLabels();
+       readResolve();
    }
 
 
@@ -100,7 +100,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    /**
     * Initializes data structure that we don't persist.
     */
-   protected Object parseLabels() {
+   protected Object readResolve() {
       labelSet = Label.parse(labelString);
       return this;
    }
@@ -151,18 +151,18 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
       // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
       AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
-            .installAdminPrivateKey(false) // no need
-            .grantSudoToAdminUser(false) // no need
-            .adminPrivateKey(JCloudsCloud.get().privateKey) // temporary due to jclouds bug
-            .authorizeAdminPublicKey(true)
-            .adminPublicKey(JCloudsCloud.get().publicKey)
-            .build();
+          .installAdminPrivateKey(false) // no need
+          .grantSudoToAdminUser(false) // no need
+          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
+          .authorizeAdminPublicKey(true)
+          .adminPublicKey(getCloud().publicKey)
+          .build();
 
 
       // Jenkins needs /jenkins dir.
       Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
 
-      Statement bootstrap = newStatementList(InstallJDK.fromOpenJDK(), adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
+      Statement bootstrap = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript), InstallJDK.fromOpenJDK());
 
       template.getOptions()
             .inboundPorts(22)

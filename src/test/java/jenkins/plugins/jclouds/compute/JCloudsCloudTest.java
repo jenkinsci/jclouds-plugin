@@ -54,9 +54,13 @@ public class JCloudsCloudTest extends HudsonTestCase {
       submit(createWebClient().goTo("configure").getFormByName("config"));
 
       assertEqualBeans(original,
-            hudson.clouds.iterator().next(),
-            "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap");
-   }
+                       hudson.clouds.getByName("aws-profile"),
+                       "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap");
+
+      assertEqualBeans(original,
+                       JCloudsCloud.getByName("aws-profile"),
+                       "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap");
+}
 
 
 }
