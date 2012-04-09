@@ -31,6 +31,10 @@ public class JCloudsComputer extends SlaveComputer {
       return (JCloudsSlave) super.getNode();
    }
 
+    public String getCloudName() {
+        return getNode().getCloudName();
+    }
+
    /**
     * Really deletes the slave, by terminating the instance.
     */

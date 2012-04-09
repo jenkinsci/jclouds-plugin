@@ -25,9 +25,11 @@ public class JCloudsSlave extends Slave {
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlave.class.getName());
     private NodeMetadata nodeMetaData;
     public final boolean stopOnTerminate;
+    private String cloudName;
     
    @DataBoundConstructor
-   public JCloudsSlave(String name,
+   public JCloudsSlave(String cloudName,
+                       String name,
                        String nodeDescription,
                        String remoteFS,
                        String numExecutors,
@@ -39,34 +41,37 @@ public class JCloudsSlave extends Slave {
                        boolean stopOnTerminate) throws Descriptor.FormException, IOException {
       super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
       this.stopOnTerminate = stopOnTerminate;
+      this.cloudName = cloudName;
    }
 
-   /**
-    * Constructs a new slave from JCloud's NodeMetadata
-    *
-    * @param metadata - JCloudsNodeMetadata
-    * @param labelString - Label(s) for this slave.
-    * @param description - Description of this slave.
-    * @param numExecutors - Number of executors for this slave.
-    * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
-    * @throws IOException
-    * @throws Descriptor.FormException
-    */
-    public JCloudsSlave(NodeMetadata metadata, final String labelString,
+    /**
+     * Constructs a new slave from JCloud's NodeMetadata
+     *
+     * @param cloudName - the name of the cloud that's provisioning this slave.
+     * @param metadata - JCloudsNodeMetadata
+     * @param labelString - Label(s) for this slave.
+     * @param description - Description of this slave.
+     * @param numExecutors - Number of executors for this slave.
+     * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
+     * @throws IOException
+     * @throws Descriptor.FormException
+     */
+    public JCloudsSlave(final String cloudName, NodeMetadata metadata, final String labelString,
                         final String description, final String numExecutors,
                         final boolean stopOnTerminate) throws IOException, Descriptor.FormException {
-      this(metadata.getName(),
-           description,
-           "/jenkins",
-           numExecutors,
-           Mode.NORMAL,
-           labelString,
-           new JCloudsLauncher(),
-           new JCloudsRetentionStrategy(),
-           Collections.<NodeProperty<?>>emptyList(),
-           stopOnTerminate);
-      this.nodeMetaData = metadata;
-   }
+        this(cloudName,
+             metadata.getName(),
+             description,
+             "/jenkins",
+             numExecutors,
+             Mode.NORMAL,
+             labelString,
+             new JCloudsLauncher(),
+             new JCloudsRetentionStrategy(),
+             Collections.<NodeProperty<?>>emptyList(),
+             stopOnTerminate);
+        this.nodeMetaData = metadata;
+    }
 
    /**
     * Get Jclouds NodeMetadata associated with this Slave.
@@ -77,6 +82,15 @@ public class JCloudsSlave extends Slave {
       return nodeMetaData;
    }
 
+    /**
+     * Get the JClouds profile identifier for the Cloud associated with this slave.
+     *
+     * @return cloudName
+     */
+    public String getCloudName() {
+        return cloudName;
+    }
+    
    /**
     * {@inheritDoc}
     */

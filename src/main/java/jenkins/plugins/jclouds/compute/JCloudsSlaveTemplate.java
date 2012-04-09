@@ -113,7 +113,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       LOGGER.info("Provisioning new node");
       NodeMetadata nodeMetadata = createNodeWithJdk();
       try {
-          return new JCloudsSlave(nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
+          return new JCloudsSlave(getCloud().getDisplayName(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
       } catch (Descriptor.FormException e) {
          throw new AssertionError("Invalid configuration " + e.getMessage());
       }
