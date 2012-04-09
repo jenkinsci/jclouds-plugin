@@ -26,12 +26,12 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
       submit(createWebClient().goTo("configure").getFormByName("config"));
 
       assertEqualBeans(originalCloud,
-            hudson.clouds.iterator().next(),
-            "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl");
+                       JCloudsCloud.getByName("aws-profile"),
+                       "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl");
 
       assertEqualBeans(originalTemplate,
-            ((JCloudsCloud) hudson.clouds.iterator().next()).getTemplate(name),
-            "name,cores,ram,osFamily,osVersion,labelString,description,initScript,numExecutors,stopOnTerminate");
+                       JCloudsCloud.getByName("aws-profile").getTemplate(name),
+                       "name,cores,ram,osFamily,osVersion,labelString,description,initScript,numExecutors,stopOnTerminate");
 
    }
 
