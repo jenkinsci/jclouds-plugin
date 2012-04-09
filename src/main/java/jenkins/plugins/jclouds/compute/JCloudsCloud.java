@@ -67,8 +67,8 @@ public class JCloudsCloud extends Cloud {
    public final List<JCloudsSlaveTemplate> templates;
    private transient ComputeService compute;
 
-   public static JCloudsCloud get() {
-      return Hudson.getInstance().clouds.get(JCloudsCloud.class);
+   public static JCloudsCloud getByName(String name) {
+       return (JCloudsCloud)Hudson.getInstance().clouds.getByName(name);
    }
     
     @DataBoundConstructor
@@ -91,10 +91,11 @@ public class JCloudsCloud extends Cloud {
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
-        setCloudForTemplates();
+        readResolve();
     }
 
-   protected Object setCloudForTemplates() {
+
+    protected Object readResolve() {
       for (JCloudsSlaveTemplate template : templates)
          template.cloud = this;
       return this;
