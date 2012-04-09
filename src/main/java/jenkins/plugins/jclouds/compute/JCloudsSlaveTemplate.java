@@ -89,7 +89,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        this.numExecutors = Util.fixNull(numExecutors);
        this.stopOnTerminate = stopOnTerminate;
        
-       parseLabels();
+       readResolve();
    }
 
 
@@ -100,7 +100,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    /**
     * Initializes data structure that we don't persist.
     */
-   protected Object parseLabels() {
+   protected Object readResolve() {
       labelSet = Label.parse(labelString);
       return this;
    }

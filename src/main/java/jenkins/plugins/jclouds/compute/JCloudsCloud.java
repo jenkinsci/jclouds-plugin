@@ -91,10 +91,11 @@ public class JCloudsCloud extends Cloud {
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
-        setCloudForTemplates();
+        readResolve();
     }
 
-   protected Object setCloudForTemplates() {
+
+    protected Object readResolve() {
       for (JCloudsSlaveTemplate template : templates)
          template.cloud = this;
       return this;
