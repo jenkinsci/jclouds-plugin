@@ -70,6 +70,7 @@ public class JCloudsCloud extends Cloud {
    public final String publicKey;
    public final String endPointUrl;
    public final String profile;
+    private final int retentionTime;
    public int instanceCap;
    public final List<JCloudsSlaveTemplate> templates;
    private transient ComputeService compute;
@@ -87,6 +88,7 @@ public class JCloudsCloud extends Cloud {
                         final String publicKey,
                         final String endPointUrl,
                         final int instanceCap,
+                        final int retentionTime,
                         final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
@@ -97,6 +99,7 @@ public class JCloudsCloud extends Cloud {
         this.publicKey = publicKey;
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
+        this.retentionTime = retentionTime;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
         readResolve();
     }
@@ -108,6 +111,19 @@ public class JCloudsCloud extends Cloud {
       return this;
    }
 
+
+    /**
+     * Get the retention time, defaulting to 30 minutes.
+     */
+    public int getRetentionTime() {
+        if (retentionTime == 0) {
+            return 30;
+        } else {
+            return retentionTime;
+        }
+    }
+        
+    
    public ComputeService getCompute() {
       if (this.compute == null) {
          Properties overrides = new Properties();
