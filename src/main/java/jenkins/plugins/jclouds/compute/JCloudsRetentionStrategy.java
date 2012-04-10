@@ -5,6 +5,7 @@ import hudson.slaves.RetentionStrategy;
 import hudson.util.TimeUnit2;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 /**
@@ -18,12 +19,18 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
     @Override
     public synchronized long check(JCloudsComputer c) {
         if (c.isIdle() && !disabled) {
-            // TODO: really think about the right strategy here
+            // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
+            final int retentionTime = JCloudsCloud.getByName(c.getCloudName()).getRetentionTime();
             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
-            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(30)) {
+            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
                 LOGGER.info("Disconnecting "+c.getName());
-                c.getNode().terminate();
+                try {
+                    c.deleteSlave();
+                } catch (IOException e) {
+                    LOGGER.warning("Failed to disconnect and delete "+c.getName()+": "+e.getMessage());
+                }
             }
+                
         }
         return 1;
     }

@@ -10,11 +10,15 @@
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Identity" field="identity">
+    <f:entry title="Max. No. of Instances" field="instanceCap">
         <f:textbox/>
     </f:entry>
 
-    <f:entry title="Max. No. of Instances" field="instanceCap">
+    <f:entry title="Retention Time" field="retentionTime">
+        <f:textbox/>
+    </f:entry>
+
+    <f:entry title="Identity" field="identity">
         <f:textbox/>
     </f:entry>
 

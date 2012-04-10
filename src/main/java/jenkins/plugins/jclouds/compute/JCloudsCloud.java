@@ -10,12 +10,14 @@ import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
+import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
@@ -23,6 +25,9 @@ import org.jclouds.Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
+import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeState;
 import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
@@ -39,12 +44,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.util.concurrent.Callable;
 
 /**
  * The JClouds version of the Jenkins Cloud.
@@ -63,6 +70,7 @@ public class JCloudsCloud extends Cloud {
    public final String publicKey;
    public final String endPointUrl;
    public final String profile;
+    private final int retentionTime;
    public int instanceCap;
    public final List<JCloudsSlaveTemplate> templates;
    private transient ComputeService compute;
@@ -80,6 +88,7 @@ public class JCloudsCloud extends Cloud {
                         final String publicKey,
                         final String endPointUrl,
                         final int instanceCap,
+                        final int retentionTime,
                         final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
@@ -90,6 +99,7 @@ public class JCloudsCloud extends Cloud {
         this.publicKey = publicKey;
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
+        this.retentionTime = retentionTime;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
         readResolve();
     }
@@ -101,6 +111,19 @@ public class JCloudsCloud extends Cloud {
       return this;
    }
 
+
+    /**
+     * Get the retention time, defaulting to 30 minutes.
+     */
+    public int getRetentionTime() {
+        if (retentionTime == 0) {
+            return 30;
+        } else {
+            return retentionTime;
+        }
+    }
+        
+    
    public ComputeService getCompute() {
       if (this.compute == null) {
          Properties overrides = new Properties();
@@ -119,13 +142,41 @@ public class JCloudsCloud extends Cloud {
       return Collections.unmodifiableList(templates);
    }
 
-   /**
-    * {@inheritDoc}
-    */
-   @Override
-   public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
-      throw new UnsupportedOperationException("Auto Provisioning Not implemented yet.");
-   }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
+        final JCloudsSlaveTemplate t = getTemplate(label);
+        
+        List<PlannedNode> r = new ArrayList<PlannedNode>();
+        for( ; excessWorkload>0; excessWorkload-- ) {
+            if(getRunningNodesCount()>=instanceCap)
+                break;      // maxed out
+            
+            r.add(new PlannedNode(t.name,
+                                  Computer.threadPoolForRemoting.submit(new Callable<Node>() {
+                                          public Node call() throws Exception {
+                                              // TODO: record the output somewhere
+                                              JCloudsSlave s = t.provision(new StreamTaskListener(System.out));
+                                              Hudson.getInstance().addNode(s);
+                                              // Cloud instances may have a long init script. If we declare
+                                              // the provisioning complete by returning without the connect
+                                              // operation, NodeProvisioner may decide that it still wants
+                                              // one more instance, because it sees that (1) all the slaves
+                                              // are offline (because it's still being launched) and
+                                              // (2) there's no capacity provisioned yet.
+                                              //
+                                              // deferring the completion of provisioning until the launch
+                                              // goes successful prevents this problem.
+                                              s.toComputer().connect(false).get();
+                                              return s;
+                                          }
+                                      })
+                                  ,Util.tryParseNumber(t.numExecutors, 1).intValue()));
+        }
+        return r;
+    }
 
    @Override
    public boolean canProvision(final Label label) {
@@ -171,14 +222,7 @@ public class JCloudsCloud extends Cloud {
          return;
       }
 
-      Collection<Node> jcloudsNodes = Collections2.filter(Jenkins.getInstance().getNodes(), new Predicate<Node>() {
-         public boolean apply(@Nullable Node node) {
-            //TODO Need to check if the node status should be taken into consideration for determining the instace cap
-             return node != null && JCloudsSlave.class.isInstance(node) && ((JCloudsSlave)node).getCloudName().equals(profile);
-         }
-      });
-
-      if (jcloudsNodes.size() < instanceCap) {
+      if (getRunningNodesCount() < instanceCap) {
          StringWriter sw = new StringWriter();
          StreamTaskListener listener = new StreamTaskListener(sw);
          JCloudsSlave node = t.provision(listener);
@@ -190,7 +234,28 @@ public class JCloudsCloud extends Cloud {
       }
    }
 
+    /**
+     * Determine how many nodes are currently running for this cloud.
+     */
+    public int getRunningNodesCount() {
+        int nodeCount = 0;
 
+        for (ComputeMetadata cm : getCompute().listNodes()) {
+            if (NodeMetadata.class.isInstance(cm)) {
+                String nodeGroup = ((NodeMetadata)cm).getGroup();
+
+                if (getTemplate(nodeGroup) != null
+                    && !((NodeMetadata)cm).getState().equals(NodeState.SUSPENDED)
+                    && !((NodeMetadata)cm).getState().equals(NodeState.TERMINATED)) {
+                    nodeCount++;
+                }
+            }
+        }
+        return nodeCount;
+    }
+        
+
+    
    @Extension
    public static class DescriptorImpl extends Descriptor<Cloud> {
 
