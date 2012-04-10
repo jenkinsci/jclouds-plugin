@@ -10,12 +10,14 @@ import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
+import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
+import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
@@ -42,12 +44,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.util.concurrent.Callable;
 
 /**
  * The JClouds version of the Jenkins Cloud.
@@ -122,13 +126,41 @@ public class JCloudsCloud extends Cloud {
       return Collections.unmodifiableList(templates);
    }
 
-   /**
-    * {@inheritDoc}
-    */
-   @Override
-   public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
-      throw new UnsupportedOperationException("Auto Provisioning Not implemented yet.");
-   }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
+        final JCloudsSlaveTemplate t = getTemplate(label);
+        
+        List<PlannedNode> r = new ArrayList<PlannedNode>();
+        for( ; excessWorkload>0; excessWorkload-- ) {
+            if(getRunningNodesCount()>=instanceCap)
+                break;      // maxed out
+            
+            r.add(new PlannedNode(t.name,
+                                  Computer.threadPoolForRemoting.submit(new Callable<Node>() {
+                                          public Node call() throws Exception {
+                                              // TODO: record the output somewhere
+                                              JCloudsSlave s = t.provision(new StreamTaskListener(System.out));
+                                              Hudson.getInstance().addNode(s);
+                                              // Cloud instances may have a long init script. If we declare
+                                              // the provisioning complete by returning without the connect
+                                              // operation, NodeProvisioner may decide that it still wants
+                                              // one more instance, because it sees that (1) all the slaves
+                                              // are offline (because it's still being launched) and
+                                              // (2) there's no capacity provisioned yet.
+                                              //
+                                              // deferring the completion of provisioning until the launch
+                                              // goes successful prevents this problem.
+                                              s.toComputer().connect(false).get();
+                                              return s;
+                                          }
+                                      })
+                                  ,Util.tryParseNumber(t.numExecutors, 1).intValue()));
+        }
+        return r;
+    }
 
    @Override
    public boolean canProvision(final Label label) {
