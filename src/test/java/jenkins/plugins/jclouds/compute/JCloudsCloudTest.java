@@ -32,6 +32,7 @@ public class JCloudsCloudTest extends HudsonTestCase {
       WebAssert.assertInputPresent(page2, "_.identity");
       WebAssert.assertInputPresent(page2, "_.credential");
       WebAssert.assertInputPresent(page2, "_.instanceCap");
+      WebAssert.assertInputPresent(page2, "_.retentionTime");
 
       HtmlForm configForm2 = page2.getFormByName("config");
       assertNotNull(configForm2.getTextAreaByName("_.privateKey"));
@@ -48,18 +49,18 @@ public class JCloudsCloudTest extends HudsonTestCase {
    public void testConfigRoundtrip() throws Exception {
 
       JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey",
-            "endPointUrl", 1 , Collections.<JCloudsSlaveTemplate>emptyList());
+                                               "endPointUrl", 1 , 30, Collections.<JCloudsSlaveTemplate>emptyList());
 
       hudson.clouds.add(original);
       submit(createWebClient().goTo("configure").getFormByName("config"));
 
       assertEqualBeans(original,
                        hudson.clouds.getByName("aws-profile"),
-                       "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap");
+                       "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap,retentionTime");
 
       assertEqualBeans(original,
                        JCloudsCloud.getByName("aws-profile"),
-                       "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap");
+                       "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap,retentionTime");
 }
 
 

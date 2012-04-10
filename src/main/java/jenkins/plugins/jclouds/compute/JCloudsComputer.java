@@ -35,18 +35,25 @@ public class JCloudsComputer extends SlaveComputer {
         return getNode().getCloudName();
     }
 
-   /**
-    * Really deletes the slave, by terminating the instance.
-    */
-   @Override
-   public HttpResponse doDoDelete() throws IOException {
-      LOGGER.info("Terminating " + getName() + " slave");
-      JCloudsSlave slave = getNode();
-      if (slave.getChannel() != null) {
-         slave.getChannel().close();
-      }
-      slave.terminate();
-      Hudson.getInstance().removeNode(slave);
-      return new HttpRedirect("..");
-   }
+    /**
+     * Really deletes the slave, by terminating the instance.
+     */
+    @Override
+    public HttpResponse doDoDelete() throws IOException {
+        deleteSlave();
+        return new HttpRedirect("..");
+    }
+    
+    /**
+     * Delete the slave, terminate the instance. Can be called eitehr by doDoDelete() or from JCloudsRetentionStrategy.
+     */
+    public void deleteSlave() throws IOException {
+        LOGGER.info("Terminating " + getName() + " slave");
+        JCloudsSlave slave = getNode();
+        if (slave.getChannel() != null) {
+            slave.getChannel().close();
+        }
+        slave.terminate();
+        Hudson.getInstance().removeNode(slave);
+    }
 }
