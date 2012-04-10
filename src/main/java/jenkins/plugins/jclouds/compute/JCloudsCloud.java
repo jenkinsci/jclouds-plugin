@@ -23,6 +23,9 @@ import org.jclouds.Constants;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
+import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeState;
 import org.jclouds.compute.util.ComputeServiceUtils;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
@@ -171,14 +174,7 @@ public class JCloudsCloud extends Cloud {
          return;
       }
 
-      Collection<Node> jcloudsNodes = Collections2.filter(Jenkins.getInstance().getNodes(), new Predicate<Node>() {
-         public boolean apply(@Nullable Node node) {
-            //TODO Need to check if the node status should be taken into consideration for determining the instace cap
-             return node != null && JCloudsSlave.class.isInstance(node) && ((JCloudsSlave)node).getCloudName().equals(profile);
-         }
-      });
-
-      if (jcloudsNodes.size() < instanceCap) {
+      if (getRunningNodesCount() < instanceCap) {
          StringWriter sw = new StringWriter();
          StreamTaskListener listener = new StreamTaskListener(sw);
          JCloudsSlave node = t.provision(listener);
@@ -190,7 +186,28 @@ public class JCloudsCloud extends Cloud {
       }
    }
 
+    /**
+     * Determine how many nodes are currently running for this cloud.
+     */
+    public int getRunningNodesCount() {
+        int nodeCount = 0;
 
+        for (ComputeMetadata cm : getCompute().listNodes()) {
+            if (NodeMetadata.class.isInstance(cm)) {
+                String nodeGroup = ((NodeMetadata)cm).getGroup();
+
+                if (getTemplate(nodeGroup) != null
+                    && !((NodeMetadata)cm).getState().equals(NodeState.SUSPENDED)
+                    && !((NodeMetadata)cm).getState().equals(NodeState.TERMINATED)) {
+                    nodeCount++;
+                }
+            }
+        }
+        return nodeCount;
+    }
+        
+
+    
    @Extension
    public static class DescriptorImpl extends Descriptor<Cloud> {
 
