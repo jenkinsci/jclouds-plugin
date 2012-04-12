@@ -127,6 +127,17 @@ public class JCloudsLauncher extends ComputerLauncher {
       }
    }
 
+    /**
+     * Get the potential addresses to connect to, opting for public first and then private.
+     */
+    private String[] getConnectionAddresses(NodeMetadata nodeMetadata) {
+        if (nodeMetadata.getPublicAddresses().size() > 0) {
+            return nodeMetadata.getPublicAddresses().toArray(new String[nodeMetadata.getPublicAddresses().size()]);
+        } else {
+            return nodeMetadata.getPrivateAddresses().toArray(new String[nodeMetadata.getPrivateAddresses().size()]);
+        }
+    }
+    
    /**
     * Connect to SSH, and return the connection.
     * @param nodeMetadata - JClouds compute instance {@link NodeMetadata}, for credentials and the public IP.
@@ -138,7 +149,7 @@ public class JCloudsLauncher extends ComputerLauncher {
       while (true) {
          try {
 
-            final String[] addresses = nodeMetadata.getPublicAddresses().toArray(new String[nodeMetadata.getPublicAddresses().size()]);
+             final String[] addresses = getConnectionAddresses(nodeMetadata);
             String host = addresses[0];
             if ("0.0.0.0".equals(host)) {
                logger.println("Invalid host 0.0.0.0, your host is most likely waiting for an ip address.");

@@ -30,6 +30,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
@@ -59,6 +60,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    public final String initScript;
    public final String numExecutors;
    public boolean stopOnTerminate;
+   public final String vmUser;
+   public final String vmPassword;
+   public final boolean preInstalledJava;
+   
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
@@ -76,7 +81,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
                                final String description,
                                final String initScript,
                                final String numExecutors,
-                               final boolean stopOnTerminate) {
+                               final boolean stopOnTerminate,
+                               final String vmPassword,
+                               final String vmUser,
+                               final boolean preInstalledJava) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -89,6 +97,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        this.description = Util.fixNull(description);
        this.initScript = Util.fixNull(initScript);
        this.numExecutors = Util.fixNull(numExecutors);
+       this.vmPassword = Util.fixEmptyAndTrim(vmPassword);
+       this.vmUser = Util.fixEmptyAndTrim(vmUser);
+       this.preInstalledJava = preInstalledJava;
        this.stopOnTerminate = stopOnTerminate;
        
        readResolve();
@@ -151,6 +162,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
       Template template = templateBuilder.build();
 
+      if (!Strings.isNullOrEmpty(vmUser)) {
+          LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
+          template.getOptions().overrideLoginCredentials(lc);
+      }
+
       // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
       AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
           .installAdminPrivateKey(false) // no need
@@ -164,8 +180,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       // Jenkins needs /jenkins dir.
       Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
 
-      Statement bootstrap = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript), InstallJDK.fromOpenJDK());
+      Statement initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
 
+      Statement bootstrap;
+      if (preInstalledJava) {
+          bootstrap = initStatement;
+      } else {
+          bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
+      }
+      
       template.getOptions()
             .inboundPorts(22)
             .userMetadata(userMetadata)
