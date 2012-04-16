@@ -130,10 +130,11 @@ public class JCloudsLauncher extends ComputerLauncher {
     /**
      * Get the potential addresses to connect to, opting for public first and then private.
      */
-    private String[] getConnectionAddresses(NodeMetadata nodeMetadata) {
+    private String[] getConnectionAddresses(NodeMetadata nodeMetadata, PrintStream logger) {
         if (nodeMetadata.getPublicAddresses().size() > 0) {
             return nodeMetadata.getPublicAddresses().toArray(new String[nodeMetadata.getPublicAddresses().size()]);
         } else {
+            logger.println("No public addresses found, so using private address.");
             return nodeMetadata.getPrivateAddresses().toArray(new String[nodeMetadata.getPrivateAddresses().size()]);
         }
     }
@@ -149,7 +150,7 @@ public class JCloudsLauncher extends ComputerLauncher {
       while (true) {
          try {
 
-             final String[] addresses = getConnectionAddresses(nodeMetadata);
+             final String[] addresses = getConnectionAddresses(nodeMetadata, logger);
             String host = addresses[0];
             if ("0.0.0.0".equals(host)) {
                logger.println("Invalid host 0.0.0.0, your host is most likely waiting for an ip address.");
