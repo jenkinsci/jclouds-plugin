@@ -51,6 +51,17 @@
         <f:textarea />
     </f:entry>
 
+    <f:entry title="Admin Username" field="vmUser">
+        <f:textbox />
+    </f:entry>
+    <f:entry title="Admin Password" field="vmPassword">
+        <f:password />
+    </f:entry>
+
+    <f:entry title="${%Use Pre-installed Java}" field="preInstalledJava">
+      <f:checkbox />
+    </f:entry>
+
     <f:entry title="${%Stop on Terminate}" field="stopOnTerminate">
       <f:checkbox />
     </f:entry>
