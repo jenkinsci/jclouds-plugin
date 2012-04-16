@@ -1,21 +1,22 @@
 package jenkins.plugins.jclouds.compute;
 
-import com.trilead.ssh2.Connection;
-import com.trilead.ssh2.SCPClient;
-import com.trilead.ssh2.ServerHostKeyVerifier;
-import com.trilead.ssh2.Session;
-import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
 import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.domain.LoginCredentials;
 
 import java.io.IOException;
 import java.io.PrintStream;
+
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.domain.LoginCredentials;
+
+import com.trilead.ssh2.Connection;
+import com.trilead.ssh2.SCPClient;
+import com.trilead.ssh2.ServerHostKeyVerifier;
+import com.trilead.ssh2.Session;
 
 /**
  * The launcher that launches the jenkins slave.jar on the Slave. Uses the SSHKeyPair configured in the

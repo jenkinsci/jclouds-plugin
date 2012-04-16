@@ -1,14 +1,23 @@
 package jenkins.plugins.jclouds.blobstore;
 
 import hudson.FilePath;
-import org.jclouds.blobstore.BlobStore;
-import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.blobstore.BlobStoreContextFactory;
-import org.jclouds.blobstore.InputStreamMap;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.util.Properties;
 import java.util.logging.Logger;
+
+import org.jclouds.ContextBuilder;
+import org.jclouds.apis.Apis;
+import org.jclouds.blobstore.BlobStore;
+import org.jclouds.blobstore.BlobStoreContext;
+import org.jclouds.blobstore.InputStreamMap;
+import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
+import org.jclouds.sshj.config.SshjSshClientModule;
+import org.kohsuke.stapler.DataBoundConstructor;
+
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Module;
 
 /**
  * Model class for Blobstore profile. User can configure multiple profiles to upload artifacts to different providers.
@@ -70,7 +79,17 @@ public class BlobStoreProfile {
    public String getCredential() {
       return credential;
    }
-
+   
+   static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
+            new EnterpriseConfigurationModule());
+  
+   static BlobStoreContext ctx(String providerName, String identity, String credential, Properties overrides) {
+     return ContextBuilder.newBuilder(providerName)
+                                 .credentials(identity, credential)
+                                 .overrides(overrides)
+                                 .modules(MODULES)
+                                 .build(BlobStoreContext.class);
+   }
    /**
     * Upload the specified file from the {@param filePath} to container
     *
@@ -83,8 +102,10 @@ public class BlobStoreProfile {
       if (filePath.isDirectory()) {
          throw new IOException(filePath + " is a directory");
       }
-
-      final BlobStoreContext context = new BlobStoreContextFactory().createContext(this.providerName, this.identity, this.credential);
+      // correct the classloader so that extensions can be found
+      Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+      //TODO: endpoint
+      final BlobStoreContext context = ctx(this.providerName, this.identity, this.credential, new Properties());
       try {
          final BlobStore blobStore = context.getBlobStore();
          if (!blobStore.containerExists(container)) {

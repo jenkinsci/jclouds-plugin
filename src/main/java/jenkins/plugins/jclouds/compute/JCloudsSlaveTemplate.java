@@ -1,7 +1,8 @@
 package jenkins.plugins.jclouds.compute;
 
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
@@ -11,10 +12,17 @@ import hudson.model.Label;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.logging.Logger;
+
 import jenkins.model.Jenkins;
+
 import org.apache.commons.lang.StringUtils;
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
@@ -29,14 +37,8 @@ import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Logger;
-
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.getOnlyElement;
-import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * @author Vijay Kiran
@@ -250,8 +252,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
          FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
          ComputeService computeService = null;
          try {
-            computeService = new ComputeServiceContextFactory()
-                  .createContext(providerName, identity, credential).getComputeService();
+            // TODO: endpoint is ignored
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, new Properties()).getComputeService();
             Set<? extends Image> images = computeService.listImages();
             for (Image image : images) {
                if (!image.getId().equals(imageId)) {
@@ -300,8 +302,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
          FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
          ComputeService computeService = null;
          try {
-            computeService = new ComputeServiceContextFactory()
-                  .createContext(providerName, identity, credential).getComputeService();
+            // TODO: endpoint is ignored
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, new Properties()).getComputeService();
             Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
             for (Hardware hardware : hardwareProfiles) {
                if (!hardware.getId().equals(hardwareId)) {

@@ -1,12 +1,5 @@
 package jenkins.plugins.jclouds.compute;
 
-import com.google.common.base.Objects;
-import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Iterables;
-import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
@@ -20,26 +13,7 @@ import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
 import hudson.util.StreamTaskListener;
-import jenkins.model.Jenkins;
-import org.jclouds.Constants;
-import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.ComputeServiceContext;
-import org.jclouds.compute.ComputeServiceContextFactory;
-import org.jclouds.compute.domain.ComputeMetadata;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeState;
-import org.jclouds.compute.util.ComputeServiceUtils;
-import org.jclouds.crypto.SshKeys;
-import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.sshj.config.SshjSshClientModule;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
-import javax.annotation.Nullable;
-import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -50,8 +24,38 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Logger;
 import java.util.concurrent.Callable;
+import java.util.logging.Logger;
+
+import javax.annotation.Nullable;
+import javax.servlet.ServletException;
+
+import org.jclouds.Constants;
+import org.jclouds.ContextBuilder;
+import org.jclouds.apis.Apis;
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.ComputeServiceContext;
+import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeState;
+import org.jclouds.crypto.SshKeys;
+import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
+import org.jclouds.providers.Providers;
+import org.jclouds.sshj.config.SshjSshClientModule;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+
+import com.google.common.base.Objects;
+import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.io.Closeables;
+import com.google.inject.Module;
 
 /**
  * The JClouds version of the Jenkins Cloud.
@@ -123,20 +127,32 @@ public class JCloudsCloud extends Cloud {
         }
     }
         
-    
+   static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
+             new EnterpriseConfigurationModule());
+   
+   static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides) {
+      // correct the classloader so that extensions can be found
+      Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+      return ContextBuilder.newBuilder(providerName)
+                                  .credentials(identity, credential)
+                                  .overrides(overrides)
+                                  .modules(MODULES)
+                                  .build(ComputeServiceContext.class);
+   }
+   
    public ComputeService getCompute() {
       if (this.compute == null) {
          Properties overrides = new Properties();
          if (!Strings.isNullOrEmpty(this.endPointUrl)) {
             overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
          }
-         Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
-               new EnterpriseConfigurationModule());
-         this.compute = new ComputeServiceContextFactory()
-               .createContext(this.providerName, this.identity, this.credential, modules, overrides).getComputeService();
+
+         this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
       }
       return compute;
    }
+
+
 
    public List<JCloudsSlaveTemplate> getTemplates() {
       return Collections.unmodifiableList(templates);
@@ -286,27 +302,21 @@ public class JCloudsCloud extends Cloud {
          credential = Util.fixEmptyAndTrim(credential);
          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
-         Iterable<Module> modules = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
-               new EnterpriseConfigurationModule());
          FormValidation result = FormValidation.ok("Connection succeeded!");
-         ComputeService computeService = null;
+         ComputeServiceContext ctx = null;
          try {
             Properties overrides = new Properties();
             if (!Strings.isNullOrEmpty(endPointUrl)) {
                overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
             }
 
-            ComputeServiceContext context = new ComputeServiceContextFactory()
-                  .createContext(providerName, identity, credential, modules, overrides);
+            ctx = ctx(providerName, identity, credential, overrides);
 
-            computeService = context.getComputeService();
-            computeService.listNodes();
+            ctx.getComputeService().listNodes();
          } catch (Exception ex) {
             result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getMessage());
          } finally {
-            if (computeService != null) {
-               computeService.getContext().close();
-            }
+            Closeables.closeQuietly(ctx);
          }
          return result;
       }
@@ -340,8 +350,14 @@ public class JCloudsCloud extends Cloud {
       }
 
       public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
-
-         Iterable<String> supportedProviders = ComputeServiceUtils.getSupportedProviders();
+         // correct the classloader so that extensions can be found
+         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+         // TODO: apis need endpoints, providers don't; do something smarter with this stuff :)
+         Builder<String> builder = ImmutableSet.<String> builder();
+         builder.addAll(Iterables.transform(Apis.contextWrappableAs(ComputeServiceContext.class), Apis.idFunction()));
+         builder.addAll(Iterables.transform(Providers.contextWrappableAs(ComputeServiceContext.class), Providers
+                  .idFunction()));
+         Iterable<String> supportedProviders = builder.build();
 
          Iterable<String> matchedProviders = Iterables.filter(supportedProviders, new Predicate<String>() {
             public boolean apply(@Nullable String input) {
