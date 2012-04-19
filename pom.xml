@@ -97,11 +97,6 @@
             <version>${jsch.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.kohsuke.stapler</groupId>
-            <artifactId>stapler</artifactId>
-            <version>${stapler.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.code.findbugs</groupId>
             <artifactId>jsr305</artifactId>
             <version>${jsr305.version}</version>

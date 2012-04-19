@@ -174,7 +174,7 @@ public class JCloudsCloud extends Cloud {
                                   Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                                           public Node call() throws Exception {
                                               // TODO: record the output somewhere
-                                              JCloudsSlave s = t.provision(new StreamTaskListener(System.out));
+                                              JCloudsSlave s = t.provisionSlave(new StreamTaskListener(System.out));
                                               Hudson.getInstance().addNode(s);
                                               // Cloud instances may have a long init script. If we declare
                                               // the provisioning complete by returning without the connect
@@ -241,7 +241,7 @@ public class JCloudsCloud extends Cloud {
       if (getRunningNodesCount() < instanceCap) {
          StringWriter sw = new StringWriter();
          StreamTaskListener listener = new StreamTaskListener(sw);
-         JCloudsSlave node = t.provision(listener);
+         JCloudsSlave node = t.provisionSlave(listener);
          Hudson.getInstance().addNode(node);
          rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
       } else {

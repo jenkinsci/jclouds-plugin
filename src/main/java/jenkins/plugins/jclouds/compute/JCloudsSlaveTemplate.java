@@ -122,21 +122,19 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       return labelSet;
    }
 
-   public JCloudsSlave provision(TaskListener listener) throws IOException {
-      LOGGER.info("Provisioning new node");
-      NodeMetadata nodeMetadata = createNodeWithJdk();
-      try {
-          return new JCloudsSlave(getCloud().getDisplayName(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
-      } catch (Descriptor.FormException e) {
-         throw new AssertionError("Invalid configuration " + e.getMessage());
-      }
-
-
+   public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
+       NodeMetadata nodeMetadata = provision(listener);
+       
+       try {
+           return new JCloudsSlave(getCloud().getDisplayName(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
+       } catch (Descriptor.FormException e) {
+           throw new AssertionError("Invalid configuration " + e.getMessage());
+       }
    }
 
 
-   private NodeMetadata createNodeWithJdk() {
-      LOGGER.info("creating jclouds node");
+   public NodeMetadata provision(TaskListener listener) throws IOException {
+      LOGGER.info("Provisioning new jclouds node");
 
       ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
       TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
