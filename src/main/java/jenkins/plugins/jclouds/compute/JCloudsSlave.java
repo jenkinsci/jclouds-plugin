@@ -49,6 +49,7 @@ public class JCloudsSlave extends Slave {
      * Constructs a new slave from JCloud's NodeMetadata
      *
      * @param cloudName - the name of the cloud that's provisioning this slave.
+     * @param fsRoot - where on the slave the Jenkins slave root is.
      * @param metadata - JCloudsNodeMetadata
      * @param labelString - Label(s) for this slave.
      * @param description - Description of this slave.
@@ -57,13 +58,13 @@ public class JCloudsSlave extends Slave {
      * @throws IOException
      * @throws Descriptor.FormException
      */
-    public JCloudsSlave(final String cloudName, NodeMetadata metadata, final String labelString,
+    public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
                         final String description, final String numExecutors,
                         final boolean stopOnTerminate) throws IOException, Descriptor.FormException {
         this(cloudName,
              metadata.getName(),
              description,
-             "/jenkins",
+             fsRoot,
              numExecutors,
              Mode.NORMAL,
              labelString,

@@ -59,10 +59,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    public final String osVersion;
    public final String initScript;
    public final String numExecutors;
-   public boolean stopOnTerminate;
+   public final boolean stopOnTerminate;
    public final String vmUser;
    public final String vmPassword;
    public final boolean preInstalledJava;
+   private final String jenkinsUser;
+   private final String fsRoot;
+   public final boolean allowSudo;
    
    private transient Set<LabelAtom> labelSet;
 
@@ -84,7 +87,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
                                final boolean stopOnTerminate,
                                final String vmPassword,
                                final String vmUser,
-                               final boolean preInstalledJava) {
+                               final boolean preInstalledJava,
+                               final String jenkinsUser,
+                               final String fsRoot,
+                               final boolean allowSudo) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -101,7 +107,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        this.vmUser = Util.fixEmptyAndTrim(vmUser);
        this.preInstalledJava = preInstalledJava;
        this.stopOnTerminate = stopOnTerminate;
-       
+       this.jenkinsUser = Util.fixEmptyAndTrim(jenkinsUser);
+       this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
+       this.allowSudo = allowSudo;
        readResolve();
    }
 
@@ -118,6 +126,23 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       return this;
    }
 
+   public String getJenkinsUser() {
+       if (jenkinsUser == null || jenkinsUser.equals("")) {
+           return "jenkins";
+       } else {
+           return jenkinsUser;
+       }
+   }
+
+   public String getFsRoot() {
+       if (fsRoot == null || fsRoot.equals("")) {
+           return "/jenkins";
+       } else {
+           return fsRoot;
+       }
+   }
+       
+   
    public Set<LabelAtom> getLabelSet() {
       return labelSet;
    }
@@ -126,7 +151,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        NodeMetadata nodeMetadata = provision(listener);
        
        try {
-           return new JCloudsSlave(getCloud().getDisplayName(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
+           return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
        } catch (Descriptor.FormException e) {
            throw new AssertionError("Invalid configuration " + e.getMessage());
        }
@@ -160,15 +185,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
       Template template = templateBuilder.build();
 
-      if (!Strings.isNullOrEmpty(vmUser)) {
+      if (!Strings.isNullOrEmpty(vmPassword)) {
           LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
           template.getOptions().overrideLoginCredentials(lc);
       }
 
       // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
-      AdminAccess adminAccess = AdminAccess.builder().adminUsername("jenkins")
+      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
           .installAdminPrivateKey(false) // no need
-          .grantSudoToAdminUser(false) // no need
+          .grantSudoToAdminUser(allowSudo) // no need
           .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
           .authorizeAdminPublicKey(true)
           .adminPublicKey(getCloud().publicKey)
@@ -176,7 +201,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
 
       // Jenkins needs /jenkins dir.
-      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir /jenkins"), Statements.exec("chown jenkins /jenkins"));
+      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p "+getFsRoot()), Statements.exec("chown "+getJenkinsUser()+" "+getFsRoot()));
 
       Statement initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
 
