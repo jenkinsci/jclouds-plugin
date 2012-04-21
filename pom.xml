@@ -20,7 +20,7 @@
         <jclouds.test.provider>stub</jclouds.test.provider>
         <jclouds.test.identity>identity</jclouds.test.identity>
         <jclouds.test.credential>credential</jclouds.test.credential>
-        <jclouds.version>1.5.0-SNAPSHOT</jclouds.version>
+        <jclouds.version>1.5.0-alpha.4</jclouds.version> <!-- note that this needs to get bumped up to whatever the next release is -->
         <guava.version>12.0-rc1</guava.version>
         <jsch.version>0.1.46</jsch.version>
         <stapler.version>1.178</stapler.version>
@@ -46,6 +46,13 @@
             <email>mail@vijaykiran.com</email>
             <url>http://vijaykiran.com</url>
         </developer>
+        <developer>
+          <id>abayer</id>
+          <name>Andrew Bayer</name>
+          <email>andrew.bayer@gmail.com</email>
+          <timezone>-8</timezone>
+        </developer>
+        
     </developers>
 
     <dependencies>
@@ -95,11 +102,6 @@
             <groupId>com.jcraft</groupId>
             <artifactId>jsch</artifactId>
             <version>${jsch.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.kohsuke.stapler</groupId>
-            <artifactId>stapler</artifactId>
-            <version>${stapler.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
