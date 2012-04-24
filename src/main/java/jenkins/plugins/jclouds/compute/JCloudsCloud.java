@@ -137,7 +137,7 @@ public class JCloudsCloud extends Cloud {
                                   .credentials(identity, credential)
                                   .overrides(overrides)
                                   .modules(MODULES)
-                                  .build(ComputeServiceContext.class);
+                                  .buildView(ComputeServiceContext.class);
    }
    
    public ComputeService getCompute() {
@@ -354,8 +354,8 @@ public class JCloudsCloud extends Cloud {
          Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
          // TODO: apis need endpoints, providers don't; do something smarter with this stuff :)
          Builder<String> builder = ImmutableSet.<String> builder();
-         builder.addAll(Iterables.transform(Apis.contextWrappableAs(ComputeServiceContext.class), Apis.idFunction()));
-         builder.addAll(Iterables.transform(Providers.contextWrappableAs(ComputeServiceContext.class), Providers
+         builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
+         builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers
                   .idFunction()));
          Iterable<String> supportedProviders = builder.build();
 

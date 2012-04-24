@@ -88,7 +88,7 @@ public class BlobStoreProfile {
                                  .credentials(identity, credential)
                                  .overrides(overrides)
                                  .modules(MODULES)
-                                 .build(BlobStoreContext.class);
+                                 .buildView(BlobStoreContext.class);
    }
    /**
     * Upload the specified file from the {@param filePath} to container
