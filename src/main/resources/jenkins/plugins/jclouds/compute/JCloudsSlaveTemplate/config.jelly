@@ -6,18 +6,15 @@
     </f:entry>
 
     <f:entry title="Hardware Id" field="hardwareId">
-        <f:textbox  />
+        <f:select  />
     </f:entry>
-
-    <f:validateButton title="${%Check Hardware Id}" progress="${%Checking...}" method="validateHardwareId"
-                      with="providerName,identity,credential,hardwareId"/>
 
     <f:entry title="Image Id" field="imageId">
        <f:textbox />
     </f:entry>
 
     <f:validateButton title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
-                      with="providerName,identity,credential,imageId"/>
+                      with="providerName,identity,credential,endPointUrl,imageId"/>
 
     <f:entry title="Number of Executors" field="numExecutors">
         <f:textbox/>
