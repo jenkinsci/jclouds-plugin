@@ -53,6 +53,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.io.Closeables;
@@ -369,7 +370,7 @@ public class JCloudsCloud extends Cloud {
           builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
           builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers
                                              .idFunction()));
-          Iterable<String> supportedProviders = builder.build();
+          Iterable<String> supportedProviders = ImmutableSortedSet.copyOf(builder.build());
           
           for (String supportedProvider : supportedProviders) {
               m.add(supportedProvider, supportedProvider);

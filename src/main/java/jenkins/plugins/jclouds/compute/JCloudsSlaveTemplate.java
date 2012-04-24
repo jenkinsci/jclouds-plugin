@@ -41,6 +41,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
 
 /**
  * @author Vijay Kiran
@@ -358,7 +359,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
           try {
               // TODO: endpoint is ignored
               computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
-              Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
+              Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
               for (Hardware hardware : hardwareProfiles) {
 
                   m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()),
