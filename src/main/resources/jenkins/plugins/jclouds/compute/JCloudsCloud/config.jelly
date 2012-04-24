@@ -4,7 +4,7 @@
         <f:textbox/>
     </f:entry>
     <f:entry title="Provider Name" field="providerName">
-        <f:textbox/>
+        <f:select/>
     </f:entry>
     <f:entry title="End Point URL" field="endPointUrl">
         <f:textbox/>

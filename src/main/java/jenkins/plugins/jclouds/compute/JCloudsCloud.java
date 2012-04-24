@@ -12,6 +12,7 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
 
 import java.io.BufferedReader;
@@ -129,7 +130,15 @@ public class JCloudsCloud extends Cloud {
         
    static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
              new EnterpriseConfigurationModule());
-   
+
+    static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl) {
+        Properties overrides = new Properties();
+        if (!Strings.isNullOrEmpty(endPointUrl)) {
+            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
+        }
+        return ctx(providerName, identity, credential, overrides);
+    }
+        
    static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides) {
       // correct the classloader so that extensions can be found
       Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
@@ -349,6 +358,26 @@ public class JCloudsCloud extends Cloud {
          return FormValidation.ok();
       }
 
+
+      public ListBoxModel doFillProviderNameItems() {
+          ListBoxModel m = new ListBoxModel();
+
+          // correct the classloader so that extensions can be found
+          Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+          // TODO: apis need endpoints, providers don't; do something smarter with this stuff :)
+          Builder<String> builder = ImmutableSet.<String> builder();
+          builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
+          builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers
+                                             .idFunction()));
+          Iterable<String> supportedProviders = builder.build();
+          
+          for (String supportedProvider : supportedProviders) {
+              m.add(supportedProvider, supportedProvider);
+          }
+          return m;
+      }
+
+      
       public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
          // correct the classloader so that extensions can be found
          Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());

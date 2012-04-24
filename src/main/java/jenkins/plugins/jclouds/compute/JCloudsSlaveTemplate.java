@@ -12,6 +12,7 @@ import hudson.model.Label;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.util.Map;
@@ -277,6 +278,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
             @QueryParameter String providerName,
             @QueryParameter String identity,
             @QueryParameter String credential,
+            @QueryParameter String endPointUrl,
             @QueryParameter String imageId) {
 
          if (Strings.isNullOrEmpty(identity))
@@ -293,13 +295,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
          providerName = Util.fixEmptyAndTrim(providerName);
          identity = Util.fixEmptyAndTrim(identity);
          credential = Util.fixEmptyAndTrim(credential);
+         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
          imageId = Util.fixEmptyAndTrim(imageId);
 
          FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
          ComputeService computeService = null;
          try {
             // TODO: endpoint is ignored
-            computeService = JCloudsCloud.ctx(providerName, identity, credential, new Properties()).getComputeService();
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
             Set<? extends Image> images = computeService.listImages();
             for (Image image : images) {
                if (!image.getId().equals(imageId)) {
@@ -323,54 +326,54 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
          return result;
       }
 
-      public FormValidation doValidateHardwareId(
-            @QueryParameter String providerName,
-            @QueryParameter String identity,
-            @QueryParameter String credential,
-            @QueryParameter String hardwareId) {
+      
+      public ListBoxModel doFillHardwareIdItems(@QueryParameter String providerName,
+                                                @QueryParameter String identity,
+                                                @QueryParameter String credential,
+                                                @QueryParameter String endPointUrl) {
 
-         if (Strings.isNullOrEmpty(identity))
-            return FormValidation.error("Invalid identity (AccessId).");
-         if (Strings.isNullOrEmpty(credential))
-            return FormValidation.error("Invalid credential (secret key).");
-         if (Strings.isNullOrEmpty(providerName))
-            return FormValidation.error("Provider Name shouldn't be empty");
-         if (Strings.isNullOrEmpty(hardwareId)) {
-            return FormValidation.error("Hardware Id shouldn't be empty");
-         }
+          ListBoxModel m = new ListBoxModel();
+          
+          if (Strings.isNullOrEmpty(identity)) {
+              LOGGER.warning("identity is null or empty");
+              return m;
+          }
+          if (Strings.isNullOrEmpty(credential)) {
+              LOGGER.warning("credential is null or empty");
+              return m;
+          }
+          if (Strings.isNullOrEmpty(providerName)) {
+              LOGGER.warning("providerName is null or empty");
+              return m;
+          }
 
-         // Remove empty text/whitespace from the fields.
-         providerName = Util.fixEmptyAndTrim(providerName);
-         identity = Util.fixEmptyAndTrim(identity);
-         credential = Util.fixEmptyAndTrim(credential);
-         hardwareId = Util.fixEmptyAndTrim(hardwareId);
 
-         FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
-         ComputeService computeService = null;
-         try {
-            // TODO: endpoint is ignored
-            computeService = JCloudsCloud.ctx(providerName, identity, credential, new Properties()).getComputeService();
-            Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
-            for (Hardware hardware : hardwareProfiles) {
-               if (!hardware.getId().equals(hardwareId)) {
-                  if (hardware.getId().contains(hardwareId)) {
-                     return FormValidation.warning("Sorry cannot find the hardware id, " +
-                           "Did you mean: " + hardware.getId() +  "?\n" + hardware);
-                  }
-               } else {
-                  return FormValidation.ok("Hardware Id is valid.");
-               }
-            }
+          // Remove empty text/whitespace from the fields.
+          providerName = Util.fixEmptyAndTrim(providerName);
+          identity = Util.fixEmptyAndTrim(identity);
+          credential = Util.fixEmptyAndTrim(credential);
+          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+         
+          ComputeService computeService = null;
+          try {
+              // TODO: endpoint is ignored
+              computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+              Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
+              for (Hardware hardware : hardwareProfiles) {
 
-         } catch (Exception ex) {
-            result = FormValidation.error("Unable to check the hardware id, " +
-                  "please check if the credentials you provided are correct.", ex);
-         } finally {
-            if (computeService != null) {
-               computeService.getContext().close();
-            }
-         }
-         return result;
+                  m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()),
+                        hardware.getId());
+              }
+              
+          } catch (Exception ex) {
+
+          } finally {
+              if (computeService != null) {
+                  computeService.getContext().close();
+              }
+          }
+
+          return m;
       }
    }
 }
