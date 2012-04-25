@@ -4,6 +4,7 @@ import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 import hudson.Extension;
+import hudson.RelativePath;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
@@ -328,10 +329,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       }
 
       
-      public ListBoxModel doFillHardwareIdItems(@QueryParameter String providerName,
-                                                @QueryParameter String identity,
-                                                @QueryParameter String credential,
-                                                @QueryParameter String endPointUrl) {
+      public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
+                                                @RelativePath("..") @QueryParameter String identity,
+                                                @RelativePath("..") @QueryParameter String credential,
+                                                @RelativePath("..") @QueryParameter String endPointUrl) {
 
           ListBoxModel m = new ListBoxModel();
           

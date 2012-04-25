@@ -6,7 +6,7 @@
     </f:entry>
 
     <f:entry title="Hardware Id" field="hardwareId">
-        <f:textbox  />
+        <f:select />
     </f:entry>
     <f:validateButton title="${%Check Hardware Id}" progress="${%Checking...}" method="validateHardwareId"
                       with="providerName,identity,credential,endPointUrl,hardwareId"/>
