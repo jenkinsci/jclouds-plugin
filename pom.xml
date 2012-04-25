@@ -158,6 +158,11 @@
         </plugins>
     </build>
 
+    <scm>
+      <connection>scm:git:git://github.com/jenkinsci/jclouds-plugin.git</connection>
+      <developerConnection>scm:git:git@github.com:jenkinsci/jclouds-plugin.git</developerConnection>
+      <url>http://github.com/jenkinsci/jclouds-plugin</url>
+    </scm>
 
     <repositories>
         <repository>
