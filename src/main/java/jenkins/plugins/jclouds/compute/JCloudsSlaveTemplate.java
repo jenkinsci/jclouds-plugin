@@ -376,5 +376,57 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
 
           return m;
       }
+
+      public FormValidation doValidateHardwareId(
+            @QueryParameter String providerName,
+            @QueryParameter String identity,
+            @QueryParameter String credential,
+            @QueryParameter String endPointUrl,
+            @QueryParameter String hardwareId) {
+
+         if (Strings.isNullOrEmpty(identity))
+            return FormValidation.error("Invalid identity (AccessId).");
+         if (Strings.isNullOrEmpty(credential))
+            return FormValidation.error("Invalid credential (secret key).");
+         if (Strings.isNullOrEmpty(providerName))
+            return FormValidation.error("Provider Name shouldn't be empty");
+         if (Strings.isNullOrEmpty(hardwareId)) {
+            return FormValidation.error("Hardware Id shouldn't be empty");
+         }
+
+         // Remove empty text/whitespace from the fields.
+         providerName = Util.fixEmptyAndTrim(providerName);
+         identity = Util.fixEmptyAndTrim(identity);
+         credential = Util.fixEmptyAndTrim(credential);
+         hardwareId = Util.fixEmptyAndTrim(hardwareId);
+         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+
+         FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
+         ComputeService computeService = null;
+         try {
+            // TODO: endpoint is ignored
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+            Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
+            for (Hardware hardware : hardwareProfiles) {
+               if (!hardware.getId().equals(hardwareId)) {
+                  if (hardware.getId().contains(hardwareId)) {
+                     return FormValidation.warning("Sorry cannot find the hardware id, " +
+                           "Did you mean: " + hardware.getId() +  "?\n" + hardware);
+                  }
+               } else {
+                  return FormValidation.ok("Hardware Id is valid.");
+               }
+            }
+
+         } catch (Exception ex) {
+            result = FormValidation.error("Unable to check the hardware id, " +
+                  "please check if the credentials you provided are correct.", ex);
+         } finally {
+            if (computeService != null) {
+               computeService.getContext().close();
+            }
+         }
+         return result;
+      }
    }
 }
