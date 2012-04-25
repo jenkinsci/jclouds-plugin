@@ -27,7 +27,7 @@ public class JCloudsCloudTest extends HudsonTestCase {
 
       HtmlPage page2 = page.getAnchorByText("Cloud (JClouds)").click();
       WebAssert.assertInputPresent(page2, "_.profile");
-      WebAssert.assertInputPresent(page2, "_.providerName");
+      //WebAssert.assertInputPresent(page2, "_.providerName");
       WebAssert.assertInputPresent(page2, "_.endPointUrl");
       WebAssert.assertInputPresent(page2, "_.identity");
       WebAssert.assertInputPresent(page2, "_.credential");
