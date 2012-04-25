@@ -16,7 +16,6 @@ import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -171,7 +170,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       } else {
          if (!Strings.isNullOrEmpty(osFamily)) {
             LOGGER.info("Setting osFamily to " + osFamily);
-            templateBuilder.osFamily(OsFamily.valueOf(osFamily));
+            templateBuilder.osFamily(OsFamily.fromValue(osFamily));
          }
          if (!Strings.isNullOrEmpty(osVersion)) {
             LOGGER.info("Setting osVersion to " + osVersion);
@@ -265,7 +264,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
          AutoCompletionCandidates candidates = new AutoCompletionCandidates();
          for (OsFamily osFamily : osFamilies) {
             if (StringUtils.containsIgnoreCase(osFamily.toString(), value)) {
-               candidates.add(osFamily.toString().toUpperCase());
+               // note: string form of osFamily is lower-hyphen
+               candidates.add(osFamily.toString());
             }
          }
          return candidates;
