@@ -143,6 +143,14 @@
                         <version>${stapler.version}</version>
                     </dependency>
                 </dependencies>
+                <configuration>
+                  <archive>
+                    <manifestEntries>
+                      <Mask-Classes>com.google.common</Mask-Classes>
+                    </manifestEntries>
+                  </archive>
+                </configuration>
+                
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
