@@ -180,6 +180,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       }
       if (!Strings.isNullOrEmpty((hardwareId))) {
          LOGGER.info("Setting hardware Id to " + hardwareId);
+         templateBuilder.hardwareId(hardwareId);
       } else {
          LOGGER.info("Setting minRam " + ram + " and minCores " + cores);
          templateBuilder.minCores(cores).minRam(ram);
