@@ -66,7 +66,7 @@ public class JCloudsSlave extends Slave {
              description,
              fsRoot,
              numExecutors,
-             Mode.NORMAL,
+             Mode.EXCLUSIVE,
              labelString,
              new JCloudsLauncher(),
              new JCloudsRetentionStrategy(),
