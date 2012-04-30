@@ -24,9 +24,10 @@ import java.util.logging.Logger;
  */
 public class JCloudsSlave extends Slave {
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlave.class.getName());
-    private NodeMetadata nodeMetaData;
+    private transient NodeMetadata nodeMetaData;
     public final boolean stopOnTerminate;
     private String cloudName;
+    private String nodeId;
     
    @DataBoundConstructor
    public JCloudsSlave(String cloudName,
@@ -73,6 +74,7 @@ public class JCloudsSlave extends Slave {
              Collections.<NodeProperty<?>>emptyList(),
              stopOnTerminate);
         this.nodeMetaData = metadata;
+        this.nodeId = nodeMetaData.getId();
     }
 
    /**
@@ -81,7 +83,11 @@ public class JCloudsSlave extends Slave {
     * @return {@link NodeMetadata}
     */
    public NodeMetadata getNodeMetaData() {
-      return nodeMetaData;
+       if (this.nodeMetaData == null) {
+           final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
+           this.nodeMetaData = compute.getNodeMetadata(nodeId);
+       }
+       return nodeMetaData;
    }
 
     /**
@@ -108,14 +114,14 @@ public class JCloudsSlave extends Slave {
     */
    public void terminate() {
        final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-       if (compute.getNodeMetadata(nodeMetaData.getId()) != null &&
-           compute.getNodeMetadata(nodeMetaData.getId()).getState().equals(NodeState.RUNNING)) {
+       if (compute.getNodeMetadata(nodeId) != null &&
+           compute.getNodeMetadata(nodeId).getState().equals(NodeState.RUNNING)) {
            if (stopOnTerminate) {
                LOGGER.info("Suspending the Slave : " + getNodeName());
-               compute.suspendNode(nodeMetaData.getId());
+               compute.suspendNode(nodeId);
            } else {
                LOGGER.info("Terminating the Slave : " + getNodeName());
-               compute.destroyNode(nodeMetaData.getId());
+               compute.destroyNode(nodeId);
            }
        } else {
            LOGGER.info("Slave " + getNodeName() + " is already not running.");
