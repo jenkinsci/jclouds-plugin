@@ -15,9 +15,21 @@
     <url>https://wiki.jenkins-ci.org/display/JENKINS/JClouds+Plugin</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <jclouds.test.provider>stub</jclouds.test.provider>
-        <jclouds.test.identity>identity</jclouds.test.identity>
-        <jclouds.test.credential>credential</jclouds.test.credential>
+        <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
+        <test.jenkins.compute.endpoint></test.jenkins.compute.endpoint>
+        <test.jenkins.compute.api-version></test.jenkins.compute.api-version>
+        <test.jenkins.compute.build-version></test.jenkins.compute.build-version>
+        <test.jenkins.compute.identity>FIXME_IDENTITY</test.jenkins.compute.identity>
+        <test.jenkins.compute.credential>FIXME_CREDENTIALS</test.jenkins.compute.credential>
+        <test.jenkins.compute.image-id></test.jenkins.compute.image-id>
+        <test.jenkins.compute.image.login-user></test.jenkins.compute.image.login-user>
+        <test.jenkins.compute.image.authenticate-sudo></test.jenkins.compute.image.authenticate-sudo>
+        <test.jenkins.blobstore.provider>FIXME_PROVIDER</test.jenkins.blobstore.provider>
+        <test.jenkins.blobstore.endpoint></test.jenkins.blobstore.endpoint>
+        <test.jenkins.blobstore.api-version></test.jenkins.blobstore.api-version>
+        <test.jenkins.blobstore.build-version></test.jenkins.blobstore.build-version>
+        <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
+        <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
         <jclouds.version>1.5.0-alpha.5</jclouds.version>
         <guava.version>12.0-rc2</guava.version>
         <jsch.version>0.1.46</jsch.version>
@@ -120,7 +132,33 @@
             <scope>test</scope>
             <classifier>jdk15</classifier>
         </dependency>
-
+        <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-core</artifactId>
+            <version>${jclouds.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-compute</artifactId>
+            <version>${jclouds.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jclouds</groupId>
+            <artifactId>jclouds-blobstore</artifactId>
+            <version>${jclouds.version}</version>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
 
@@ -206,20 +244,23 @@
                                     <includes>
                                         <include>**/*LiveTest.java</include>
                                     </includes>
-                                    <systemProperties>
-                                        <property>
-                                            <name>jclouds.test.provider</name>
-                                            <value>${jclouds.test.provider}</value>
-                                        </property>
-                                        <property>
-                                            <name>jclouds.test.identity</name>
-                                            <value>${jclouds.test.identity}</value>
-                                        </property>
-                                        <property>
-                                            <name>jclouds.test.credential</name>
-                                            <value>${jclouds.test.credential}</value>
-                                        </property>
-                                    </systemProperties>
+                                    <systemPropertyVariables>
+                                        <test.jenkins.compute.provider>${test.jenkins.compute.provider}</test.jenkins.compute.provider>
+                                        <test.jenkins.compute.endpoint>${test.jenkins.compute.endpoint}</test.jenkins.compute.endpoint>
+                                        <test.jenkins.compute.api-version>${test.jenkins.compute.api-version}</test.jenkins.compute.api-version>
+                                        <test.jenkins.compute.build-version>${test.jenkins.compute.build-version}</test.jenkins.compute.build-version>
+                                        <test.jenkins.compute.identity>${test.jenkins.compute.identity}</test.jenkins.compute.identity>
+                                        <test.jenkins.compute.credential>${test.jenkins.compute.credential}</test.jenkins.compute.credential>
+                                        <test.jenkins.compute.image-id>${test.jenkins.compute.image-id}</test.jenkins.compute.image-id>
+                                        <test.jenkins.compute.image.login-user>${test.jenkins.compute.image.login-user}</test.jenkins.compute.image.login-user>
+                                        <test.jenkins.compute.image.authenticate-sudo>${test.jenkins.compute.image.authenticate-sudo}</test.jenkins.compute.image.authenticate-sudo>
+                                        <test.jenkins.blobstore.provider>${test.jenkins.blobstore.provider}</test.jenkins.blobstore.provider>
+                                        <test.jenkins.blobstore.endpoint>${test.jenkins.blobstore.endpoint}</test.jenkins.blobstore.endpoint>
+                                        <test.jenkins.blobstore.api-version>${test.jenkins.blobstore.api-version}</test.jenkins.blobstore.api-version>
+                                        <test.jenkins.blobstore.build-version>${test.jenkins.blobstore.build-version}</test.jenkins.blobstore.build-version>
+                                        <test.jenkins.blobstore.identity>${test.jenkins.blobstore.identity}</test.jenkins.blobstore.identity>
+                                        <test.jenkins.blobstore.credential>${test.jenkins.blobstore.credential}</test.jenkins.blobstore.credential>
+                                    </systemPropertyVariables>
                                 </configuration>
                             </execution>
                         </executions>
