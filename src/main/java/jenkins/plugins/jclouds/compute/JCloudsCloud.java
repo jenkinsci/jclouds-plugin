@@ -12,8 +12,8 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
+import hudson.util.ListBoxModel;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -41,7 +41,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
+import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -53,9 +53,9 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.io.Closeables;
 import com.google.inject.Module;
 
@@ -66,7 +66,7 @@ import com.google.inject.Module;
  */
 public class JCloudsCloud extends Cloud {
 
-   private static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
+   static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
    public final String identity;
    public final String credential;
@@ -128,9 +128,14 @@ public class JCloudsCloud extends Cloud {
             return retentionTime;
         }
     }
-        
-   static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
-             new EnterpriseConfigurationModule());
+
+    static final Iterable<Module> MODULES = ImmutableSet.<Module> of(new SshjSshClientModule(),
+         new JDKLoggingModule() {
+            @Override
+            public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
+               return new ComputeLogger.Factory();
+            }
+         }, new EnterpriseConfigurationModule());
 
     static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl) {
         Properties overrides = new Properties();

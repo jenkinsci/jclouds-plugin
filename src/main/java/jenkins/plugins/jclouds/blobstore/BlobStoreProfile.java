@@ -12,8 +12,6 @@ import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.InputStreamMap;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.sshj.config.SshjSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.collect.ImmutableSet;
@@ -80,8 +78,7 @@ public class BlobStoreProfile {
       return credential;
    }
    
-   static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new SLF4JLoggingModule(),
-            new EnterpriseConfigurationModule());
+   static final Iterable<Module> MODULES = ImmutableSet.<Module> of(new EnterpriseConfigurationModule());
   
    static BlobStoreContext ctx(String providerName, String identity, String credential, Properties overrides) {
      return ContextBuilder.newBuilder(providerName)
