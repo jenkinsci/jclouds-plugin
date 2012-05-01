@@ -21,13 +21,15 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
         if (c.isIdle() && !disabled) {
             // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
             final int retentionTime = JCloudsCloud.getByName(c.getCloudName()).getRetentionTime();
-            final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
-            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
-                LOGGER.info("Disconnecting "+c.getName());
-                try {
-                    c.deleteSlave();
-                } catch (IOException e) {
-                    LOGGER.warning("Failed to disconnect and delete "+c.getName()+": "+e.getMessage());
+            if (retentionTime > -1) {
+                final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
+                if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
+                    LOGGER.info("Disconnecting "+c.getName());
+                    try {
+                        c.deleteSlave();
+                    } catch (IOException e) {
+                        LOGGER.warning("Failed to disconnect and delete "+c.getName()+": "+e.getMessage());
+                    }
                 }
             }
                 
