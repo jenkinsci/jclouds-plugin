@@ -1,50 +1,73 @@
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form">
-<table width="100%">
-    <f:entry title="Name" field="name">
+  <table width="100%">
+    <f:section title="General Configuration">
+      <f:entry title="Name" field="name">
         <f:textbox/>
-    </f:entry>
-
-    <f:entry title="Hardware Id" field="hardwareId">
-        <f:select />
-    </f:entry>
-    <f:validateButton title="${%Check Hardware Id}" progress="${%Checking...}" method="validateHardwareId"
-                      with="providerName,identity,credential,endPointUrl,hardwareId"/>
-
-    <f:entry title="Image Id" field="imageId">
-       <f:textbox />
-    </f:entry>
-
-    <f:validateButton title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
-                      with="providerName,identity,credential,endPointUrl,imageId"/>
-
-    <f:entry title="Number of Executors" field="numExecutors">
-        <f:textbox/>
-    </f:entry>
-
-    <f:entry title="Description" field="description">
+      </f:entry>
+      <f:entry title="Description" field="description">
         <f:textarea/>
-    </f:entry>
-
-    <f:entry title="OS Family" field="osFamily">
+      </f:entry>
+      <f:entry title="Labels" field="labelString">
         <f:textbox/>
-    </f:entry>
-
-    <f:entry title="OS Version" field="osVersion">
+      </f:entry>
+      <f:entry title="Number of Executors" field="numExecutors">
         <f:textbox/>
-    </f:entry>
+      </f:entry>
+    </f:section>
+    
+    <f:section title="Hardware Options">
+      <f:radioBlock name="jclouds.useHardwareId" value="true"
+                    title="Specify Hardware ID" checked="${instance.hardwareId != ''}">
+        <f:block>
+          <f:entry title="Hardware Id" field="hardwareId">
+            <f:select />
+          </f:entry>
+          <f:validateButton title="${%Check Hardware Id}" progress="${%Checking...}" method="validateHardwareId"
+                            with="providerName,identity,credential,endPointUrl,hardwareId"/>
+        </f:block>
+      </f:radioBlock>
+      
+      <f:radioBlock name="jclouds.useHardwareId" value="false"
+                    title="Specify RAM and Cores" checked="${instance.hardwareId == ''}">
+        <f:block>
+          <f:entry title="Min. RAM (MB)" field="ram">
+            <f:textbox default="512"/>
+          </f:entry>
+          
+          <f:entry title="Min. No.of Cores" field="cores">
+            <f:textbox default="1"/>
+          </f:entry>
+        </f:block>
+      </f:radioBlock>
+    </f:section>
 
-    <f:entry title="Min. RAM (MB)" field="ram">
-        <f:textbox default="512"/>
-    </f:entry>
-
-    <f:entry title="Min. No.of Cores" field="cores">
-        <f:textbox default="1"/>
-    </f:entry>
-
-    <f:entry title="Labels" field="labelString">
-        <f:textbox/>
-    </f:entry>
+    <f:section title="Image/OS Options">
+      <f:radioBlock name="jclouds.useImageId" value="true"
+                    title="Specify Image ID" checked="${instance.imageId != ''}">
+        <f:block>
+          <f:entry title="Image Id" field="imageId">
+            <f:textbox />
+          </f:entry>
+          
+          <f:validateButton title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
+                            with="providerName,identity,credential,endPointUrl,imageId"/>
+        </f:block>
+      </f:radioBlock>
+      
+      <f:radioBlock name="jclouds.useImageId" value="false"
+                    title="Specify OS Family and Version" checked="${instance.imageId == ''}">
+        <f:block>
+          <f:entry title="OS Family" field="osFamily">
+            <f:textbox/>
+          </f:entry>
+          
+          <f:entry title="OS Version" field="osVersion">
+            <f:textbox/>
+          </f:entry>
+        </f:block>
+      </f:radioBlock>
+    </f:section>
 
     <f:advanced>
       <f:entry title="Init Script" field="initScript">
@@ -54,14 +77,14 @@
       <f:entry title="Jenkins User" field="jenkinsUser">
         <f:textbox />
       </f:entry>
-
+      
       <f:entry title="Allow Sudo" field="allowSudo">
         <f:checkbox />
       </f:entry>
       <f:entry title="Remote FS Root" field="fsRoot">
         <f:textbox />
       </f:entry>
-        
+      
       <f:entry title="Admin Username" field="vmUser">
         <f:textbox />
       </f:entry>
@@ -78,10 +101,10 @@
       </f:entry>
     </f:advanced>
     <f:entry title="">
-        <div align="right">
-            <f:repeatableDeleteButton/>
-        </div>
+      <div align="right">
+        <f:repeatableDeleteButton/>
+      </div>
     </f:entry>
-
-</table>
+    
+  </table>
 </j:jelly>

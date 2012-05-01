@@ -330,10 +330,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
       }
 
       
-      public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
-                                                @RelativePath("..") @QueryParameter String identity,
-                                                @RelativePath("..") @QueryParameter String credential,
-                                                @RelativePath("..") @QueryParameter String endPointUrl) {
+      public ListBoxModel doFillHardwareIdItems(@RelativePath("../..") @QueryParameter String providerName,
+                                                @RelativePath("../..") @QueryParameter String identity,
+                                                @RelativePath("../..") @QueryParameter String credential,
+                                                @RelativePath("../..") @QueryParameter String endPointUrl) {
 
           ListBoxModel m = new ListBoxModel();
           
@@ -358,6 +358,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
           endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
          
           ComputeService computeService = null;
+          m.add("None specified", "");
           try {
               // TODO: endpoint is ignored
               computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
