@@ -8,7 +8,7 @@
 
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>jclouds-jenkins</artifactId>
-    <version>2.0.4-SNAPSHOT</version>
+    <version>2.0.4</version>
     <packaging>hpi</packaging>
     <name>Jenkins JClouds plugin</name>
     <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
@@ -16,18 +16,18 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
-        <test.jenkins.compute.endpoint></test.jenkins.compute.endpoint>
-        <test.jenkins.compute.api-version></test.jenkins.compute.api-version>
-        <test.jenkins.compute.build-version></test.jenkins.compute.build-version>
+        <test.jenkins.compute.endpoint />
+        <test.jenkins.compute.api-version />
+        <test.jenkins.compute.build-version />
         <test.jenkins.compute.identity>FIXME_IDENTITY</test.jenkins.compute.identity>
         <test.jenkins.compute.credential>FIXME_CREDENTIALS</test.jenkins.compute.credential>
-        <test.jenkins.compute.image-id></test.jenkins.compute.image-id>
-        <test.jenkins.compute.image.login-user></test.jenkins.compute.image.login-user>
-        <test.jenkins.compute.image.authenticate-sudo></test.jenkins.compute.image.authenticate-sudo>
+        <test.jenkins.compute.image-id />
+        <test.jenkins.compute.image.login-user />
+        <test.jenkins.compute.image.authenticate-sudo />
         <test.jenkins.blobstore.provider>FIXME_PROVIDER</test.jenkins.blobstore.provider>
-        <test.jenkins.blobstore.endpoint></test.jenkins.blobstore.endpoint>
-        <test.jenkins.blobstore.api-version></test.jenkins.blobstore.api-version>
-        <test.jenkins.blobstore.build-version></test.jenkins.blobstore.build-version>
+        <test.jenkins.blobstore.endpoint />
+        <test.jenkins.blobstore.api-version />
+        <test.jenkins.blobstore.build-version />
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
         <jclouds.version>1.5.0-alpha.5</jclouds.version>
