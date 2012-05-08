@@ -81,10 +81,21 @@ public class JCloudsCloud extends Cloud {
    public final List<JCloudsSlaveTemplate> templates;
    private transient ComputeService compute;
 
-   public static JCloudsCloud getByName(String name) {
-       return (JCloudsCloud)Hudson.getInstance().clouds.getByName(name);
-   }
-    
+    public static List<String> getCloudNames() {
+        List<String> cloudNames = new ArrayList<String>();
+        for (Cloud c : Hudson.getInstance().clouds) {
+            if (JCloudsCloud.class.isInstance(c)) {
+                cloudNames.add(c.name);
+            }
+        }
+
+        return cloudNames;
+    }
+
+    public static JCloudsCloud getByName(String name) {
+        return (JCloudsCloud)Hudson.getInstance().clouds.getByName(name);
+    }
+
     @DataBoundConstructor
     public JCloudsCloud(final String profile,
                         final String providerName,
