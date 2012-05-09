@@ -150,7 +150,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    }
 
    public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
-       NodeMetadata nodeMetadata = provision(listener);
+       NodeMetadata nodeMetadata = provision();
        
        try {
            return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
@@ -160,7 +160,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    }
 
 
-   public NodeMetadata provision(TaskListener listener) throws IOException {
+   public NodeMetadata provision() throws IOException {
       LOGGER.info("Provisioning new jclouds node");
 
       ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);

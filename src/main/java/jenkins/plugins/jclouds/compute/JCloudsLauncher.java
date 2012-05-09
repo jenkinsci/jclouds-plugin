@@ -130,7 +130,7 @@ public class JCloudsLauncher extends ComputerLauncher {
     /**
      * Get the potential addresses to connect to, opting for public first and then private.
      */
-    private String[] getConnectionAddresses(NodeMetadata nodeMetadata, PrintStream logger) {
+    public static String[] getConnectionAddresses(NodeMetadata nodeMetadata, PrintStream logger) {
         if (nodeMetadata.getPublicAddresses().size() > 0) {
             return nodeMetadata.getPublicAddresses().toArray(new String[nodeMetadata.getPublicAddresses().size()]);
         } else {
