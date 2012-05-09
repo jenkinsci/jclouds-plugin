@@ -23,9 +23,13 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,8 +60,8 @@ public class JCloudsBuildWrapper extends BuildWrapper {
     @Override
     public Environment setUp(AbstractBuild build, final Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
 
-        final Map<String,Map<String,List<NodeMetadata>>> instances;
-        Map<String,Map<String,List<NodeMetadata>>> spawnedInstances = new HashMap<String,Map<String,List<NodeMetadata>>>();
+        final Map<String,Multimap<String,NodeMetadata>> instances;
+        Map<String,Multimap<String,NodeMetadata>> spawnedInstances = new HashMap<String,Multimap<String,NodeMetadata>>();
         List<PlannedInstance> plannedInstances = new ArrayList<PlannedInstance>();
         
         for (InstancesToRun instance : instancesToRun) {
@@ -99,14 +103,11 @@ public class JCloudsBuildWrapper extends BuildWrapper {
                 PlannedInstance f = itr.next();
                 if (f.future.isDone()) {
                     try {
-                        Map<String,List<NodeMetadata>> cloudMap = spawnedInstances.get(f.cloudName);
+                        Multimap<String,NodeMetadata> cloudMap = spawnedInstances.get(f.cloudName);
                         if (cloudMap==null) {
-                            spawnedInstances.put(f.cloudName, cloudMap = new HashMap<String,List<NodeMetadata>>());
+                            spawnedInstances.put(f.cloudName, cloudMap = HashMultimap.<String,NodeMetadata> create());
                         }
-                        List<NodeMetadata> templateList = cloudMap.get(f.templateName);
-                        if (templateList==null) {
-                            cloudMap.put(f.templateName, templateList = new ArrayList<NodeMetadata>());
-                        }
+                        Collection<NodeMetadata> templateList = cloudMap.get(f.templateName);
                         
                         NodeMetadata n = f.future.get();
                         
@@ -155,7 +156,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
             
     }
 
-    public List<String> getInstanceIPs(Map<String,Map<String,List<NodeMetadata>>> instances, PrintStream logger) {
+    public List<String> getInstanceIPs(Map<String,Multimap<String,NodeMetadata>> instances, PrintStream logger) {
         List<String> ips = new ArrayList<String>();
 
         for (String cloudName : instances.keySet()) {
@@ -174,7 +175,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
 
         
 
-    public void terminateNodes(Map<String,Map<String,List<NodeMetadata>>> instances, PrintStream logger) {
+    public void terminateNodes(Map<String,Multimap<String,NodeMetadata>> instances, PrintStream logger) {
         for (String cloudName : instances.keySet()) {
             for (String templateName : instances.get(cloudName).keySet()) {
                 InstancesToRun i = getMatchingInstanceToRun(cloudName, templateName);
