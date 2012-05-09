@@ -180,7 +180,11 @@ public class JCloudsBuildWrapper extends BuildWrapper {
             for (String templateName : instances.get(cloudName).keySet()) {
                 InstancesToRun i = getMatchingInstanceToRun(cloudName, templateName);
                 for (NodeMetadata n : instances.get(cloudName).get(templateName)) {
-                    terminateNode(cloudName, n.getId(), i.suspendOrTerminate, logger);
+                    try {
+                        terminateNode(cloudName, n.getId(), i.suspendOrTerminate, logger);
+                    } catch (UnsupportedOperationException e) {
+                        logger.println("Error terminating node " + n.getId() + ": " + e);
+                    }
                 }
             }
         }
@@ -191,7 +195,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
      * Destroy the node calls {@link ComputeService#destroyNode}
      *
      */
-    public void terminateNode(String cloudName, String nodeId, boolean suspendOrTerminate, PrintStream logger) {
+    public void terminateNode(String cloudName, String nodeId, boolean suspendOrTerminate, PrintStream logger) throws UnsupportedOperationException {
         final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
         if (compute.getNodeMetadata(nodeId) != null &&
             compute.getNodeMetadata(nodeId).getState().equals(NodeState.RUNNING)) {
