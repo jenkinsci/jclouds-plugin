@@ -25,6 +25,8 @@ import org.jclouds.compute.domain.NodeState;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -42,12 +44,18 @@ import java.util.concurrent.Callable;
 public class JCloudsBuildWrapper extends BuildWrapper {
     public List<InstancesToRun> instancesToRun;
     public final int MAX_ATTEMPTS = 5;
-
+    private ListeningExecutorService executor;
+    
     @DataBoundConstructor
     public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
+        this(MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), instancesToRun);
+    }
+
+    public JCloudsBuildWrapper(ListeningExecutorService executor, List<InstancesToRun> instancesToRun) {
+        this.executor = executor;
         this.instancesToRun = instancesToRun;
     }
-    
+
     public InstancesToRun getMatchingInstanceToRun(String cloudName, String templateName) {
         for (InstancesToRun i : instancesToRun) {
             if (i.cloudName.equals(cloudName) && i.templateName.equals(templateName)) {
@@ -73,7 +81,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
                 plannedInstances.add(new PlannedInstance(instance.cloudName,
                                                          instance.templateName,
                                                          i,
-                                                         Computer.threadPoolForRemoting.submit(new Callable<NodeMetadata>() {
+                                                         executor.submit(new Callable<NodeMetadata>() {
                                                                  public NodeMetadata call() throws Exception {
                                                                      int attempts = 0;
                                                                      
@@ -181,7 +189,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
                 InstancesToRun i = getMatchingInstanceToRun(cloudName, templateName);
                 for (NodeMetadata n : instances.get(cloudName).get(templateName)) {
                     try {
-                        terminateNode(cloudName, n.getId(), i.suspendOrTerminate, logger);
+                        terminateNode(cloudName, n, i.suspendOrTerminate, logger);
                     } catch (UnsupportedOperationException e) {
                         logger.println("Error terminating node " + n.getId() + ": " + e);
                     }
@@ -195,19 +203,19 @@ public class JCloudsBuildWrapper extends BuildWrapper {
      * Destroy the node calls {@link ComputeService#destroyNode}
      *
      */
-    public void terminateNode(String cloudName, String nodeId, boolean suspendOrTerminate, PrintStream logger) throws UnsupportedOperationException {
+    public void terminateNode(String cloudName, NodeMetadata n, boolean suspendOrTerminate, PrintStream logger) throws UnsupportedOperationException {
         final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-        if (compute.getNodeMetadata(nodeId) != null &&
-            compute.getNodeMetadata(nodeId).getState().equals(NodeState.RUNNING)) {
+        if (n != null &&
+            n.getState().equals(NodeState.RUNNING)) {
             if (suspendOrTerminate) {
-                logger.println("Suspending the Node : " + nodeId);
-                compute.suspendNode(nodeId);
+                logger.println("Suspending the Node : " + n.getId());
+                compute.suspendNode(n.getId());
             } else {
-                logger.println("Terminating the Node : " + nodeId);
-                compute.destroyNode(nodeId);
+                logger.println("Terminating the Node : " + n.getId());
+                compute.destroyNode(n.getId());
             }
         } else {
-            logger.println("Node " + nodeId + " is already not running.");
+            logger.println("Node " + n.getId() + " is already not running.");
         }
     }
 
