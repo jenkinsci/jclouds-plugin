@@ -23,6 +23,9 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -45,13 +48,21 @@ public class JCloudsBuildWrapper extends BuildWrapper {
     public List<InstancesToRun> instancesToRun;
     public final int MAX_ATTEMPTS = 5;
     private ListeningExecutorService executor;
+    private LoadingCache<String,JCloudsCloud> cloudCache;
     
     @DataBoundConstructor
     public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
-        this(MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), instancesToRun);
+        this(CacheBuilder.newBuilder().<String,JCloudsCloud> build(
+                                             new CacheLoader<String,JCloudsCloud>() {
+                                                 public JCloudsCloud load(String key) {
+                                                     return JCloudsCloud.getByName(key);
+                                                 }
+                                             }),
+             MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), instancesToRun);
     }
 
-    public JCloudsBuildWrapper(ListeningExecutorService executor, List<InstancesToRun> instancesToRun) {
+    public JCloudsBuildWrapper(LoadingCache<String,JCloudsCloud> cloudCache, ListeningExecutorService executor, List<InstancesToRun> instancesToRun) {
+        this.cloudCache = cloudCache;
         this.executor = executor;
         this.instancesToRun = instancesToRun;
     }
@@ -73,7 +84,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
         List<PlannedInstance> plannedInstances = new ArrayList<PlannedInstance>();
         
         for (InstancesToRun instance : instancesToRun) {
-            final JCloudsCloud cloud = JCloudsCloud.getByName(instance.cloudName);
+            final JCloudsCloud cloud = cloudCache.getUnchecked(instance.cloudName);
             final JCloudsSlaveTemplate template = cloud.getTemplate(instance.templateName);
 
             for (int i=0; i < instance.count; i++) {
