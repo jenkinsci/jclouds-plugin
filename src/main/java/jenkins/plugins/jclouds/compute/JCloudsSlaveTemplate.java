@@ -40,13 +40,14 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 
 /**
  * @author Vijay Kiran
  */
-public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
+public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<NodeMetadata> {
 
    private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
 
@@ -150,7 +151,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
    }
 
    public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
-       NodeMetadata nodeMetadata = provision();
+       NodeMetadata nodeMetadata = get();
        
        try {
            return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
@@ -159,8 +160,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate> {
        }
    }
 
-
-   public NodeMetadata provision() throws IOException {
+   public NodeMetadata get() {
       LOGGER.info("Provisioning new jclouds node");
 
       ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);

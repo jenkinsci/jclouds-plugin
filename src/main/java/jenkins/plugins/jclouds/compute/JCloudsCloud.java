@@ -12,8 +12,8 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
-import hudson.util.StreamTaskListener;
 import hudson.util.ListBoxModel;
+import hudson.util.StreamTaskListener;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -53,9 +53,9 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.io.Closeables;
 import com.google.inject.Module;
 
