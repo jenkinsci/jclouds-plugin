@@ -19,7 +19,7 @@
     </f:entry>
 
     <f:entry title="Init Script Timeout" field="scriptTimeout">
-        <f:textbox/>
+        <f:textbox default="600000"/>
     </f:entry>
 
     <f:entry title="Identity" field="identity">

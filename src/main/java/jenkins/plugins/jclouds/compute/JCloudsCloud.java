@@ -144,13 +144,6 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-    public int getScriptTimeout() {
-    	if (scriptTimeout == 0) {
-    		return 600 * 1000;
-    	} else {
-    		return scriptTimeout;
-    	}
-    }
   
     static final Iterable<Module> MODULES = ImmutableSet.<Module> of(new SshjSshClientModule(),
          new JDKLoggingModule() {
@@ -185,7 +178,7 @@ public class JCloudsCloud extends Cloud {
             overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
          }
          overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
-        		 String.valueOf(this.getScriptTimeout())); 
+        		 String.valueOf(scriptTimeout)); 
 
          this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
       }
