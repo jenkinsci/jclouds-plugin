@@ -200,7 +200,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       Statement initStatement;
       Statement bootstrap;
       
-      if (not this.preExistingJenkinsUser) {
+      if (this.preExistingJenkinsUser) {
+    	  initStatement = Statements.exec(this.initScript);
+      } else {
 	      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
 	      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
 	          .installAdminPrivateKey(false) // no need
@@ -215,8 +217,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p "+getFsRoot()), Statements.exec("chown "+getJenkinsUser()+" "+getFsRoot()));
 
           initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
-      } else {
-    	  initStatement = Statements.exec(this.initScript);
       }
 
       if (preInstalledJava) {
