@@ -66,6 +66,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final String vmUser;
    public final String vmPassword;
    public final boolean preInstalledJava;
+   public final boolean preExistingJenkinsUser;
    private final String jenkinsUser;
    private final String fsRoot;
    public final boolean allowSudo;
@@ -92,6 +93,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String vmUser,
                                final boolean preInstalledJava,
                                final String jenkinsUser,
+                               final boolean preExistingJenkinsUser,
                                final String fsRoot,
                                final boolean allowSudo) {
 
@@ -111,6 +113,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.preInstalledJava = preInstalledJava;
        this.stopOnTerminate = stopOnTerminate;
        this.jenkinsUser = Util.fixEmptyAndTrim(jenkinsUser);
+       this.preExistingJenkinsUser = preExistingJenkinsUser;
        this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
        this.allowSudo = allowSudo;
        readResolve();
@@ -193,22 +196,29 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           template.getOptions().overrideLoginCredentials(lc);
       }
 
-      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
-      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
-          .installAdminPrivateKey(false) // no need
-          .grantSudoToAdminUser(allowSudo) // no need
-          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
-          .authorizeAdminPublicKey(true)
-          .adminPublicKey(getCloud().publicKey)
-          .build();
 
-
-      // Jenkins needs /jenkins dir.
-      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p "+getFsRoot()), Statements.exec("chown "+getJenkinsUser()+" "+getFsRoot()));
-
-      Statement initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
-
+      Statement initStatement;
       Statement bootstrap;
+      
+      if (this.preExistingJenkinsUser) {
+    	  initStatement = Statements.exec(this.initScript);
+      } else {
+	      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
+	      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
+	          .installAdminPrivateKey(false) // no need
+	          .grantSudoToAdminUser(allowSudo) // no need
+	          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
+	          .authorizeAdminPublicKey(true)
+	          .adminPublicKey(getCloud().publicKey)
+	          .build();
+
+
+	      // Jenkins needs /jenkins dir.
+	      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p "+getFsRoot()), Statements.exec("chown "+getJenkinsUser()+" "+getFsRoot()));
+
+          initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
+      }
+
       if (preInstalledJava) {
           bootstrap = initStatement;
       } else {
