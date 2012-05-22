@@ -31,7 +31,8 @@ public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
                generatedKeys.get("public"), 
                fixture.getEndpoint(), 
                1, 
-               30, 
+               30,
+               600*1000,
                Collections.<JCloudsSlaveTemplate> emptyList());
    }
 

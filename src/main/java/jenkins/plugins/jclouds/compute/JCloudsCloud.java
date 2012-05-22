@@ -36,6 +36,7 @@ import org.jclouds.ContextBuilder;
 import org.jclouds.apis.Apis;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
+import org.jclouds.compute.config.ComputeServiceProperties;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
@@ -79,6 +80,7 @@ public class JCloudsCloud extends Cloud {
     private final int retentionTime;
    public int instanceCap;
    public final List<JCloudsSlaveTemplate> templates;
+   public final int scriptTimeout;
    private transient ComputeService compute;
 
     public static List<String> getCloudNames() {
@@ -106,6 +108,7 @@ public class JCloudsCloud extends Cloud {
                         final String endPointUrl,
                         final int instanceCap,
                         final int retentionTime,
+                        final int scriptTimeout,
                         final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
@@ -117,6 +120,7 @@ public class JCloudsCloud extends Cloud {
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
         this.retentionTime = retentionTime;
+        this.scriptTimeout = scriptTimeout;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
         readResolve();
     }
@@ -140,6 +144,14 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
+    public int getScriptTimeout() {
+    	if (scriptTimeout == 0) {
+    		return 600 * 1000;
+    	} else {
+    		return scriptTimeout;
+    	}
+    }
+  
     static final Iterable<Module> MODULES = ImmutableSet.<Module> of(new SshjSshClientModule(),
          new JDKLoggingModule() {
             @Override
@@ -172,12 +184,13 @@ public class JCloudsCloud extends Cloud {
          if (!Strings.isNullOrEmpty(this.endPointUrl)) {
             overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
          }
+         overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
+        		 String.valueOf(this.getScriptTimeout())); 
 
          this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
       }
       return compute;
    }
-
 
 
    public List<JCloudsSlaveTemplate> getTemplates() {
@@ -442,6 +455,10 @@ public class JCloudsCloud extends Cloud {
          return FormValidation.validatePositiveInteger(value);
       }
 
+      public FormValidation doCheckScriptTimeout(@QueryParameter String value) {
+    	  return FormValidation.validatePositiveInteger(value);
+      }
+    
       public FormValidation doCheckEndPointUrl(@QueryParameter String value) {
          if (!value.isEmpty() && !value.startsWith("http")) {
             return FormValidation.error("The endpoint must be an URL");

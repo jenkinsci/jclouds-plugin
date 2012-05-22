@@ -33,6 +33,7 @@ public class JCloudsCloudLiveTest extends TestCase {
                fixture.getEndpoint(), 
                1, 
                30, 
+               600*1000,
                Collections.<JCloudsSlaveTemplate> emptyList());
    }
 
