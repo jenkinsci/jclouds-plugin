@@ -44,6 +44,10 @@ public class JCloudsBuildWrapper extends BuildWrapper {
       this.instancesToRun = instancesToRun;
    }
 
+    public List<InstancesToRun> getInstancesToRun() {
+        return instancesToRun;
+    }
+
    //   
    // convert Jenkins staticy stuff into pojos; performing as little critical stuff here as
    // possible, as this method is very hard to test due to static usage, etc.
