@@ -39,7 +39,6 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.config.ComputeServiceProperties;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeState;
 import org.jclouds.crypto.SshKeys;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
@@ -293,8 +292,8 @@ public class JCloudsCloud extends Cloud {
                 String nodeGroup = ((NodeMetadata)cm).getGroup();
 
                 if (getTemplate(nodeGroup) != null
-                    && !((NodeMetadata)cm).getState().equals(NodeState.SUSPENDED)
-                    && !((NodeMetadata)cm).getState().equals(NodeState.TERMINATED)) {
+                    && !((NodeMetadata)cm).getStatus().equals(NodeMetadata.Status.SUSPENDED)
+                    && !((NodeMetadata)cm).getStatus().equals(NodeMetadata.Status.TERMINATED)) {
                     nodeCount++;
                 }
             }

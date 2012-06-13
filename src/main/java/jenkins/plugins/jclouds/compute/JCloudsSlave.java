@@ -7,15 +7,15 @@ import hudson.model.Slave;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
-import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeState;
-import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Jenkins Slave node  - managed by JClouds.
@@ -115,7 +115,7 @@ public class JCloudsSlave extends Slave {
    public void terminate() {
        final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
        if (compute.getNodeMetadata(nodeId) != null &&
-           compute.getNodeMetadata(nodeId).getState().equals(NodeState.RUNNING)) {
+           compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
            if (stopOnTerminate) {
                LOGGER.info("Suspending the Slave : " + getNodeName());
                compute.suspendNode(nodeId);

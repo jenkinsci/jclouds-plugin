@@ -10,7 +10,6 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeState;
 import org.jclouds.logging.Logger;
 
 import com.google.common.base.Function;
@@ -50,9 +49,9 @@ public class TerminateNodesTest extends TestCase {
       newTerminateNodes(compute).apply(runningNodesToSuspend);
 
       for (NodeMetadata node : split.get(0))
-         assertEquals(NodeState.SUSPENDED, compute.getNodeMetadata(node.getId()).getState());
+         assertEquals(NodeMetadata.Status.SUSPENDED, compute.getNodeMetadata(node.getId()).getStatus());
       for (NodeMetadata node : split.get(1))
-         assertEquals(NodeState.RUNNING, compute.getNodeMetadata(node.getId()).getState());
+         assertEquals(NodeMetadata.Status.RUNNING, compute.getNodeMetadata(node.getId()).getStatus());
 
    }
 
@@ -82,7 +81,7 @@ public class TerminateNodesTest extends TestCase {
       for (NodeMetadata node : split.get(0))
          assertEquals(null, compute.getNodeMetadata(node.getId()));
       for (NodeMetadata node : split.get(1))
-         assertEquals(NodeState.RUNNING, compute.getNodeMetadata(node.getId()).getState());
+         assertEquals(NodeMetadata.Status.RUNNING, compute.getNodeMetadata(node.getId()).getStatus());
 
    }
 
@@ -112,7 +111,7 @@ public class TerminateNodesTest extends TestCase {
       newTerminateNodes(compute).apply(Iterables.concat(runningNodesToSuspend, runningNodesToDestroy));
 
       for (NodeMetadata node : split.get(0))
-         assertEquals(NodeState.SUSPENDED, compute.getNodeMetadata(node.getId()).getState());
+         assertEquals(NodeMetadata.Status.SUSPENDED, compute.getNodeMetadata(node.getId()).getStatus());
       for (NodeMetadata node : split.get(1))
          assertEquals(null, compute.getNodeMetadata(node.getId()));
 
