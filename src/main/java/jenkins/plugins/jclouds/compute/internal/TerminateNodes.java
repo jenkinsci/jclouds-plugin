@@ -1,12 +1,17 @@
 package jenkins.plugins.jclouds.compute.internal;
 
+import java.util.Collection;
+
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeState;
 import org.jclouds.logging.Logger;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.ImmutableMultimap.Builder;
 
 public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
    private final Logger logger;
@@ -18,34 +23,52 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
    }
 
    public Void apply(Iterable<RunningNode> runningNode) {
+      Builder<String, String> cloudNodesToSuspendBuilder = ImmutableMultimap.<String, String> builder();
+      Builder<String, String> cloudNodesToDestroyBuilder = ImmutableMultimap.<String, String> builder();
       for (RunningNode cloudTemplateNode : runningNode) {
-         try {
-            terminateNode(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode(), cloudTemplateNode
-                     .isSuspendOrTerminate(), logger);
-         } catch (UnsupportedOperationException e) {
-            logger.info("Error terminating node " + cloudTemplateNode.getNode().getId() + ": " + e);
+         if (cloudTemplateNode.isSuspendOrTerminate()) {
+            cloudNodesToSuspendBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
+         } else {
+            cloudNodesToDestroyBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
          }
       }
+      Multimap<String, String> cloudNodesToSuspend = cloudNodesToSuspendBuilder.build();
+      Multimap<String, String> cloudNodesToDestroy = cloudNodesToDestroyBuilder.build();
+
+      suspendIfSupported(cloudNodesToSuspend);
+      destroy(cloudNodesToDestroy);
       return null;
    }
 
-   /**
-    * Destroy the node calls {@link ComputeService#destroyNode}
-    * 
-    */
-   public void terminateNode(String cloudName, NodeMetadata n, boolean suspendOrTerminate, Logger logger)
-            throws UnsupportedOperationException {
-      final ComputeService compute = computeCache.getUnchecked(cloudName);
-      if (n != null && n.getState().equals(NodeState.RUNNING)) {
-         if (suspendOrTerminate) {
-            logger.info("Suspending the Node : " + n.getId());
-            compute.suspendNode(n.getId());
-         } else {
-            logger.info("Terminating the Node : " + n.getId());
-            compute.destroyNode(n.getId());
+   private void destroy(Multimap<String, String> cloudNodesToDestroy) {
+      for (String cloudToDestroy : cloudNodesToDestroy.keySet()) {
+         final Collection<String> nodesToDestroy = cloudNodesToDestroy.get(cloudToDestroy);
+         logger.info("Destroying nodes: " + nodesToDestroy);
+         computeCache.getUnchecked(cloudToDestroy).destroyNodesMatching(new Predicate<NodeMetadata>() {
+
+            public boolean apply(NodeMetadata input) {
+               return nodesToDestroy.contains(input.getId());
+            }
+
+         });
+      }
+   }
+
+   private void suspendIfSupported(Multimap<String, String> cloudNodesToSuspend) {
+      for (String cloudToSuspend : cloudNodesToSuspend.keySet()) {
+         final Collection<String> nodesToSuspend = cloudNodesToSuspend.get(cloudToSuspend);
+         try {
+            logger.info("Suspending nodes: " + nodesToSuspend);
+            computeCache.getUnchecked(cloudToSuspend).suspendNodesMatching(new Predicate<NodeMetadata>() {
+
+               public boolean apply(NodeMetadata input) {
+                  return nodesToSuspend.contains(input.getId());
+               }
+
+            });
+         } catch (UnsupportedOperationException e) {
+            logger.info("Suspending unsupported on cloud: " + cloudToSuspend + "; nodes: " + nodesToSuspend + ": " + e);
          }
-      } else {
-         logger.info("Node " + n.getId() + " is already not running.");
       }
    }
 }
