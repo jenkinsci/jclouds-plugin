@@ -197,11 +197,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       }
 
 
-      Statement initStatement;
-      Statement bootstrap;
+      Statement initStatement = null;
+      Statement bootstrap = null;
       
       if (this.preExistingJenkinsUser) {
-    	  initStatement = Statements.exec(this.initScript);
+          if( this.initScript.length() > 0 ) {
+    	    initStatement = Statements.exec(this.initScript);
+          }
       } else {
 	      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
 	      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
@@ -227,8 +229,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       
       template.getOptions()
             .inboundPorts(22)
-            .userMetadata(userMetadata)
-            .runScript(bootstrap);
+            .userMetadata(userMetadata);
+
+      if( bootstrap != null )
+            template.getOptions().runScript(bootstrap);
 
       NodeMetadata nodeMetadata = null;
 

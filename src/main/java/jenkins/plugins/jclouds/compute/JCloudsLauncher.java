@@ -59,7 +59,7 @@ public class JCloudsLauncher extends ComputerLauncher {
             // connect fresh as ROOT
             cleanupConn = connectToSsh(nodeMetadata, logger);
             LoginCredentials credentials = nodeMetadata.getCredentials();
-            if (!cleanupConn.authenticateWithPublicKey(credentials.getUser(), credentials.getPrivateKey().toCharArray(), "")) {
+            if (!authenticate(cleanupConn, credentials)) {
                logger.println("Authentication failed");
                return; // failed to connect as root.
             }
@@ -90,6 +90,20 @@ public class JCloudsLauncher extends ComputerLauncher {
       }
    }
 
+    /**
+     * Authenticate with credentials
+     */
+    private boolean authenticate(Connection connection, LoginCredentials credentials) throws IOException {
+        if( credentials.getOptionalPrivateKey().isPresent() )
+        {
+            return connection.authenticateWithPublicKey(credentials.getUser(),
+                    credentials.getPrivateKey().toCharArray(), "");
+        } else {
+            return connection.authenticateWithPassword(credentials.getUser(),
+                    credentials.getPassword());
+        }
+    }
+
    /**
     * Authenticates using the bootstrapConn, tries to 20 times before giving up.
     * @param bootstrapConn
@@ -107,8 +121,9 @@ public class JCloudsLauncher extends ComputerLauncher {
          while (tries-- > 0) {
             LoginCredentials credentials = nodeMetadata.getCredentials();
             logger.println("Authenticating as " + credentials.getUser());
-            isAuthenticated = bootstrapConn.authenticateWithPublicKey(credentials.getUser(),
-                  credentials.getPrivateKey().toCharArray(), "");
+
+            isAuthenticated = authenticate(bootstrapConn, credentials);
+
             if (isAuthenticated) {
                break;
             }
