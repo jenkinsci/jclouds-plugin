@@ -34,6 +34,7 @@ public class JCloudsCloudLiveTest extends TestCase {
                1, 
                30, 
                600*1000,
+               600*1000,
                Collections.<JCloudsSlaveTemplate> emptyList());
    }
 

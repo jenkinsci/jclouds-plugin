@@ -80,6 +80,7 @@ public class JCloudsCloud extends Cloud {
    public int instanceCap;
    public final List<JCloudsSlaveTemplate> templates;
    public final int scriptTimeout;
+    public final int startTimeout;
    private transient ComputeService compute;
 
     public static List<String> getCloudNames() {
@@ -108,6 +109,7 @@ public class JCloudsCloud extends Cloud {
                         final int instanceCap,
                         final int retentionTime,
                         final int scriptTimeout,
+                        final int startTimeout,
                         final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
@@ -120,6 +122,7 @@ public class JCloudsCloud extends Cloud {
         this.instanceCap = instanceCap;
         this.retentionTime = retentionTime;
         this.scriptTimeout = scriptTimeout;
+        this.startTimeout = startTimeout;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
         readResolve();
     }
@@ -176,9 +179,14 @@ public class JCloudsCloud extends Cloud {
          if (!Strings.isNullOrEmpty(this.endPointUrl)) {
             overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
          }
-         overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
-        		 String.valueOf(scriptTimeout)); 
-
+         if (scriptTimeout > 0) {
+             overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
+                                   String.valueOf(scriptTimeout));
+         }
+         if (startTimeout > 0) {
+             overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING,
+                                   String.valueOf(startTimeout)); 
+         }
          this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
       }
       return compute;
@@ -448,6 +456,10 @@ public class JCloudsCloud extends Cloud {
       }
 
       public FormValidation doCheckScriptTimeout(@QueryParameter String value) {
+    	  return FormValidation.validatePositiveInteger(value);
+      }
+    
+      public FormValidation doCheckStartTimeout(@QueryParameter String value) {
     	  return FormValidation.validatePositiveInteger(value);
       }
     

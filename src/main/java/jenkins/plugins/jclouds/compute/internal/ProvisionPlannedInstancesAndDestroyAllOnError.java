@@ -41,7 +41,8 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements
                      nodePlan.getTemplateName());
 
             ListenableFuture<NodeMetadata> provisionTemplate = executor.submit(new RetrySupplierOnException(nodePlan
-                     .getNodeSupplier()));
+                                                                                                            .getNodeSupplier(),
+                                                                                                            logger));
 
             Futures.addCallback(provisionTemplate, new FutureCallback<NodeMetadata>() {
                public void onSuccess(NodeMetadata result) {

@@ -33,6 +33,7 @@ public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
                1, 
                30,
                600*1000,
+               600*1000,
                Collections.<JCloudsSlaveTemplate> emptyList());
    }
 
