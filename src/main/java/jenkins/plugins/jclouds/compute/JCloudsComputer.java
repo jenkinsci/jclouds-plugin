@@ -2,6 +2,7 @@ package jenkins.plugins.jclouds.compute;
 
 import hudson.model.Hudson;
 import hudson.model.Slave;
+import hudson.slaves.OfflineCause;
 import hudson.slaves.SlaveComputer;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
@@ -40,7 +41,8 @@ public class JCloudsComputer extends SlaveComputer {
      */
     @Override
     public HttpResponse doDoDelete() throws IOException {
-        deleteSlave();
+        setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
+        getNode().setPendingDelete(true);
         return new HttpRedirect("..");
     }
     

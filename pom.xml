@@ -34,7 +34,7 @@
         <guava.version>12.0</guava.version>
         <jsch.version>0.1.48</jsch.version>
         <stapler.version>1.178</stapler.version>
-        <hpi.plugin.version>1.85-SNAPSHOT</hpi.plugin.version>
+        <hpi.plugin.version>1.84</hpi.plugin.version>
         <stapler.version>1.99</stapler.version>
         <jsr305.version>1.3.9</jsr305.version>
     </properties>
@@ -211,6 +211,7 @@
             <plugin>
                 <groupId>org.jenkins-ci.tools</groupId>
                 <artifactId>maven-hpi-plugin</artifactId>
+                <version>${hpi.plugin.version}</version>
                 <dependencies>
                   <dependency>
                     <groupId>com.google.guava</groupId>

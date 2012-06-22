@@ -28,6 +28,7 @@ public class JCloudsSlave extends Slave {
     public final boolean stopOnTerminate;
     private String cloudName;
     private String nodeId;
+    private boolean pendingDelete;
     
    @DataBoundConstructor
    public JCloudsSlave(String cloudName,
@@ -97,6 +98,14 @@ public class JCloudsSlave extends Slave {
      */
     public String getCloudName() {
         return cloudName;
+    }
+
+    public boolean isPendingDelete() {
+        return pendingDelete;
+    }
+
+    public void setPendingDelete(boolean pendingDelete) {
+        this.pendingDelete = pendingDelete;
     }
     
    /**
