@@ -12,6 +12,13 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+
 @Extension
 public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 
@@ -32,17 +39,30 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
     }
 
     protected void execute(TaskListener listener) {
-        for (Computer c : Jenkins.getInstance().getComputers()) {
+        final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder = ImmutableList
+            .<ListenableFuture<?>> builder();
+        ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
+        
+        for (final Computer c : Jenkins.getInstance().getComputers()) {
             if (JCloudsComputer.class.isInstance(c)) {
                 if (((JCloudsComputer)c).getNode().isPendingDelete()) {
-                    logger.log(Level.INFO, "Deleting pending node " + c.getName());
-                    try {
-                        ((JCloudsComputer)c).deleteSlave();
-                    } catch (IOException e) {
-                        logger.log(Level.WARNING, "Failed to disconnect and delete "+c.getName()+": "+e.getMessage());
-                    }
+                    ListenableFuture<?> f = executor.submit(new Runnable() {
+                            @Override
+                            public void run() {
+                                logger.log(Level.INFO, "Deleting pending node " + c.getName());
+                                try {
+                                    ((JCloudsComputer)c).deleteSlave();
+                                } catch (IOException e) {
+                                    logger.log(Level.WARNING, "Failed to disconnect and delete "+c.getName()+": "+e.getMessage());
+                                }
+                            }
+                        });
+
+                    deletedNodesBuilder.add(f);
                 }
             }
         }
+
+        Futures.getUnchecked(Futures.successfulAsList(deletedNodesBuilder.build()));
     }
 }

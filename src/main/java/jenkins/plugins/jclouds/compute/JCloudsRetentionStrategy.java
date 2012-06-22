@@ -1,6 +1,7 @@
 package jenkins.plugins.jclouds.compute;
 
 import hudson.model.Descriptor;
+import hudson.slaves.OfflineCause;
 import hudson.slaves.RetentionStrategy;
 import hudson.util.TimeUnit2;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -25,6 +26,9 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                 final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
                 if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
                     LOGGER.info("Setting "+c.getName()+" to be deleted.");
+                    if (!c.isOffline()) {
+                        c.setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
+                    }
                     c.getNode().setPendingDelete(true);
                 }
             }
