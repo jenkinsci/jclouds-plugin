@@ -30,7 +30,7 @@
         <test.jenkins.blobstore.build-version />
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-        <jclouds.version>1.5.0-beta.4</jclouds.version>
+        <jclouds.version>1.5.0-beta.6</jclouds.version>
         <guava.version>12.0</guava.version>
         <jsch.version>0.1.48</jsch.version>
         <stapler.version>1.178</stapler.version>
