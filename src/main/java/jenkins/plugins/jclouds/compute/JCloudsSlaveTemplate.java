@@ -212,6 +212,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
 	          .authorizeAdminPublicKey(true)
 	          .adminPublicKey(getCloud().publicKey)
+                  .adminHome(getFsRoot())
 	          .build();
 
 
