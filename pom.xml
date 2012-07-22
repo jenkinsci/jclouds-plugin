@@ -102,7 +102,12 @@
             <groupId>org.jclouds</groupId>
             <artifactId>jclouds-allcompute</artifactId>
             <version>${jclouds.version}</version>
-        </dependency>
+        </dependency>        
+        <dependency>
+            <groupId>org.jclouds.labs</groupId>
+            <artifactId>smartos-ssh</artifactId>
+            <version>${jclouds.version}</version>
+        </dependency>		
         <dependency>
             <groupId>org.jclouds</groupId>
             <artifactId>jclouds-allblobstore</artifactId>
