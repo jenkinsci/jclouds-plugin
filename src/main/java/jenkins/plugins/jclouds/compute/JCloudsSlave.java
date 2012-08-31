@@ -29,6 +29,7 @@ public class JCloudsSlave extends Slave {
     private String cloudName;
     private String nodeId;
     private boolean pendingDelete;
+    private int overrideRetentionTime;
     
    @DataBoundConstructor
    public JCloudsSlave(String cloudName,
@@ -41,10 +42,12 @@ public class JCloudsSlave extends Slave {
                        ComputerLauncher launcher,
                        RetentionStrategy retentionStrategy,
                        List<? extends NodeProperty<?>> nodeProperties,
-                       boolean stopOnTerminate) throws Descriptor.FormException, IOException {
+                       boolean stopOnTerminate,
+                       int overrideRetentionTime) throws Descriptor.FormException, IOException {
       super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
       this.stopOnTerminate = stopOnTerminate;
       this.cloudName = cloudName;
+      this.overrideRetentionTime = overrideRetentionTime;
    }
 
     /**
@@ -57,12 +60,13 @@ public class JCloudsSlave extends Slave {
      * @param description - Description of this slave.
      * @param numExecutors - Number of executors for this slave.
      * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
+     * @param overrideRetentionTime - Retention time to use specifically for this slave, overriding the cloud default.
      * @throws IOException
      * @throws Descriptor.FormException
      */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
                         final String description, final String numExecutors,
-                        final boolean stopOnTerminate) throws IOException, Descriptor.FormException {
+                        final boolean stopOnTerminate, final int overrideRetentionTime) throws IOException, Descriptor.FormException {
         this(cloudName,
              metadata.getName(),
              description,
@@ -73,7 +77,8 @@ public class JCloudsSlave extends Slave {
              new JCloudsLauncher(),
              new JCloudsRetentionStrategy(),
              Collections.<NodeProperty<?>>emptyList(),
-             stopOnTerminate);
+             stopOnTerminate,
+             overrideRetentionTime);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
@@ -90,6 +95,20 @@ public class JCloudsSlave extends Slave {
        }
        return nodeMetaData;
    }
+
+
+    /**
+     * Get the retention time for this slave, defaulting to the parent cloud's if not set.
+     *
+     * @return overrideTime
+     */
+    public int getRetentionTime() {
+        if (overrideRetentionTime > 0) {
+            return overrideRetentionTime;
+        } else {
+            return JCloudsCloud.getByName(cloudName).getRetentionTime();
+        }
+    }
 
     /**
      * Get the JClouds profile identifier for the Cloud associated with this slave.

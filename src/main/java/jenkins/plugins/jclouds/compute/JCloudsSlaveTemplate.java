@@ -70,6 +70,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    private final String jenkinsUser;
    private final String fsRoot;
    public final boolean allowSudo;
+   public final int overrideRetentionTime;
    
    private transient Set<LabelAtom> labelSet;
 
@@ -95,7 +96,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String jenkinsUser,
                                final boolean preExistingJenkinsUser,
                                final String fsRoot,
-                               final boolean allowSudo) {
+                               final boolean allowSudo,
+                               final int overrideRetentionTime) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -116,6 +118,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.preExistingJenkinsUser = preExistingJenkinsUser;
        this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
        this.allowSudo = allowSudo;
+       this.overrideRetentionTime = overrideRetentionTime;
        readResolve();
    }
 
@@ -157,7 +160,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        NodeMetadata nodeMetadata = get();
        
        try {
-           return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate);
+           return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
+                                   numExecutors, stopOnTerminate, overrideRetentionTime);
        } catch (Descriptor.FormException e) {
            throw new AssertionError("Invalid configuration " + e.getMessage());
        }

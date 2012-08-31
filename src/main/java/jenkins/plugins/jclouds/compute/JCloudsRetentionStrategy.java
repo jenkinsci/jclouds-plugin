@@ -21,7 +21,7 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
     public synchronized long check(JCloudsComputer c) {
          if (c.isIdle() && !c.getNode().isPendingDelete() && !disabled) {
             // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
-            final int retentionTime = JCloudsCloud.getByName(c.getCloudName()).getRetentionTime();
+            final int retentionTime = c.getRetentionTime();
             if (retentionTime > -1) {
                 final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
                 if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {

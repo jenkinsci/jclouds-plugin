@@ -32,6 +32,10 @@ public class JCloudsComputer extends SlaveComputer {
       return (JCloudsSlave) super.getNode();
    }
 
+    public int getRetentionTime() {
+        return getNode().getRetentionTime();
+    }
+    
     public String getCloudName() {
         return getNode().getCloudName();
     }
