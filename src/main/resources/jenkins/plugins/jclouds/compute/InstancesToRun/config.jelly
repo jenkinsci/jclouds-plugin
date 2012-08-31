@@ -3,10 +3,20 @@
   <f:entry title="Cloud Name" field="cloudName">
     <f:select />
   </f:entry>
+
+  <f:radioBlock inline="true" name="jclouds.useSelectTemplates" value="true"
+                title="Select Template from List" checked="${!instance.isUsingManualTemplateName()}">
+    <f:entry title="Template" field="templateName">
+      <f:select />
+    </f:entry>
+  </f:radioBlock>
+  <f:radioBlock inline="true" name="jclouds.useSelectTemplates" value="false"
+                title="Specify Template Name as String" checked="${instance.isUsingManualTemplateName()}">
+    <f:entry title="Template" field="manualTemplateName">
+      <f:textbox />
+    </f:entry>
+  </f:radioBlock>
   
-  <f:entry title="Template" field="templateName">
-    <f:select />
-  </f:entry>
   
   <f:entry title="Number of Instances" field="count">
     <f:textbox />

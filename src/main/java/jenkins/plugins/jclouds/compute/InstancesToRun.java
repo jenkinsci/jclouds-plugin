@@ -18,16 +18,36 @@ import org.kohsuke.stapler.export.ExportedBean;
 public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> {
     public final String cloudName;
     public final String templateName;
+    public final String manualTemplateName;
     public final int count;
     public final boolean suspendOrTerminate;
     
     @DataBoundConstructor
-    public InstancesToRun(String cloudName, String templateName, int count, boolean suspendOrTerminate) {
+    public InstancesToRun(String cloudName, String templateName, String manualTemplateName, int count, boolean suspendOrTerminate) {
         this.cloudName = Util.fixEmptyAndTrim(cloudName);
         this.templateName = Util.fixEmptyAndTrim(templateName);
+        this.manualTemplateName = Util.fixEmptyAndTrim(manualTemplateName);
         this.count = count;
         this.suspendOrTerminate = suspendOrTerminate;
-    }        
+    }
+
+    public String getActualTemplateName() {
+        if (isUsingManualTemplateName()) {
+            return manualTemplateName;
+        } else {
+            return templateName;
+        }
+    }
+    
+    public boolean isUsingManualTemplateName() {
+        if (manualTemplateName == null ||
+            manualTemplateName.equals("")) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+        
 
     @Extension
     public static class DescriptorImpl extends Descriptor<InstancesToRun> {
