@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 import jenkins.plugins.jclouds.compute.internal.NodePlan;
 import jenkins.plugins.jclouds.compute.internal.ProvisionPlannedInstancesAndDestroyAllOnError;
@@ -25,7 +26,7 @@ import jenkins.plugins.jclouds.internal.BuildListenerLogger;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.logging.Logger;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Function;
@@ -39,6 +40,8 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.util.concurrent.MoreExecutors;
 
 public class JCloudsOneOffSlave extends BuildWrapper {
+   private static final Logger LOGGER = Logger.getLogger(JCloudsOneOffSlave.class.getName());
+
    @DataBoundConstructor
    public JCloudsOneOffSlave() {
    }
@@ -55,7 +58,7 @@ public class JCloudsOneOffSlave extends BuildWrapper {
                 @Override
                 public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException,
                                                                                                   InterruptedException {
-                    
+                    LOGGER.warning("Single-use slave " + c.getName() + " getting torn down.");
                     c.setTemporarilyOffline(true, OfflineCause.create(Messages._OneOffCause()));
                     return true;
                 }
