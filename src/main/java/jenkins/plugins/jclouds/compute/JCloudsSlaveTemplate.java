@@ -71,6 +71,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    private final String fsRoot;
    public final boolean allowSudo;
    public final int overrideRetentionTime;
+   public final int spoolDelayMs;
+   private final Object delayLockObject = new Object();
    
    private transient Set<LabelAtom> labelSet;
 
@@ -97,7 +99,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final boolean preExistingJenkinsUser,
                                final String fsRoot,
                                final boolean allowSudo,
-                               final int overrideRetentionTime) {
+                               final int overrideRetentionTime,
+                               final int spoolDelayMs
+                               ) {
 
        this.name = Util.fixEmptyAndTrim(name);
        this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -119,6 +123,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
        this.allowSudo = allowSudo;
        this.overrideRetentionTime = overrideRetentionTime;
+       this.spoolDelayMs = spoolDelayMs;
        readResolve();
    }
 
@@ -200,6 +205,21 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           template.getOptions().overrideLoginCredentials(lc);
       }
 
+      if (spoolDelayMs > 0)
+      {
+          // (JENKINS-15970) Add optional delay before spooling. Author: Adam Rofer
+          synchronized(delayLockObject)
+          {
+              LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
+              try
+              {
+                  Thread.sleep(spoolDelayMs);
+              }
+              catch (InterruptedException e)
+              {
+              }
+          }
+      }
 
       Statement initStatement = null;
       Statement bootstrap = null;
