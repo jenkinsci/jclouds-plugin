@@ -20,6 +20,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import org.jclouds.rest.AuthorizationException;
+
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -157,6 +159,10 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
                blobStoreProfile.upload(blobStoreEntry.container, src);
             }
          }
+      } catch (AuthorizationException e) {
+         LOGGER.severe("Failed to upload files to Blob Store due to authorization exception.");
+         e.printStackTrace(listener.error("Failed to upload files"));
+         build.setResult(Result.UNSTABLE);
       } catch (IOException e) {
          LOGGER.severe("Failed to upload files to Blob Store: " + e.getMessage());
          e.printStackTrace(listener.error("Failed to upload files"));
