@@ -316,6 +316,54 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           return FormValidation.validatePositiveInteger(value);
       }
 
+      public ListBoxModel doFillImageIdItems(@RelativePath("..") @QueryParameter String providerName,
+                                             @RelativePath("..") @QueryParameter String identity,
+                                             @RelativePath("..") @QueryParameter String credential,
+                                             @RelativePath("..") @QueryParameter String endPointUrl) {
+
+         ListBoxModel m = new ListBoxModel();
+
+         if (Strings.isNullOrEmpty(identity)) {
+            LOGGER.warning("identity is null or empty");
+            return m;
+         }
+         if (Strings.isNullOrEmpty(credential)) {
+            LOGGER.warning("credential is null or empty");
+            return m;
+         }
+         if (Strings.isNullOrEmpty(providerName)) {
+            LOGGER.warning("providerName is null or empty");
+            return m;
+         }
+
+
+         // Remove empty text/whitespace from the fields.
+         providerName = Util.fixEmptyAndTrim(providerName);
+         identity = Util.fixEmptyAndTrim(identity);
+         credential = Util.fixEmptyAndTrim(credential);
+         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+
+         ComputeService computeService = null;
+         m.add("None specified", "");
+         try {
+            // TODO: endpoint is ignored
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+            ImmutableSortedSet<Image> images = ImmutableSortedSet.copyOf(computeService.listImages());
+            for (Image image : images) {
+               m.add(String.format("%s (%s)", image.getId(), image.getName()), image.getId());
+            }
+
+         } catch (Exception ex) {
+
+         } finally {
+            if (computeService != null) {
+               computeService.getContext().close();
+            }
+         }
+
+         return m;
+      }
+
       public FormValidation doValidateImageId(
             @QueryParameter String providerName,
             @QueryParameter String identity,
@@ -368,7 +416,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          return result;
       }
 
-      
       public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
                                                 @RelativePath("..") @QueryParameter String identity,
                                                 @RelativePath("..") @QueryParameter String credential,
@@ -403,9 +450,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
               computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
               Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
               for (Hardware hardware : hardwareProfiles) {
-
-                  m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()),
-                        hardware.getId());
+                  m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()), hardware.getId());
               }
               
           } catch (Exception ex) {
