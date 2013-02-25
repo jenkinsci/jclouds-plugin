@@ -161,7 +161,9 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          }
       } catch (AuthorizationException e) {
          LOGGER.severe("Failed to upload files to Blob Store due to authorization exception.");
-         e.printStackTrace(listener.error("Failed to upload files"));
+         RuntimeException overrideException =
+            new RuntimeException("Failed to upload files to Blob Store due to authorization exception.");
+         overrideException.printStackTrace(listener.error("Failed to upload files"));
          build.setResult(Result.UNSTABLE);
       } catch (IOException e) {
          LOGGER.severe("Failed to upload files to Blob Store: " + e.getMessage());
