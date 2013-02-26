@@ -21,6 +21,14 @@
                     <input class="setting-input" name="jcblobstore.entry.container"
                            type="text" value="${e.container}"/>
                 </f:entry>
+                <f:entry title="Destination Path">
+                    <input class="setting-input" name="jcblobstore.entry.path"
+                           type="text" value="${e.path}"/>
+                </f:entry>
+                <f:entry title="Keep Hierarchy">
+                    <f:checkbox name="jcblobstore.entry.keepHierarchy"
+                           checked="${e.keepHierarchy}"/>
+                </f:entry>
                 <f:entry title="">
                     <div align="right">
                         <f:repeatableDeleteButton/>

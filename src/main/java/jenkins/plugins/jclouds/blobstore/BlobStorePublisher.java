@@ -143,20 +143,27 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          Map<String, String> envVars = build.getEnvironment(listener);
 
          for (BlobStoreEntry blobStoreEntry : entries) {
-            String expanded = Util.replaceMacro(blobStoreEntry.sourceFile, envVars);
+            String expandedSource = Util.replaceMacro(blobStoreEntry.sourceFile, envVars);
+            String expandedContainer = Util.replaceMacro(blobStoreEntry.container, envVars);
             FilePath ws = build.getWorkspace();
-            FilePath[] paths = ws.list(expanded);
+            FilePath[] paths = ws.list(expandedSource);
+            String wsPath = ws.getRemote();
 
             if (paths.length == 0) {
                // try to do error diagnostics
-               log(listener.getLogger(), "No file(s) found: " + expanded);
-               String error = ws.validateAntFileMask(expanded);
+               log(listener.getLogger(), "No file(s) found: " + expandedSource);
+               String error = ws.validateAntFileMask(expandedSource);
                if (error != null)
                   log(listener.getLogger(), error);
             }
             for (FilePath src : paths) {
-               log(listener.getLogger(), "container=" + blobStoreEntry.container + ", file=" + src.getName());
-               blobStoreProfile.upload(blobStoreEntry.container, src);
+               String expandedPath = getDestinationPath(blobStoreEntry.path,
+                                                        blobStoreEntry.keepHierarchy,
+                                                        wsPath, src, envVars);
+               log(listener.getLogger(), "container=" + expandedContainer +
+                                         ", path=" + expandedPath +
+                                         ", file=" + src.getName());
+               blobStoreProfile.upload(expandedContainer, expandedPath, src);
             }
          }
       } catch (AuthorizationException e) {
@@ -173,6 +180,45 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
 
       return true;
+   }
+
+   private String getDestinationPath(String path,
+                                     boolean appendFilePath,
+                                     String wsPath, FilePath file,
+                                     Map<String, String> envVars) {
+      String resultPath;
+      String expandedPath = "";
+      String relativeFilePath = "";
+      String fileFullPath = file.getParent().getRemote();
+      if (path != null && !path.equals("")) {
+         expandedPath = Util.replaceMacro(path, envVars);
+         if (expandedPath.endsWith("/")) {
+            expandedPath = expandedPath.substring(0, expandedPath.length() - 1);
+         }
+      }
+      if (appendFilePath && fileFullPath.startsWith(wsPath)) {
+         // Determine relative path to file relative to the workspace.
+         relativeFilePath = fileFullPath.substring(wsPath.length());
+         if (relativeFilePath.startsWith("/")) {
+            relativeFilePath = relativeFilePath.substring(1);
+         }
+      }
+      if (!expandedPath.equals("") && !relativeFilePath.equals("")) {
+         resultPath = expandedPath + "/" + relativeFilePath;
+      }
+      else {
+         resultPath = expandedPath + relativeFilePath;
+      }
+
+      // Strip leading and trailing slashes to play nice with object stores.
+      if (resultPath.startsWith("/")) {
+         resultPath = resultPath.substring(1);
+      }
+      if (resultPath.endsWith("/")) {
+         resultPath = resultPath.substring(0, resultPath.length() - 1);
+      }
+
+      return resultPath;
    }
 
    /**
