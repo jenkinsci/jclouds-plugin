@@ -15,6 +15,7 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -43,20 +44,15 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
    private String profileName;
    @Extension
    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-   private final List<BlobStoreEntry> entries = new ArrayList<BlobStoreEntry>();
-
-
-   @DataBoundConstructor
-   public BlobStorePublisher() {
-      super();
-   }
+   private final List<BlobStoreEntry> entries;
 
    /**
     * Create a new Blobstore publisher for the cofigured profile identified by profileName
     *
     * @param profileName - the name of the configured profile name
     */
-   public BlobStorePublisher(String profileName) {
+   @DataBoundConstructor
+   public BlobStorePublisher(String profileName, List<BlobStoreEntry> entries) {
       super();
       if (profileName == null) {
          // defaults to the first one
@@ -64,6 +60,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          if (sites.length > 0)
             profileName = sites[0].getProfileName();
       }
+      this.entries = entries;
       this.profileName = profileName;
    }
 
@@ -253,14 +250,6 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
 
       @Override
-      public BlobStorePublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
-         BlobStorePublisher blobstorePublisher = new BlobStorePublisher();
-         req.bindParameters(blobstorePublisher, "jcblobstore.");
-         blobstorePublisher.getEntries().addAll(req.bindParametersToList(BlobStoreEntry.class, "jcblobstore.entry."));
-         return blobstorePublisher;
-      }
-
-      @Override
       public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
          profiles.replaceBy(req.bindParametersToList(BlobStoreProfile.class, "jcblobstore."));
          save();
@@ -288,5 +277,12 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          return true;
       }
 
+      public ListBoxModel doFillProfileNameItems() {
+         ListBoxModel model = new ListBoxModel();
+         for (BlobStoreProfile profile : getProfiles()) {
+            model.add(profile.getProfileName());
+         }
+         return model;
+      }
    }
 }
