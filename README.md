@@ -89,6 +89,8 @@ After you configure a cloudstorage provider, you can enable the publishing file 
 * Click on Add button next to `Files to upload`.
 * Add the sourcd file path (relative to workspace) 
 * Add the destination container name.
+* Add the virtual path under the container to copy to. (optional)
+* Check the Keep Hierarchy box if you want the path of the file relative to the workspace to be appended to the virtual path.
 * Repeat to add more files if you want to copy.
 * Click save.
 
