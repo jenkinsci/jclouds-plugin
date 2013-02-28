@@ -15,6 +15,7 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -43,20 +44,15 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
    private String profileName;
    @Extension
    public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-   private final List<BlobStoreEntry> entries = new ArrayList<BlobStoreEntry>();
-
-
-   @DataBoundConstructor
-   public BlobStorePublisher() {
-      super();
-   }
+   private final List<BlobStoreEntry> entries;
 
    /**
     * Create a new Blobstore publisher for the cofigured profile identified by profileName
     *
     * @param profileName - the name of the configured profile name
     */
-   public BlobStorePublisher(String profileName) {
+   @DataBoundConstructor
+   public BlobStorePublisher(String profileName, List<BlobStoreEntry> entries) {
       super();
       if (profileName == null) {
          // defaults to the first one
@@ -64,6 +60,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          if (sites.length > 0)
             profileName = sites[0].getProfileName();
       }
+      this.entries = entries;
       this.profileName = profileName;
    }
 
@@ -143,20 +140,27 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          Map<String, String> envVars = build.getEnvironment(listener);
 
          for (BlobStoreEntry blobStoreEntry : entries) {
-            String expanded = Util.replaceMacro(blobStoreEntry.sourceFile, envVars);
+            String expandedSource = Util.replaceMacro(blobStoreEntry.sourceFile, envVars);
+            String expandedContainer = Util.replaceMacro(blobStoreEntry.container, envVars);
             FilePath ws = build.getWorkspace();
-            FilePath[] paths = ws.list(expanded);
+            FilePath[] paths = ws.list(expandedSource);
+            String wsPath = ws.getRemote();
 
             if (paths.length == 0) {
                // try to do error diagnostics
-               log(listener.getLogger(), "No file(s) found: " + expanded);
-               String error = ws.validateAntFileMask(expanded);
+               log(listener.getLogger(), "No file(s) found: " + expandedSource);
+               String error = ws.validateAntFileMask(expandedSource);
                if (error != null)
                   log(listener.getLogger(), error);
             }
             for (FilePath src : paths) {
-               log(listener.getLogger(), "container=" + blobStoreEntry.container + ", file=" + src.getName());
-               blobStoreProfile.upload(blobStoreEntry.container, src);
+               String expandedPath = getDestinationPath(blobStoreEntry.path,
+                                                        blobStoreEntry.keepHierarchy,
+                                                        wsPath, src, envVars);
+               log(listener.getLogger(), "container=" + expandedContainer +
+                                         ", path=" + expandedPath +
+                                         ", file=" + src.getName());
+               blobStoreProfile.upload(expandedContainer, expandedPath, src);
             }
          }
       } catch (AuthorizationException e) {
@@ -173,6 +177,45 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
 
       return true;
+   }
+
+   private String getDestinationPath(String path,
+                                     boolean appendFilePath,
+                                     String wsPath, FilePath file,
+                                     Map<String, String> envVars) {
+      String resultPath;
+      String expandedPath = "";
+      String relativeFilePath = "";
+      String fileFullPath = file.getParent().getRemote();
+      if (path != null && !path.equals("")) {
+         expandedPath = Util.replaceMacro(path, envVars);
+         if (expandedPath.endsWith("/")) {
+            expandedPath = expandedPath.substring(0, expandedPath.length() - 1);
+         }
+      }
+      if (appendFilePath && fileFullPath.startsWith(wsPath)) {
+         // Determine relative path to file relative to the workspace.
+         relativeFilePath = fileFullPath.substring(wsPath.length());
+         if (relativeFilePath.startsWith("/")) {
+            relativeFilePath = relativeFilePath.substring(1);
+         }
+      }
+      if (!expandedPath.equals("") && !relativeFilePath.equals("")) {
+         resultPath = expandedPath + "/" + relativeFilePath;
+      }
+      else {
+         resultPath = expandedPath + relativeFilePath;
+      }
+
+      // Strip leading and trailing slashes to play nice with object stores.
+      if (resultPath.startsWith("/")) {
+         resultPath = resultPath.substring(1);
+      }
+      if (resultPath.endsWith("/")) {
+         resultPath = resultPath.substring(0, resultPath.length() - 1);
+      }
+
+      return resultPath;
    }
 
    /**
@@ -207,14 +250,6 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
 
       @Override
-      public BlobStorePublisher newInstance(StaplerRequest req, net.sf.json.JSONObject formData) throws FormException {
-         BlobStorePublisher blobstorePublisher = new BlobStorePublisher();
-         req.bindParameters(blobstorePublisher, "jcblobstore.");
-         blobstorePublisher.getEntries().addAll(req.bindParametersToList(BlobStoreEntry.class, "jcblobstore.entry."));
-         return blobstorePublisher;
-      }
-
-      @Override
       public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
          profiles.replaceBy(req.bindParametersToList(BlobStoreProfile.class, "jcblobstore."));
          save();
@@ -242,5 +277,12 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          return true;
       }
 
+      public ListBoxModel doFillProfileNameItems() {
+         ListBoxModel model = new ListBoxModel();
+         for (BlobStoreProfile profile : getProfiles()) {
+            model.add(profile.getProfileName());
+         }
+         return model;
+      }
    }
 }

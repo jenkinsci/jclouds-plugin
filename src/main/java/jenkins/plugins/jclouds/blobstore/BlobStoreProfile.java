@@ -90,12 +90,13 @@ public class BlobStoreProfile {
    /**
     * Upload the specified file from the {@param filePath} to container
     *
-    * @param container - The container where the file need to uploaded.
+    * @param container - The container where the file needs to be uploaded.
+    * @param path - The path in container where the file needs to be uploaded.
     * @param filePath  - the {@link FilePath} of the file which needs to be uploaded.
     * @throws IOException
     * @throws InterruptedException
     */
-   public void upload(String container, FilePath filePath) throws IOException, InterruptedException {
+   public void upload(String container, String path, FilePath filePath) throws IOException, InterruptedException {
       if (filePath.isDirectory()) {
          throw new IOException(filePath + " is a directory");
       }
@@ -108,9 +109,20 @@ public class BlobStoreProfile {
          if (!blobStore.containerExists(container)) {
             blobStore.createContainerInLocation(null, container);
          }
+         if (!path.equals("") && !blobStore.directoryExists(container, path)) {
+            blobStore.createDirectory(container, path);
+         }
+         String destPath;
+         if (path.equals("")) {
+            destPath = filePath.getName();
+         }
+         else {
+            destPath = path + "/" + filePath.getName();
+         }
+         LOGGER.info("Publishing now to container: " + container + " path: " + destPath);
          InputStreamMap map = context.createInputStreamMap(container);
-         map.put(filePath.getName(), filePath.read());
-         LOGGER.info("Published " + filePath.getName() + " to container " + container + " with profile " + this.profileName);
+         map.put(destPath, filePath.read());
+         LOGGER.info("Published " + destPath + " to container " + container + " with profile " + this.profileName);
       } finally {
          context.close();
       }
