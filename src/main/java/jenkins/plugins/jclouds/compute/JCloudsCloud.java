@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -213,7 +214,8 @@ public class JCloudsCloud extends Cloud {
                                   Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                                           public Node call() throws Exception {
                                               // TODO: record the output somewhere
-                                              JCloudsSlave s = t.provisionSlave(new StreamTaskListener(System.out));
+                                              JCloudsSlave s = t.provisionSlave(new StreamTaskListener(System.out,
+                                                                                Charset.defaultCharset()));
                                               Hudson.getInstance().addNode(s);
                                               // Cloud instances may have a long init script. If we declare
                                               // the provisioning complete by returning without the connect

@@ -42,7 +42,7 @@
       <f:radioBlock inline="true" name="jclouds.useImageId" value="true"
                     title="Specify Image ID" checked="${instance.imageId != ''}">
         <f:entry title="Image Id" field="imageId">
-          <f:textbox />
+          <f:select />
         </f:entry>
         
         <f:validateButton title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
