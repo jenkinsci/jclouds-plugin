@@ -16,8 +16,10 @@ import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
@@ -31,6 +33,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
@@ -61,6 +64,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final String description;
    public final String osVersion;
    public final String initScript;
+   public final String userData;
    public final String numExecutors;
    public final boolean stopOnTerminate;
    public final String vmUser;
@@ -90,6 +94,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String labelString,
                                final String description,
                                final String initScript,
+                               final String userData,
                                final String numExecutors,
                                final boolean stopOnTerminate,
                                final String vmPassword,
@@ -113,6 +118,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.labelString = Util.fixNull(labelString);
        this.description = Util.fixNull(description);
        this.initScript = Util.fixNull(initScript);
+       this.userData = Util.fixNull(userData);
        this.numExecutors = Util.fixNull(numExecutors);
        this.vmPassword = Util.fixEmptyAndTrim(vmPassword);
        this.vmUser = Util.fixEmptyAndTrim(vmUser);
@@ -199,10 +205,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       }
 
       Template template = templateBuilder.build();
+      TemplateOptions options = template.getOptions();
 
       if (!Strings.isNullOrEmpty(vmPassword)) {
           LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
-          template.getOptions().overrideLoginCredentials(lc);
+          options.overrideLoginCredentials(lc);
       }
 
       if (spoolDelayMs > 0)
@@ -252,12 +259,22 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
       }
       
-      template.getOptions()
+      options
             .inboundPorts(22)
             .userMetadata(userMetadata);
 
       if( bootstrap != null )
-            template.getOptions().runScript(bootstrap);
+            options.runScript(bootstrap);
+
+      if (userData != null) {
+          try {
+              Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
+              LOGGER.info("Setting userData to " + userData);
+              userDataMethod.invoke(options, userData.getBytes());
+          } catch (Exception e) {
+              LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
+          }
+      }
 
       NodeMetadata nodeMetadata = null;
 
