@@ -46,11 +46,13 @@ public class JCloudsLauncher extends ComputerLauncher {
       final Connection conn;
       Connection cleanupConn = null; // java's code path analysis for final doesn't work that well.
       boolean successful = false;
-      final NodeMetadata nodeMetadata = ((JCloudsSlave) computer.getNode()).getNodeMetaData();
+      final JCloudsSlave slave = (JCloudsSlave) computer.getNode();
+      final LoginCredentials credentials = slave.getCredentials();
+      final NodeMetadata nodeMetadata = slave.getNodeMetaData();
 
       try {
          bootstrapConn = connectToSsh(nodeMetadata, logger);
-         int bootstrapResult = bootstrap(bootstrapConn, nodeMetadata, logger);
+         int bootstrapResult = bootstrap(bootstrapConn, nodeMetadata, credentials, logger);
          if (bootstrapResult == FAILED)
             return; // bootstrap closed for us.
          else if (bootstrapResult == SAMEUSER)
@@ -58,7 +60,6 @@ public class JCloudsLauncher extends ComputerLauncher {
          else {
             // connect fresh as ROOT
             cleanupConn = connectToSsh(nodeMetadata, logger);
-            LoginCredentials credentials = nodeMetadata.getCredentials();
             if (!authenticate(cleanupConn, credentials)) {
                logger.println("Authentication failed");
                return; // failed to connect as root.
@@ -113,13 +114,12 @@ public class JCloudsLauncher extends ComputerLauncher {
     * @throws IOException
     * @throws InterruptedException
     */
-   private int bootstrap(Connection bootstrapConn, NodeMetadata nodeMetadata, PrintStream logger) throws IOException, InterruptedException {
+   private int bootstrap(Connection bootstrapConn, NodeMetadata nodeMetadata, LoginCredentials credentials, PrintStream logger) throws IOException, InterruptedException {
       boolean closeBootstrap = true;
       try {
          int tries = 20;
          boolean isAuthenticated = false;
          while (tries-- > 0) {
-            LoginCredentials credentials = nodeMetadata.getCredentials();
             logger.println("Authenticating as " + credentials.getUser());
 
             isAuthenticated = authenticate(bootstrapConn, credentials);
@@ -136,6 +136,15 @@ public class JCloudsLauncher extends ComputerLauncher {
          }
          closeBootstrap = false;
          return SAMEUSER;
+      } catch (InterruptedException e) {
+          e.printStackTrace(logger);
+          throw e;
+      } catch (IOException e) {
+          e.printStackTrace(logger);
+          throw e;
+      } catch (Exception e) {
+        e.printStackTrace(logger);
+        throw new RuntimeException(e);
       } finally {
          if (closeBootstrap)
             bootstrapConn.close();
