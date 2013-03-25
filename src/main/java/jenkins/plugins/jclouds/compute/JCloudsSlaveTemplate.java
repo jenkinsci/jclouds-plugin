@@ -73,6 +73,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final boolean preExistingJenkinsUser;
    private final String jenkinsUser;
    private final String fsRoot;
+   public final boolean installPrivateKey;
    public final boolean allowSudo;
    public final int overrideRetentionTime;
    public final int spoolDelayMs;
@@ -103,6 +104,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String jenkinsUser,
                                final boolean preExistingJenkinsUser,
                                final String fsRoot,
+                               final boolean installPrivateKey,
                                final boolean allowSudo,
                                final int overrideRetentionTime,
                                final int spoolDelayMs
@@ -127,6 +129,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.jenkinsUser = Util.fixEmptyAndTrim(jenkinsUser);
        this.preExistingJenkinsUser = preExistingJenkinsUser;
        this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
+       this.installPrivateKey = installPrivateKey;
        this.allowSudo = allowSudo;
        this.overrideRetentionTime = overrideRetentionTime;
        this.spoolDelayMs = spoolDelayMs;
@@ -238,7 +241,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       } else {
 	      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
 	      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
-	          .installAdminPrivateKey(false) // no need
+	          .installAdminPrivateKey(installPrivateKey)
 	          .grantSudoToAdminUser(allowSudo) // no need
 	          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
 	          .authorizeAdminPublicKey(true)
