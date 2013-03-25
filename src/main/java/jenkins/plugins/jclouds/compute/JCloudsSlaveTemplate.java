@@ -231,7 +231,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       } else {
 	      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
 	      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
-	          .installAdminPrivateKey(false) // no need
+	          .installAdminPrivateKey(true)
 	          .grantSudoToAdminUser(allowSudo) // no need
 	          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
 	          .authorizeAdminPublicKey(true)
