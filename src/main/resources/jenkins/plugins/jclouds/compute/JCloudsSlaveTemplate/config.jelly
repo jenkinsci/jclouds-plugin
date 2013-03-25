@@ -83,6 +83,8 @@
         <f:checkbox />
       </f:entry>
       
+      <f:entry title="Install Private Key" field="installPrivateKey">
+        <f:checkbox />
       <f:entry title="Allow Sudo" field="allowSudo">
         <f:checkbox />
       </f:entry>
