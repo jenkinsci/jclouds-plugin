@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.domain.LoginCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -30,6 +31,10 @@ public class JCloudsSlave extends Slave {
     private String nodeId;
     private boolean pendingDelete;
     private int overrideRetentionTime;
+    private String user;
+    private String password;
+    private String privateKey;
+    private boolean authSudo;
     
    @DataBoundConstructor
    public JCloudsSlave(String cloudName,
@@ -43,11 +48,19 @@ public class JCloudsSlave extends Slave {
                        RetentionStrategy retentionStrategy,
                        List<? extends NodeProperty<?>> nodeProperties,
                        boolean stopOnTerminate,
-                       int overrideRetentionTime) throws Descriptor.FormException, IOException {
+                       int overrideRetentionTime,
+                       String user,
+                       String password,
+                       String privateKey,
+                       boolean authSudo) throws Descriptor.FormException, IOException {
       super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
       this.stopOnTerminate = stopOnTerminate;
       this.cloudName = cloudName;
       this.overrideRetentionTime = overrideRetentionTime;
+      this.user = user;
+      this.password = password;
+      this.privateKey = privateKey;
+      this.authSudo = authSudo;
    }
 
     /**
@@ -78,9 +91,14 @@ public class JCloudsSlave extends Slave {
              new JCloudsRetentionStrategy(),
              Collections.<NodeProperty<?>>emptyList(),
              stopOnTerminate,
-             overrideRetentionTime);
+             overrideRetentionTime,
+             metadata.getCredentials().getUser(),
+             metadata.getCredentials().getPassword(),
+             metadata.getCredentials().getPrivateKey(),
+             metadata.getCredentials().shouldAuthenticateSudo());
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
+        
     }
 
    /**
@@ -96,7 +114,20 @@ public class JCloudsSlave extends Slave {
        return nodeMetaData;
    }
 
-
+   /**
+    * Get Jclouds LoginCredentials associated with this Slave. 
+    * 
+    * If Jclouds doesn't provide credentials, use stored ones.
+    * 
+    * @return {@link LoginCredentials}
+    */
+   public LoginCredentials getCredentials() {
+       LoginCredentials credentials = getNodeMetaData().getCredentials();
+       if (credentials == null) 
+           credentials = new LoginCredentials(user, password, privateKey, authSudo);
+       return credentials;
+   }
+   
     /**
      * Get the retention time for this slave, defaulting to the parent cloud's if not set.
      *
