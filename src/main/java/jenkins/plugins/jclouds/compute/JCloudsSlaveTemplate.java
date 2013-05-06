@@ -266,6 +266,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             .userMetadata(userMetadata);
 
       ((NovaTemplateOptions)options).autoAssignFloatingIp(true);
+      ((NovaTemplateOptions)options).keyPairName("jenkins");
 
       if( bootstrap != null )
             options.runScript(bootstrap);
