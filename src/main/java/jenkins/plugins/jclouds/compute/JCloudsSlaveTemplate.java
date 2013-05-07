@@ -39,6 +39,7 @@ import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
+import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -77,7 +78,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final int overrideRetentionTime;
    public final int spoolDelayMs;
    private final Object delayLockObject = new Object();
-   
+
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
@@ -161,15 +162,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
            return fsRoot;
        }
    }
-       
-   
+
+
    public Set<LabelAtom> getLabelSet() {
       return labelSet;
    }
 
    public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
        NodeMetadata nodeMetadata = get();
-       
+
        try {
            return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
                                    numExecutors, stopOnTerminate, overrideRetentionTime);
@@ -204,6 +205,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          templateBuilder.minCores(cores).minRam(ram);
       }
 
+
       Template template = templateBuilder.build();
       TemplateOptions options = template.getOptions();
 
@@ -230,7 +232,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
       Statement initStatement = null;
       Statement bootstrap = null;
-      
+
       if (this.preExistingJenkinsUser) {
           if( this.initScript.length() > 0 ) {
     	    initStatement = Statements.exec(this.initScript);
@@ -258,10 +260,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       } else {
           bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
       }
-      
+
       options
             .inboundPorts(22)
             .userMetadata(userMetadata);
+
+      ((NovaTemplateOptions)options).autoAssignFloatingIp(true);
+      ((NovaTemplateOptions)options).keyPairName("jenkins");
 
       if( bootstrap != null )
             options.runScript(bootstrap);
@@ -385,14 +390,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          return result;
       }
 
-      
+
       public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
                                                 @RelativePath("..") @QueryParameter String identity,
                                                 @RelativePath("..") @QueryParameter String credential,
                                                 @RelativePath("..") @QueryParameter String endPointUrl) {
 
           ListBoxModel m = new ListBoxModel();
-          
+
           if (Strings.isNullOrEmpty(identity)) {
               LOGGER.warning("identity is null or empty");
               return m;
@@ -412,7 +417,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           identity = Util.fixEmptyAndTrim(identity);
           credential = Util.fixEmptyAndTrim(credential);
           endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         
+
           ComputeService computeService = null;
           m.add("None specified", "");
           try {
@@ -424,7 +429,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                   m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()),
                         hardware.getId());
               }
-              
+
           } catch (Exception ex) {
 
           } finally {
