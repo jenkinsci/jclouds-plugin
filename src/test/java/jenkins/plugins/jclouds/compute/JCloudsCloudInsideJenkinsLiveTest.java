@@ -5,7 +5,7 @@ import hudson.util.FormValidation;
 import java.util.Collections;
 import java.util.Map;
 
-import org.jclouds.crypto.SshKeys;
+import org.jclouds.ssh.SshKeys;
 import org.jvnet.hudson.test.HudsonTestCase;
 
 public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {

@@ -124,7 +124,12 @@ public class JCloudsSlave extends Slave {
    public LoginCredentials getCredentials() {
        LoginCredentials credentials = getNodeMetaData().getCredentials();
        if (credentials == null) 
-           credentials = new LoginCredentials(user, password, privateKey, authSudo);
+           credentials = LoginCredentials.builder()
+               .user(user)
+               .password(password)
+               .privateKey(privateKey)
+               .authenticateSudo(authSudo)
+               .build();
        return credentials;
    }
    

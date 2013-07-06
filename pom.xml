@@ -30,8 +30,8 @@
         <test.jenkins.blobstore.build-version />
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-        <jclouds.version>1.5.7</jclouds.version>
-        <guava.version>12.0</guava.version>
+        <jclouds.version>1.6.1-incubating</jclouds.version>
+        <guava.version>14.0.1</guava.version>
         <jsch.version>0.1.48</jsch.version>
         <stapler.version>1.178</stapler.version>
         <hpi.plugin.version>1.84</hpi.plugin.version>
@@ -95,43 +95,43 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.jclouds</groupId>
+            <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-core</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jclouds</groupId>
+            <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-allcompute</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <!-- temporary until jclouds 1.5.0-beta.10 -->
         <dependency>
-            <groupId>org.jclouds.provider</groupId>
+            <groupId>org.apache.jclouds.provider</groupId>
             <artifactId>rackspace-cloudservers-uk</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jclouds</groupId>
+            <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-allblobstore</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jclouds.driver</groupId>
+            <groupId>org.apache.jclouds.driver</groupId>
             <artifactId>jclouds-enterprise</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jclouds.driver</groupId>
+            <groupId>org.apache.jclouds.driver</groupId>
             <artifactId>jclouds-sshj</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jclouds</groupId>
+            <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-scriptbuilder</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.jclouds.driver</groupId>
+            <groupId>org.apache.jclouds.driver</groupId>
             <artifactId>jclouds-jsch</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
@@ -153,21 +153,21 @@
 
         <!-- Test Dependencies -->
         <dependency>
-            <groupId>org.jclouds</groupId>
+            <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-core</artifactId>
             <version>${jclouds.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jclouds</groupId>
+            <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-compute</artifactId>
             <version>${jclouds.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jclouds</groupId>
+            <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-blobstore</artifactId>
             <version>${jclouds.version}</version>
             <type>test-jar</type>

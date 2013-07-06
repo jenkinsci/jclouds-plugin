@@ -7,7 +7,7 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
-import org.jclouds.crypto.SshKeys;
+import org.jclouds.ssh.SshKeys;
 
 public class JCloudsCloudLiveTest extends TestCase {
 
