@@ -108,6 +108,16 @@
       <f:entry title="${%Stop on Terminate}" field="stopOnTerminate">
         <f:checkbox />
       </f:entry>
+      
+      <f:section title="Open Stack Options">
+      	<f:entry title="Assign Floating IP" field="assignFloatingIp">
+          <f:checkbox />
+        </f:entry>
+        <f:entry title="Key Pair Name" field="keyPairName">
+          <f:textbox />
+        </f:entry>
+      </f:section>
+      
     </f:advanced>
     <f:entry title="">
       <div align="right">
