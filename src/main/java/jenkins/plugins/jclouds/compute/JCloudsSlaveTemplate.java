@@ -8,9 +8,9 @@ import hudson.RelativePath;
 import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Describable;
+import hudson.model.TaskListener;
 import hudson.model.Descriptor;
 import hudson.model.Label;
-import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
@@ -35,6 +35,7 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.LoginCredentials;
+import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
@@ -77,6 +78,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final int overrideRetentionTime;
    public final int spoolDelayMs;
    private final Object delayLockObject = new Object();
+   public final boolean assignFloatingIp;
+   public final String keyPairName;
    
    private transient Set<LabelAtom> labelSet;
 
@@ -105,7 +108,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String fsRoot,
                                final boolean allowSudo,
                                final int overrideRetentionTime,
-                               final int spoolDelayMs
+                               final int spoolDelayMs,
+                               final boolean assignFloatingIp,
+                               final String keyPairName
                                ) {
 
        this.name = Util.fixEmptyAndTrim(name);
@@ -130,6 +135,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.allowSudo = allowSudo;
        this.overrideRetentionTime = overrideRetentionTime;
        this.spoolDelayMs = spoolDelayMs;
+       this.assignFloatingIp = assignFloatingIp;
+       this.keyPairName = keyPairName;
        readResolve();
    }
 
@@ -206,7 +213,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
       Template template = templateBuilder.build();
       TemplateOptions options = template.getOptions();
-
+      
+      if(assignFloatingIp && options instanceof NovaTemplateOptions){
+          LOGGER.info("Setting autoAssignFloatingIp to true");
+          options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
+      }
+      
+      if (!Strings.isNullOrEmpty((keyPairName)) && options instanceof NovaTemplateOptions) {
+          LOGGER.info("Setting keyPairName to " + keyPairName );
+          options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+      }
+      
       if (!Strings.isNullOrEmpty(vmPassword)) {
           LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
           options.overrideLoginCredentials(lc);
