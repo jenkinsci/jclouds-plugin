@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
+import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.Hardware;
@@ -80,6 +81,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    private final Object delayLockObject = new Object();
    public final boolean assignFloatingIp;
    public final String keyPairName;
+   private final boolean assignPublicIp;
    
    private transient Set<LabelAtom> labelSet;
 
@@ -110,7 +112,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final int overrideRetentionTime,
                                final int spoolDelayMs,
                                final boolean assignFloatingIp,
-                               final String keyPairName
+                               final String keyPairName,
+                               final boolean assignPublicIp
                                ) {
 
        this.name = Util.fixEmptyAndTrim(name);
@@ -137,6 +140,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.spoolDelayMs = spoolDelayMs;
        this.assignFloatingIp = assignFloatingIp;
        this.keyPairName = keyPairName;
+       this.assignPublicIp = assignPublicIp;
        readResolve();
    }
 
@@ -222,6 +226,16 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       if (!Strings.isNullOrEmpty((keyPairName)) && options instanceof NovaTemplateOptions) {
           LOGGER.info("Setting keyPairName to " + keyPairName );
           options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+      }
+
+      if (options instanceof CloudStackTemplateOptions) {
+          /**
+           * This tells jclouds cloudstack module to assign a public ip, setup
+           * staticnat and configure the firewall when true. Only interesting
+           * when using cloudstack advanced networking.
+           */
+          LOGGER.info("Setting setupStaticNat to " + assignPublicIp);
+          options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
       }
       
       if (!Strings.isNullOrEmpty(vmPassword)) {

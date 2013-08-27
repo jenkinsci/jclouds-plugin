@@ -117,6 +117,12 @@
           <f:textbox />
         </f:entry>
       </f:section>
+
+      <f:section title="CloudStack Options">
+        <f:entry title="Assign Public IP" field="assignPublicIp">
+          <f:checkbox checked="true"/>
+        </f:entry>
+      </f:section>
       
     </f:advanced>
     <f:entry title="">
