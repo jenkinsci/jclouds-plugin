@@ -120,7 +120,7 @@
 
       <f:section title="CloudStack Options">
         <f:entry title="Assign Public IP" field="assignPublicIp">
-          <f:checkbox checked="true"/>
+          <f:checkbox default="true"/>
         </f:entry>
       </f:section>
       
