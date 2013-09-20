@@ -81,7 +81,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    private final Object delayLockObject = new Object();
    public final boolean assignFloatingIp;
    public final String keyPairName;
-   private final boolean assignPublicIp;
+   public final boolean assignPublicIp;
    
    private transient Set<LabelAtom> labelSet;
 
