@@ -242,7 +242,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
           options.overrideLoginCredentials(lc);
       } else if(!Strings.isNullOrEmpty(getCloud().privateKey)){
-          options.overrideLoginPrivateKey(getCloud().privateKey);
+	      String key = getCloud().privateKey;
+          LoginCredentials lc = LoginCredentials.builder().user(vmUser).privateKey(key).build();
+          options.overrideLoginCredentials(lc);
+//          options.overrideLoginPrivateKey(getCloud().privateKey);
       }
 
       if (spoolDelayMs > 0)
