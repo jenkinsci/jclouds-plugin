@@ -37,6 +37,7 @@ import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions;
+import org.jclouds.predicates.validators.DnsNameValidator;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.java.InstallJDK;
@@ -341,6 +342,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          return null;
       }
 
+      public FormValidation doCheckName(@QueryParameter String value) {
+    	  try {
+    		  new DnsNameValidator(1, 80).validate(value);
+    		  return FormValidation.ok();
+    	  } catch (Exception e) {
+    		  return FormValidation.error(e.getMessage());
+    	  }
+      }
+      
       public FormValidation doCheckCores(@QueryParameter String value) {
          return FormValidation.validateRequired(value);
       }
@@ -519,6 +529,19 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
          }
          return result;
+      }
+      
+      public FormValidation doCheckOverrideRetentionTime(@QueryParameter String value) {
+          try {
+              if(Integer.parseInt(value) == -1)
+                  return FormValidation.ok();
+          } catch (NumberFormatException e) {
+          }
+    	  return FormValidation.validateNonNegativeInteger(value);
+      }
+
+      public FormValidation doCheckSpoolDelayMs(@QueryParameter String value) {
+          return FormValidation.validateNonNegativeInteger(value);
       }
    }
 }

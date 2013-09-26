@@ -455,6 +455,15 @@ public class JCloudsCloud extends Cloud {
          return FormValidation.validatePositiveInteger(value);
       }
 
+      public FormValidation doCheckRetentionTime(@QueryParameter String value) {
+          try {
+              if(Integer.parseInt(value) == -1)
+                  return FormValidation.ok();
+          } catch (NumberFormatException e) {
+          }
+    	  return FormValidation.validateNonNegativeInteger(value);
+       }
+
       public FormValidation doCheckScriptTimeout(@QueryParameter String value) {
     	  return FormValidation.validatePositiveInteger(value);
       }
