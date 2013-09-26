@@ -29,11 +29,8 @@ import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
-import org.jclouds.compute.domain.ComputeMetadataBuilder;
 import org.jclouds.compute.domain.Hardware;
-import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
-import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
@@ -51,7 +48,6 @@ import org.kohsuke.stapler.QueryParameter;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSortedSet;
 
 /**
  * @author Vijay Kiran
