@@ -28,8 +28,12 @@ import org.apache.commons.lang.StringUtils;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
+import org.jclouds.compute.domain.ComputeMetadata;
+import org.jclouds.compute.domain.ComputeMetadataBuilder;
 import org.jclouds.compute.domain.Hardware;
+import org.jclouds.compute.domain.HardwareBuilder;
 import org.jclouds.compute.domain.Image;
+import org.jclouds.compute.domain.ImageBuilder;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
@@ -418,25 +422,40 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          return result;
       }
 
-      
-      public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
-                                                @RelativePath("..") @QueryParameter String identity,
-                                                @RelativePath("..") @QueryParameter String credential,
-                                                @RelativePath("..") @QueryParameter String endPointUrl) {
+      public ListBoxModel doFillImageIdItems(@RelativePath("..") @QueryParameter String providerName,
+              @RelativePath("..") @QueryParameter String identity,
+              @RelativePath("..") @QueryParameter String credential,
+              @RelativePath("..") @QueryParameter String endPointUrl) {
+    	  return doFillItems(providerName, identity, credential, endPointUrl, new ListImages());
+      }
 
-          ListBoxModel m = new ListBoxModel();
+      public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
+                 @RelativePath("..") @QueryParameter String identity,
+                 @RelativePath("..") @QueryParameter String credential,
+                 @RelativePath("..") @QueryParameter String endPointUrl) {
+    	  return doFillItems(providerName, identity, credential, endPointUrl, new ListHardwareProfiles());
+      }
+
+      
+      private ListBoxModel doFillItems(String providerName,
+              String identity,
+              String credential,
+              String endPointUrl,
+              ListMetadataCommand command) {
+
+          ListBoxModel listBox = new ListBoxModel();
           
           if (Strings.isNullOrEmpty(identity)) {
               LOGGER.warning("identity is null or empty");
-              return m;
+              return listBox;
           }
           if (Strings.isNullOrEmpty(credential)) {
               LOGGER.warning("credential is null or empty");
-              return m;
+              return listBox;
           }
           if (Strings.isNullOrEmpty(providerName)) {
               LOGGER.warning("providerName is null or empty");
-              return m;
+              return listBox;
           }
 
 
@@ -447,15 +466,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
          
           ComputeService computeService = null;
-          m.add("None specified", "");
+          listBox.add("None specified", "");
           try {
               // TODO: endpoint is ignored
               computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
-              Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
-              for (Hardware hardware : hardwareProfiles) {
-
-                  m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()),
-                        hardware.getId());
+              Set<? extends ComputeMetadata> computeMetadata = command.execute(computeService);
+              for (ComputeMetadata metadata : computeMetadata) {
+                 listBox.add(String.format("%s (%s)", metadata.getId(), metadata.getName()), metadata.getId());
               }
               
           } catch (Exception ex) {
@@ -466,7 +483,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
               }
           }
 
-          return m;
+          return listBox;
       }
 
       public FormValidation doValidateHardwareId(
@@ -520,5 +537,22 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          }
          return result;
       }
+      
+      interface ListMetadataCommand {
+    	  public Set<? extends ComputeMetadata> execute(ComputeService cs);
+      }
+      
+      class ListImages implements ListMetadataCommand {
+    	  public Set<? extends ComputeMetadata> execute(ComputeService cs) {
+    		  return cs.listImages();
+    	  }
+      }
+
+      class ListHardwareProfiles implements ListMetadataCommand {
+    	  public Set<? extends ComputeMetadata> execute(ComputeService cs) {
+    		  return cs.listHardwareProfiles();
+    	  }
+      }
    }
+   
 }
