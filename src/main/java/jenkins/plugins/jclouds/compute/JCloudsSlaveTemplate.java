@@ -366,58 +366,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           return FormValidation.validatePositiveInteger(value);
       }
 
-      public FormValidation doValidateImageId(
-            @QueryParameter String providerName,
-            @QueryParameter String identity,
-            @QueryParameter String credential,
-            @QueryParameter String endPointUrl,
-            @QueryParameter String imageId) {
-
-         if (Strings.isNullOrEmpty(identity))
-            return FormValidation.error("Invalid identity (AccessId).");
-         if (Strings.isNullOrEmpty(credential))
-            return FormValidation.error("Invalid credential (secret key).");
-         if (Strings.isNullOrEmpty(providerName))
-            return FormValidation.error("Provider Name shouldn't be empty");
-         if (Strings.isNullOrEmpty(imageId)) {
-            return FormValidation.error("Image Id shouldn't be empty");
-         }
-
-         // Remove empty text/whitespace from the fields.
-         providerName = Util.fixEmptyAndTrim(providerName);
-         identity = Util.fixEmptyAndTrim(identity);
-         credential = Util.fixEmptyAndTrim(credential);
-         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         imageId = Util.fixEmptyAndTrim(imageId);
-
-         FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
-         ComputeService computeService = null;
-         try {
-            // TODO: endpoint is ignored
-            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
-            Set<? extends Image> images = computeService.listImages();
-            for (Image image : images) {
-               if (!image.getId().equals(imageId)) {
-                  if (image.getId().contains(imageId)) {
-                     return FormValidation.warning("Sorry cannot find the image id, " +
-                           "Did you mean: " + image.getId() + "?\n" + image);
-                  }
-               } else {
-                  return FormValidation.ok("Image Id is valid.");
-               }
-            }
-
-         } catch (Exception ex) {
-            result = FormValidation.error("Unable to check the image id, " +
-                  "please check if the credentials you provided are correct.", ex);
-         } finally {
-            if (computeService != null) {
-               computeService.getContext().close();
-            }
-         }
-         return result;
-      }
-
       public ListBoxModel doFillImageIdItems(@RelativePath("..") @QueryParameter String providerName,
               @RelativePath("..") @QueryParameter String identity,
               @RelativePath("..") @QueryParameter String credential,
@@ -432,7 +380,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     	  return doFillItems(providerName, identity, credential, endPointUrl, new ListHardwareProfiles());
       }
 
-      
       private ListBoxModel doFillItems(String providerName,
               String identity,
               String credential,
@@ -482,12 +429,47 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           return listBox;
       }
 
-      public FormValidation doValidateHardwareId(
-            @QueryParameter String providerName,
-            @QueryParameter String identity,
-            @QueryParameter String credential,
-            @QueryParameter String endPointUrl,
-            @QueryParameter String hardwareId) {
+      interface ComputeMetadataBehavior {
+         public String getName();
+         public Set<? extends ComputeMetadata> list(ComputeService computeService);
+      }
+
+      private class ImageBehavior implements ComputeMetadataBehavior {
+         public String getName() { return Image.class.getSimpleName(); }
+         public Set<? extends Image> list(ComputeService computeService) {
+            return computeService.listImages();
+         }
+      }
+
+      private class HardwareBehavior implements ComputeMetadataBehavior {
+         public String getName() { return Hardware.class.getSimpleName(); }
+         public Set<? extends Hardware> list(ComputeService computeService) {
+            return computeService.listHardwareProfiles(); // FIXME: should be a ImmutableSortedSet.copyOf() ?
+         }
+      }
+
+      public FormValidation doValidateImageId(@QueryParameter String providerName,
+                                              @QueryParameter String identity,
+                                              @QueryParameter String credential,
+                                              @QueryParameter String endPointUrl,
+                                              @QueryParameter String imageId) {
+         return doValidateId(providerName, identity, credential, endPointUrl, imageId, new ImageBehavior());
+      }
+
+      public FormValidation doValidateHardwareId(@QueryParameter String providerName,
+                                                 @QueryParameter String identity,
+                                                 @QueryParameter String credential,
+                                                 @QueryParameter String endPointUrl,
+                                                 @QueryParameter String hardwareId) {
+         return doValidateId(providerName, identity, credential, endPointUrl, hardwareId, new HardwareBehavior());
+      }
+
+      private FormValidation doValidateId(String providerName,
+                                          String identity,
+                                          String credential,
+                                          String endPointUrl,
+                                          String thingId,
+                                          ComputeMetadataBehavior computeMetadataBehavior) {
 
          if (Strings.isNullOrEmpty(identity))
             return FormValidation.error("Invalid identity (AccessId).");
@@ -495,37 +477,40 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.error("Invalid credential (secret key).");
          if (Strings.isNullOrEmpty(providerName))
             return FormValidation.error("Provider Name shouldn't be empty");
-         if (Strings.isNullOrEmpty(hardwareId)) {
-            return FormValidation.error("Hardware Id shouldn't be empty");
+         String computeMetadataName = computeMetadataBehavior.getName();
+         if (Strings.isNullOrEmpty(thingId)) {
+            return FormValidation.error(String.format("%s Id shouldn't be empty", computeMetadataName));
          }
 
          // Remove empty text/whitespace from the fields.
          providerName = Util.fixEmptyAndTrim(providerName);
          identity = Util.fixEmptyAndTrim(identity);
          credential = Util.fixEmptyAndTrim(credential);
-         hardwareId = Util.fixEmptyAndTrim(hardwareId);
          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+         thingId = Util.fixEmptyAndTrim(thingId);
 
-         FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
+         FormValidation result = FormValidation.error(
+               String.format("Invalid %s Id, please check the value and try again.", computeMetadataName));
          ComputeService computeService = null;
          try {
             // TODO: endpoint is ignored
             computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
-            Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
-            for (Hardware hardware : hardwareProfiles) {
-               if (!hardware.getId().equals(hardwareId)) {
-                  if (hardware.getId().contains(hardwareId)) {
-                     return FormValidation.warning("Sorry cannot find the hardware id, " +
-                           "Did you mean: " + hardware.getId() +  "?\n" + hardware);
+            Set<? extends ComputeMetadata> computeMetadata = computeMetadataBehavior.list(computeService);
+            for (ComputeMetadata metadata : computeMetadata) {
+               String metadataId = metadata.getId();
+               if (!metadataId.equals(thingId)) {
+                  if (metadataId.contains(thingId)) {
+                     result = FormValidation.warning(String.format("Sorry cannot find the %s id, " +
+                           "Did you mean: %s ?\n" + metadata, computeMetadataName, metadataId));
                   }
                } else {
-                  return FormValidation.ok("Hardware Id is valid.");
+                  result = FormValidation.ok(String.format("%s Id is valid.", computeMetadataName));
                }
             }
 
          } catch (Exception ex) {
-            result = FormValidation.error("Unable to check the hardware id, " +
-                  "please check if the credentials you provided are correct.", ex);
+            result = FormValidation.error(String.format("Unable to check the %s id, " +
+                  "please check if the credentials you provided are correct.", computeMetadataName), ex);
          } finally {
             if (computeService != null) {
                computeService.getContext().close();
@@ -533,7 +518,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          }
          return result;
       }
-      
+
       interface ListMetadataCommand {
     	  public Set<? extends ComputeMetadata> execute(ComputeService cs);
       }
