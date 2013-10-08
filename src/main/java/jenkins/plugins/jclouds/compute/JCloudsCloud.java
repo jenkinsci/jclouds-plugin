@@ -205,7 +205,7 @@ public class JCloudsCloud extends Cloud {
         final JCloudsSlaveTemplate t = getTemplate(label);
         
         List<PlannedNode> r = new ArrayList<PlannedNode>();
-        for( ; excessWorkload>0; excessWorkload-- ) {
+        while (excessWorkload > 0) {
             if(getRunningNodesCount()>=instanceCap)
                 break;      // maxed out
             
@@ -229,6 +229,7 @@ public class JCloudsCloud extends Cloud {
                                           }
                                       })
                                   ,Util.tryParseNumber(t.numExecutors, 1).intValue()));
+            excessWorkload -= t.getNumExecutors();
         }
         return r;
     }

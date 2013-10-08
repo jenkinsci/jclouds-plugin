@@ -165,6 +165,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        }
    }
 
+   public int getNumExecutors() {
+      return Util.tryParseNumber(numExecutors, 1).intValue();
+   }
+
    public String getFsRoot() {
        if (fsRoot == null || fsRoot.equals("")) {
            return "/jenkins";
