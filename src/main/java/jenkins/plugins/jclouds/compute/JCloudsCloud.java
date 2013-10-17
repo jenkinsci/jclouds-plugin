@@ -207,7 +207,7 @@ public class JCloudsCloud extends Cloud {
         List<PlannedNode> r = new ArrayList<PlannedNode>();
         while (excessWorkload > 0) {
             if((getRunningNodesCount() + r.size()) >=instanceCap) {
-                LOGGER.info("Instance Cap reached for label " + label.toString());
+                LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
                 break;      // maxed out
             }
             
