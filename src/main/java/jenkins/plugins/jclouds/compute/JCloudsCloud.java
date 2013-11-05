@@ -206,8 +206,10 @@ public class JCloudsCloud extends Cloud {
         
         List<PlannedNode> r = new ArrayList<PlannedNode>();
         while (excessWorkload > 0) {
-            if(getRunningNodesCount()>=instanceCap)
+            if((getRunningNodesCount() + r.size()) >=instanceCap) {
+                LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
                 break;      // maxed out
+            }
             
             r.add(new PlannedNode(t.name,
                                   Computer.threadPoolForRemoting.submit(new Callable<Node>() {
