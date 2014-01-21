@@ -36,9 +36,9 @@ public class JCloudsSlave extends Slave {
     private String privateKey;
     private boolean authSudo;
     private String jvmOptions;
-    
-   @DataBoundConstructor
-   public JCloudsSlave(String cloudName,
+
+    @DataBoundConstructor
+    public JCloudsSlave(String cloudName,
                        String name,
                        String nodeDescription,
                        String remoteFS,
@@ -55,31 +55,31 @@ public class JCloudsSlave extends Slave {
                        String privateKey,
                        boolean authSudo,
                        String jvmOptions) throws Descriptor.FormException, IOException {
-      super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
-      this.stopOnTerminate = stopOnTerminate;
-      this.cloudName = cloudName;
-      this.overrideRetentionTime = overrideRetentionTime;
-      this.user = user;
-      this.password = password;
-      this.privateKey = privateKey;
-      this.authSudo = authSudo;
-      this.jvmOptions = jvmOptions;
-   }
+        super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
+        this.stopOnTerminate = stopOnTerminate;
+        this.cloudName = cloudName;
+        this.overrideRetentionTime = overrideRetentionTime;
+        this.user = user;
+        this.password = password;
+        this.privateKey = privateKey;
+        this.authSudo = authSudo;
+        this.jvmOptions = jvmOptions;
+    }
 
     /**
-     * Constructs a new slave from JCloud's NodeMetadata
-     *
-     * @param cloudName - the name of the cloud that's provisioning this slave.
-     * @param fsRoot - where on the slave the Jenkins slave root is.
-     * @param metadata - JCloudsNodeMetadata
-     * @param labelString - Label(s) for this slave.
-     * @param description - Description of this slave.
-     * @param numExecutors - Number of executors for this slave.
-     * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
-     * @param overrideRetentionTime - Retention time to use specifically for this slave, overriding the cloud default.
-     * @throws IOException
-     * @throws Descriptor.FormException
-     */
+    * Constructs a new slave from JCloud's NodeMetadata
+    *
+    * @param cloudName - the name of the cloud that's provisioning this slave.
+    * @param fsRoot - where on the slave the Jenkins slave root is.
+    * @param metadata - JCloudsNodeMetadata
+    * @param labelString - Label(s) for this slave.
+    * @param description - Description of this slave.
+    * @param numExecutors - Number of executors for this slave.
+    * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
+    * @param overrideRetentionTime - Retention time to use specifically for this slave, overriding the cloud default.
+    * @throws IOException
+    * @throws Descriptor.FormException
+    */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
                         final String description, final String numExecutors,
                         final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions) throws IOException, Descriptor.FormException {
@@ -207,17 +207,17 @@ public class JCloudsSlave extends Slave {
     @Extension
     public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {
 
-      @Override
-      public String getDisplayName() {
-         return "JClouds Slave";
-      }
+        @Override
+        public String getDisplayName() {
+           return "JClouds Slave";
+        }
 
-    /**
-    * {@inheritDoc}
-    */
-    @Override
-    public boolean isInstantiable() {
-        return false;
-    }
+        /**
+        * {@inheritDoc}
+        */
+        @Override
+        public boolean isInstantiable() {
+            return false;
+        }
     }
 }
