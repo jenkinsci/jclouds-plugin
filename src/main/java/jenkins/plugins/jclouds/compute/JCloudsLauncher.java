@@ -73,7 +73,7 @@ public class JCloudsLauncher extends ComputerLauncher {
                "slave.jar", "/tmp");
 
 
-         String launchString = "java  -jar /tmp/slave.jar";
+         String launchString = "cd /tmp && java -jar slave.jar";
          logger.println("Launching slave agent: " + launchString);
          final Session sess = conn.openSession();
          sess.execCommand(launchString);
