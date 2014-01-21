@@ -66,22 +66,22 @@ import com.google.inject.Module;
  */
 public class JCloudsCloud extends Cloud {
 
-   static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
+    static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
-   public final String identity;
-   public final String credential;
-   public final String providerName;
+    public final String identity;
+    public final String credential;
+    public final String providerName;
 
-   public final String privateKey;
-   public final String publicKey;
-   public final String endPointUrl;
-   public final String profile;
+    public final String privateKey;
+    public final String publicKey;
+    public final String endPointUrl;
+    public final String profile;
     private final int retentionTime;
-   public int instanceCap;
-   public final List<JCloudsSlaveTemplate> templates;
-   public final int scriptTimeout;
+    public int instanceCap;
+    public final List<JCloudsSlaveTemplate> templates;
+    public final int scriptTimeout;
     public final int startTimeout;
-   private transient ComputeService compute;
+    private transient ComputeService compute;
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
@@ -134,7 +134,6 @@ public class JCloudsCloud extends Cloud {
       return this;
    }
 
-
     /**
      * Get the retention time, defaulting to 30 minutes.
      */
@@ -146,7 +145,6 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-  
     static final Iterable<Module> MODULES = ImmutableSet.<Module> of(new SshjSshClientModule(),
          new JDKLoggingModule() {
             @Override
@@ -162,40 +160,39 @@ public class JCloudsCloud extends Cloud {
         }
         return ctx(providerName, identity, credential, overrides);
     }
-        
-   static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides) {
-      // correct the classloader so that extensions can be found
-      Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-      return ContextBuilder.newBuilder(providerName)
+
+    static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides) {
+        // correct the classloader so that extensions can be found
+        Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        return ContextBuilder.newBuilder(providerName)
                                   .credentials(identity, credential)
                                   .overrides(overrides)
                                   .modules(MODULES)
                                   .buildView(ComputeServiceContext.class);
-   }
-   
-   public ComputeService getCompute() {
-      if (this.compute == null) {
-         Properties overrides = new Properties();
-         if (!Strings.isNullOrEmpty(this.endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
-         }
-         if (scriptTimeout > 0) {
-             overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
+    }
+
+    public ComputeService getCompute() {
+        if (this.compute == null) {
+            Properties overrides = new Properties();
+            if (!Strings.isNullOrEmpty(this.endPointUrl)) {
+                overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
+            }
+            if (scriptTimeout > 0) {
+                overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
                                    String.valueOf(scriptTimeout));
-         }
-         if (startTimeout > 0) {
-             overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING,
+            }
+            if (startTimeout > 0) {
+                overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING,
                                    String.valueOf(startTimeout)); 
-         }
-         this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
-      }
-      return compute;
-   }
+            }
+            this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
+        }
+        return compute;
+    }
 
-
-   public List<JCloudsSlaveTemplate> getTemplates() {
-      return Collections.unmodifiableList(templates);
-   }
+    public List<JCloudsSlaveTemplate> getTemplates() {
+        return Collections.unmodifiableList(templates);
+    }
 
     /**
      * {@inheritDoc}
