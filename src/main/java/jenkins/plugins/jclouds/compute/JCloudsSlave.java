@@ -117,12 +117,15 @@ public class JCloudsSlave extends Slave {
         return nodeMetaData;
     }
 
-   /**
+    /**
     * Get Jclouds Custom JVM Options associated with this Slave. 
     * 
     * @return jvmOptions
     */
     public String getJvmOptions() {
+        if (jvmOptions == null) {
+            return "";
+        }
         return jvmOptions;
     }
 
