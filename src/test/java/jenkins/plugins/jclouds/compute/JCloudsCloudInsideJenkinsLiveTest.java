@@ -34,6 +34,7 @@ public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
                30,
                600*1000,
                600*1000,
+               null,
                Collections.<JCloudsSlaveTemplate> emptyList());
    }
 
@@ -43,7 +44,8 @@ public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
                                     fixture.getIdentity(),
                                     fixture.getCredential(), 
                                     generatedKeys.get("private"),
-                                    fixture.getEndpoint());
+                                    fixture.getEndpoint(),
+                                    fixture.getZones());
       assertEquals("Connection succeeded!", result.getMessage());
    }
 
