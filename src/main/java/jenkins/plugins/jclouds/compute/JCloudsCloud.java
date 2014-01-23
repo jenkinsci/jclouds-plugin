@@ -83,7 +83,7 @@ public class JCloudsCloud extends Cloud {
     public final int scriptTimeout;
     public final int startTimeout;
     private transient ComputeService compute;
-    private final String zones;
+    public final String zones;
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();

@@ -460,7 +460,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
           identity = Util.fixEmptyAndTrim(identity);
           credential = Util.fixEmptyAndTrim(credential);
           endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         
+          zones = Util.fixEmptyAndTrim(zones);
+
           ComputeService computeService = null;
           m.add("None specified", "");
           try {
@@ -508,6 +509,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          credential = Util.fixEmptyAndTrim(credential);
          hardwareId = Util.fixEmptyAndTrim(hardwareId);
          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+         zones = Util.fixEmptyAndTrim(zones);
 
          FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
          ComputeService computeService = null;
