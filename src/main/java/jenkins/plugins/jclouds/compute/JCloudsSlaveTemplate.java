@@ -84,11 +84,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final boolean assignFloatingIp;
    public final String keyPairName;
    public final boolean assignPublicIp;
-   
+
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
-
 
    @DataBoundConstructor
    public JCloudsSlaveTemplate(final String name,
@@ -148,7 +147,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        readResolve();
    }
 
-
    public JCloudsCloud getCloud() {
       return cloud;
    }
@@ -166,6 +164,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
            return "jenkins";
        } else {
            return jenkinsUser;
+       }
+   }
+
+   public String getJvmOptions() {
+       if (jvmOptions == null || jenkinsUser.equals("")) {
+           return "";
+       } else {
+           return jvmOptions;
        }
    }
 
@@ -190,7 +196,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
        try {
            return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
-                                   numExecutors, stopOnTerminate, overrideRetentionTime, jvmOptions);
+                                   numExecutors, stopOnTerminate, overrideRetentionTime, getJvmOptions());
        } catch (Descriptor.FormException e) {
            throw new AssertionError("Invalid configuration " + e.getMessage());
        }
@@ -433,7 +439,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          return result;
       }
 
-      
       public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
                                                 @RelativePath("..") @QueryParameter String identity,
                                                 @RelativePath("..") @QueryParameter String credential,
@@ -454,13 +459,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
               return m;
           }
 
-
           // Remove empty text/whitespace from the fields.
           providerName = Util.fixEmptyAndTrim(providerName);
           identity = Util.fixEmptyAndTrim(identity);
           credential = Util.fixEmptyAndTrim(credential);
           endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         
+
           ComputeService computeService = null;
           m.add("None specified", "");
           try {
