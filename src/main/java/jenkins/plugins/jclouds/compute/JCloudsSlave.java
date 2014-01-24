@@ -123,9 +123,6 @@ public class JCloudsSlave extends Slave {
     * @return jvmOptions
     */
     public String getJvmOptions() {
-        if (jvmOptions == null) {
-            return "";
-        }
         return jvmOptions;
     }
 
