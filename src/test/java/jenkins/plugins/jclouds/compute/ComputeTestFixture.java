@@ -73,6 +73,10 @@ public class ComputeTestFixture extends BaseComputeServiceContextLiveTest {
       return endpoint;
    }
 
+   public String getZones() {
+      return null;
+   }
+
    public String getIdentity() {
       return identity;
    }

@@ -35,9 +35,10 @@ public class JCloudsSlave extends Slave {
     private String password;
     private String privateKey;
     private boolean authSudo;
-    
-   @DataBoundConstructor
-   public JCloudsSlave(String cloudName,
+    private String jvmOptions;
+
+    @DataBoundConstructor
+    public JCloudsSlave(String cloudName,
                        String name,
                        String nodeDescription,
                        String remoteFS,
@@ -52,34 +53,36 @@ public class JCloudsSlave extends Slave {
                        String user,
                        String password,
                        String privateKey,
-                       boolean authSudo) throws Descriptor.FormException, IOException {
-      super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
-      this.stopOnTerminate = stopOnTerminate;
-      this.cloudName = cloudName;
-      this.overrideRetentionTime = overrideRetentionTime;
-      this.user = user;
-      this.password = password;
-      this.privateKey = privateKey;
-      this.authSudo = authSudo;
-   }
+                       boolean authSudo,
+                       String jvmOptions) throws Descriptor.FormException, IOException {
+        super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
+        this.stopOnTerminate = stopOnTerminate;
+        this.cloudName = cloudName;
+        this.overrideRetentionTime = overrideRetentionTime;
+        this.user = user;
+        this.password = password;
+        this.privateKey = privateKey;
+        this.authSudo = authSudo;
+        this.jvmOptions = jvmOptions;
+    }
 
     /**
-     * Constructs a new slave from JCloud's NodeMetadata
-     *
-     * @param cloudName - the name of the cloud that's provisioning this slave.
-     * @param fsRoot - where on the slave the Jenkins slave root is.
-     * @param metadata - JCloudsNodeMetadata
-     * @param labelString - Label(s) for this slave.
-     * @param description - Description of this slave.
-     * @param numExecutors - Number of executors for this slave.
-     * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
-     * @param overrideRetentionTime - Retention time to use specifically for this slave, overriding the cloud default.
-     * @throws IOException
-     * @throws Descriptor.FormException
-     */
+    * Constructs a new slave from JCloud's NodeMetadata
+    *
+    * @param cloudName - the name of the cloud that's provisioning this slave.
+    * @param fsRoot - where on the slave the Jenkins slave root is.
+    * @param metadata - JCloudsNodeMetadata
+    * @param labelString - Label(s) for this slave.
+    * @param description - Description of this slave.
+    * @param numExecutors - Number of executors for this slave.
+    * @param stopOnTerminate - if true, suspend the slave rather than terminating it.
+    * @param overrideRetentionTime - Retention time to use specifically for this slave, overriding the cloud default.
+    * @throws IOException
+    * @throws Descriptor.FormException
+    */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
                         final String description, final String numExecutors,
-                        final boolean stopOnTerminate, final int overrideRetentionTime) throws IOException, Descriptor.FormException {
+                        final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions) throws IOException, Descriptor.FormException {
         this(cloudName,
              metadata.getName(),
              description,
@@ -95,24 +98,33 @@ public class JCloudsSlave extends Slave {
              metadata.getCredentials().getUser(),
              metadata.getCredentials().getPassword(),
              metadata.getCredentials().getPrivateKey(),
-             metadata.getCredentials().shouldAuthenticateSudo());
+             metadata.getCredentials().shouldAuthenticateSudo(),
+             jvmOptions);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
-        
     }
 
-   /**
+    /**
     * Get Jclouds NodeMetadata associated with this Slave.
     *
     * @return {@link NodeMetadata}
     */
-   public NodeMetadata getNodeMetaData() {
-       if (this.nodeMetaData == null) {
-           final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-           this.nodeMetaData = compute.getNodeMetadata(nodeId);
-       }
-       return nodeMetaData;
-   }
+    public NodeMetadata getNodeMetaData() {
+        if (this.nodeMetaData == null) {
+            final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
+            this.nodeMetaData = compute.getNodeMetadata(nodeId);
+        }
+        return nodeMetaData;
+    }
+
+    /**
+    * Get Jclouds Custom JVM Options associated with this Slave. 
+    * 
+    * @return jvmOptions
+    */
+    public String getJvmOptions() {
+        return jvmOptions;
+    }
 
    /**
     * Get Jclouds LoginCredentials associated with this Slave. 
@@ -121,18 +133,18 @@ public class JCloudsSlave extends Slave {
     * 
     * @return {@link LoginCredentials}
     */
-   public LoginCredentials getCredentials() {
-       LoginCredentials credentials = getNodeMetaData().getCredentials();
-       if (credentials == null) 
-           credentials = LoginCredentials.builder()
-               .user(user)
-               .password(password)
-               .privateKey(privateKey)
-               .authenticateSudo(authSudo)
-               .build();
+    public LoginCredentials getCredentials() {
+        LoginCredentials credentials = getNodeMetaData().getCredentials();
+        if (credentials == null) 
+            credentials = LoginCredentials.builder()
+                .user(user)
+                .password(password)
+                .privateKey(privateKey)
+                .authenticateSudo(authSudo)
+                .build();
        return credentials;
-   }
-   
+    }
+
     /**
      * Get the retention time for this slave, defaulting to the parent cloud's if not set.
      *
@@ -162,52 +174,50 @@ public class JCloudsSlave extends Slave {
     public void setPendingDelete(boolean pendingDelete) {
         this.pendingDelete = pendingDelete;
     }
-    
-   /**
+
+    /**
     * {@inheritDoc}
     */
-   @Override
-   public Computer createComputer() {
-      LOGGER.info("Creating a new JClouds Slave");
-      return new JCloudsComputer(this);
-   }
+    @Override
+    public Computer createComputer() {
+        LOGGER.info("Creating a new JClouds Slave");
+        return new JCloudsComputer(this);
+    }
 
-   /**
+    /**
     * Destroy the node calls {@link ComputeService#destroyNode}
     *
     */
-   public void terminate() {
-       final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-       if (compute.getNodeMetadata(nodeId) != null &&
-           compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
-           if (stopOnTerminate) {
-               LOGGER.info("Suspending the Slave : " + getNodeName());
-               compute.suspendNode(nodeId);
-           } else {
-               LOGGER.info("Terminating the Slave : " + getNodeName());
-               compute.destroyNode(nodeId);
-           }
-       } else {
-           LOGGER.info("Slave " + getNodeName() + " is already not running.");
-       }
-   }
+    public void terminate() {
+        final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
+        if (compute.getNodeMetadata(nodeId) != null &&
+            compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
+            if (stopOnTerminate) {
+                LOGGER.info("Suspending the Slave : " + getNodeName());
+                compute.suspendNode(nodeId);
+            } else {
+                LOGGER.info("Terminating the Slave : " + getNodeName());
+                compute.destroyNode(nodeId);
+            }
+        } else {
+            LOGGER.info("Slave " + getNodeName() + " is already not running.");
+        }
+    }
 
+    @Extension
+    public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {
 
-   @Extension
-   public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {
+        @Override
+        public String getDisplayName() {
+           return "JClouds Slave";
+        }
 
-      @Override
-      public String getDisplayName() {
-         return "JClouds Slave";
-      }
-
-
-      /**
-       * {@inheritDoc}
-       */
-      @Override
-      public boolean isInstantiable() {
-         return false;
-      }
-   }
+        /**
+        * {@inheritDoc}
+        */
+        @Override
+        public boolean isInstantiable() {
+            return false;
+        }
+    }
 }

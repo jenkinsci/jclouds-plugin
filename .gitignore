@@ -1,1 +1,6 @@
 work
+/target
+/bin
+.settings
+.classpath
+.project

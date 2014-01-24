@@ -73,6 +73,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final String vmUser;
    public final String vmPassword;
    public final boolean preInstalledJava;
+   private final String jvmOptions;
    public final boolean preExistingJenkinsUser;
    private final String jenkinsUser;
    private final String fsRoot;
@@ -83,11 +84,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
    public final boolean assignFloatingIp;
    public final String keyPairName;
    public final boolean assignPublicIp;
-   
+
    private transient Set<LabelAtom> labelSet;
 
    protected transient JCloudsCloud cloud;
-
 
    @DataBoundConstructor
    public JCloudsSlaveTemplate(final String name,
@@ -106,6 +106,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                final String vmPassword,
                                final String vmUser,
                                final boolean preInstalledJava,
+                               final String jvmOptions,
                                final String jenkinsUser,
                                final boolean preExistingJenkinsUser,
                                final String fsRoot,
@@ -132,6 +133,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.vmPassword = Util.fixEmptyAndTrim(vmPassword);
        this.vmUser = Util.fixEmptyAndTrim(vmUser);
        this.preInstalledJava = preInstalledJava;
+       this.jvmOptions = Util.fixEmptyAndTrim(jvmOptions);
        this.stopOnTerminate = stopOnTerminate;
        this.jenkinsUser = Util.fixEmptyAndTrim(jenkinsUser);
        this.preExistingJenkinsUser = preExistingJenkinsUser;
@@ -144,7 +146,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        this.assignPublicIp = assignPublicIp;
        readResolve();
    }
-
 
    public JCloudsCloud getCloud() {
       return cloud;
@@ -166,6 +167,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        }
    }
 
+   public String getJvmOptions() {
+       if (jvmOptions == null || jenkinsUser.equals("")) {
+           return "";
+       } else {
+           return jvmOptions;
+       }
+   }
+
    public int getNumExecutors() {
       return Util.tryParseNumber(numExecutors, 1).intValue();
    }
@@ -177,18 +186,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
            return fsRoot;
        }
    }
-       
-   
+
    public Set<LabelAtom> getLabelSet() {
       return labelSet;
    }
 
    public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
        NodeMetadata nodeMetadata = get();
-       
+
        try {
            return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
-                                   numExecutors, stopOnTerminate, overrideRetentionTime);
+                                   numExecutors, stopOnTerminate, overrideRetentionTime, getJvmOptions());
        } catch (Descriptor.FormException e) {
            throw new AssertionError("Invalid configuration " + e.getMessage());
        }
@@ -269,25 +277,25 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
       Statement initStatement = null;
       Statement bootstrap = null;
-      
+
       if (this.preExistingJenkinsUser) {
           if( this.initScript.length() > 0 ) {
-    	    initStatement = Statements.exec(this.initScript);
+              initStatement = Statements.exec(this.initScript);
           }
       } else {
-	      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
-	      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
-	          .installAdminPrivateKey(false) // no need
-	          .grantSudoToAdminUser(allowSudo) // no need
-	          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
-	          .authorizeAdminPublicKey(true)
-	          .adminPublicKey(getCloud().publicKey)
+          // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
+          AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
+              .installAdminPrivateKey(false) // no need
+              .grantSudoToAdminUser(allowSudo) // no need
+              .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
+              .authorizeAdminPublicKey(true)
+              .adminPublicKey(getCloud().publicKey)
                   .adminHome(getFsRoot())
-	          .build();
+              .build();
 
 
-	      // Jenkins needs /jenkins dir.
-	      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p "+getFsRoot()), Statements.exec("chown "+getJenkinsUser()+" "+getFsRoot()));
+          // Jenkins needs /jenkins dir.
+          Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p "+getFsRoot()), Statements.exec("chown "+getJenkinsUser()+" "+getFsRoot()));
 
           initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
       }
@@ -317,7 +325,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
       NodeMetadata nodeMetadata = null;
 
-
       try {
          nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
       } catch (RunNodesException e) {
@@ -334,7 +341,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       throw propagate(e);
    }
 
-
    public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
       return Jenkins.getInstance().getDescriptor(getClass());
    }
@@ -348,12 +354,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
       }
 
       public FormValidation doCheckName(@QueryParameter String value) {
-    	  try {
-    		  new DnsNameValidator(1, 80).validate(value);
-    		  return FormValidation.ok();
-    	  } catch (Exception e) {
-    		  return FormValidation.error(e.getMessage());
-    	  }
+          try {
+              new DnsNameValidator(1, 80).validate(value);
+              return FormValidation.ok();
+          } catch (Exception e) {
+              return FormValidation.error(e.getMessage());
+          }
       }
       
       public FormValidation doCheckCores(@QueryParameter String value) {
@@ -386,7 +392,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             @QueryParameter String identity,
             @QueryParameter String credential,
             @QueryParameter String endPointUrl,
-            @QueryParameter String imageId) {
+            @QueryParameter String imageId,
+            @QueryParameter String zones) {
 
          if (Strings.isNullOrEmpty(identity))
             return FormValidation.error("Invalid identity (AccessId).");
@@ -409,7 +416,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          ComputeService computeService = null;
          try {
             // TODO: endpoint is ignored
-            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
             Set<? extends Image> images = computeService.listImages();
             for (Image image : images) {
                if (!image.getId().equals(imageId)) {
@@ -433,11 +440,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          return result;
       }
 
-      
       public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
                                                 @RelativePath("..") @QueryParameter String identity,
                                                 @RelativePath("..") @QueryParameter String credential,
-                                                @RelativePath("..") @QueryParameter String endPointUrl) {
+                                                @RelativePath("..") @QueryParameter String endPointUrl,
+                                                @RelativePath("..") @QueryParameter String zones) {
 
           ListBoxModel m = new ListBoxModel();
           
@@ -454,18 +461,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
               return m;
           }
 
-
           // Remove empty text/whitespace from the fields.
           providerName = Util.fixEmptyAndTrim(providerName);
           identity = Util.fixEmptyAndTrim(identity);
           credential = Util.fixEmptyAndTrim(credential);
           endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         
+
           ComputeService computeService = null;
           m.add("None specified", "");
           try {
               // TODO: endpoint is ignored
-              computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+              computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
               Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
               for (Hardware hardware : hardwareProfiles) {
 
@@ -489,7 +495,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             @QueryParameter String identity,
             @QueryParameter String credential,
             @QueryParameter String endPointUrl,
-            @QueryParameter String hardwareId) {
+            @QueryParameter String hardwareId,
+            @QueryParameter String zones) {
 
          if (Strings.isNullOrEmpty(identity))
             return FormValidation.error("Invalid identity (AccessId).");
@@ -507,12 +514,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          credential = Util.fixEmptyAndTrim(credential);
          hardwareId = Util.fixEmptyAndTrim(hardwareId);
          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+         zones = Util.fixEmptyAndTrim(zones);
 
          FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
          ComputeService computeService = null;
          try {
             // TODO: endpoint is ignored
-            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
             Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
             for (Hardware hardware : hardwareProfiles) {
                if (!hardware.getId().equals(hardwareId)) {
@@ -542,7 +550,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                   return FormValidation.ok();
           } catch (NumberFormatException e) {
           }
-    	  return FormValidation.validateNonNegativeInteger(value);
+          return FormValidation.validateNonNegativeInteger(value);
       }
 
       public FormValidation doCheckSpoolDelayMs(@QueryParameter String value) {

@@ -35,6 +35,7 @@ public class JCloudsCloudLiveTest extends TestCase {
                30, 
                600*1000,
                600*1000,
+               null,
                Collections.<JCloudsSlaveTemplate> emptyList());
    }
 
@@ -44,7 +45,8 @@ public class JCloudsCloudLiveTest extends TestCase {
                                     fixture.getIdentity(),
                                     fixture.getCredential(), 
                                     generatedKeys.get("private"),
-                                    fixture.getEndpoint());
+                                    fixture.getEndpoint(),
+                                    fixture.getZones());
       assertEquals("Connection succeeded!", result.getMessage());
    }
 

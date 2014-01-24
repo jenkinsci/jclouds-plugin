@@ -41,6 +41,7 @@ import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
+import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.providers.Providers;
 import org.jclouds.ssh.SshKeys;
 import org.jclouds.sshj.config.SshjSshClientModule;
@@ -66,22 +67,23 @@ import com.google.inject.Module;
  */
 public class JCloudsCloud extends Cloud {
 
-   static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
+    static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
-   public final String identity;
-   public final String credential;
-   public final String providerName;
+    public final String identity;
+    public final String credential;
+    public final String providerName;
 
-   public final String privateKey;
-   public final String publicKey;
-   public final String endPointUrl;
-   public final String profile;
+    public final String privateKey;
+    public final String publicKey;
+    public final String endPointUrl;
+    public final String profile;
     private final int retentionTime;
-   public int instanceCap;
-   public final List<JCloudsSlaveTemplate> templates;
-   public final int scriptTimeout;
+    public int instanceCap;
+    public final List<JCloudsSlaveTemplate> templates;
+    public final int scriptTimeout;
     public final int startTimeout;
-   private transient ComputeService compute;
+    private transient ComputeService compute;
+    public final String zones;
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
@@ -110,6 +112,7 @@ public class JCloudsCloud extends Cloud {
                         final int retentionTime,
                         final int scriptTimeout,
                         final int startTimeout,
+                        final String zones,
                         final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
@@ -124,6 +127,7 @@ public class JCloudsCloud extends Cloud {
         this.scriptTimeout = scriptTimeout;
         this.startTimeout = startTimeout;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
+        this.zones = Util.fixEmptyAndTrim(zones);
         readResolve();
     }
 
@@ -133,7 +137,6 @@ public class JCloudsCloud extends Cloud {
          template.cloud = this;
       return this;
    }
-
 
     /**
      * Get the retention time, defaulting to 30 minutes.
@@ -146,7 +149,6 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-  
     static final Iterable<Module> MODULES = ImmutableSet.<Module> of(new SshjSshClientModule(),
          new JDKLoggingModule() {
             @Override
@@ -155,47 +157,49 @@ public class JCloudsCloud extends Cloud {
             }
          }, new EnterpriseConfigurationModule());
 
-    static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl) {
+    static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl, String zones) {
         Properties overrides = new Properties();
         if (!Strings.isNullOrEmpty(endPointUrl)) {
             overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
         }
-        return ctx(providerName, identity, credential, overrides);
+        return ctx(providerName, identity, credential, overrides, zones);
     }
-        
-   static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides) {
-      // correct the classloader so that extensions can be found
-      Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-      return ContextBuilder.newBuilder(providerName)
+
+    static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides, String zones) {
+        if (!Strings.isNullOrEmpty(zones)) {
+            overrides.setProperty(LocationConstants.PROPERTY_ZONES, zones);
+          }
+        // correct the classloader so that extensions can be found
+        Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        return ContextBuilder.newBuilder(providerName)
                                   .credentials(identity, credential)
                                   .overrides(overrides)
                                   .modules(MODULES)
                                   .buildView(ComputeServiceContext.class);
-   }
-   
-   public ComputeService getCompute() {
-      if (this.compute == null) {
-         Properties overrides = new Properties();
-         if (!Strings.isNullOrEmpty(this.endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
-         }
-         if (scriptTimeout > 0) {
-             overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
+    }
+
+    public ComputeService getCompute() {
+        if (this.compute == null) {
+            Properties overrides = new Properties();
+            if (!Strings.isNullOrEmpty(this.endPointUrl)) {
+                overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
+            }
+            if (scriptTimeout > 0) {
+                overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE,
                                    String.valueOf(scriptTimeout));
-         }
-         if (startTimeout > 0) {
-             overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING,
+            }
+            if (startTimeout > 0) {
+                overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING,
                                    String.valueOf(startTimeout)); 
-         }
-         this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
-      }
-      return compute;
-   }
+            }
+            this.compute = ctx(this.providerName, this.identity, this.credential, overrides, this.zones).getComputeService();
+        }
+        return compute;
+    }
 
-
-   public List<JCloudsSlaveTemplate> getTemplates() {
-      return Collections.unmodifiableList(templates);
-   }
+    public List<JCloudsSlaveTemplate> getTemplates() {
+        return Collections.unmodifiableList(templates);
+    }
 
     /**
      * {@inheritDoc}
@@ -329,7 +333,8 @@ public class JCloudsCloud extends Cloud {
                                              @QueryParameter String identity,
                                              @QueryParameter String credential,
                                              @QueryParameter String privateKey,
-                                             @QueryParameter String endPointUrl) {
+                                             @QueryParameter String endPointUrl,
+                                             @QueryParameter String zones) {
          if (identity == null)
             return FormValidation.error("Invalid (AccessId).");
          if (credential == null)
@@ -343,6 +348,7 @@ public class JCloudsCloud extends Cloud {
          identity = Util.fixEmptyAndTrim(identity);
          credential = Util.fixEmptyAndTrim(credential);
          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+         zones = Util.fixEmptyAndTrim(zones);
 
          FormValidation result = FormValidation.ok("Connection succeeded!");
          ComputeServiceContext ctx = null;
@@ -352,7 +358,7 @@ public class JCloudsCloud extends Cloud {
                overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
             }
 
-            ctx = ctx(providerName, identity, credential, overrides);
+            ctx = ctx(providerName, identity, credential, overrides, zones);
 
             ctx.getComputeService().listNodes();
          } catch (Exception ex) {

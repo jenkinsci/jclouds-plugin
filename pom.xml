@@ -69,7 +69,7 @@
         <dependency>
           <groupId>org.jenkins-ci.main</groupId>
           <artifactId>jenkins-core</artifactId>
-          <version>1.457</version>
+          <version>1.547</version>
           <exclusions>
             <exclusion>
               <groupId>org.sonatype.sisu</groupId>

@@ -14,14 +14,14 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
       String name = "testSlave";
       JCloudsSlaveTemplate originalTemplate = new JCloudsSlaveTemplate(name, "imageId", "hardwareId", 1, 512, "osFamily",
                                                                        "osVersion", "jclouds-slave-type1 jclouds-type2", "Description",
-                                                                       "initScript", null, "1", false, null, null, true, "jenkins", false, 
+                                                                       "initScript", null, "1", false, null, null, true, null, "jenkins", false, 
                                                                        null, false, 5, 0, true, "jenkins", true);
 
       List<JCloudsSlaveTemplate> templates = new ArrayList<JCloudsSlaveTemplate>();
       templates.add(originalTemplate);
 
       JCloudsCloud originalCloud = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey",
-                                                    "endPointUrl", 1, 30, 600*1000, 600*1000, templates);
+                                                    "endPointUrl", 1, 30, 600*1000, 600*1000, null, templates);
 
       hudson.clouds.add(originalCloud);
       submit(createWebClient().goTo("configure").getFormByName("config"));

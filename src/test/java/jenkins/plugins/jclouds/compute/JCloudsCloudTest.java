@@ -49,7 +49,7 @@ public class JCloudsCloudTest extends HudsonTestCase {
    public void testConfigRoundtrip() throws Exception {
 
       JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey",
-                                               "endPointUrl", 1 , 30, 600*1000, 600*1000, Collections.<JCloudsSlaveTemplate>emptyList());
+                                               "endPointUrl", 1 , 30, 600*1000, 600*1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
 
       hudson.clouds.add(original);
       submit(createWebClient().goTo("configure").getFormByName("config"));
