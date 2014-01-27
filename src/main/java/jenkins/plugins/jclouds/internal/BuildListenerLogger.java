@@ -3,61 +3,61 @@ package jenkins.plugins.jclouds.internal;
 import hudson.model.BuildListener;
 
 public class BuildListenerLogger implements org.jclouds.logging.Logger {
-   private final BuildListener listener;
-   
-   public BuildListenerLogger(BuildListener listener) {
-      this.listener = listener;
-   }
+	private final BuildListener listener;
 
-   public void debug(String message, Object... args) {
-      //noop
-   }
+	public BuildListenerLogger(BuildListener listener) {
+		this.listener = listener;
+	}
 
-   public void error(String message, Object... args) {
-      listener.fatalError(String.format(message, args));
-   }
+	public void debug(String message, Object... args) {
+		// noop
+	}
 
-   public void error(Throwable throwable, String message, Object... args) {
-      listener.fatalError(String.format(message, args) +": " + throwable.getCause());
-   }
+	public void error(String message, Object... args) {
+		listener.fatalError(String.format(message, args));
+	}
 
-   public String getCategory() {
-      return null;
-   }
+	public void error(Throwable throwable, String message, Object... args) {
+		listener.fatalError(String.format(message, args) + ": " + throwable.getCause());
+	}
 
-   public void info(String message, Object... args) {
-      listener.getLogger().println(String.format(message, args));
-   }
+	public String getCategory() {
+		return null;
+	}
 
-   public boolean isDebugEnabled() {
-      return false;
-   }
+	public void info(String message, Object... args) {
+		listener.getLogger().println(String.format(message, args));
+	}
 
-   public boolean isErrorEnabled() {
-      return true;
-   }
+	public boolean isDebugEnabled() {
+		return false;
+	}
 
-   public boolean isInfoEnabled() {
-      return true;
-   }
+	public boolean isErrorEnabled() {
+		return true;
+	}
 
-   public boolean isTraceEnabled() {
-      return false;
-   }
+	public boolean isInfoEnabled() {
+		return true;
+	}
 
-   public boolean isWarnEnabled() {
-      return true;
-   }
+	public boolean isTraceEnabled() {
+		return false;
+	}
 
-   public void trace(String message, Object... args) {         
-   }
+	public boolean isWarnEnabled() {
+		return true;
+	}
 
-   public void warn(String message, Object... args) {
-      listener.error(String.format(message, args));
-   }
+	public void trace(String message, Object... args) {
+	}
 
-   public void warn(Throwable throwable, String message, Object... args) {
-      listener.error(String.format(message, args) +": " + throwable.getCause());
-   }
-    
- }
+	public void warn(String message, Object... args) {
+		listener.error(String.format(message, args));
+	}
+
+	public void warn(Throwable throwable, String message, Object... args) {
+		listener.error(String.format(message, args) + ": " + throwable.getCause());
+	}
+
+}

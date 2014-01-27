@@ -22,47 +22,46 @@ import com.google.common.util.concurrent.MoreExecutors;
 @Extension
 public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 
-    public JCloudsCleanupThread() {
-        super("JClouds slave cleanup");
-    }
+	public JCloudsCleanupThread() {
+		super("JClouds slave cleanup");
+	}
 
-    public long getRecurrencePeriod() {
-        return MIN * 5;
-    }
+	public long getRecurrencePeriod() {
+		return MIN * 5;
+	}
 
-    public static void invoke() {
-        getInstance().run();
-    }
+	public static void invoke() {
+		getInstance().run();
+	}
 
-    private static JCloudsCleanupThread getInstance() {
-        return Jenkins.getInstance().getExtensionList(AsyncPeriodicWork.class).get(JCloudsCleanupThread.class);
-    }
+	private static JCloudsCleanupThread getInstance() {
+		return Jenkins.getInstance().getExtensionList(AsyncPeriodicWork.class).get(JCloudsCleanupThread.class);
+	}
 
-    protected void execute(TaskListener listener) {
-        final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder = ImmutableList
-            .<ListenableFuture<?>> builder();
-        ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
-        
-        for (final Computer c : Jenkins.getInstance().getComputers()) {
-            if (JCloudsComputer.class.isInstance(c)) {
-                if (((JCloudsComputer)c).getNode().isPendingDelete()) {
-                    ListenableFuture<?> f = executor.submit(new Runnable() {
-                            @Override
-                            public void run() {
-                                logger.log(Level.INFO, "Deleting pending node " + c.getName());
-                                try {
-                                    ((JCloudsComputer)c).deleteSlave();
-                                } catch (IOException e) {
-                                    logger.log(Level.WARNING, "Failed to disconnect and delete "+c.getName()+": "+e.getMessage());
-                                }
-                            }
-                        });
+	protected void execute(TaskListener listener) {
+		final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder = ImmutableList.<ListenableFuture<?>> builder();
+		ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
 
-                    deletedNodesBuilder.add(f);
-                }
-            }
-        }
+		for (final Computer c : Jenkins.getInstance().getComputers()) {
+			if (JCloudsComputer.class.isInstance(c)) {
+				if (((JCloudsComputer) c).getNode().isPendingDelete()) {
+					ListenableFuture<?> f = executor.submit(new Runnable() {
+						@Override
+						public void run() {
+							logger.log(Level.INFO, "Deleting pending node " + c.getName());
+							try {
+								((JCloudsComputer) c).deleteSlave();
+							} catch (IOException e) {
+								logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+							}
+						}
+					});
 
-        Futures.getUnchecked(Futures.successfulAsList(deletedNodesBuilder.build()));
-    }
+					deletedNodesBuilder.add(f);
+				}
+			}
+		}
+
+		Futures.getUnchecked(Futures.successfulAsList(deletedNodesBuilder.build()));
+	}
 }
