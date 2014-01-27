@@ -2,18 +2,15 @@ package jenkins.plugins.jclouds.compute;
 
 import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
-import hudson.model.Computer;
 import hudson.model.TaskListener;
-import jenkins.model.Jenkins;
+import hudson.model.Computer;
 
-import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.regex.Pattern;
+
+import jenkins.model.Jenkins;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -26,6 +23,7 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 		super("JClouds slave cleanup");
 	}
 
+	@Override
 	public long getRecurrencePeriod() {
 		return MIN * 5;
 	}
@@ -38,6 +36,7 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 		return Jenkins.getInstance().getExtensionList(AsyncPeriodicWork.class).get(JCloudsCleanupThread.class);
 	}
 
+	@Override
 	protected void execute(TaskListener listener) {
 		final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder = ImmutableList.<ListenableFuture<?>> builder();
 		ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
@@ -46,7 +45,6 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 			if (JCloudsComputer.class.isInstance(c)) {
 				if (((JCloudsComputer) c).getNode().isPendingDelete()) {
 					ListenableFuture<?> f = executor.submit(new Runnable() {
-						@Override
 						public void run() {
 							logger.log(Level.INFO, "Deleting pending node " + c.getName());
 							try {
