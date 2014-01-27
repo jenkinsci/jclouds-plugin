@@ -16,77 +16,74 @@ import com.google.common.reflect.TypeToken;
 
 @SuppressWarnings("unchecked")
 public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
-   public static String PROVIDER;
+	public static String PROVIDER;
 
-   /**
-    * base jclouds tests expect properties to arrive in a different naming convention, based on
-    * provider name.
-    * 
-    * ex.
-    * 
-    * <pre>
-    *  test.jenkins.blobstore.provider=aws-s3
-    *  test.jenkins.blobstore.identity=access
-    *  test.jenkins.blobstore.credential=secret
-    * </pre>
-    * 
-    * should turn into
-    * 
-    * <pre>
-    *  test.aws-s3.identity=access
-    *  test.aws-s3.credential=secret
-    * </pre>
-    */
-   static {
-      PROVIDER = checkNotNull(System.getProperty("test.jenkins.blobstore.provider"),
-               "test.blobstore.provider variable must be set!");
-      Map<String, String> filtered = Maps.filterKeys(Map.class.cast(System.getProperties()), Predicates
-               .containsPattern("^test\\.jenkins\\.blobstore"));
-      Map<String, String> transformed = Maps2.transformKeys(filtered, new Function<String, String>() {
+	/**
+	 * base jclouds tests expect properties to arrive in a different naming convention, based on provider name.
+	 * 
+	 * ex.
+	 * 
+	 * <pre>
+	 *  test.jenkins.blobstore.provider=aws-s3
+	 *  test.jenkins.blobstore.identity=access
+	 *  test.jenkins.blobstore.credential=secret
+	 * </pre>
+	 * 
+	 * should turn into
+	 * 
+	 * <pre>
+	 *  test.aws-s3.identity=access
+	 *  test.aws-s3.credential=secret
+	 * </pre>
+	 */
+	static {
+		PROVIDER = checkNotNull(System.getProperty("test.jenkins.blobstore.provider"), "test.blobstore.provider variable must be set!");
+		Map<String, String> filtered = Maps.filterKeys(Map.class.cast(System.getProperties()), Predicates.containsPattern("^test\\.jenkins\\.blobstore"));
+		Map<String, String> transformed = Maps2.transformKeys(filtered, new Function<String, String>() {
 
-         public String apply(String arg0) {
-            return arg0.replaceAll("test.jenkins.blobstore", "test." + PROVIDER);
-         }
+			public String apply(String arg0) {
+				return arg0.replaceAll("test.jenkins.blobstore", "test." + PROVIDER);
+			}
 
-      });
-      System.getProperties().putAll(transformed);
-   }
+		});
+		System.getProperties().putAll(transformed);
+	}
 
-   public BlobStoreTestFixture() {
-      provider = PROVIDER;
-   }
-   
-   public BlobStore getBlobStore() {
-      return view.getBlobStore();
-   }
+	public BlobStoreTestFixture() {
+		provider = PROVIDER;
+	}
 
-   public String getProvider() {
-      return provider;
-   }
+	public BlobStore getBlobStore() {
+		return view.getBlobStore();
+	}
 
-   public String getEndpoint() {
-      return endpoint;
-   }
+	public String getProvider() {
+		return provider;
+	}
 
-   public String getIdentity() {
-      return identity;
-   }
+	public String getEndpoint() {
+		return endpoint;
+	}
 
-   public String getCredential() {
-      return credential;
-   }
+	public String getIdentity() {
+		return identity;
+	}
 
-   public void setUp() {
-      super.setupContext();
-   }
+	public String getCredential() {
+		return credential;
+	}
 
-   public void tearDown() {
-      super.tearDownContext();
-   }
+	public void setUp() {
+		super.setupContext();
+	}
 
-   @Override
-   protected TypeToken<BlobStoreContext> viewType() {
-      return TypeToken.of(BlobStoreContext.class);
-   }
+	public void tearDown() {
+		super.tearDownContext();
+	}
+
+	@Override
+	protected TypeToken<BlobStoreContext> viewType() {
+		return TypeToken.of(BlobStoreContext.class);
+	}
 
 }

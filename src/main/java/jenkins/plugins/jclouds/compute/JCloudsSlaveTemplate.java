@@ -55,498 +55,443 @@ import com.google.common.collect.ImmutableSortedSet;
  */
 public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<NodeMetadata> {
 
-   private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
 
-   public final String name;
-   public final String imageId;
-   public final String hardwareId;
-   public final double cores;
-   public final int ram;
-   public final String osFamily;
-   public final String labelString;
-   public final String description;
-   public final String osVersion;
-   public final String initScript;
-   public final String userData;
-   public final String numExecutors;
-   public final boolean stopOnTerminate;
-   public final String vmUser;
-   public final String vmPassword;
-   public final boolean preInstalledJava;
-   public final boolean preExistingJenkinsUser;
-   private final String jenkinsUser;
-   private final String fsRoot;
-   public final boolean allowSudo;
-   public final int overrideRetentionTime;
-   public final int spoolDelayMs;
-   private final Object delayLockObject = new Object();
-   public final boolean assignFloatingIp;
-   public final String keyPairName;
-   public final boolean assignPublicIp;
-   
-   private transient Set<LabelAtom> labelSet;
+	public final String name;
+	public final String imageId;
+	public final String hardwareId;
+	public final double cores;
+	public final int ram;
+	public final String osFamily;
+	public final String labelString;
+	public final String description;
+	public final String osVersion;
+	public final String initScript;
+	public final String userData;
+	public final String numExecutors;
+	public final boolean stopOnTerminate;
+	public final String vmUser;
+	public final String vmPassword;
+	public final boolean preInstalledJava;
+	public final boolean preExistingJenkinsUser;
+	private final String jenkinsUser;
+	private final String fsRoot;
+	public final boolean allowSudo;
+	public final int overrideRetentionTime;
+	public final int spoolDelayMs;
+	private final Object delayLockObject = new Object();
+	public final boolean assignFloatingIp;
+	public final String keyPairName;
+	public final boolean assignPublicIp;
 
-   protected transient JCloudsCloud cloud;
+	private transient Set<LabelAtom> labelSet;
 
+	protected transient JCloudsCloud cloud;
 
-   @DataBoundConstructor
-   public JCloudsSlaveTemplate(final String name,
-                               final String imageId,
-                               final String hardwareId,
-                               final double cores,
-                               final int ram,
-                               final String osFamily,
-                               final String osVersion,
-                               final String labelString,
-                               final String description,
-                               final String initScript,
-                               final String userData,
-                               final String numExecutors,
-                               final boolean stopOnTerminate,
-                               final String vmPassword,
-                               final String vmUser,
-                               final boolean preInstalledJava,
-                               final String jenkinsUser,
-                               final boolean preExistingJenkinsUser,
-                               final String fsRoot,
-                               final boolean allowSudo,
-                               final int overrideRetentionTime,
-                               final int spoolDelayMs,
-                               final boolean assignFloatingIp,
-                               final String keyPairName,
-                               final boolean assignPublicIp
-                               ) {
+	@DataBoundConstructor
+	public JCloudsSlaveTemplate(final String name, final String imageId, final String hardwareId, final double cores, final int ram, final String osFamily,
+			final String osVersion, final String labelString, final String description, final String initScript, final String userData,
+			final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser, final boolean preInstalledJava,
+			final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo, final int overrideRetentionTime,
+			final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName, final boolean assignPublicIp) {
 
-       this.name = Util.fixEmptyAndTrim(name);
-       this.imageId = Util.fixEmptyAndTrim(imageId);
-       this.hardwareId = Util.fixEmptyAndTrim(hardwareId);
-       this.cores = cores;
-       this.ram = ram;
-       this.osFamily = Util.fixNull(osFamily);
-       this.osVersion = Util.fixNull(osVersion);
-       this.labelString = Util.fixNull(labelString);
-       this.description = Util.fixNull(description);
-       this.initScript = Util.fixNull(initScript);
-       this.userData = Util.fixNull(userData);
-       this.numExecutors = Util.fixNull(numExecutors);
-       this.vmPassword = Util.fixEmptyAndTrim(vmPassword);
-       this.vmUser = Util.fixEmptyAndTrim(vmUser);
-       this.preInstalledJava = preInstalledJava;
-       this.stopOnTerminate = stopOnTerminate;
-       this.jenkinsUser = Util.fixEmptyAndTrim(jenkinsUser);
-       this.preExistingJenkinsUser = preExistingJenkinsUser;
-       this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
-       this.allowSudo = allowSudo;
-       this.overrideRetentionTime = overrideRetentionTime;
-       this.spoolDelayMs = spoolDelayMs;
-       this.assignFloatingIp = assignFloatingIp;
-       this.keyPairName = keyPairName;
-       this.assignPublicIp = assignPublicIp;
-       readResolve();
-   }
+		this.name = Util.fixEmptyAndTrim(name);
+		this.imageId = Util.fixEmptyAndTrim(imageId);
+		this.hardwareId = Util.fixEmptyAndTrim(hardwareId);
+		this.cores = cores;
+		this.ram = ram;
+		this.osFamily = Util.fixNull(osFamily);
+		this.osVersion = Util.fixNull(osVersion);
+		this.labelString = Util.fixNull(labelString);
+		this.description = Util.fixNull(description);
+		this.initScript = Util.fixNull(initScript);
+		this.userData = Util.fixNull(userData);
+		this.numExecutors = Util.fixNull(numExecutors);
+		this.vmPassword = Util.fixEmptyAndTrim(vmPassword);
+		this.vmUser = Util.fixEmptyAndTrim(vmUser);
+		this.preInstalledJava = preInstalledJava;
+		this.stopOnTerminate = stopOnTerminate;
+		this.jenkinsUser = Util.fixEmptyAndTrim(jenkinsUser);
+		this.preExistingJenkinsUser = preExistingJenkinsUser;
+		this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
+		this.allowSudo = allowSudo;
+		this.overrideRetentionTime = overrideRetentionTime;
+		this.spoolDelayMs = spoolDelayMs;
+		this.assignFloatingIp = assignFloatingIp;
+		this.keyPairName = keyPairName;
+		this.assignPublicIp = assignPublicIp;
+		readResolve();
+	}
 
+	public JCloudsCloud getCloud() {
+		return cloud;
+	}
 
-   public JCloudsCloud getCloud() {
-      return cloud;
-   }
+	/**
+	 * Initializes data structure that we don't persist.
+	 */
+	protected Object readResolve() {
+		labelSet = Label.parse(labelString);
+		return this;
+	}
 
-   /**
-    * Initializes data structure that we don't persist.
-    */
-   protected Object readResolve() {
-      labelSet = Label.parse(labelString);
-      return this;
-   }
+	public String getJenkinsUser() {
+		if (jenkinsUser == null || jenkinsUser.equals("")) {
+			return "jenkins";
+		} else {
+			return jenkinsUser;
+		}
+	}
 
-   public String getJenkinsUser() {
-       if (jenkinsUser == null || jenkinsUser.equals("")) {
-           return "jenkins";
-       } else {
-           return jenkinsUser;
-       }
-   }
+	public int getNumExecutors() {
+		return Util.tryParseNumber(numExecutors, 1).intValue();
+	}
 
-   public int getNumExecutors() {
-      return Util.tryParseNumber(numExecutors, 1).intValue();
-   }
+	public String getFsRoot() {
+		if (fsRoot == null || fsRoot.equals("")) {
+			return "/jenkins";
+		} else {
+			return fsRoot;
+		}
+	}
 
-   public String getFsRoot() {
-       if (fsRoot == null || fsRoot.equals("")) {
-           return "/jenkins";
-       } else {
-           return fsRoot;
-       }
-   }
-       
-   
-   public Set<LabelAtom> getLabelSet() {
-      return labelSet;
-   }
+	public Set<LabelAtom> getLabelSet() {
+		return labelSet;
+	}
 
-   public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
-       NodeMetadata nodeMetadata = get();
-       
-       try {
-           return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
-                                   numExecutors, stopOnTerminate, overrideRetentionTime);
-       } catch (Descriptor.FormException e) {
-           throw new AssertionError("Invalid configuration " + e.getMessage());
-       }
-   }
+	public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
+		NodeMetadata nodeMetadata = get();
 
-   public NodeMetadata get() {
-      LOGGER.info("Provisioning new jclouds node");
+		try {
+			return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate,
+					overrideRetentionTime);
+		} catch (Descriptor.FormException e) {
+			throw new AssertionError("Invalid configuration " + e.getMessage());
+		}
+	}
 
-      ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
-      TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
-      if (!Strings.isNullOrEmpty(imageId)) {
-         LOGGER.info("Setting image id to " + imageId);
-         templateBuilder.imageId(imageId);
-      } else {
-         if (!Strings.isNullOrEmpty(osFamily)) {
-            LOGGER.info("Setting osFamily to " + osFamily);
-            templateBuilder.osFamily(OsFamily.fromValue(osFamily));
-         }
-         if (!Strings.isNullOrEmpty(osVersion)) {
-            LOGGER.info("Setting osVersion to " + osVersion);
-            templateBuilder.osVersionMatches(osVersion);
-         }
-      }
-      if (!Strings.isNullOrEmpty((hardwareId))) {
-         LOGGER.info("Setting hardware Id to " + hardwareId);
-         templateBuilder.hardwareId(hardwareId);
-      } else {
-         LOGGER.info("Setting minRam " + ram + " and minCores " + cores);
-         templateBuilder.minCores(cores).minRam(ram);
-      }
+	public NodeMetadata get() {
+		LOGGER.info("Provisioning new jclouds node");
 
-      Template template = templateBuilder.build();
-      TemplateOptions options = template.getOptions();
-      
-      if(assignFloatingIp && options instanceof NovaTemplateOptions){
-          LOGGER.info("Setting autoAssignFloatingIp to true");
-          options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
-      }
-      
-      if (!Strings.isNullOrEmpty((keyPairName)) && options instanceof NovaTemplateOptions) {
-          LOGGER.info("Setting keyPairName to " + keyPairName );
-          options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
-      }
+		ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
+		TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
+		if (!Strings.isNullOrEmpty(imageId)) {
+			LOGGER.info("Setting image id to " + imageId);
+			templateBuilder.imageId(imageId);
+		} else {
+			if (!Strings.isNullOrEmpty(osFamily)) {
+				LOGGER.info("Setting osFamily to " + osFamily);
+				templateBuilder.osFamily(OsFamily.fromValue(osFamily));
+			}
+			if (!Strings.isNullOrEmpty(osVersion)) {
+				LOGGER.info("Setting osVersion to " + osVersion);
+				templateBuilder.osVersionMatches(osVersion);
+			}
+		}
+		if (!Strings.isNullOrEmpty((hardwareId))) {
+			LOGGER.info("Setting hardware Id to " + hardwareId);
+			templateBuilder.hardwareId(hardwareId);
+		} else {
+			LOGGER.info("Setting minRam " + ram + " and minCores " + cores);
+			templateBuilder.minCores(cores).minRam(ram);
+		}
 
-      if (options instanceof CloudStackTemplateOptions) {
-          /**
-           * This tells jclouds cloudstack module to assign a public ip, setup
-           * staticnat and configure the firewall when true. Only interesting
-           * when using cloudstack advanced networking.
-           */
-          LOGGER.info("Setting setupStaticNat to " + assignPublicIp);
-          options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
-      }
-      
-      if (!Strings.isNullOrEmpty(vmPassword)) {
-          LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
-          options.overrideLoginCredentials(lc);
-      } else if(!Strings.isNullOrEmpty(getCloud().privateKey)){
-          LoginCredentials lc = LoginCredentials.builder().user(vmUser).privateKey(getCloud().privateKey).build();
-          options.overrideLoginCredentials(lc);
-      }
+		Template template = templateBuilder.build();
+		TemplateOptions options = template.getOptions();
 
-      if (spoolDelayMs > 0)
-      {
-          // (JENKINS-15970) Add optional delay before spooling. Author: Adam Rofer
-          synchronized(delayLockObject)
-          {
-              LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
-              try
-              {
-                  Thread.sleep(spoolDelayMs);
-              }
-              catch (InterruptedException e)
-              {
-              }
-          }
-      }
+		if (assignFloatingIp && options instanceof NovaTemplateOptions) {
+			LOGGER.info("Setting autoAssignFloatingIp to true");
+			options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
+		}
 
-      Statement initStatement = null;
-      Statement bootstrap = null;
-      
-      if (this.preExistingJenkinsUser) {
-          if( this.initScript.length() > 0 ) {
-    	    initStatement = Statements.exec(this.initScript);
-          }
-      } else {
-	      // setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
-	      AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
-	          .installAdminPrivateKey(false) // no need
-	          .grantSudoToAdminUser(allowSudo) // no need
-	          .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
-	          .authorizeAdminPublicKey(true)
-	          .adminPublicKey(getCloud().publicKey)
-                  .adminHome(getFsRoot())
-	          .build();
+		if (!Strings.isNullOrEmpty((keyPairName)) && options instanceof NovaTemplateOptions) {
+			LOGGER.info("Setting keyPairName to " + keyPairName);
+			options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+		}
 
+		if (options instanceof CloudStackTemplateOptions) {
+			/**
+			 * This tells jclouds cloudstack module to assign a public ip, setup staticnat and configure the firewall when true. Only interesting when using
+			 * cloudstack advanced networking.
+			 */
+			LOGGER.info("Setting setupStaticNat to " + assignPublicIp);
+			options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
+		}
 
-	      // Jenkins needs /jenkins dir.
-	      Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p "+getFsRoot()), Statements.exec("chown "+getJenkinsUser()+" "+getFsRoot()));
+		if (!Strings.isNullOrEmpty(vmPassword)) {
+			LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
+			options.overrideLoginCredentials(lc);
+		} else if (!Strings.isNullOrEmpty(getCloud().privateKey)) {
+			LoginCredentials lc = LoginCredentials.builder().user(vmUser).privateKey(getCloud().privateKey).build();
+			options.overrideLoginCredentials(lc);
+		}
 
-          initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
-      }
+		if (spoolDelayMs > 0) {
+			// (JENKINS-15970) Add optional delay before spooling. Author: Adam Rofer
+			synchronized (delayLockObject) {
+				LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
+				try {
+					Thread.sleep(spoolDelayMs);
+				} catch (InterruptedException e) {
+				}
+			}
+		}
 
-      if (preInstalledJava) {
-          bootstrap = initStatement;
-      } else {
-          bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
-      }
-      
-      options
-            .inboundPorts(22)
-            .userMetadata(userMetadata);
+		Statement initStatement = null;
+		Statement bootstrap = null;
 
-      if( bootstrap != null )
-            options.runScript(bootstrap);
+		if (this.preExistingJenkinsUser) {
+			if (this.initScript.length() > 0) {
+				initStatement = Statements.exec(this.initScript);
+			}
+		} else {
+			// setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
+			AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser()).installAdminPrivateKey(false) // no need
+					.grantSudoToAdminUser(allowSudo) // no need
+					.adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
+					.authorizeAdminPublicKey(true).adminPublicKey(getCloud().publicKey).adminHome(getFsRoot()).build();
 
-      if (userData != null) {
-          try {
-              Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
-              LOGGER.info("Setting userData to " + userData);
-              userDataMethod.invoke(options, userData.getBytes());
-          } catch (Exception e) {
-              LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
-          }
-      }
+			// Jenkins needs /jenkins dir.
+			Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
+					Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
 
-      NodeMetadata nodeMetadata = null;
+			initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
+		}
 
+		if (preInstalledJava) {
+			bootstrap = initStatement;
+		} else {
+			bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
+		}
 
-      try {
-         nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
-      } catch (RunNodesException e) {
-         throw destroyBadNodesAndPropagate(e);
-      }
+		options.inboundPorts(22).userMetadata(userMetadata);
 
-      //Check if nodeMetadata is null and throw
-      return nodeMetadata;
-   }
+		if (bootstrap != null)
+			options.runScript(bootstrap);
 
-   private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
-      for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet())
-         getCloud().getCompute().destroyNode(nodeError.getKey().getId());
-      throw propagate(e);
-   }
+		if (userData != null) {
+			try {
+				Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
+				LOGGER.info("Setting userData to " + userData);
+				userDataMethod.invoke(options, userData.getBytes());
+			} catch (Exception e) {
+				LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
+			}
+		}
 
+		NodeMetadata nodeMetadata = null;
 
-   public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
-      return Jenkins.getInstance().getDescriptor(getClass());
-   }
+		try {
+			nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
+		} catch (RunNodesException e) {
+			throw destroyBadNodesAndPropagate(e);
+		}
 
-   @Extension
-   public static final class DescriptorImpl extends Descriptor<JCloudsSlaveTemplate> {
+		// Check if nodeMetadata is null and throw
+		return nodeMetadata;
+	}
 
-      @Override
-      public String getDisplayName() {
-         return null;
-      }
+	private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
+		for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet())
+			getCloud().getCompute().destroyNode(nodeError.getKey().getId());
+		throw propagate(e);
+	}
 
-      public FormValidation doCheckName(@QueryParameter String value) {
-    	  try {
-    		  new DnsNameValidator(1, 80).validate(value);
-    		  return FormValidation.ok();
-    	  } catch (Exception e) {
-    		  return FormValidation.error(e.getMessage());
-    	  }
-      }
-      
-      public FormValidation doCheckCores(@QueryParameter String value) {
-         return FormValidation.validateRequired(value);
-      }
+	public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
+		return Jenkins.getInstance().getDescriptor(getClass());
+	}
 
-      public FormValidation doCheckRam(@QueryParameter String value) {
-         return FormValidation.validateRequired(value);
-      }
+	@Extension
+	public static final class DescriptorImpl extends Descriptor<JCloudsSlaveTemplate> {
 
-      public AutoCompletionCandidates doAutoCompleteOsFamily(@QueryParameter final String value) {
-         OsFamily[] osFamilies = OsFamily.values();
+		@Override
+		public String getDisplayName() {
+			return null;
+		}
 
-         AutoCompletionCandidates candidates = new AutoCompletionCandidates();
-         for (OsFamily osFamily : osFamilies) {
-            if (StringUtils.containsIgnoreCase(osFamily.toString(), value)) {
-               // note: string form of osFamily is lower-hyphen
-               candidates.add(osFamily.toString());
-            }
-         }
-         return candidates;
-      }
+		public FormValidation doCheckName(@QueryParameter String value) {
+			try {
+				new DnsNameValidator(1, 80).validate(value);
+				return FormValidation.ok();
+			} catch (Exception e) {
+				return FormValidation.error(e.getMessage());
+			}
+		}
 
-      public FormValidation doCheckNumExecutors(@QueryParameter String value) {
-          return FormValidation.validatePositiveInteger(value);
-      }
+		public FormValidation doCheckCores(@QueryParameter String value) {
+			return FormValidation.validateRequired(value);
+		}
 
-      public FormValidation doValidateImageId(
-            @QueryParameter String providerName,
-            @QueryParameter String identity,
-            @QueryParameter String credential,
-            @QueryParameter String endPointUrl,
-            @QueryParameter String imageId) {
+		public FormValidation doCheckRam(@QueryParameter String value) {
+			return FormValidation.validateRequired(value);
+		}
 
-         if (Strings.isNullOrEmpty(identity))
-            return FormValidation.error("Invalid identity (AccessId).");
-         if (Strings.isNullOrEmpty(credential))
-            return FormValidation.error("Invalid credential (secret key).");
-         if (Strings.isNullOrEmpty(providerName))
-            return FormValidation.error("Provider Name shouldn't be empty");
-         if (Strings.isNullOrEmpty(imageId)) {
-            return FormValidation.error("Image Id shouldn't be empty");
-         }
+		public AutoCompletionCandidates doAutoCompleteOsFamily(@QueryParameter final String value) {
+			OsFamily[] osFamilies = OsFamily.values();
 
-         // Remove empty text/whitespace from the fields.
-         providerName = Util.fixEmptyAndTrim(providerName);
-         identity = Util.fixEmptyAndTrim(identity);
-         credential = Util.fixEmptyAndTrim(credential);
-         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         imageId = Util.fixEmptyAndTrim(imageId);
+			AutoCompletionCandidates candidates = new AutoCompletionCandidates();
+			for (OsFamily osFamily : osFamilies) {
+				if (StringUtils.containsIgnoreCase(osFamily.toString(), value)) {
+					// note: string form of osFamily is lower-hyphen
+					candidates.add(osFamily.toString());
+				}
+			}
+			return candidates;
+		}
 
-         FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
-         ComputeService computeService = null;
-         try {
-            // TODO: endpoint is ignored
-            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
-            Set<? extends Image> images = computeService.listImages();
-            for (Image image : images) {
-               if (!image.getId().equals(imageId)) {
-                  if (image.getId().contains(imageId)) {
-                     return FormValidation.warning("Sorry cannot find the image id, " +
-                           "Did you mean: " + image.getId() + "?\n" + image);
-                  }
-               } else {
-                  return FormValidation.ok("Image Id is valid.");
-               }
-            }
+		public FormValidation doCheckNumExecutors(@QueryParameter String value) {
+			return FormValidation.validatePositiveInteger(value);
+		}
 
-         } catch (Exception ex) {
-            result = FormValidation.error("Unable to check the image id, " +
-                  "please check if the credentials you provided are correct.", ex);
-         } finally {
-            if (computeService != null) {
-               computeService.getContext().close();
-            }
-         }
-         return result;
-      }
+		public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+				@QueryParameter String endPointUrl, @QueryParameter String imageId) {
 
-      
-      public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
-                                                @RelativePath("..") @QueryParameter String identity,
-                                                @RelativePath("..") @QueryParameter String credential,
-                                                @RelativePath("..") @QueryParameter String endPointUrl) {
+			if (Strings.isNullOrEmpty(identity))
+				return FormValidation.error("Invalid identity (AccessId).");
+			if (Strings.isNullOrEmpty(credential))
+				return FormValidation.error("Invalid credential (secret key).");
+			if (Strings.isNullOrEmpty(providerName))
+				return FormValidation.error("Provider Name shouldn't be empty");
+			if (Strings.isNullOrEmpty(imageId)) {
+				return FormValidation.error("Image Id shouldn't be empty");
+			}
 
-          ListBoxModel m = new ListBoxModel();
-          
-          if (Strings.isNullOrEmpty(identity)) {
-              LOGGER.warning("identity is null or empty");
-              return m;
-          }
-          if (Strings.isNullOrEmpty(credential)) {
-              LOGGER.warning("credential is null or empty");
-              return m;
-          }
-          if (Strings.isNullOrEmpty(providerName)) {
-              LOGGER.warning("providerName is null or empty");
-              return m;
-          }
+			// Remove empty text/whitespace from the fields.
+			providerName = Util.fixEmptyAndTrim(providerName);
+			identity = Util.fixEmptyAndTrim(identity);
+			credential = Util.fixEmptyAndTrim(credential);
+			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+			imageId = Util.fixEmptyAndTrim(imageId);
 
+			FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
+			ComputeService computeService = null;
+			try {
+				// TODO: endpoint is ignored
+				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+				Set<? extends Image> images = computeService.listImages();
+				for (Image image : images) {
+					if (!image.getId().equals(imageId)) {
+						if (image.getId().contains(imageId)) {
+							return FormValidation.warning("Sorry cannot find the image id, " + "Did you mean: " + image.getId() + "?\n" + image);
+						}
+					} else {
+						return FormValidation.ok("Image Id is valid.");
+					}
+				}
 
-          // Remove empty text/whitespace from the fields.
-          providerName = Util.fixEmptyAndTrim(providerName);
-          identity = Util.fixEmptyAndTrim(identity);
-          credential = Util.fixEmptyAndTrim(credential);
-          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-         
-          ComputeService computeService = null;
-          m.add("None specified", "");
-          try {
-              // TODO: endpoint is ignored
-              computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
-              Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
-              for (Hardware hardware : hardwareProfiles) {
+			} catch (Exception ex) {
+				result = FormValidation.error("Unable to check the image id, " + "please check if the credentials you provided are correct.", ex);
+			} finally {
+				if (computeService != null) {
+					computeService.getContext().close();
+				}
+			}
+			return result;
+		}
 
-                  m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()),
-                        hardware.getId());
-              }
-              
-          } catch (Exception ex) {
+		public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
+				@RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl) {
 
-          } finally {
-              if (computeService != null) {
-                  computeService.getContext().close();
-              }
-          }
+			ListBoxModel m = new ListBoxModel();
 
-          return m;
-      }
+			if (Strings.isNullOrEmpty(identity)) {
+				LOGGER.warning("identity is null or empty");
+				return m;
+			}
+			if (Strings.isNullOrEmpty(credential)) {
+				LOGGER.warning("credential is null or empty");
+				return m;
+			}
+			if (Strings.isNullOrEmpty(providerName)) {
+				LOGGER.warning("providerName is null or empty");
+				return m;
+			}
 
-      public FormValidation doValidateHardwareId(
-            @QueryParameter String providerName,
-            @QueryParameter String identity,
-            @QueryParameter String credential,
-            @QueryParameter String endPointUrl,
-            @QueryParameter String hardwareId) {
+			// Remove empty text/whitespace from the fields.
+			providerName = Util.fixEmptyAndTrim(providerName);
+			identity = Util.fixEmptyAndTrim(identity);
+			credential = Util.fixEmptyAndTrim(credential);
+			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
-         if (Strings.isNullOrEmpty(identity))
-            return FormValidation.error("Invalid identity (AccessId).");
-         if (Strings.isNullOrEmpty(credential))
-            return FormValidation.error("Invalid credential (secret key).");
-         if (Strings.isNullOrEmpty(providerName))
-            return FormValidation.error("Provider Name shouldn't be empty");
-         if (Strings.isNullOrEmpty(hardwareId)) {
-            return FormValidation.error("Hardware Id shouldn't be empty");
-         }
+			ComputeService computeService = null;
+			m.add("None specified", "");
+			try {
+				// TODO: endpoint is ignored
+				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+				Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
+				for (Hardware hardware : hardwareProfiles) {
 
-         // Remove empty text/whitespace from the fields.
-         providerName = Util.fixEmptyAndTrim(providerName);
-         identity = Util.fixEmptyAndTrim(identity);
-         credential = Util.fixEmptyAndTrim(credential);
-         hardwareId = Util.fixEmptyAndTrim(hardwareId);
-         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+					m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()), hardware.getId());
+				}
 
-         FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
-         ComputeService computeService = null;
-         try {
-            // TODO: endpoint is ignored
-            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
-            Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
-            for (Hardware hardware : hardwareProfiles) {
-               if (!hardware.getId().equals(hardwareId)) {
-                  if (hardware.getId().contains(hardwareId)) {
-                     return FormValidation.warning("Sorry cannot find the hardware id, " +
-                           "Did you mean: " + hardware.getId() +  "?\n" + hardware);
-                  }
-               } else {
-                  return FormValidation.ok("Hardware Id is valid.");
-               }
-            }
+			} catch (Exception ex) {
 
-         } catch (Exception ex) {
-            result = FormValidation.error("Unable to check the hardware id, " +
-                  "please check if the credentials you provided are correct.", ex);
-         } finally {
-            if (computeService != null) {
-               computeService.getContext().close();
-            }
-         }
-         return result;
-      }
-      
-      public FormValidation doCheckOverrideRetentionTime(@QueryParameter String value) {
-          try {
-              if(Integer.parseInt(value) == -1)
-                  return FormValidation.ok();
-          } catch (NumberFormatException e) {
-          }
-    	  return FormValidation.validateNonNegativeInteger(value);
-      }
+			} finally {
+				if (computeService != null) {
+					computeService.getContext().close();
+				}
+			}
 
-      public FormValidation doCheckSpoolDelayMs(@QueryParameter String value) {
-          return FormValidation.validateNonNegativeInteger(value);
-      }
-   }
+			return m;
+		}
+
+		public FormValidation doValidateHardwareId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+				@QueryParameter String endPointUrl, @QueryParameter String hardwareId) {
+
+			if (Strings.isNullOrEmpty(identity))
+				return FormValidation.error("Invalid identity (AccessId).");
+			if (Strings.isNullOrEmpty(credential))
+				return FormValidation.error("Invalid credential (secret key).");
+			if (Strings.isNullOrEmpty(providerName))
+				return FormValidation.error("Provider Name shouldn't be empty");
+			if (Strings.isNullOrEmpty(hardwareId)) {
+				return FormValidation.error("Hardware Id shouldn't be empty");
+			}
+
+			// Remove empty text/whitespace from the fields.
+			providerName = Util.fixEmptyAndTrim(providerName);
+			identity = Util.fixEmptyAndTrim(identity);
+			credential = Util.fixEmptyAndTrim(credential);
+			hardwareId = Util.fixEmptyAndTrim(hardwareId);
+			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+
+			FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
+			ComputeService computeService = null;
+			try {
+				// TODO: endpoint is ignored
+				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+				Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
+				for (Hardware hardware : hardwareProfiles) {
+					if (!hardware.getId().equals(hardwareId)) {
+						if (hardware.getId().contains(hardwareId)) {
+							return FormValidation.warning("Sorry cannot find the hardware id, " + "Did you mean: " + hardware.getId() + "?\n" + hardware);
+						}
+					} else {
+						return FormValidation.ok("Hardware Id is valid.");
+					}
+				}
+
+			} catch (Exception ex) {
+				result = FormValidation.error("Unable to check the hardware id, " + "please check if the credentials you provided are correct.", ex);
+			} finally {
+				if (computeService != null) {
+					computeService.getContext().close();
+				}
+			}
+			return result;
+		}
+
+		public FormValidation doCheckOverrideRetentionTime(@QueryParameter String value) {
+			try {
+				if (Integer.parseInt(value) == -1)
+					return FormValidation.ok();
+			} catch (NumberFormatException e) {
+			}
+			return FormValidation.validateNonNegativeInteger(value);
+		}
+
+		public FormValidation doCheckSpoolDelayMs(@QueryParameter String value) {
+			return FormValidation.validateNonNegativeInteger(value);
+		}
+	}
 }
