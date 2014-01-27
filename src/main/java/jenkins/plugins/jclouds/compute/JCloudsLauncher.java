@@ -1,8 +1,8 @@
 package jenkins.plugins.jclouds.compute;
 
+import hudson.model.TaskListener;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
-import hudson.model.TaskListener;
 import hudson.remoting.Channel;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
@@ -71,7 +71,7 @@ public class JCloudsLauncher extends ComputerLauncher {
 			logger.println("Copying slave.jar");
 			scp.put(Hudson.getInstance().getJnlpJars("slave.jar").readFully(), "slave.jar", "/tmp");
 
-			String launchString = "java  -jar /tmp/slave.jar";
+			String launchString = "cd /tmp && java -jar slave.jar";
 			logger.println("Launching slave agent: " + launchString);
 			final Session sess = conn.openSession();
 			sess.execCommand(launchString);
