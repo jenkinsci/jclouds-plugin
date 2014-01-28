@@ -71,7 +71,7 @@ public class JCloudsLauncher extends ComputerLauncher {
 			logger.println("Copying slave.jar");
 			scp.put(Hudson.getInstance().getJnlpJars("slave.jar").readFully(), "slave.jar", "/tmp");
 
-			String launchString = "cd /tmp && java -jar slave.jar";
+			String launchString = "cd /tmp && java " + slave.getJvmOptions() + " -jar slave.jar";
 			logger.println("Launching slave agent: " + launchString);
 			final Session sess = conn.openSession();
 			sess.execCommand(launchString);
@@ -185,6 +185,7 @@ public class JCloudsLauncher extends ComputerLauncher {
 				logger.println("Connecting to " + host + " on port " + 22 + ". ");
 				Connection conn = new Connection(host, 22);
 				conn.connect(new ServerHostKeyVerifier() {
+					@Override
 					public boolean verifyServerHostKey(String hostname, int port, String serverHostKeyAlgorithm, byte[] serverHostKey) throws Exception {
 						return true;
 					}

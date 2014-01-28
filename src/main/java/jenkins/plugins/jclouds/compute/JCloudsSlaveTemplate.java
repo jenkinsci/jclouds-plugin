@@ -73,6 +73,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final String vmUser;
 	public final String vmPassword;
 	public final boolean preInstalledJava;
+	private final String jvmOptions;
 	public final boolean preExistingJenkinsUser;
 	private final String jenkinsUser;
 	private final String fsRoot;
@@ -92,8 +93,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public JCloudsSlaveTemplate(final String name, final String imageId, final String hardwareId, final double cores, final int ram, final String osFamily,
 			final String osVersion, final String labelString, final String description, final String initScript, final String userData,
 			final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser, final boolean preInstalledJava,
-			final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo, final int overrideRetentionTime,
-			final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName, final boolean assignPublicIp) {
+			final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo,
+			final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName, final boolean assignPublicIp) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -110,6 +111,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.vmPassword = Util.fixEmptyAndTrim(vmPassword);
 		this.vmUser = Util.fixEmptyAndTrim(vmUser);
 		this.preInstalledJava = preInstalledJava;
+		this.jvmOptions = Util.fixEmptyAndTrim(jvmOptions);
 		this.stopOnTerminate = stopOnTerminate;
 		this.jenkinsUser = Util.fixEmptyAndTrim(jenkinsUser);
 		this.preExistingJenkinsUser = preExistingJenkinsUser;
@@ -143,6 +145,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		}
 	}
 
+	public String getJvmOptions() {
+		if (jvmOptions == null || jenkinsUser.equals("")) {
+			return "";
+		} else {
+			return jvmOptions;
+		}
+	}
+
 	public int getNumExecutors() {
 		return Util.tryParseNumber(numExecutors, 1).intValue();
 	}
@@ -164,7 +174,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 		try {
 			return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate,
-					overrideRetentionTime);
+					overrideRetentionTime, getJvmOptions());
 		} catch (Descriptor.FormException e) {
 			throw new AssertionError("Invalid configuration " + e.getMessage());
 		}
@@ -172,7 +182,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 	public NodeMetadata get() {
 		LOGGER.info("Provisioning new jclouds node");
-
 		ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
 		TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
 		if (!Strings.isNullOrEmpty(imageId)) {
