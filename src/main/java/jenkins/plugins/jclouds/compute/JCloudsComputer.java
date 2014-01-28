@@ -52,9 +52,11 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
 	}
 
 	/**
-	 * Delete the slave, terminate the instance. Can be called eitehr by doDoDelete() or from JCloudsRetentionStrategy.
+	 * Delete the slave, terminate the instance. Can be called either by doDoDelete() or from JCloudsRetentionStrategy.
+	 * 
+	 * @throws InterruptedException
 	 */
-	public void deleteSlave() throws IOException {
+	public void deleteSlave() throws IOException, InterruptedException {
 		LOGGER.info("Terminating " + getName() + " slave");
 		JCloudsSlave slave = getNode();
 		if (slave.getChannel() != null) {

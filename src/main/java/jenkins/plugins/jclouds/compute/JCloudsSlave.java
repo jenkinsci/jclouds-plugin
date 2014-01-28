@@ -151,26 +151,6 @@ public class JCloudsSlave extends AbstractCloudSlave {
 		return new JCloudsComputer(this);
 	}
 
-	/**
-	 * Destroy the node calls {@link ComputeService#destroyNode}
-	 * 
-	 */
-	@Override
-	public void terminate() {
-		final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-		if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
-			if (stopOnTerminate) {
-				LOGGER.info("Suspending the Slave : " + getNodeName());
-				compute.suspendNode(nodeId);
-			} else {
-				LOGGER.info("Terminating the Slave : " + getNodeName());
-				compute.destroyNode(nodeId);
-			}
-		} else {
-			LOGGER.info("Slave " + getNodeName() + " is already not running.");
-		}
-	}
-
 	@Extension
 	public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {
 
@@ -188,9 +168,23 @@ public class JCloudsSlave extends AbstractCloudSlave {
 		}
 	}
 
+	/**
+	 * Destroy the node calls {@link ComputeService#destroyNode}
+	 * 
+	 */
 	@Override
 	protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
-		// TODO Auto-generated method stub
-
+		final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
+		if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
+			if (stopOnTerminate) {
+				LOGGER.info("Suspending the Slave : " + getNodeName());
+				compute.suspendNode(nodeId);
+			} else {
+				LOGGER.info("Terminating the Slave : " + getNodeName());
+				compute.destroyNode(nodeId);
+			}
+		} else {
+			LOGGER.info("Slave " + getNodeName() + " is already not running.");
+		}
 	}
 }
