@@ -27,7 +27,6 @@ import com.trilead.ssh2.Session;
 public class JCloudsLauncher extends ComputerLauncher {
 	private final int FAILED = -1;
 	private final int SAMEUSER = 0;
-	private final int RECONNECT = -2;
 
 	/**
 	 * Launch the Jenkins Slave on the SlaveComputer.
