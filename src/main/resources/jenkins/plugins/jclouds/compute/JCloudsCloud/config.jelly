@@ -23,7 +23,7 @@
     </f:entry>
 
     <f:entry title="Credential" field="credential">
-        <f:textbox/>
+        <f:password/>
     </f:entry>
 
     <f:entry title="RSA Private Key" field="privateKey">
