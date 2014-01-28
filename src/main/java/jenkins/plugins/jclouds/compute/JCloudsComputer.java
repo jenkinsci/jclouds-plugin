@@ -1,25 +1,26 @@
 package jenkins.plugins.jclouds.compute;
 
 import hudson.model.Hudson;
-import hudson.model.Slave;
+import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.OfflineCause;
 import hudson.slaves.SlaveComputer;
-import org.kohsuke.stapler.HttpRedirect;
-import org.kohsuke.stapler.HttpResponse;
 
 import java.io.IOException;
 import java.util.logging.Logger;
+
+import org.kohsuke.stapler.HttpRedirect;
+import org.kohsuke.stapler.HttpResponse;
 
 /**
  * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.
  * 
  * @author Vijay Kiran
  */
-public class JCloudsComputer extends SlaveComputer {
+public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
 
 	private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
 
-	public JCloudsComputer(Slave slave) {
+	public JCloudsComputer(JCloudsSlave slave) {
 		super(slave);
 	}
 
@@ -29,7 +30,7 @@ public class JCloudsComputer extends SlaveComputer {
 
 	@Override
 	public JCloudsSlave getNode() {
-		return (JCloudsSlave) super.getNode();
+		return super.getNode();
 	}
 
 	public int getRetentionTime() {

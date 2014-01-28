@@ -297,6 +297,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		throw propagate(e);
 	}
 
+	@SuppressWarnings("unchecked")
 	public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
 		return Jenkins.getInstance().getDescriptor(getClass());
 	}
