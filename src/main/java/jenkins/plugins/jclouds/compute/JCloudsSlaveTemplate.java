@@ -146,7 +146,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	}
 
 	public String getJvmOptions() {
-		if (jvmOptions == null || jenkinsUser.equals("")) {
+		if (jvmOptions == null || jvmOptions.equals("")) {
 			return "";
 		} else {
 			return jvmOptions;
@@ -180,6 +180,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		}
 	}
 
+	@Override
 	public NodeMetadata get() {
 		LOGGER.info("Provisioning new jclouds node");
 		ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
@@ -306,6 +307,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		throw propagate(e);
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
 		return Jenkins.getInstance().getDescriptor(getClass());
