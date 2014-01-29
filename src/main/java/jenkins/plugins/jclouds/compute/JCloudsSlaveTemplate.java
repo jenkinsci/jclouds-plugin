@@ -354,7 +354,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		}
 
 		public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
-				@QueryParameter String endPointUrl, @QueryParameter String imageId) {
+				@QueryParameter String endPointUrl, @QueryParameter String imageId, @QueryParameter String zones) {
 
 			if (Strings.isNullOrEmpty(identity))
 				return FormValidation.error("Invalid identity (AccessId).");
@@ -377,7 +377,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			ComputeService computeService = null;
 			try {
 				// TODO: endpoint is ignored
-				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
 				Set<? extends Image> images = computeService.listImages();
 				for (Image image : images) {
 					if (!image.getId().equals(imageId)) {
@@ -400,7 +400,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		}
 
 		public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
-				@RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl) {
+				@RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl,
+				@RelativePath("..") @QueryParameter String zones) {
 
 			ListBoxModel m = new ListBoxModel();
 
@@ -427,7 +428,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			m.add("None specified", "");
 			try {
 				// TODO: endpoint is ignored
-				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
 				Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
 				for (Hardware hardware : hardwareProfiles) {
 
@@ -446,7 +447,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		}
 
 		public FormValidation doValidateHardwareId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
-				@QueryParameter String endPointUrl, @QueryParameter String hardwareId) {
+				@QueryParameter String endPointUrl, @QueryParameter String hardwareId, @QueryParameter String zones) {
 
 			if (Strings.isNullOrEmpty(identity))
 				return FormValidation.error("Invalid identity (AccessId).");
@@ -464,12 +465,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			credential = Util.fixEmptyAndTrim(credential);
 			hardwareId = Util.fixEmptyAndTrim(hardwareId);
 			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+			zones = Util.fixEmptyAndTrim(zones);
 
 			FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
 			ComputeService computeService = null;
 			try {
 				// TODO: endpoint is ignored
-				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl).getComputeService();
+				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
 				Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
 				for (Hardware hardware : hardwareProfiles) {
 					if (!hardware.getId().equals(hardwareId)) {
