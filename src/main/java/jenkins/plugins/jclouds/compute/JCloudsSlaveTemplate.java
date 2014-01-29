@@ -83,6 +83,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final boolean assignFloatingIp;
 	public final String keyPairName;
 	public final boolean assignPublicIp;
+	public final String jvmOptions;
 
 	private transient Set<LabelAtom> labelSet;
 
@@ -93,7 +94,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String osVersion, final String labelString, final String description, final String initScript, final String userData,
 			final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser, final boolean preInstalledJava,
 			final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo, final int overrideRetentionTime,
-			final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName, final boolean assignPublicIp) {
+			final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName, final boolean assignPublicIp, final String jvmOptions) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -120,6 +121,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.assignFloatingIp = assignFloatingIp;
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
+		this.jvmOptions = jvmOptions;
 		readResolve();
 	}
 
@@ -164,7 +166,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 		try {
 			return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate,
-					overrideRetentionTime);
+					overrideRetentionTime, jvmOptions);
 		} catch (Descriptor.FormException e) {
 			throw new AssertionError("Invalid configuration " + e.getMessage());
 		}

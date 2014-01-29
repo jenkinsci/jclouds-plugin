@@ -72,6 +72,14 @@ public class JCloudsLauncher extends ComputerLauncher {
 			scp.put(Hudson.getInstance().getJnlpJars("slave.jar").readFully(), "slave.jar", "/tmp");
 
 			String launchString = "cd /tmp && java -jar slave.jar";
+			if (slave.getJvmOptions() != null && !slave.getJvmOptions().isEmpty()) {
+			    StringBuilder launchStringBuilder = new StringBuilder();
+			    launchStringBuilder.append("cd /tmp && java ");
+			    launchStringBuilder.append(slave.getJvmOptions());
+			    launchStringBuilder.append(" -jar slave.jar");
+			    launchString = launchStringBuilder.toString();
+			}
+			
 			logger.println("Launching slave agent: " + launchString);
 			final Session sess = conn.openSession();
 			sess.execCommand(launchString);
