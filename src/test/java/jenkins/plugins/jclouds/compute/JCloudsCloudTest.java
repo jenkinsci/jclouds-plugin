@@ -1,14 +1,13 @@
 package jenkins.plugins.jclouds.compute;
 
+import java.util.Collections;
+
+import org.jvnet.hudson.test.HudsonTestCase;
+
 import com.gargoylesoftware.htmlunit.WebAssert;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import jenkins.plugins.jclouds.compute.JCloudsCloud;
-import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
-import org.jvnet.hudson.test.HudsonTestCase;
-
-import java.util.Collections;
 
 /**
  * @author Vijay Kiran
@@ -27,7 +26,6 @@ public class JCloudsCloudTest extends HudsonTestCase {
 
 		HtmlPage page2 = page.getAnchorByText("Cloud (JClouds)").click();
 		WebAssert.assertInputPresent(page2, "_.profile");
-		// WebAssert.assertInputPresent(page2, "_.providerName");
 		WebAssert.assertInputPresent(page2, "_.endPointUrl");
 		WebAssert.assertInputPresent(page2, "_.identity");
 		WebAssert.assertInputPresent(page2, "_.credential");
@@ -49,7 +47,7 @@ public class JCloudsCloudTest extends HudsonTestCase {
 	public void testConfigRoundtrip() throws Exception {
 
 		JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey", "endPointUrl", 1, 30,
-				600 * 1000, 600 * 1000, Collections.<JCloudsSlaveTemplate> emptyList());
+				600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate> emptyList());
 
 		hudson.clouds.add(original);
 		submit(createWebClient().goTo("configure").getFormByName("config"));
