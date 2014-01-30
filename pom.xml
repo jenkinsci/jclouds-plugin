@@ -61,6 +61,12 @@
           <email>andrew.bayer@gmail.com</email>
           <timezone>-8</timezone>
         </developer>
+        <developer>
+          <id>mavlyutov</id>
+          <name>Marat Mavlyutov</name>
+          <email>m.mavlyutov@gmail.com</email>
+          <timezone>+3</timezone>
+        </developer>
         
     </developers>
 

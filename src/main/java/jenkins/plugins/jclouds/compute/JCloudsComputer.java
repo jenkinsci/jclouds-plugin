@@ -12,54 +12,54 @@ import java.util.logging.Logger;
 
 /**
  * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.
+ * 
  * @author Vijay Kiran
  */
 public class JCloudsComputer extends SlaveComputer {
 
-   private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
 
+	public JCloudsComputer(Slave slave) {
+		super(slave);
+	}
 
-   public JCloudsComputer(Slave slave) {
-      super(slave);
-   }
+	public String getInstanceId() {
+		return getName();
+	}
 
-   public String getInstanceId() {
-      return getName();
-   }
+	@Override
+	public JCloudsSlave getNode() {
+		return (JCloudsSlave) super.getNode();
+	}
 
-   @Override
-   public JCloudsSlave getNode() {
-      return (JCloudsSlave) super.getNode();
-   }
+	public int getRetentionTime() {
+		return getNode().getRetentionTime();
+	}
 
-    public int getRetentionTime() {
-        return getNode().getRetentionTime();
-    }
-    
-    public String getCloudName() {
-        return getNode().getCloudName();
-    }
+	public String getCloudName() {
+		return getNode().getCloudName();
+	}
 
-    /**
-     * Really deletes the slave, by terminating the instance.
-     */
-    @Override
-    public HttpResponse doDoDelete() throws IOException {
-        setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
-        getNode().setPendingDelete(true);
-        return new HttpRedirect("..");
-    }
-    
-    /**
-     * Delete the slave, terminate the instance. Can be called eitehr by doDoDelete() or from JCloudsRetentionStrategy.
-     */
-    public void deleteSlave() throws IOException {
-        LOGGER.info("Terminating " + getName() + " slave");
-        JCloudsSlave slave = getNode();
-        if (slave.getChannel() != null) {
-            slave.getChannel().close();
-        }
-        slave.terminate();
-        Hudson.getInstance().removeNode(slave);
-    }
+	/**
+	 * Really deletes the slave, by terminating the instance.
+	 */
+	@Override
+	public HttpResponse doDoDelete() throws IOException {
+		setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
+		getNode().setPendingDelete(true);
+		return new HttpRedirect("..");
+	}
+
+	/**
+	 * Delete the slave, terminate the instance. Can be called eitehr by doDoDelete() or from JCloudsRetentionStrategy.
+	 */
+	public void deleteSlave() throws IOException {
+		LOGGER.info("Terminating " + getName() + " slave");
+		JCloudsSlave slave = getNode();
+		if (slave.getChannel() != null) {
+			slave.getChannel().close();
+		}
+		slave.terminate();
+		Hudson.getInstance().removeNode(slave);
+	}
 }
