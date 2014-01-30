@@ -146,7 +146,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	}
 
 	public String getJvmOptions() {
-		if (jvmOptions == null || jvmOptions.equals("")) {
+		if (jvmOptions == null) {
 			return "";
 		} else {
 			return jvmOptions;
