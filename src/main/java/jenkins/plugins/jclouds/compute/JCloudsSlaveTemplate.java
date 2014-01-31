@@ -59,6 +59,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 	public final String name;
 	public final String imageId;
+	public final String imageNameRegex;
 	public final String hardwareId;
 	public final double cores;
 	public final int ram;
@@ -90,14 +91,16 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	protected transient JCloudsCloud cloud;
 
 	@DataBoundConstructor
-	public JCloudsSlaveTemplate(final String name, final String imageId, final String hardwareId, final double cores, final int ram, final String osFamily,
-			final String osVersion, final String labelString, final String description, final String initScript, final String userData,
-			final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser, final boolean preInstalledJava,
-			final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo,
-			final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName, final boolean assignPublicIp) {
+	public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex, final String hardwareId, final double cores,
+			final int ram, final String osFamily, final String osVersion, final String labelString, final String description, final String initScript,
+			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
+			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
+			final boolean allowSudo, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName,
+			final boolean assignPublicIp) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
+		this.imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
 		this.hardwareId = Util.fixEmptyAndTrim(hardwareId);
 		this.cores = cores;
 		this.ram = ram;
@@ -188,6 +191,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		if (!Strings.isNullOrEmpty(imageId)) {
 			LOGGER.info("Setting image id to " + imageId);
 			templateBuilder.imageId(imageId);
+		} else if (!Strings.isNullOrEmpty(imageNameRegex)) {
+			LOGGER.info("Setting image name regex to " + imageNameRegex);
+			templateBuilder.imageNameMatches(imageNameRegex);
 		} else {
 			if (!Strings.isNullOrEmpty(osFamily)) {
 				LOGGER.info("Setting osFamily to " + osFamily);
@@ -276,8 +282,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 		options.inboundPorts(22).userMetadata(userMetadata);
 
-		if (bootstrap != null)
+		if (bootstrap != null) {
 			options.runScript(bootstrap);
+		}
 
 		if (userData != null) {
 			try {
@@ -302,8 +309,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	}
 
 	private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
-		for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet())
+		for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet()) {
 			getCloud().getCompute().destroyNode(nodeError.getKey().getId());
+		}
 		throw propagate(e);
 	}
 
@@ -358,47 +366,97 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
 				@QueryParameter String endPointUrl, @QueryParameter String imageId, @QueryParameter String zones) {
 
-			if (Strings.isNullOrEmpty(identity))
-				return FormValidation.error("Invalid identity (AccessId).");
-			if (Strings.isNullOrEmpty(credential))
-				return FormValidation.error("Invalid credential (secret key).");
-			if (Strings.isNullOrEmpty(providerName))
-				return FormValidation.error("Provider Name shouldn't be empty");
+			final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, identity, credential, endPointUrl, zones);
+			if (computeContextValidationResult != null) {
+				return computeContextValidationResult;
+			}
 			if (Strings.isNullOrEmpty(imageId)) {
 				return FormValidation.error("Image Id shouldn't be empty");
 			}
 
 			// Remove empty text/whitespace from the fields.
+			imageId = Util.fixEmptyAndTrim(imageId);
+
+			try {
+				final Set<? extends Image> images = listImages(providerName, identity, credential, endPointUrl, zones);
+				if (images != null) {
+					for (final Image image : images) {
+						if (!image.getId().equals(imageId)) {
+							if (image.getId().contains(imageId)) {
+								return FormValidation.warning("Sorry cannot find the image id, " + "Did you mean: " + image.getId() + "?\n" + image);
+							}
+						} else {
+							return FormValidation.ok("Image Id is valid.");
+						}
+					}
+				}
+			} catch (Exception ex) {
+				return FormValidation.error("Unable to check the image id, " + "please check if the credentials you provided are correct.", ex);
+			}
+			return FormValidation.error("Invalid Image Id, please check the value and try again.");
+		}
+
+		public FormValidation doValidateImageNameRegex(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+				@QueryParameter String endPointUrl, @QueryParameter String imageNameRegex, @QueryParameter String zones) {
+
+			final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, identity, credential, endPointUrl, zones);
+			if (computeContextValidationResult != null) {
+				return computeContextValidationResult;
+			}
+			if (Strings.isNullOrEmpty(imageNameRegex)) {
+				return FormValidation.error("Image Name Regex shouldn't be empty");
+			}
+
+			// Remove empty text/whitespace from the fields.
+			imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
+
+			try {
+				final Set<? extends Image> images = listImages(providerName, identity, credential, endPointUrl, zones);
+				if (images != null) {
+					for (final Image image : images) {
+						if (image.getName().matches(imageNameRegex)) {
+							return FormValidation.ok("Image Name Regex is valid.");
+						}
+					}
+				}
+			} catch (Exception ex) {
+				return FormValidation.error("Unable to check the image name regex, " + "please check if the credentials you provided are correct.", ex);
+			}
+			return FormValidation.error("Invalid Image Name Regex, please check the value and try again.");
+		}
+
+		private FormValidation validateComputeContextParameters(@QueryParameter String providerName, @QueryParameter String identity,
+				@QueryParameter String credential, @QueryParameter String endPointUrl, @QueryParameter String zones) {
+			if (Strings.isNullOrEmpty(identity)) {
+				return FormValidation.error("Invalid identity (AccessId).");
+			}
+			if (Strings.isNullOrEmpty(credential)) {
+				return FormValidation.error("Invalid credential (secret key).");
+			}
+			if (Strings.isNullOrEmpty(providerName)) {
+				return FormValidation.error("Provider Name shouldn't be empty");
+			}
+
+			return null;
+		}
+
+		private Set<? extends Image> listImages(String providerName, String identity, String credential, String endPointUrl, String zones) {
+			// Remove empty text/whitespace from the fields.
 			providerName = Util.fixEmptyAndTrim(providerName);
 			identity = Util.fixEmptyAndTrim(identity);
 			credential = Util.fixEmptyAndTrim(credential);
 			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-			imageId = Util.fixEmptyAndTrim(imageId);
-
-			FormValidation result = FormValidation.error("Invalid Image Id, please check the value and try again.");
+			zones = Util.fixEmptyAndTrim(zones);
 			ComputeService computeService = null;
-			try {
-				// TODO: endpoint is ignored
-				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
-				Set<? extends Image> images = computeService.listImages();
-				for (Image image : images) {
-					if (!image.getId().equals(imageId)) {
-						if (image.getId().contains(imageId)) {
-							return FormValidation.warning("Sorry cannot find the image id, " + "Did you mean: " + image.getId() + "?\n" + image);
-						}
-					} else {
-						return FormValidation.ok("Image Id is valid.");
-					}
-				}
 
-			} catch (Exception ex) {
-				result = FormValidation.error("Unable to check the image id, " + "please check if the credentials you provided are correct.", ex);
+			try {
+				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
+				return computeService.listImages();
 			} finally {
 				if (computeService != null) {
 					computeService.getContext().close();
 				}
 			}
-			return result;
 		}
 
 		public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
@@ -451,12 +509,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		public FormValidation doValidateHardwareId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
 				@QueryParameter String endPointUrl, @QueryParameter String hardwareId, @QueryParameter String zones) {
 
-			if (Strings.isNullOrEmpty(identity))
+			if (Strings.isNullOrEmpty(identity)) {
 				return FormValidation.error("Invalid identity (AccessId).");
-			if (Strings.isNullOrEmpty(credential))
+			}
+			if (Strings.isNullOrEmpty(credential)) {
 				return FormValidation.error("Invalid credential (secret key).");
-			if (Strings.isNullOrEmpty(providerName))
+			}
+			if (Strings.isNullOrEmpty(providerName)) {
 				return FormValidation.error("Provider Name shouldn't be empty");
+			}
 			if (Strings.isNullOrEmpty(hardwareId)) {
 				return FormValidation.error("Hardware Id shouldn't be empty");
 			}
@@ -497,8 +558,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 		public FormValidation doCheckOverrideRetentionTime(@QueryParameter String value) {
 			try {
-				if (Integer.parseInt(value) == -1)
+				if (Integer.parseInt(value) == -1) {
 					return FormValidation.ok();
+				}
 			} catch (NumberFormatException e) {
 			}
 			return FormValidation.validateNonNegativeInteger(value);
