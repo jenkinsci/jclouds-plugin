@@ -39,8 +39,8 @@
     </f:section>
 
     <f:section title="Image/OS Options">
-      <f:radioBlock inline="true" name="jclouds.useImageId" value="true"
-                    title="Specify Image ID" checked="${instance.imageId != ''}">
+      <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="imageId"
+                    title="Specify Image ID" checked="${(instance.imageId != null) &amp;&amp; !instance.imageId.isEmpty()}">
         <f:entry title="Image Id" field="imageId">
           <f:textbox />
         </f:entry>
@@ -48,9 +48,19 @@
         <f:validateButton title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
                           with="providerName,identity,credential,endPointUrl,imageId"/>
       </f:radioBlock>
-      
-      <f:radioBlock inline="true" name="jclouds.useImageId" value="false"
-                    title="Specify OS Family and Version" checked="${instance.imageId == ''}">
+
+      <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="imageNameRegex"
+                    title="Specify Image Name Regex" checked="${((instance.imageId == null) || instance.imageId.isEmpty()) &amp;&amp; (instance.imageNameRegex != null) &amp;&amp; !instance.imageNameRegex.isEmpty()}">
+        <f:entry title="Image Name Regex" field="imageNameRegex">
+            <f:textbox />
+        </f:entry>
+
+        <f:validateButton title="${%Check Image Name Regex}" progress="${%Checking...}" method="validateImageNameRegex"
+                          with="providerName,identity,credential,endPointUrl,imageNameRegex"/>
+      </f:radioBlock>
+
+      <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="osFamilyAndVersion"
+                    title="Specify OS Family and Version" checked="${((instance.imageId == null) || instance.imageId.isEmpty()) &amp;&amp; ((instance.imageNameRegex == null) || instance.imageNameRegex.isEmpty())}">
         <f:entry title="OS Family" field="osFamily">
           <f:textbox/>
         </f:entry>
