@@ -12,8 +12,8 @@ import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 import hudson.util.StreamTaskListener;
+import hudson.util.ListBoxModel;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -40,6 +40,7 @@ import org.jclouds.compute.config.ComputeServiceProperties;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.ssh.SshKeys;
@@ -53,9 +54,9 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.ImmutableSet.Builder;
 import com.google.common.io.Closeables;
 import com.google.inject.Module;
 
@@ -82,6 +83,7 @@ public class JCloudsCloud extends Cloud {
 	public final int scriptTimeout;
 	public final int startTimeout;
 	private transient ComputeService compute;
+	public final String zones;
 
 	public static List<String> getCloudNames() {
 		List<String> cloudNames = new ArrayList<String>();
@@ -101,7 +103,7 @@ public class JCloudsCloud extends Cloud {
 	@DataBoundConstructor
 	public JCloudsCloud(final String profile, final String providerName, final String identity, final String credential, final String privateKey,
 			final String publicKey, final String endPointUrl, final int instanceCap, final int retentionTime, final int scriptTimeout, final int startTimeout,
-			final List<JCloudsSlaveTemplate> templates) {
+			final String zones, final List<JCloudsSlaveTemplate> templates) {
 		super(Util.fixEmptyAndTrim(profile));
 		this.profile = Util.fixEmptyAndTrim(profile);
 		this.providerName = Util.fixEmptyAndTrim(providerName);
@@ -115,6 +117,7 @@ public class JCloudsCloud extends Cloud {
 		this.scriptTimeout = scriptTimeout;
 		this.startTimeout = startTimeout;
 		this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate> emptyList());
+		this.zones = Util.fixEmptyAndTrim(zones);
 		readResolve();
 	}
 
@@ -142,15 +145,18 @@ public class JCloudsCloud extends Cloud {
 		}
 	}, new EnterpriseConfigurationModule());
 
-	static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl) {
+	static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl, String zones) {
 		Properties overrides = new Properties();
 		if (!Strings.isNullOrEmpty(endPointUrl)) {
 			overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
 		}
-		return ctx(providerName, identity, credential, overrides);
+		return ctx(providerName, identity, credential, overrides, zones);
 	}
 
-	static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides) {
+	static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides, String zones) {
+		if (!Strings.isNullOrEmpty(zones)) {
+			overrides.setProperty(LocationConstants.PROPERTY_ZONES, zones);
+		}
 		// correct the classloader so that extensions can be found
 		Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
 		return ContextBuilder.newBuilder(providerName).credentials(identity, credential).overrides(overrides).modules(MODULES)
@@ -169,7 +175,7 @@ public class JCloudsCloud extends Cloud {
 			if (startTimeout > 0) {
 				overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
 			}
-			this.compute = ctx(this.providerName, this.identity, this.credential, overrides).getComputeService();
+			this.compute = ctx(this.providerName, this.identity, this.credential, overrides, this.zones).getComputeService();
 		}
 		return compute;
 	}
@@ -197,14 +203,20 @@ public class JCloudsCloud extends Cloud {
 					// TODO: record the output somewhere
 					JCloudsSlave s = t.provisionSlave(new StreamTaskListener(System.out));
 					Hudson.getInstance().addNode(s);
-					// Cloud instances may have a long init script. If we declare
-					// the provisioning complete by returning without the connect
-					// operation, NodeProvisioner may decide that it still wants
-					// one more instance, because it sees that (1) all the slaves
-					// are offline (because it's still being launched) and
+					// Cloud instances may have a long init script. If
+					// we declare
+					// the provisioning complete by returning without
+					// the connect
+					// operation, NodeProvisioner may decide that it
+					// still wants
+					// one more instance, because it sees that (1) all
+					// the slaves
+					// are offline (because it's still being launched)
+					// and
 					// (2) there's no capacity provisioned yet.
 					//
-					// deferring the completion of provisioning until the launch
+					// deferring the completion of provisioning until
+					// the launch
 					// goes successful prevents this problem.
 					s.toComputer().connect(false).get();
 					return s;
@@ -305,7 +317,7 @@ public class JCloudsCloud extends Cloud {
 		}
 
 		public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
-				@QueryParameter String privateKey, @QueryParameter String endPointUrl) {
+				@QueryParameter String privateKey, @QueryParameter String endPointUrl, @QueryParameter String zones) {
 			if (identity == null)
 				return FormValidation.error("Invalid (AccessId).");
 			if (credential == null)
@@ -318,6 +330,7 @@ public class JCloudsCloud extends Cloud {
 			identity = Util.fixEmptyAndTrim(identity);
 			credential = Util.fixEmptyAndTrim(credential);
 			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+			zones = Util.fixEmptyAndTrim(zones);
 
 			FormValidation result = FormValidation.ok("Connection succeeded!");
 			ComputeServiceContext ctx = null;
@@ -327,7 +340,7 @@ public class JCloudsCloud extends Cloud {
 					overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
 				}
 
-				ctx = ctx(providerName, identity, credential, overrides);
+				ctx = ctx(providerName, identity, credential, overrides, zones);
 
 				ctx.getComputeService().listNodes();
 			} catch (Exception ex) {
@@ -369,7 +382,8 @@ public class JCloudsCloud extends Cloud {
 
 			// correct the classloader so that extensions can be found
 			Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-			// TODO: apis need endpoints, providers don't; do something smarter with this stuff :)
+			// TODO: apis need endpoints, providers don't; do something smarter
+			// with this stuff :)
 			Builder<String> builder = ImmutableSet.<String> builder();
 			builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
 			builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));
@@ -384,7 +398,8 @@ public class JCloudsCloud extends Cloud {
 		public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
 			// correct the classloader so that extensions can be found
 			Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-			// TODO: apis need endpoints, providers don't; do something smarter with this stuff :)
+			// TODO: apis need endpoints, providers don't; do something smarter
+			// with this stuff :)
 			Builder<String> builder = ImmutableSet.<String> builder();
 			builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
 			builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));

@@ -1,11 +1,12 @@
 package jenkins.plugins.jclouds.compute;
 
 import hudson.Extension;
-import hudson.model.Computer;
+import hudson.model.TaskListener;
 import hudson.model.Descriptor;
-import hudson.model.Slave;
-import hudson.slaves.ComputerLauncher;
+import hudson.slaves.AbstractCloudComputer;
+import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.NodeProperty;
+import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 
 import java.io.IOException;
@@ -23,23 +24,26 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * 
  * @author Vijay Kiran
  */
-public class JCloudsSlave extends Slave {
+public class JCloudsSlave extends AbstractCloudSlave {
 	private static final Logger LOGGER = Logger.getLogger(JCloudsSlave.class.getName());
 	private transient NodeMetadata nodeMetaData;
 	public final boolean stopOnTerminate;
-	private String cloudName;
+	private final String cloudName;
 	private String nodeId;
 	private boolean pendingDelete;
-	private int overrideRetentionTime;
-	private String user;
-	private String password;
-	private String privateKey;
-	private boolean authSudo;
+	private final int overrideRetentionTime;
+	private final String user;
+	private final String password;
+	private final String privateKey;
+	private final boolean authSudo;
+	private final String jvmOptions;
 
 	@DataBoundConstructor
+	@SuppressWarnings("rawtypes")
 	public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
 			ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-			int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo) throws Descriptor.FormException, IOException {
+			int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions) throws Descriptor.FormException,
+			IOException {
 		super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
 		this.stopOnTerminate = stopOnTerminate;
 		this.cloudName = cloudName;
@@ -48,6 +52,7 @@ public class JCloudsSlave extends Slave {
 		this.password = password;
 		this.privateKey = privateKey;
 		this.authSudo = authSudo;
+		this.jvmOptions = jvmOptions;
 	}
 
 	/**
@@ -73,14 +78,14 @@ public class JCloudsSlave extends Slave {
 	 * @throws Descriptor.FormException
 	 */
 	public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString, final String description,
-			final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime) throws IOException, Descriptor.FormException {
+			final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions) throws IOException,
+			Descriptor.FormException {
 		this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString, new JCloudsLauncher(),
 				new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>> emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials()
 						.getUser(), metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(), metadata.getCredentials()
-						.shouldAuthenticateSudo());
+						.shouldAuthenticateSudo(), jvmOptions);
 		this.nodeMetaData = metadata;
 		this.nodeId = nodeMetaData.getId();
-
 	}
 
 	/**
@@ -94,6 +99,15 @@ public class JCloudsSlave extends Slave {
 			this.nodeMetaData = compute.getNodeMetadata(nodeId);
 		}
 		return nodeMetaData;
+	}
+
+	/**
+	 * Get Jclouds Custom JVM Options associated with this Slave.
+	 * 
+	 * @return jvmOptions
+	 */
+	public String getJvmOptions() {
+		return jvmOptions;
 	}
 
 	/**
@@ -144,28 +158,9 @@ public class JCloudsSlave extends Slave {
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Computer createComputer() {
+	public AbstractCloudComputer<JCloudsSlave> createComputer() {
 		LOGGER.info("Creating a new JClouds Slave");
 		return new JCloudsComputer(this);
-	}
-
-	/**
-	 * Destroy the node calls {@link ComputeService#destroyNode}
-	 * 
-	 */
-	public void terminate() {
-		final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-		if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
-			if (stopOnTerminate) {
-				LOGGER.info("Suspending the Slave : " + getNodeName());
-				compute.suspendNode(nodeId);
-			} else {
-				LOGGER.info("Terminating the Slave : " + getNodeName());
-				compute.destroyNode(nodeId);
-			}
-		} else {
-			LOGGER.info("Slave " + getNodeName() + " is already not running.");
-		}
 	}
 
 	@Extension
@@ -182,6 +177,26 @@ public class JCloudsSlave extends Slave {
 		@Override
 		public boolean isInstantiable() {
 			return false;
+		}
+	}
+
+	/**
+	 * Destroy the node calls {@link ComputeService#destroyNode}
+	 * 
+	 */
+	@Override
+	protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
+		final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
+		if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
+			if (stopOnTerminate) {
+				LOGGER.info("Suspending the Slave : " + getNodeName());
+				compute.suspendNode(nodeId);
+			} else {
+				LOGGER.info("Terminating the Slave : " + getNodeName());
+				compute.destroyNode(nodeId);
+			}
+		} else {
+			LOGGER.info("Slave " + getNodeName() + " is already not running.");
 		}
 	}
 }

@@ -49,12 +49,11 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 							logger.log(Level.INFO, "Deleting pending node " + c.getName());
 							try {
 								((JCloudsComputer) c).deleteSlave();
-							} catch (IOException e) {
+							} catch (IOException | InterruptedException e) {
 								logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
 							}
 						}
 					});
-
 					deletedNodesBuilder.add(f);
 				}
 			}
