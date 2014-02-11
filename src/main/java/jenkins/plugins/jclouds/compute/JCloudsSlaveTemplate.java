@@ -17,6 +17,7 @@ import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -85,6 +86,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final boolean assignFloatingIp;
 	public final String keyPairName;
 	public final boolean assignPublicIp;
+        public final String[] securityGroupNames; 
 
 	private transient Set<LabelAtom> labelSet;
 
@@ -96,7 +98,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName,
-			final boolean assignPublicIp) {
+			final boolean assignPublicIp, final String securityGroupNames) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -125,6 +127,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.assignFloatingIp = assignFloatingIp;
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
+                this.securityGroupNames = !Strings.isNullOrEmpty(securityGroupNames) ? 
+                                          Util.fixEmptyAndTrim(securityGroupNames).replace(" ", "").split(",") : new String[0];
 		readResolve();
 	}
 
@@ -225,7 +229,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
 		}
 
-		if (options instanceof CloudStackTemplateOptions) {
+                if ( (securityGroupNames.length > 0) && options instanceof NovaTemplateOptions) {
+                  LOGGER.info("Setting securityGroupNames to " + Arrays.toString(securityGroupNames));
+                  options.as(NovaTemplateOptions.class).securityGroupNames(securityGroupNames);
+                }
+
+                if (options instanceof CloudStackTemplateOptions) {
 			/**
 			 * This tells jclouds cloudstack module to assign a public ip, setup staticnat and configure the firewall when true. Only interesting when using
 			 * cloudstack advanced networking.
