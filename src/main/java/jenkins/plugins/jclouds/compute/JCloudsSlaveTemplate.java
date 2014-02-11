@@ -127,8 +127,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.assignFloatingIp = assignFloatingIp;
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
-                this.securityGroupNames = !Strings.isNullOrEmpty(securityGroupNames) ? 
-                                          Util.fixEmptyAndTrim(securityGroupNames).replace(" ", "").split(",") : new String[0];
+                this.securityGroupNames = prepareSecurityGroupNames(securityGroupNames);
 		readResolve();
 	}
 
@@ -329,6 +328,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
 		return Jenkins.getInstance().getDescriptor(getClass());
 	}
+  
+        private static String[] prepareSecurityGroupNames(final String securityGroupNames){
+          return !Strings.isNullOrEmpty(securityGroupNames) ?
+                 Util.fixEmptyAndTrim(securityGroupNames).replace(" ", "").split(",") : new String[0];
+        }
 
 	@Extension
 	public static final class DescriptorImpl extends Descriptor<JCloudsSlaveTemplate> {
