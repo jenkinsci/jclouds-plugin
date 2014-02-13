@@ -33,14 +33,14 @@ public class JCloudsCloudTest extends HudsonTestCase {
 		WebAssert.assertInputPresent(page2, "_.retentionTime");
 
 		HtmlForm configForm2 = page2.getFormByName("config");
-		assertNotNull(configForm2.getTextAreaByName("_.privateKey"));
-		assertNotNull(configForm2.getTextAreaByName("_.publicKey"));
+		assertNotNull("\"Private Key\" area should be present.", configForm2.getTextAreaByName("_.privateKey"));
+		assertNotNull("\"Public Key\" should be present.", configForm2.getTextAreaByName("_.publicKey"));
 		HtmlButton generateKeyPairButton = configForm2.getButtonByCaption("Generate Key Pair");
 		HtmlButton testConnectionButton = configForm2.getButtonByCaption("Test Connection");
 		HtmlButton deleteCloudButton = configForm2.getButtonByCaption("Delete cloud");
-		assertNotNull(generateKeyPairButton);
-		assertNotNull(testConnectionButton);
-		assertNotNull(deleteCloudButton);
+		assertNotNull("\"Generate Keypair\" button should be present.", generateKeyPairButton);
+		assertNotNull("\"Test Connection\" button should be present.", testConnectionButton);
+		assertNotNull("\"Delete Cloud\" button should be present.", deleteCloudButton);
 
 	}
 

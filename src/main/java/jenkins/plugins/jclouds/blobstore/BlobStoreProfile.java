@@ -1,21 +1,21 @@
 package jenkins.plugins.jclouds.blobstore;
 
-import hudson.FilePath;
-
-import java.io.IOException;
-import java.util.Properties;
-import java.util.logging.Logger;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Module;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.apis.Apis;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.blobstore.InputStreamMap;
+import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Module;
+import java.io.IOException;
+import java.util.Properties;
+import java.util.logging.Logger;
+
+import hudson.FilePath;
 
 /**
  * Model class for Blobstore profile. User can configure multiple profiles to upload artifacts to different providers.
@@ -120,8 +120,8 @@ public class BlobStoreProfile {
 				destPath = path + "/" + filePath.getName();
 			}
 			LOGGER.info("Publishing now to container: " + container + " path: " + destPath);
-			InputStreamMap map = context.createInputStreamMap(container);
-			map.put(destPath, filePath.read());
+                        final Blob blob = blobStore.blobBuilder(destPath).payload(filePath.read()).build();
+                        blobStore.putBlob(container, blob);
 			LOGGER.info("Published " + destPath + " to container " + container + " with profile " + this.profileName);
 		} finally {
 			context.close();
