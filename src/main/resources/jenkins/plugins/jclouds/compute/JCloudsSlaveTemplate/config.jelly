@@ -133,6 +133,9 @@
         <f:entry title="Security Group Names" field="securityGroupNames">
           <f:textbox />
         </f:entry>
+        <f:entry title="Network UID" field="network">
+          <f:textbox />
+        </f:entry>
       </f:section>
 
       <f:section title="CloudStack Options">

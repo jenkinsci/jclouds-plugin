@@ -86,8 +86,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final boolean assignFloatingIp;
 	public final String keyPairName;
 	public final boolean assignPublicIp;
-        public final String[] securityGroupNames; 
-
+        public final String securityGroupNames;
+        public final String network;
+  
 	private transient Set<LabelAtom> labelSet;
 
 	protected transient JCloudsCloud cloud;
@@ -98,7 +99,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName,
-			final boolean assignPublicIp, final String securityGroupNames) {
+			final boolean assignPublicIp, final String securityGroupNames, final String network) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -127,7 +128,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.assignFloatingIp = assignFloatingIp;
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
-                this.securityGroupNames = prepareSecurityGroupNames(securityGroupNames);
+                this.securityGroupNames = Util.fixEmptyAndTrim(securityGroupNames);
+                this.network = Util.fixEmptyAndTrim(network);
 		readResolve();
 	}
 
@@ -228,9 +230,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
 		}
 
-                if ( (securityGroupNames.length > 0) && options instanceof NovaTemplateOptions) {
-                  LOGGER.info("Setting securityGroupNames to " + Arrays.toString(securityGroupNames));
-                  options.as(NovaTemplateOptions.class).securityGroupNames(securityGroupNames);
+                if (!Strings.isNullOrEmpty(securityGroupNames) && options instanceof NovaTemplateOptions) {
+                  final String[] securityGroupNamesArray = prepareSecurityGroupNames(securityGroupNames);
+                  LOGGER.info("Setting securityGroupNames to " + Arrays.toString(securityGroupNamesArray));
+                  options.as(NovaTemplateOptions.class).securityGroupNames(securityGroupNamesArray);
+                }
+          
+                if (!Strings.isNullOrEmpty(network) && options instanceof NovaTemplateOptions) {
+                  LOGGER.info("Setting network to " + network);
+                  options.as(NovaTemplateOptions.class).networks(network);
                 }
 
                 if (options instanceof CloudStackTemplateOptions) {
