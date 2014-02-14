@@ -14,7 +14,7 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
 		String name = "testSlave";
 		JCloudsSlaveTemplate originalTemplate = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId", 1, 512, "osFamily", "osVersion",
 				"jclouds-slave-type1 jclouds-type2", "Description", "initScript", null, "1", false, null, null, true, "jenkins", null, false, null, false, 5,
-				0, true, "jenkins", true, "group1, group2", "bf083625-07b6-4d72-97a4-845d63945aa7");
+				0, true, "jenkins", true, "group1, group2", "");
 
 		List<JCloudsSlaveTemplate> templates = new ArrayList<JCloudsSlaveTemplate>();
 		templates.add(originalTemplate);
