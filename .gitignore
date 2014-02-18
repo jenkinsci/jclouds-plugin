@@ -7,3 +7,5 @@ work
 release.properties
 .idea
 *.iml
+**/dependency-reduced-pom.xml
+**/target
