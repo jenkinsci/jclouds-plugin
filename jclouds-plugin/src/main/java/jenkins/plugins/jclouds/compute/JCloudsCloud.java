@@ -1,20 +1,7 @@
 package jenkins.plugins.jclouds.compute;
 
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.AutoCompletionCandidates;
-import hudson.model.Computer;
-import hudson.model.Descriptor;
-import hudson.model.Hudson;
-import hudson.model.Label;
-import hudson.model.Node;
-import hudson.slaves.Cloud;
-import hudson.slaves.NodeProvisioner;
-import hudson.slaves.NodeProvisioner.PlannedNode;
-import hudson.util.FormValidation;
-import hudson.util.StreamTaskListener;
-import hudson.util.ListBoxModel;
-
+import javax.annotation.Nullable;
+import javax.servlet.ServletException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -28,9 +15,22 @@ import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.logging.Logger;
 
-import javax.annotation.Nullable;
-import javax.servlet.ServletException;
-
+import com.google.inject.Module;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.AutoCompletionCandidates;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.Hudson;
+import hudson.model.Label;
+import hudson.model.Node;
+import hudson.slaves.Cloud;
+import hudson.slaves.NodeProvisioner;
+import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import hudson.util.StreamTaskListener;
+import jenkins.model.Jenkins;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
 import org.jclouds.apis.Apis;
@@ -49,7 +49,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
-
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.base.Strings;
@@ -58,7 +57,6 @@ import shaded.com.google.common.collect.ImmutableSet.Builder;
 import shaded.com.google.common.collect.ImmutableSortedSet;
 import shaded.com.google.common.collect.Iterables;
 import shaded.com.google.common.io.Closeables;
-import com.google.inject.Module;
 
 /**
  * The JClouds version of the Jenkins Cloud.
@@ -192,7 +190,9 @@ public class JCloudsCloud extends Cloud {
 		final JCloudsSlaveTemplate t = getTemplate(label);
 
 		List<PlannedNode> r = new ArrayList<PlannedNode>();
-		while (excessWorkload > 0) {
+		while (excessWorkload > 0
+                && !Jenkins.getInstance().isQuietingDown()
+                && !Jenkins.getInstance().isTerminating()) {
 			if ((getRunningNodesCount() + r.size()) >= instanceCap) {
 				LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
 				break; // maxed out
