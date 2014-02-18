@@ -1,20 +1,18 @@
 package jenkins.plugins.jclouds.compute;
 
-import hudson.Extension;
-import hudson.model.AsyncPeriodicWork;
-import hudson.model.TaskListener;
-import hudson.model.Computer;
-
 import java.io.IOException;
 import java.util.logging.Level;
-
-import jenkins.model.Jenkins;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import hudson.Extension;
+import hudson.model.AsyncPeriodicWork;
+import hudson.model.Computer;
+import hudson.model.TaskListener;
+import jenkins.model.Jenkins;
 
 @Extension
 public final class JCloudsCleanupThread extends AsyncPeriodicWork {
@@ -49,7 +47,9 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 							logger.log(Level.INFO, "Deleting pending node " + c.getName());
 							try {
 								((JCloudsComputer) c).deleteSlave();
-							} catch (IOException | InterruptedException e) {
+							} catch (IOException e) {
+                                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                            } catch (InterruptedException e) {
 								logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
 							}
 						}
