@@ -3,17 +3,6 @@ package jenkins.plugins.jclouds.compute;
 import static com.google.common.base.Throwables.propagate;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
-import hudson.Extension;
-import hudson.RelativePath;
-import hudson.Util;
-import hudson.model.AutoCompletionCandidates;
-import hudson.model.Describable;
-import hudson.model.TaskListener;
-import hudson.model.Descriptor;
-import hudson.model.Label;
-import hudson.model.labels.LabelAtom;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -22,8 +11,18 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import hudson.Extension;
+import hudson.RelativePath;
+import hudson.Util;
+import hudson.model.AutoCompletionCandidates;
+import hudson.model.Describable;
+import hudson.model.Descriptor;
+import hudson.model.Label;
+import hudson.model.TaskListener;
+import hudson.model.labels.LabelAtom;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
-
 import org.apache.commons.lang.StringUtils;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.ComputeService;
@@ -44,7 +43,6 @@ import org.jclouds.scriptbuilder.statements.java.InstallJDK;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.base.Supplier;
 import shaded.com.google.common.collect.ImmutableMap;
@@ -237,7 +235,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		if (!Strings.isNullOrEmpty(vmPassword)) {
 			LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
 			options.overrideLoginCredentials(lc);
-		} else if (!Strings.isNullOrEmpty(getCloud().privateKey)) {
+		} else if (!Strings.isNullOrEmpty(getCloud().privateKey) && !Strings.isNullOrEmpty(vmUser)) {
+            // Skip overriding the credentials if we don't have a VM admin user specified - there are cases where we want the private
+            // key but we don't to use it for the admin user creds.
 			LoginCredentials lc = LoginCredentials.builder().user(vmUser).privateKey(getCloud().privateKey).build();
 			options.overrideLoginCredentials(lc);
 		}
