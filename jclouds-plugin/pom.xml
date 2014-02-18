@@ -45,41 +45,6 @@
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jclouds-shaded</artifactId>
             <version>2.6-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.jclouds</groupId>
-                    <artifactId>jclouds-core</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jclouds</groupId>
-                    <artifactId>jclouds-compute</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jclouds</groupId>
-                    <artifactId>jclouds-blobstore</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jclouds.driver</groupId>
-                    <artifactId>jclouds-enterprise</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jclouds.driver</groupId>
-                    <artifactId>jclouds-sshj</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jclouds</groupId>
-                    <artifactId>jclouds-scriptbuilder</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.jclouds.driver</groupId>
-                    <artifactId>jclouds-jsch</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.google.guava</groupId>
-                    <artifactId>guava</artifactId>
-                </exclusion>
-
-            </exclusions>
         </dependency>
         <!-- Test Dependencies -->
 
