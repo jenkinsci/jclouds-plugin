@@ -29,7 +29,7 @@
         <test.jenkins.blobstore.build-version />
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-        <jclouds.version>1.6.2-incubating</jclouds.version>
+        <jclouds.version>1.7.1</jclouds.version>
         <guava.version>14.0.1</guava.version>
         <jsch.version>0.1.48</jsch.version>
         <stapler.version>1.178</stapler.version>
@@ -226,8 +226,8 @@
                             <goal>testCompile</goal>
                         </goals>
                         <configuration>
-                            <source>1.7</source>
-                            <target>1.7</target>
+                            <source>1.6</source>
+                            <target>1.6</target>
                         </configuration>
                     </execution>
                     <execution>
@@ -237,14 +237,14 @@
                             <goal>compile</goal>
                         </goals>
                         <configuration>
-                            <source>1.7</source>
-                            <target>1.7</target>
+                            <source>1.6</source>
+                            <target>1.6</target>
                         </configuration>
                     </execution>
                 </executions>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
             </plugin>
             <plugin>
