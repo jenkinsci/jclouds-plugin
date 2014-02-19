@@ -13,8 +13,8 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
 	public void testConfigRoundtrip() throws Exception {
 		String name = "testSlave";
 		JCloudsSlaveTemplate originalTemplate = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId", 1, 512, "osFamily", "osVersion",
-				"jclouds-slave-type1 jclouds-type2", "Description", "initScript", null, "1", false, null, null, true, "jenkins", null, false, null, false, 5,
-				0, true, "jenkins", true);
+				"jclouds-slave-type1 jclouds-type2", "Description", "initScript", null, "1", false, null, null, true, "jenkins", null, false, null, false,
+				false, 5, 0, true, "jenkins", true);
 
 		List<JCloudsSlaveTemplate> templates = new ArrayList<JCloudsSlaveTemplate>();
 		templates.add(originalTemplate);
