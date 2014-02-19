@@ -1,6 +1,6 @@
 package jenkins.plugins.jclouds.compute;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static shaded.com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 
