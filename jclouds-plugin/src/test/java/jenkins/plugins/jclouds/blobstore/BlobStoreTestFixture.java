@@ -1,6 +1,6 @@
 package jenkins.plugins.jclouds.blobstore;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static shaded.com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 

@@ -1,7 +1,7 @@
 package jenkins.plugins.jclouds.compute;
 
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.collect.Iterables.getOnlyElement;
+import static shaded.com.google.common.base.Throwables.propagate;
+import static shaded.com.google.common.collect.Iterables.getOnlyElement;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 import java.io.IOException;
