@@ -77,6 +77,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	private final String jenkinsUser;
 	private final String fsRoot;
 	public final boolean allowSudo;
+	public final boolean installPrivateKey;
 	public final int overrideRetentionTime;
 	public final int spoolDelayMs;
 	private final Object delayLockObject = new Object();
@@ -93,8 +94,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final int ram, final String osFamily, final String osVersion, final String labelString, final String description, final String initScript,
 			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
-			final boolean allowSudo, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final String keyPairName,
-			final boolean assignPublicIp) {
+			final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
+			final String keyPairName, final boolean assignPublicIp) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -118,6 +119,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.preExistingJenkinsUser = preExistingJenkinsUser;
 		this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
 		this.allowSudo = allowSudo;
+		this.installPrivateKey = installPrivateKey;
 		this.overrideRetentionTime = overrideRetentionTime;
 		this.spoolDelayMs = spoolDelayMs;
 		this.assignFloatingIp = assignFloatingIp;
@@ -262,7 +264,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			}
 		} else {
 			// setup the jcloudTemplate to customize the nodeMetadata with jdk, etc. also opening ports
-			AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser()).installAdminPrivateKey(false) // no need
+			AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
+					.installAdminPrivateKey(installPrivateKey) // some VCS such as Git use SSH authentication
 					.grantSudoToAdminUser(allowSudo) // no need
 					.adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
 					.authorizeAdminPublicKey(true).adminPublicKey(getCloud().publicKey).adminHome(getFsRoot()).build();
