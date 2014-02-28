@@ -54,6 +54,7 @@ import shaded.com.google.common.collect.ImmutableSortedSet;
 public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<NodeMetadata> {
 
 	private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
+        private static final String SEPARATOR_STRING = ",";
 
 	public final String name;
 	public final String imageId;
@@ -84,6 +85,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final boolean assignFloatingIp;
 	public final String keyPairName;
 	public final boolean assignPublicIp;
+        public final String networks;
 
 	private transient Set<LabelAtom> labelSet;
 
@@ -95,7 +97,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
-			final String keyPairName, final boolean assignPublicIp) {
+			final String keyPairName, final boolean assignPublicIp, final String networks) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -125,6 +127,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.assignFloatingIp = assignFloatingIp;
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
+                this.networks = networks;
 		readResolve();
 	}
 
@@ -215,6 +218,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		Template template = templateBuilder.build();
 		TemplateOptions options = template.getOptions();
 
+                if (!Strings.isNullOrEmpty(networks)){
+                  LOGGER.info("Setting networks to " + networks);
+                  options.networks(csvToArray(networks));
+                }
+          
 		if (assignFloatingIp && options instanceof NovaTemplateOptions) {
 			LOGGER.info("Setting autoAssignFloatingIp to true");
 			options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
@@ -317,6 +325,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		}
 		throw propagate(e);
 	}
+
+        private static String[] csvToArray(final String csv){
+          if (csv == null){
+            return new String[0];
+          }
+          return csv.split(SEPARATOR_STRING);
+        }
 
 	@Override
 	@SuppressWarnings("unchecked")
