@@ -129,6 +129,10 @@
       <f:entry title="Networks" field="networks">
         <f:textbox />
       </f:entry>
+
+      <f:entry title="Security Groups" field="securityGroups">
+        <f:textbox />
+      </f:entry>
       
       <f:section title="Open Stack Options">
         <f:entry title="Assign Floating IP" field="assignFloatingIp">

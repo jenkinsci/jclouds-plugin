@@ -86,6 +86,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final String keyPairName;
 	public final boolean assignPublicIp;
         public final String networks;
+        public final String securityGroups;
 
 	private transient Set<LabelAtom> labelSet;
 
@@ -97,7 +98,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
-			final String keyPairName, final boolean assignPublicIp, final String networks) {
+			final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -128,6 +129,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
                 this.networks = networks;
+                this.securityGroups = securityGroups;
 		readResolve();
 	}
 
@@ -221,6 +223,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 if (!Strings.isNullOrEmpty(networks)){
                   LOGGER.info("Setting networks to " + networks);
                   options.networks(csvToArray(networks));
+                }
+
+                if (!Strings.isNullOrEmpty(securityGroups)){
+                  LOGGER.info("Setting security groups to " + securityGroups);
+                  options.securityGroups(csvToArray(securityGroups));
                 }
           
 		if (assignFloatingIp && options instanceof NovaTemplateOptions) {
