@@ -5,6 +5,7 @@ import static shaded.com.google.common.collect.Iterables.getOnlyElement;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ import org.jclouds.scriptbuilder.statements.java.InstallJDK;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import au.com.bytecode.opencsv.CSVReader;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.base.Supplier;
 import shaded.com.google.common.collect.ImmutableMap;
@@ -54,7 +56,7 @@ import shaded.com.google.common.collect.ImmutableSortedSet;
 public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<NodeMetadata> {
 
 	private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
-        private static final String SEPARATOR_STRING = ",";
+        private static final char SEPARATOR_CHAR = ',';
 
 	public final String name;
 	public final String imageId;
@@ -333,11 +335,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		throw propagate(e);
 	}
 
-        private static String[] csvToArray(final String csv){
-          if (csv == null){
+        private static String[] csvToArray(final String csv) {
+          try {
+            final CSVReader reader = new CSVReader(new StringReader(csv), SEPARATOR_CHAR);
+            final String[] line = reader.readNext();
+            return (line != null) ? line: new String[0];
+          } catch (Exception e) {
             return new String[0];
           }
-          return csv.split(SEPARATOR_STRING);
         }
 
 	@Override
