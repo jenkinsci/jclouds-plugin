@@ -5,6 +5,7 @@ import static shaded.com.google.common.collect.Iterables.getOnlyElement;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ import org.jclouds.scriptbuilder.statements.java.InstallJDK;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import au.com.bytecode.opencsv.CSVReader;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.base.Supplier;
 import shaded.com.google.common.collect.ImmutableMap;
@@ -54,6 +56,7 @@ import shaded.com.google.common.collect.ImmutableSortedSet;
 public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<NodeMetadata> {
 
 	private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
+        private static final char SEPARATOR_CHAR = ',';
 
 	public final String name;
 	public final String imageId;
@@ -84,6 +87,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final boolean assignFloatingIp;
 	public final String keyPairName;
 	public final boolean assignPublicIp;
+        public final String networks;
+        public final String securityGroups;
 
 	private transient Set<LabelAtom> labelSet;
 
@@ -95,7 +100,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
-			final String keyPairName, final boolean assignPublicIp) {
+			final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -125,6 +130,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.assignFloatingIp = assignFloatingIp;
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
+                this.networks = networks;
+                this.securityGroups = securityGroups;
 		readResolve();
 	}
 
@@ -215,6 +222,16 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		Template template = templateBuilder.build();
 		TemplateOptions options = template.getOptions();
 
+                if (!Strings.isNullOrEmpty(networks)){
+                  LOGGER.info("Setting networks to " + networks);
+                  options.networks(csvToArray(networks));
+                }
+
+                if (!Strings.isNullOrEmpty(securityGroups)){
+                  LOGGER.info("Setting security groups to " + securityGroups);
+                  options.securityGroups(csvToArray(securityGroups));
+                }
+          
 		if (assignFloatingIp && options instanceof NovaTemplateOptions) {
 			LOGGER.info("Setting autoAssignFloatingIp to true");
 			options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
@@ -317,6 +334,16 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		}
 		throw propagate(e);
 	}
+
+        private static String[] csvToArray(final String csv) {
+          try {
+            final CSVReader reader = new CSVReader(new StringReader(csv), SEPARATOR_CHAR);
+            final String[] line = reader.readNext();
+            return (line != null) ? line: new String[0];
+          } catch (Exception e) {
+            return new String[0];
+          }
+        }
 
 	@Override
 	@SuppressWarnings("unchecked")
