@@ -7,7 +7,7 @@
     </parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>jclouds-jenkins-parent</artifactId>
-    <version>2.5.1</version>
+    <version>2.6-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Jenkins JClouds plugin parent POM</name>
     <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
