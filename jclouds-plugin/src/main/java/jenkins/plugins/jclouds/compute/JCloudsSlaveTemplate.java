@@ -2,11 +2,14 @@ package jenkins.plugins.jclouds.compute;
 
 import static shaded.com.google.common.base.Throwables.propagate;
 import static shaded.com.google.common.collect.Iterables.getOnlyElement;
+import static shaded.com.google.common.collect.Lists.newArrayList;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
+import static java.util.Collections.sort;
 
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -48,7 +51,6 @@ import au.com.bytecode.opencsv.CSVReader;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.base.Supplier;
 import shaded.com.google.common.collect.ImmutableMap;
-import shaded.com.google.common.collect.ImmutableSortedSet;
 
 /**
  * @author Vijay Kiran
@@ -231,7 +233,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                   LOGGER.info("Setting security groups to " + securityGroups);
                   options.securityGroups(csvToArray(securityGroups));
                 }
-          
+
 		if (assignFloatingIp && options instanceof NovaTemplateOptions) {
 			LOGGER.info("Setting autoAssignFloatingIp to true");
 			options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
@@ -519,14 +521,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			try {
 				// TODO: endpoint is ignored
 				computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
-				Set<? extends Hardware> hardwareProfiles = ImmutableSortedSet.copyOf(computeService.listHardwareProfiles());
-				for (Hardware hardware : hardwareProfiles) {
 
+				ArrayList<Hardware> hws = newArrayList(computeService.listHardwareProfiles());
+				sort(hws);
+
+				for (Hardware hardware : hws) {
 					m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()), hardware.getId());
 				}
-
 			} catch (Exception ex) {
-
+				LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
 			} finally {
 				if (computeService != null) {
 					computeService.getContext().close();
