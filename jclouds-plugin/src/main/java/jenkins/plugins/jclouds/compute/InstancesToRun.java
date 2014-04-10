@@ -1,7 +1,5 @@
 package jenkins.plugins.jclouds.compute;
 
-import java.io.Serializable;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
@@ -9,26 +7,23 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.export.ExportedBean;
 
 public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> {
 	public final String cloudName;
 	public final String templateName;
 	public final String manualTemplateName;
 	public final int count;
-	public final boolean suspendOrTerminate;
+	public final String actionOnBuildFinish;
 
 	@DataBoundConstructor
-	public InstancesToRun(String cloudName, String templateName, String manualTemplateName, int count, boolean suspendOrTerminate) {
+	public InstancesToRun(String cloudName, String templateName, String manualTemplateName, int count, String actionOnBuildFinish) {
 		this.cloudName = Util.fixEmptyAndTrim(cloudName);
 		this.templateName = Util.fixEmptyAndTrim(templateName);
 		this.manualTemplateName = Util.fixEmptyAndTrim(manualTemplateName);
 		this.count = count;
-		this.suspendOrTerminate = suspendOrTerminate;
+		this.actionOnBuildFinish = actionOnBuildFinish;
 	}
 
 	public String getActualTemplateName() {

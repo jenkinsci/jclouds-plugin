@@ -31,7 +31,27 @@ public class TerminateNodesTest extends TestCase {
 		compute = ContextBuilder.newBuilder("stub").buildView(ComputeServiceContext.class).getComputeService();
 	}
 
-	public void testSuspendOnlySuspendsNodesInQuestion() throws InterruptedException, ExecutionException, RunNodesException {
+  public void testLeaveLeavesNodesInQuestionRunning() throws InterruptedException, ExecutionException, RunNodesException {
+
+    List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("leave", 10));
+    List<List<NodeMetadata>> split = Lists.partition(nodes, 5);
+
+    Iterable<RunningNode> runningNodesToLeave = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
+
+      public RunningNode apply(NodeMetadata input) {
+        return new RunningNode("stub", "template", RunningNode.ACTION_LEAVE, input);
+      }
+
+    });
+
+    newTerminateNodes(compute).apply(runningNodesToLeave);
+
+    for (NodeMetadata node : nodes)
+      assertEquals(NodeMetadata.Status.RUNNING, compute.getNodeMetadata(node.getId()).getStatus());
+
+  }
+
+  public void testSuspendOnlySuspendsNodesInQuestion() throws InterruptedException, ExecutionException, RunNodesException {
 
 		List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("suspend", 10));
 		List<List<NodeMetadata>> split = Lists.partition(nodes, 5);
@@ -39,7 +59,7 @@ public class TerminateNodesTest extends TestCase {
 		Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
 
 			public RunningNode apply(NodeMetadata input) {
-				return new RunningNode("stub", "template", true, input);
+				return new RunningNode("stub", "template", RunningNode.ACTION_SUSPEND, input);
 			}
 
 		});
@@ -67,7 +87,7 @@ public class TerminateNodesTest extends TestCase {
 		Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
 
 			public RunningNode apply(NodeMetadata input) {
-				return new RunningNode("stub", "template", false, input);
+				return new RunningNode("stub", "template", RunningNode.ACTION_TERMINATE, input);
 			}
 
 		});
@@ -81,15 +101,15 @@ public class TerminateNodesTest extends TestCase {
 
 	}
 
-	public void testSuspendAndDestroy() throws InterruptedException, ExecutionException, RunNodesException {
+	public void testSuspendAndDestroyAndLeave() throws InterruptedException, ExecutionException, RunNodesException {
 
-		List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("suspenddestroy", 10));
+		List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("suspenddestroy", 15));
 		List<List<NodeMetadata>> split = Lists.partition(nodes, 5);
 
 		Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
 
 			public RunningNode apply(NodeMetadata input) {
-				return new RunningNode("stub", "template", true, input);
+				return new RunningNode("stub", "template", RunningNode.ACTION_SUSPEND, input);
 			}
 
 		});
@@ -97,17 +117,27 @@ public class TerminateNodesTest extends TestCase {
 		Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(1), new Function<NodeMetadata, RunningNode>() {
 
 			public RunningNode apply(NodeMetadata input) {
-				return new RunningNode("stub", "template", false, input);
+				return new RunningNode("stub", "template", RunningNode.ACTION_TERMINATE, input);
+			}
+
+		});
+          
+		Iterable<RunningNode> runningNodesToLeave = Iterables.transform(split.get(2), new Function<NodeMetadata, RunningNode>() {
+
+			public RunningNode apply(NodeMetadata input) {
+				return new RunningNode("stub", "template", RunningNode.ACTION_LEAVE, input);
 			}
 
 		});
 
-		newTerminateNodes(compute).apply(Iterables.concat(runningNodesToSuspend, runningNodesToDestroy));
+		newTerminateNodes(compute).apply(Iterables.concat(runningNodesToSuspend, runningNodesToDestroy, runningNodesToLeave));
 
 		for (NodeMetadata node : split.get(0))
 			assertEquals(NodeMetadata.Status.SUSPENDED, compute.getNodeMetadata(node.getId()).getStatus());
 		for (NodeMetadata node : split.get(1))
 			assertEquals(null, compute.getNodeMetadata(node.getId()));
+                for (NodeMetadata node : split.get(2))
+                  assertEquals(NodeMetadata.Status.RUNNING, compute.getNodeMetadata(node.getId()).getStatus());
 
 	}
 

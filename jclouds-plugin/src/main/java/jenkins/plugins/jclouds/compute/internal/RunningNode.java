@@ -3,31 +3,45 @@ package jenkins.plugins.jclouds.compute.internal;
 import org.jclouds.compute.domain.NodeMetadata;
 
 public class RunningNode {
-	private final String cloud;
-	private final String template;
-	private final boolean suspendOrTerminate;
-	private final NodeMetadata node;
 
-	public RunningNode(String cloud, String template, boolean suspendOrTerminate, NodeMetadata node) {
-		this.cloud = cloud;
-		this.template = template;
-		this.suspendOrTerminate = suspendOrTerminate;
-		this.node = node;
-	}
+  private final String cloud;
+  private final String template;
+  private final String actionOnBuildFinish;
+  private final NodeMetadata node;
+  
+  public static final String ACTION_TERMINATE = "terminate";
+  public static final String ACTION_SUSPEND = "suspend";
+  public static final String ACTION_LEAVE = "leave";
 
-	public String getCloudName() {
-		return cloud;
-	}
+  public RunningNode(final String cloud, final String template, final String actionOnBuildFinish,
+                     final NodeMetadata node) {
+    this.cloud = cloud;
+    this.template = template;
+    this.actionOnBuildFinish = actionOnBuildFinish;
+    this.node = node;
+  }
 
-	public String getTemplateName() {
-		return template;
-	}
+  public String getCloudName() {
+    return cloud;
+  }
 
-	public boolean isSuspendOrTerminate() {
-		return suspendOrTerminate;
-	}
+  public String getTemplateName() {
+    return template;
+  }
 
-	public NodeMetadata getNode() {
-		return node;
-	}
+  public boolean shouldTerminate() {
+    return actionOnBuildFinish.equals(ACTION_TERMINATE);
+  }
+  
+  public boolean shouldSuspend() {
+    return actionOnBuildFinish.equals(ACTION_SUSPEND);
+  }
+  
+  public boolean shouldLeave() {
+    return actionOnBuildFinish.equals(ACTION_LEAVE);
+  }
+
+  public NodeMetadata getNode() {
+    return node;
+  }
 }

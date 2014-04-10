@@ -25,18 +25,22 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
 	public Void apply(Iterable<RunningNode> runningNode) {
 		Builder<String, String> cloudNodesToSuspendBuilder = ImmutableMultimap.<String, String> builder();
 		Builder<String, String> cloudNodesToDestroyBuilder = ImmutableMultimap.<String, String> builder();
+		Builder<String, String> cloudNodesToLeaveBuilder = ImmutableMultimap.<String, String> builder();
 		for (RunningNode cloudTemplateNode : runningNode) {
-			if (cloudTemplateNode.isSuspendOrTerminate()) {
+			if (cloudTemplateNode.shouldSuspend()) {
 				cloudNodesToSuspendBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
-			} else {
+			} else if (cloudTemplateNode.shouldTerminate()) {
 				cloudNodesToDestroyBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
-			}
+			} else if (cloudTemplateNode.shouldLeave()) {
+                                cloudNodesToLeaveBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
+                        }
 		}
 		Multimap<String, String> cloudNodesToSuspend = cloudNodesToSuspendBuilder.build();
 		Multimap<String, String> cloudNodesToDestroy = cloudNodesToDestroyBuilder.build();
 
 		suspendIfSupported(cloudNodesToSuspend);
 		destroy(cloudNodesToDestroy);
+		logger.info("Leaving the following nodes running: " + cloudNodesToLeaveBuilder.build() + ". You should terminate them manually.");
 		return null;
 	}
 

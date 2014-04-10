@@ -8,14 +8,14 @@ public class NodePlan {
 	private final String cloudName;
 	private final String templateName;
 	private final int count;
-	private final boolean suspendOrTerminate;
+	private final String actionOnBuildFinish;
 	private final Supplier<NodeMetadata> nodeSupplier;
 
-	public NodePlan(String cloud, String template, int count, boolean suspendOrTerminate, Supplier<NodeMetadata> nodeSupplier) {
+	public NodePlan(String cloud, String template, int count, String actionOnBuildFinish, Supplier<NodeMetadata> nodeSupplier) {
 		this.cloudName = cloud;
 		this.templateName = template;
 		this.count = count;
-		this.suspendOrTerminate = suspendOrTerminate;
+		this.actionOnBuildFinish = actionOnBuildFinish;
 		this.nodeSupplier = nodeSupplier;
 	}
 
@@ -31,8 +31,8 @@ public class NodePlan {
 		return count;
 	}
 
-	public boolean isSuspendOrTerminate() {
-		return suspendOrTerminate;
+	public String getActionOnBuildFinish() {
+		return actionOnBuildFinish;
 	}
 
 	public Supplier<NodeMetadata> getNodeSupplier() {

@@ -22,8 +22,13 @@
     <f:textbox />
   </f:entry>
   
-  <f:entry title="${%Stop on Terminate}" field="suspendOrTerminate">
-    <f:checkbox />
+  <f:entry title="${%Action when build is finished}">
+      <f:radioBlock inline="true" name="jclouds.actionOnBuildFinish" value="terminate"
+                    title="Terminate instance" checked="${(instance.actionOnBuildFinish == null) || instance.actionOnBuildFinish.equals(&quot;terminate&quot;)}" />
+      <f:radioBlock inline="true" name="jclouds.actionOnBuildFinish" value="suspend"
+                    title="Suspend instance" checked="${instance.actionOnBuildFinish.equals(&quot;suspend&quot;)}" />
+      <f:radioBlock inline="true" name="jclouds.actionOnBuildFinish" value="leave"
+                    title="Leave instance running" checked="${instance.actionOnBuildFinish.equals(&quot;leave&quot;)}" />
   </f:entry>
   
   <f:entry>
