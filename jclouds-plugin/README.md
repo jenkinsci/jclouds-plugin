@@ -1,6 +1,6 @@
 # JClouds Plugin for Jenkins
 
-JClouds Jenkins plugin provides option to launch jenkins slaves on any Cloud provider supported by JClouds (http://www.jclouds.org/documentation/reference/supported-providers). 
+JClouds Jenkins plugin provides option to launch jenkins slaves on any Cloud provider supported by JClouds (http://jclouds.apache.org/reference/providers/). 
 
 ### Configuration Options
 
@@ -76,7 +76,7 @@ blobstore profiles and configure the build to copy different files/artifacts to 
 * Click Ad under the section `JClouds Cloud Storage Settings`
 * Provide the configuration Options:
   - Profile Name: name of the profile e.g. aws-storage
-  - Provider Name: [JClouds Supported Provider Name](http://www.jclouds.org/documentation/userguide/blobstore-guide)
+  - Provider Name: [JClouds Supported Provider Name](http://jclouds.apache.org/reference/providers/#blobstore)
   - Identity : your accessId
   - Credential: your secret key
 * You can add multiple providers by clicking on Add.
