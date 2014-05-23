@@ -70,7 +70,15 @@
         </f:entry>
       </f:radioBlock>
     </f:section>
-    
+
+    <f:section title="Location Options">
+      <f:entry title="Location Id" field="locationId">
+        <f:select />
+      </f:entry>
+      <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
+                        with="providerName,identity,credential,endPointUrl,locationId"/>
+    </f:section>
+
     <f:advanced>
       <f:entry title="Override Retention Time" field="overrideRetentionTime">
         <f:textbox />
