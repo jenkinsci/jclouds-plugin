@@ -71,76 +71,77 @@
       </f:radioBlock>
     </f:section>
 
-    <f:section title="Location Options">
-      <f:entry title="Location Id" field="locationId">
-        <f:select />
-      </f:entry>
-      <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
-                        with="providerName,identity,credential,endPointUrl,locationId"/>
-    </f:section>
-
     <f:advanced>
-      <f:entry title="Override Retention Time" field="overrideRetentionTime">
-        <f:textbox />
-      </f:entry>
+      <f:section title="Location Options">
+        <f:entry title="Location Id" field="locationId">
+          <f:select />
+        </f:entry>
+        <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
+                          with="providerName,identity,credential,endPointUrl,locationId"/>
+      </f:section>
+      <f:section title="General Options">
+        <f:entry title="Override Retention Time" field="overrideRetentionTime">
+          <f:textbox />
+        </f:entry>
       
-      <f:entry title="Delay before spooling up (ms)" field="spoolDelayMs">
-        <f:textbox />
-      </f:entry>
+        <f:entry title="Delay before spooling up (ms)" field="spoolDelayMs">
+          <f:textbox />
+        </f:entry>
       
-      <f:entry title="Init Script" field="initScript">
-        <f:textarea />
-      </f:entry>
+        <f:entry title="Init Script" field="initScript">
+          <f:textarea />
+        </f:entry>
       
-      <f:entry title="User Data (if supported by provider)" field="userData">
-        <f:textarea />
-      </f:entry>
+        <f:entry title="User Data (if supported by provider)" field="userData">
+          <f:textarea />
+        </f:entry>
 
-      <f:entry title="Jenkins User" field="jenkinsUser">
-        <f:textbox />
-      </f:entry>
+        <f:entry title="Jenkins User" field="jenkinsUser">
+          <f:textbox />
+        </f:entry>
 
-      <f:entry title="${%Use Pre-existing Jenkins User}"
-               field="preExistingJenkinsUser">
-        <f:checkbox />
-      </f:entry>
+        <f:entry title="${%Use Pre-existing Jenkins User}"
+                 field="preExistingJenkinsUser">
+          <f:checkbox />
+        </f:entry>
       
-      <f:entry title="Allow Sudo" field="allowSudo">
-        <f:checkbox />
-      </f:entry>
-      <f:entry title="Install Private Key" field="installPrivateKey">
-        <f:checkbox />
-      </f:entry>
-      <f:entry title="Remote FS Root" field="fsRoot">
-        <f:textbox />
-      </f:entry>
+        <f:entry title="Allow Sudo" field="allowSudo">
+          <f:checkbox />
+        </f:entry>
+        <f:entry title="Install Private Key" field="installPrivateKey">
+          <f:checkbox />
+        </f:entry>
+        <f:entry title="Remote FS Root" field="fsRoot">
+          <f:textbox />
+        </f:entry>
       
-      <f:entry title="Admin Username" field="vmUser">
-        <f:textbox />
-      </f:entry>
-      <f:entry title="Admin Password" field="vmPassword">
-        <f:password />
-      </f:entry>
+        <f:entry title="Admin Username" field="vmUser">
+          <f:textbox />
+        </f:entry>
+        <f:entry title="Admin Password" field="vmPassword">
+          <f:password />
+        </f:entry>
       
-      <f:entry title="${%Use Pre-installed Java}" field="preInstalledJava">
-        <f:checkbox />
-      </f:entry>
+        <f:entry title="${%Use Pre-installed Java}" field="preInstalledJava">
+          <f:checkbox />
+        </f:entry>
       
-      <f:entry title="Custom JVM Options" field="jvmOptions">
-        <f:textbox />
-      </f:entry>
+        <f:entry title="Custom JVM Options" field="jvmOptions">
+          <f:textbox />
+        </f:entry>
       
-      <f:entry title="${%Stop on Terminate}" field="stopOnTerminate">
-        <f:checkbox />
-      </f:entry>
+        <f:entry title="${%Stop on Terminate}" field="stopOnTerminate">
+          <f:checkbox />
+        </f:entry>
 
-      <f:entry title="Networks" field="networks">
-        <f:textbox />
-      </f:entry>
+        <f:entry title="Networks" field="networks">
+          <f:textbox />
+        </f:entry>
 
-      <f:entry title="Security Groups" field="securityGroups">
-        <f:textbox />
-      </f:entry>
+        <f:entry title="Security Groups" field="securityGroups">
+          <f:textbox />
+        </f:entry>
+      </f:section>
       
       <f:section title="Open Stack Options">
         <f:entry title="Assign Floating IP" field="assignFloatingIp">
