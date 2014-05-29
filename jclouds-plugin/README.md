@@ -51,6 +51,8 @@ The above command will start jenkins with JClouds plugin pre-configured.
   - RAM : in MB
   - No. of Cores: number of virtual processor cores.
 
+  - Location ID: Location ID where this slave will be deployed. If none is selected jclouds will automatically choose an available one.
+
   - Labels: (space-separated) labels/tags that you can use to attach a build to this slave template
   - Init Script: A shell script to be run when the slave is created.
   - Stop on Terminate: If true, suspend slaves rather than terminating them.

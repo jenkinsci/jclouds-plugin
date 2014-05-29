@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -27,6 +28,7 @@ import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
+
 import org.apache.commons.lang.StringUtils;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.ComputeService;
@@ -38,6 +40,7 @@ import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions;
 import org.jclouds.predicates.validators.DnsNameValidator;
@@ -47,6 +50,7 @@ import org.jclouds.scriptbuilder.statements.java.InstallJDK;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+
 import au.com.bytecode.opencsv.CSVReader;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.base.Supplier;
@@ -70,6 +74,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final String labelString;
 	public final String description;
 	public final String osVersion;
+	public final String locationId;
 	public final String initScript;
 	public final String userData;
 	public final String numExecutors;
@@ -98,8 +103,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 	@DataBoundConstructor
 	public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex, final String hardwareId, final double cores,
-			final int ram, final String osFamily, final String osVersion, final String labelString, final String description, final String initScript,
-			final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
+			final int ram, final String osFamily, final String osVersion, final String locationId, final String labelString, final String description,
+			final String initScript, final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
 			final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups) {
@@ -112,6 +117,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.ram = ram;
 		this.osFamily = Util.fixNull(osFamily);
 		this.osVersion = Util.fixNull(osVersion);
+		this.locationId = Util.fixEmptyAndTrim(locationId);
 		this.labelString = Util.fixNull(labelString);
 		this.description = Util.fixNull(description);
 		this.initScript = Util.fixNull(initScript);
@@ -220,6 +226,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			LOGGER.info("Setting minRam " + ram + " and minCores " + cores);
 			templateBuilder.minCores(cores).minRam(ram);
 		}
+      if (!Strings.isNullOrEmpty(locationId)) {
+         LOGGER.info("Setting location Id to " + locationId);
+         templateBuilder.locationId(locationId);
+      }
 
 		Template template = templateBuilder.build();
 		TemplateOptions options = template.getOptions();
@@ -588,6 +598,110 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			}
 			return result;
 		}
+
+		public ListBoxModel doFillLocationIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
+            @RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl,
+            @RelativePath("..") @QueryParameter String zones) {
+
+         ListBoxModel m = new ListBoxModel();
+
+         if (Strings.isNullOrEmpty(identity)) {
+            LOGGER.warning("identity is null or empty");
+            return m;
+         }
+         if (Strings.isNullOrEmpty(credential)) {
+            LOGGER.warning("credential is null or empty");
+            return m;
+         }
+         if (Strings.isNullOrEmpty(providerName)) {
+            LOGGER.warning("providerName is null or empty");
+            return m;
+         }
+
+         // Remove empty text/whitespace from the fields.
+         providerName = Util.fixEmptyAndTrim(providerName);
+         identity = Util.fixEmptyAndTrim(identity);
+         credential = Util.fixEmptyAndTrim(credential);
+         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+
+         ComputeService computeService = null;
+         m.add("None specified", "");
+         try {
+            // TODO: endpoint is ignored
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
+
+            ArrayList<Location> locations = newArrayList(computeService.listAssignableLocations());
+            sort(locations, new Comparator<Location>() {
+               @Override
+               public int compare(Location o1, Location o2) {
+                  return o1.getId().compareTo(o2.getId());
+               }
+            });
+
+            for (Location location : locations) {
+               m.add(String.format("%s (%s)", location.getId(), location.getDescription()), location.getId());
+            }
+         } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
+         } finally {
+            if (computeService != null) {
+               computeService.getContext().close();
+            }
+         }
+
+         return m;
+      }
+
+		public FormValidation doValidateLocationId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+            @QueryParameter String endPointUrl, @QueryParameter String locationId, @QueryParameter String zones) {
+
+         if (Strings.isNullOrEmpty(identity)) {
+            return FormValidation.error("Invalid identity (AccessId).");
+         }
+         if (Strings.isNullOrEmpty(credential)) {
+            return FormValidation.error("Invalid credential (secret key).");
+         }
+         if (Strings.isNullOrEmpty(providerName)) {
+            return FormValidation.error("Provider Name shouldn't be empty");
+         }
+
+         if (Strings.isNullOrEmpty(locationId)) {
+            return FormValidation.ok("No location configured. jclouds automatically will choose one.");
+         }
+
+         // Remove empty text/whitespace from the fields.
+         providerName = Util.fixEmptyAndTrim(providerName);
+         identity = Util.fixEmptyAndTrim(identity);
+         credential = Util.fixEmptyAndTrim(credential);
+         locationId = Util.fixEmptyAndTrim(locationId);
+         endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
+         zones = Util.fixEmptyAndTrim(zones);
+
+         FormValidation result = FormValidation.error("Invalid Location Id, please check the value and try again.");
+         ComputeService computeService = null;
+         try {
+            // TODO: endpoint is ignored
+            computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
+            Set<? extends Location> locations = computeService.listAssignableLocations();
+            for (Location location : locations) {
+               if (!location.getId().equals(locationId)) {
+                  if (location.getId().contains(locationId)) {
+                     return FormValidation.warning("Sorry cannot find the location id, " + "Did you mean: " + location.getId() + "?\n" + location);
+                  }
+               } else {
+                  return FormValidation.ok("Location Id is valid.");
+               }
+            }
+
+         } catch (Exception ex) {
+            result = FormValidation.error("Unable to check the location id, " + "please check if the credentials you provided are correct.", ex);
+         } finally {
+            if (computeService != null) {
+               computeService.getContext().close();
+            }
+         }
+         return result;
+      }
 
 		public FormValidation doCheckOverrideRetentionTime(@QueryParameter String value) {
 			try {
