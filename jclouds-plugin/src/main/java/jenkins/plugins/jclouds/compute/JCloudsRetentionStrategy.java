@@ -18,7 +18,7 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
 	}
 
 	@Override
-	public synchronized long check(JCloudsComputer c) {
+	public long check(JCloudsComputer c) {
 		if (c.isIdle() && !c.getNode().isPendingDelete() && !disabled) {
 			// Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
 			final int retentionTime = c.getRetentionTime();
