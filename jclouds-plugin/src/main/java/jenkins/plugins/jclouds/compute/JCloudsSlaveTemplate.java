@@ -27,6 +27,7 @@ import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.ListBoxModel.Option;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
@@ -94,9 +95,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final boolean assignFloatingIp;
 	public final String keyPairName;
 	public final boolean assignPublicIp;
-        public final String networks;
-        public final String securityGroups;
-
+	public final String networks;
+	public final String securityGroups;
+	public final String guestOS;
 	private transient Set<LabelAtom> labelSet;
 
 	protected transient JCloudsCloud cloud;
@@ -107,7 +108,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String initScript, final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
-			final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups) {
+			final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups, final String guestOS) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -138,8 +139,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.assignFloatingIp = assignFloatingIp;
 		this.keyPairName = keyPairName;
 		this.assignPublicIp = assignPublicIp;
-                this.networks = networks;
-                this.securityGroups = securityGroups;
+		this.networks = networks;
+		this.securityGroups = securityGroups;
+		this.guestOS = guestOS;
 		readResolve();
 	}
 
@@ -192,7 +194,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 		try {
 			return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate,
-					overrideRetentionTime, getJvmOptions());
+					overrideRetentionTime, getJvmOptions(), guestOS);
 		} catch (Descriptor.FormException e) {
 			throw new AssertionError("Invalid configuration " + e.getMessage());
 		}
@@ -499,6 +501,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 					computeService.getContext().close();
 				}
 			}
+		}
+
+		public ListBoxModel doFillGuestOSItems() {
+			return new ListBoxModel(
+					ImmutableList.<Option>of(
+							JCloudsSlave.GuestOS.JNLP_WINDOWS.toOption(),
+							JCloudsSlave.GuestOS.UNIX.toOption())
+			);
 		}
 
 		public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,

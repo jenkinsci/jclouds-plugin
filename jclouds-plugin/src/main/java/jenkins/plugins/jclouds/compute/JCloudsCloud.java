@@ -201,25 +201,36 @@ public class JCloudsCloud extends Cloud {
 			r.add(new PlannedNode(t.name, Computer.threadPoolForRemoting.submit(new Callable<Node>() {
 				public Node call() throws Exception {
 					// TODO: record the output somewhere
-					JCloudsSlave s = t.provisionSlave(new StreamTaskListener(System.out));
-					Hudson.getInstance().addNode(s);
-					// Cloud instances may have a long init script. If
-					// we declare
-					// the provisioning complete by returning without
-					// the connect
-					// operation, NodeProvisioner may decide that it
-					// still wants
-					// one more instance, because it sees that (1) all
-					// the slaves
-					// are offline (because it's still being launched)
-					// and
-					// (2) there's no capacity provisioned yet.
-					//
-					// deferring the completion of provisioning until
-					// the launch
-					// goes successful prevents this problem.
-					s.toComputer().connect(false).get();
-					return s;
+					JCloudsSlave slave = template.provisionSlave(StreamTaskListener.fromStdout());
+					Jenkins.getInstance().addNode(slave);
+					/* Cloud instances may have a long init script. If we declare
+						the provisioning complete by returning without the connect
+						operation, NodeProvisioner may decide that it still wants one
+						more instance, because it sees that (1) all the slaves are
+						offline (because it's still being launched) and (2) there's no
+						capacity provisioned yet. Deferring the completion of
+						provisioning until the launch goes successful prevents this
+						problem.  */
+
+					int timeout = 60 * 1000;
+					int counter = 0;
+					int retryStep = 15 * 1000;
+					Computer computer = slave.toComputer();
+
+					/* When starting slave via JNLP, connect might not succeed from the first
+					time. In this case retry for up to timeout. */
+					while(counter <= timeout) {
+						Thread.sleep(retryStep);
+						counter += retryStep;
+						try {
+							computer.connect(false).get();
+						} catch(Exception e) {
+							continue;
+						}
+						break;
+					}
+
+					return slave;
 				}
 			}), Util.tryParseNumber(t.numExecutors, 1).intValue()));
 			excessWorkload -= t.getNumExecutors();

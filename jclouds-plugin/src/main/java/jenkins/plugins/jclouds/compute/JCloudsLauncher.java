@@ -66,14 +66,28 @@ public class JCloudsLauncher extends ComputerLauncher {
 			}
 			conn = cleanupConn;
 
-			SCPClient scp = conn.createSCPClient();
-			logger.println("Copying slave.jar");
-			scp.put(Hudson.getInstance().getJnlpJars("slave.jar").readFully(), "slave.jar", "/tmp");
-
-			String launchString = "cd /tmp && java " + slave.getJvmOptions() + " -jar slave.jar";
-			logger.println("Launching slave agent: " + launchString);
 			final Session sess = conn.openSession();
-			sess.execCommand(launchString);
+
+			if (JCloudsSlave.GuestOS.JNLP_WINDOWS.toString().equals(slave.getGuestOS())) {
+				JCloudsLauncher.copySlaveJarTo(
+						conn, JCloudsSlave.GuestOS.JENKINS_SCRIPTS_LOCATION, logger);
+				String createLaunchScript =
+						String.format(
+								JCloudsSlave.GuestOS.CREATE_LAUNCH_SCRIPT_TEMPLATE,
+								String.format(
+										JCloudsSlave.GuestOS.JNLP_URL_TEMPLATE,
+										jenkins.getRootUrl(),
+										computer.getName()));
+				sess.execCommand(createLaunchScript);
+			} else if (JCloudsSlave.GuestOS.UNIX.toString().equals(slave.getGuestOS())) {
+				JCloudsLauncher.copySlaveJarTo(conn, "/tmp", logger);
+				String launchString = "java  -jar /tmp/slave.jar";
+				sess.execCommand(launchString);
+			} else {
+				conn.close();
+				return;
+			}
+
 			computer.setChannel(sess.getStdout(), sess.getStdin(), logger, new Channel.Listener() {
 				@Override
 				public void onClosed(Channel channel, IOException cause) {
