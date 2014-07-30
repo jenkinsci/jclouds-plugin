@@ -10,6 +10,8 @@ import hudson.slaves.SlaveComputer;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import jenkins.model.Jenkins;
+
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.LoginCredentials;
 
@@ -41,6 +43,7 @@ public class JCloudsLauncher extends ComputerLauncher {
 
 		PrintStream logger = listener.getLogger();
 
+		final Jenkins jenkins = Jenkins.getInstance();
 		final Connection bootstrapConn;
 		final Connection conn;
 		Connection cleanupConn = null; // java's code path analysis for final doesn't work that well.
@@ -101,6 +104,29 @@ public class JCloudsLauncher extends ComputerLauncher {
 				cleanupConn.close();
 		}
 	}
+
+    /**
+     * Copies Slave.jar to a given destination using provided connection.
+     *
+     * @param connection {@link Connection} to a remote host.
+     * @param destinationFolder {@link String} with an absolute path to a folder to copy slave.jar
+     *                          to.
+     * @param logger {@link PrintStream} to log status to.
+     * @throws IOException If copying went wrong.
+     */
+    private static void copySlaveJarTo(
+            Connection connection, String destinationFolder, PrintStream logger)
+                    throws IOException {
+        SCPClient scp = connection.createSCPClient();
+        logger.println(
+                String.format(
+                        "Copying slave.jar to %s:%s...",
+                        connection.getHostname(),
+                        destinationFolder));
+        scp.put(Jenkins.getInstance().getJnlpJars("slave.jar").readFully(),
+                "slave.jar", destinationFolder);
+        logger.println("slave.jar was copied successfully.");
+    }
 
 	/**
 	 * Authenticate with credentials

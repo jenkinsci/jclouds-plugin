@@ -89,7 +89,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 		this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString, new JCloudsLauncher(),
 				new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>> emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials()
 						.getUser(), metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(), metadata.getCredentials()
-						.shouldAuthenticateSudo(), jvmOption, guestOSs);
+						.shouldAuthenticateSudo(), jvmOptions, guestOS);
 		this.nodeMetaData = metadata;
 		this.nodeId = nodeMetaData.getId();
 	}

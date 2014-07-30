@@ -201,7 +201,7 @@ public class JCloudsCloud extends Cloud {
 			r.add(new PlannedNode(t.name, Computer.threadPoolForRemoting.submit(new Callable<Node>() {
 				public Node call() throws Exception {
 					// TODO: record the output somewhere
-					JCloudsSlave slave = template.provisionSlave(StreamTaskListener.fromStdout());
+					JCloudsSlave slave = t.provisionSlave(StreamTaskListener.fromStdout());
 					Jenkins.getInstance().addNode(slave);
 					/* Cloud instances may have a long init script. If we declare
 						the provisioning complete by returning without the connect
