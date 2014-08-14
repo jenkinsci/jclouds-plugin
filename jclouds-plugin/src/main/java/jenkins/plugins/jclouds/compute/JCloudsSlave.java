@@ -38,6 +38,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	private final String password;
 	private final String privateKey;
 	private final String guestOS;
+	private final int guestOsStartupTimeout;
 	private final boolean authSudo;
 	private final String jvmOptions;
 
@@ -45,7 +46,8 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	@SuppressWarnings("rawtypes")
 	public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
 			ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-			int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, String guestOS) throws Descriptor.FormException,
+			int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, String guestOS,
+			int guestOsStartupTimeout) throws Descriptor.FormException,
 			IOException {
 		super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
 		this.stopOnTerminate = stopOnTerminate;
@@ -57,6 +59,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 		this.authSudo = authSudo;
 		this.jvmOptions = jvmOptions;
 		this.guestOS = guestOS;
+		this.guestOsStartupTimeout = guestOsStartupTimeout;
 	}
 
 	/**
@@ -84,12 +87,13 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	 * @throws Descriptor.FormException
 	 */
 	public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString, final String description,
-			final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions, final String guestOS) throws IOException,
+			final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions, final String guestOS,
+			final int guestOsStartupTimeout) throws IOException,
 			Descriptor.FormException {
 		this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString, new JCloudsLauncher(),
 				new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>> emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials()
 						.getUser(), metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(), metadata.getCredentials()
-						.shouldAuthenticateSudo(), jvmOptions, guestOS);
+						.shouldAuthenticateSudo(), jvmOptions, guestOS, guestOsStartupTimeout);
 		this.nodeMetaData = metadata;
 		this.nodeId = nodeMetaData.getId();
 	}
@@ -163,6 +167,10 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	public String getGuestOS() {
 		return guestOS;
 	}
+	
+	public int getGuestOsStartupTimeout() {
+		return guestOsStartupTimeout;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -216,14 +224,14 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	 * @author iakovenko
 	 */
 	public enum GuestOS {
-		JNLP_WINDOWS("Pre-configured Windows that starts slave over JNLP", "win", true),
+		JNLP_WINDOWS("Pre-configured Windows that starts slave over JNLP", "win", false),
 		UNIX("Unix", "unix", false);
 
 		public static final String JENKINS_SCRIPTS_LOCATION = "/cygdrive/c/start";
 		public static final String JNLP_URL_TEMPLATE = "%scomputer/%s/slave-agent.jnlp";
 		public static final String CREATE_LAUNCH_SCRIPT_TEMPLATE =
-				"echo 'cd C:\\start & java -jar slave.jar -jnlpUrl " +
-						"\"%s\"' >> " + JENKINS_SCRIPTS_LOCATION + "/agent-launcher.bat";
+				"echo 'cd C:\\start & java %s -jar slave.jar -jnlpUrl " +
+				"\"%s\"' >> " + JENKINS_SCRIPTS_LOCATION + "/agent-launcher.bat";
 
 		private final String longName;
 		private final String shortName;

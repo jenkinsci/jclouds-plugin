@@ -212,7 +212,7 @@ public class JCloudsCloud extends Cloud {
 						provisioning until the launch goes successful prevents this
 						problem.  */
 
-					int timeout = 60 * 1000;
+					int timeout = slave.getGuestOsStartupTimeout() * 1000;
 					int counter = 0;
 					int retryStep = 15 * 1000;
 					Computer computer = slave.toComputer();
@@ -225,7 +225,13 @@ public class JCloudsCloud extends Cloud {
 						try {
 							computer.connect(false).get();
 						} catch(Exception e) {
-							continue;
+							if (counter > timeout) {
+								LOGGER.info(
+										String.format("Failed to connect to slave within timeout (%d ms).", timeout));
+								throw e;
+							} else {
+								continue;
+							}
 						}
 						break;
 					}

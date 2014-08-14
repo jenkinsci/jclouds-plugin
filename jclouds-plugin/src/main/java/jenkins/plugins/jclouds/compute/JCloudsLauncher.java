@@ -78,13 +78,14 @@ public class JCloudsLauncher extends ComputerLauncher {
 						String.format(
 								JCloudsSlave.GuestOS.CREATE_LAUNCH_SCRIPT_TEMPLATE,
 								String.format(
+										slave.getJvmOptions(),
 										JCloudsSlave.GuestOS.JNLP_URL_TEMPLATE,
 										jenkins.getRootUrl(),
 										computer.getName()));
 				sess.execCommand(createLaunchScript);
 			} else if (JCloudsSlave.GuestOS.UNIX.toString().equals(slave.getGuestOS())) {
 				JCloudsLauncher.copySlaveJarTo(conn, "/tmp", logger);
-				String launchString = "java  -jar /tmp/slave.jar";
+				String launchString = "java -jar " + slave.getJvmOptions() + " /tmp/slave.jar";
 				sess.execCommand(launchString);
 			} else {
 				conn.close();

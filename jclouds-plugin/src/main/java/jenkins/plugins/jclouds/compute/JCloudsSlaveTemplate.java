@@ -99,6 +99,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 	public final String networks;
 	public final String securityGroups;
 	public final String guestOS;
+	public final int guestOsStartupTimeout;
 	private transient Set<LabelAtom> labelSet;
 
 	protected transient JCloudsCloud cloud;
@@ -109,7 +110,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			final String initScript, final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
 			final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
 			final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
-			final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups, final String guestOS) {
+			final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups, final String guestOS,
+			final int guestOsStartupTimeout) {
 
 		this.name = Util.fixEmptyAndTrim(name);
 		this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -143,6 +145,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		this.networks = networks;
 		this.securityGroups = securityGroups;
 		this.guestOS = guestOS;
+		this.guestOsStartupTimeout = guestOsStartupTimeout;
 		readResolve();
 	}
 
@@ -195,7 +198,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 		try {
 			return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate,
-					overrideRetentionTime, getJvmOptions(), guestOS);
+					overrideRetentionTime, getJvmOptions(), guestOS, guestOsStartupTimeout);
 		} catch (Descriptor.FormException e) {
 			throw new AssertionError("Invalid configuration " + e.getMessage());
 		}

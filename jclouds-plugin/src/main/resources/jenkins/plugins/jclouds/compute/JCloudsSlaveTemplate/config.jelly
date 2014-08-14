@@ -134,13 +134,6 @@
           <f:checkbox />
         </f:entry>
 
-        <f:entry title="Guest OS" field="guestOS">
-          <f:select name="guestOS">
-            <f:option value="win">Prepared Windows</f:option>
-            <f:option value="unix">Unix</f:option>
-          </f:select>
-        </f:entry>
-
         <f:entry title="Networks" field="networks">
           <f:textbox />
         </f:entry>
@@ -149,7 +142,7 @@
           <f:textbox />
         </f:entry>
       </f:section>
-      
+
       <f:section title="Open Stack Options">
         <f:entry title="Assign Floating IP" field="assignFloatingIp">
           <f:checkbox />
@@ -157,6 +150,18 @@
         <f:entry title="Key Pair Name" field="keyPairName">
           <f:textbox />
         </f:entry>
+
+        <f:advanced>
+                <f:entry title="Guest OS" field="guestOS">
+                  <f:select name="guestOS" default="unix">
+                    <f:option value="unix">Unix</f:option>
+                    <f:option value="win">Prepared Windows</f:option>
+                  </f:select>
+                </f:entry>
+                <f:entry title="Guest OS startup timeout (seconds)." field="guestOsStartupTimeout">
+                  <f:textbox default="60"/>
+                </f:entry>
+           </f:advanced>
       </f:section>
 
       <f:section title="CloudStack Options">
@@ -166,6 +171,7 @@
       </f:section>
       
     </f:advanced>
+  
     <f:entry title="">
       <div align="right">
         <f:repeatableDeleteButton/>
