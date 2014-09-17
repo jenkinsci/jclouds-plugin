@@ -27,6 +27,7 @@ import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
@@ -420,7 +421,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			imageId = Util.fixEmptyAndTrim(imageId);
 
 			try {
-				final Set<? extends Image> images = listImages(providerName, identity, credential, endPointUrl, zones);
+				final Set<? extends Image> images = listImages(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
 				if (images != null) {
 					for (final Image image : images) {
 						if (!image.getId().equals(imageId)) {
@@ -441,7 +442,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 		public FormValidation doValidateImageNameRegex(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
 				@QueryParameter String endPointUrl, @QueryParameter String imageNameRegex, @QueryParameter String zones) {
 
-			final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, identity, credential, endPointUrl, zones);
+			final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
 			if (computeContextValidationResult != null) {
 				return computeContextValidationResult;
 			}
@@ -453,7 +454,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
 
 			try {
-				final Set<? extends Image> images = listImages(providerName, identity, credential, endPointUrl, zones);
+				final Set<? extends Image> images = listImages(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
 				if (images != null) {
 					for (final Image image : images) {
 						if (image.getName().matches(imageNameRegex)) {
@@ -486,7 +487,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			// Remove empty text/whitespace from the fields.
 			providerName = Util.fixEmptyAndTrim(providerName);
 			identity = Util.fixEmptyAndTrim(identity);
-			credential = Util.fixEmptyAndTrim(credential);
+			credential = Secret.fromString(credential).getPlainText();
 			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 			zones = Util.fixEmptyAndTrim(zones);
 			ComputeService computeService = null;
@@ -523,7 +524,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			// Remove empty text/whitespace from the fields.
 			providerName = Util.fixEmptyAndTrim(providerName);
 			identity = Util.fixEmptyAndTrim(identity);
-			credential = Util.fixEmptyAndTrim(credential);
+			credential = Secret.fromString(credential).getPlainText();
 			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
 			ComputeService computeService = null;
@@ -568,7 +569,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 			// Remove empty text/whitespace from the fields.
 			providerName = Util.fixEmptyAndTrim(providerName);
 			identity = Util.fixEmptyAndTrim(identity);
-			credential = Util.fixEmptyAndTrim(credential);
+			credential = Secret.fromString(credential).getPlainText();
 			hardwareId = Util.fixEmptyAndTrim(hardwareId);
 			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 			zones = Util.fixEmptyAndTrim(zones);
@@ -621,7 +622,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
          // Remove empty text/whitespace from the fields.
          providerName = Util.fixEmptyAndTrim(providerName);
          identity = Util.fixEmptyAndTrim(identity);
-         credential = Util.fixEmptyAndTrim(credential);
+         credential = Secret.fromString(credential).getPlainText();
          endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
          ComputeService computeService = null;

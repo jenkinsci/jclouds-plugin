@@ -29,6 +29,7 @@ import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import hudson.util.Secret;
 import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
 import org.jclouds.Constants;
@@ -68,7 +69,7 @@ public class JCloudsCloud extends Cloud {
 	static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
 	public final String identity;
-	public final String credential;
+	public final Secret credential;
 	public final String providerName;
 
 	public final String privateKey;
@@ -106,7 +107,7 @@ public class JCloudsCloud extends Cloud {
 		this.profile = Util.fixEmptyAndTrim(profile);
 		this.providerName = Util.fixEmptyAndTrim(providerName);
 		this.identity = Util.fixEmptyAndTrim(identity);
-		this.credential = Util.fixEmptyAndTrim(credential);
+		this.credential = Secret.fromString(credential);
 		this.privateKey = privateKey;
 		this.publicKey = publicKey;
 		this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
@@ -173,7 +174,7 @@ public class JCloudsCloud extends Cloud {
 			if (startTimeout > 0) {
 				overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
 			}
-			this.compute = ctx(this.providerName, this.identity, this.credential, overrides, this.zones).getComputeService();
+			this.compute = ctx(this.providerName, this.identity, Secret.toString(credential), overrides, this.zones).getComputeService();
 		}
 		return compute;
 	}
@@ -328,7 +329,7 @@ public class JCloudsCloud extends Cloud {
 			// Remove empty text/whitespace from the fields.
 			providerName = Util.fixEmptyAndTrim(providerName);
 			identity = Util.fixEmptyAndTrim(identity);
-			credential = Util.fixEmptyAndTrim(credential);
+			credential = Secret.fromString(credential).getPlainText();
 			endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 			zones = Util.fixEmptyAndTrim(zones);
 
