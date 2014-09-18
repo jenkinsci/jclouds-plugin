@@ -14,10 +14,11 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author Vijay Kiran
  */
 public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer> {
-	private ReentrantLock checkLock = new ReentrantLock(false);
+	private transient ReentrantLock checkLock;
 
 	@DataBoundConstructor
 	public JCloudsRetentionStrategy() {
+			readResolve();
 	}
 
 	@Override
@@ -63,6 +64,11 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
 		public String getDisplayName() {
 			return "JClouds";
 		}
+	}
+
+	protected Object readResolve() {
+		checkLock = new ReentrantLock(false);
+		return this;
 	}
 
 	private static final Logger LOGGER = Logger.getLogger(JCloudsRetentionStrategy.class.getName());
