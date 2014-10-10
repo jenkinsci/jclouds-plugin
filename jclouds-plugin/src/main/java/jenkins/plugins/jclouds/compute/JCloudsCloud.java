@@ -318,7 +318,7 @@ public class JCloudsCloud extends Cloud {
 		}
 
 		public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
-				@QueryParameter String privateKey, @QueryParameter String endPointUrl, @QueryParameter String zones) {
+				@QueryParameter String privateKey, @QueryParameter String endPointUrl, @QueryParameter String zones) throws IOException {
 			if (identity == null)
 				return FormValidation.error("Invalid (AccessId).");
 			if (credential == null)
@@ -347,7 +347,7 @@ public class JCloudsCloud extends Cloud {
 			} catch (Exception ex) {
 				result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getMessage());
 			} finally {
-				Closeables.closeQuietly(ctx);
+				Closeables.close(ctx,true);
 			}
 			return result;
 		}
