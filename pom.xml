@@ -29,8 +29,8 @@
         <test.jenkins.blobstore.build-version />
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-        <jclouds.version>1.7.3</jclouds.version>
-        <guava.version>15.0</guava.version>
+        <jclouds.version>1.8.0</jclouds.version>
+        <guava.version>18.0</guava.version>
         <jsch.version>0.1.48</jsch.version>
         <stapler.version>1.207</stapler.version>
         <hpi.plugin.version>1.97</hpi.plugin.version>
