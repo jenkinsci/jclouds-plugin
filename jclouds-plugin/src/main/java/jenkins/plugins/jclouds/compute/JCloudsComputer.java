@@ -13,56 +13,56 @@ import org.kohsuke.stapler.HttpResponse;
 
 /**
  * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.
- * 
+ *
  * @author Vijay Kiran
  */
 public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
 
-	private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
 
-	public JCloudsComputer(JCloudsSlave slave) {
-		super(slave);
-	}
+    public JCloudsComputer(JCloudsSlave slave) {
+        super(slave);
+    }
 
-	public String getInstanceId() {
-		return getName();
-	}
+    public String getInstanceId() {
+        return getName();
+    }
 
-	@Override
-	public JCloudsSlave getNode() {
-		return super.getNode();
-	}
+    @Override
+    public JCloudsSlave getNode() {
+        return super.getNode();
+    }
 
-	public int getRetentionTime() {
-		return getNode().getRetentionTime();
-	}
+    public int getRetentionTime() {
+        return getNode().getRetentionTime();
+    }
 
-	public String getCloudName() {
-		return getNode().getCloudName();
-	}
+    public String getCloudName() {
+        return getNode().getCloudName();
+    }
 
-	/**
-	 * Really deletes the slave, by terminating the instance.
-	 */
-	@Override
-	public HttpResponse doDoDelete() throws IOException {
-		setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
-		getNode().setPendingDelete(true);
-		return new HttpRedirect("..");
-	}
+    /**
+     * Really deletes the slave, by terminating the instance.
+     */
+    @Override
+    public HttpResponse doDoDelete() throws IOException {
+        setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
+        getNode().setPendingDelete(true);
+        return new HttpRedirect("..");
+    }
 
-	/**
-	 * Delete the slave, terminate the instance. Can be called either by doDoDelete() or from JCloudsRetentionStrategy.
-	 * 
-	 * @throws InterruptedException
-	 */
-	public void deleteSlave() throws IOException, InterruptedException {
-		LOGGER.info("Terminating " + getName() + " slave");
-		JCloudsSlave slave = getNode();
-		if (slave.getChannel() != null) {
-			slave.getChannel().close();
-		}
-		slave.terminate();
-		Hudson.getInstance().removeNode(slave);
-	}
+    /**
+     * Delete the slave, terminate the instance. Can be called either by doDoDelete() or from JCloudsRetentionStrategy.
+     *
+     * @throws InterruptedException
+     */
+    public void deleteSlave() throws IOException, InterruptedException {
+        LOGGER.info("Terminating " + getName() + " slave");
+        JCloudsSlave slave = getNode();
+        if (slave.getChannel() != null) {
+            slave.getChannel().close();
+        }
+        slave.terminate();
+        Hudson.getInstance().removeNode(slave);
+    }
 }

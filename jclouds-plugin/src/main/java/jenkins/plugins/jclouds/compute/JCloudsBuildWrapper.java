@@ -38,108 +38,108 @@ import shaded.com.google.common.collect.ImmutableList.Builder;
 import shaded.com.google.common.util.concurrent.MoreExecutors;
 
 public class JCloudsBuildWrapper extends BuildWrapper {
-	private final List<InstancesToRun> instancesToRun;
+    private final List<InstancesToRun> instancesToRun;
 
-	@DataBoundConstructor
-	public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
-		this.instancesToRun = instancesToRun;
-	}
+    @DataBoundConstructor
+    public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
+        this.instancesToRun = instancesToRun;
+    }
 
-	public List<InstancesToRun> getInstancesToRun() {
-		return instancesToRun;
-	}
+    public List<InstancesToRun> getInstancesToRun() {
+        return instancesToRun;
+    }
 
-	//
-	// convert Jenkins staticy stuff into pojos; performing as little critical stuff here as
-	// possible, as this method is very hard to test due to static usage, etc.
-	//
-	@Override
-	public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) {
-		// TODO: on shutdown, close all
-		final LoadingCache<String, ComputeService> computeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, ComputeService>() {
+    //
+    // convert Jenkins staticy stuff into pojos; performing as little critical stuff here as
+    // possible, as this method is very hard to test due to static usage, etc.
+    //
+    @Override
+    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) {
+        // TODO: on shutdown, close all
+        final LoadingCache<String, ComputeService> computeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, ComputeService>() {
 
-			@Override
-			public ComputeService load(String arg0) throws Exception {
-				return JCloudsCloud.getByName(arg0).getCompute();
-			}
+            @Override
+            public ComputeService load(String arg0) throws Exception {
+                return JCloudsCloud.getByName(arg0).getCompute();
+            }
 
-		});
-		// final ParametersAction parameters = build.getAction(ParametersAction.class);
+        });
+        // final ParametersAction parameters = build.getAction(ParametersAction.class);
 
-		// eagerly lookup node supplier so that errors occur before we attempt to provision things
-		Iterable<NodePlan> nodePlans = Iterables.transform(instancesToRun, new Function<InstancesToRun, NodePlan>() {
+        // eagerly lookup node supplier so that errors occur before we attempt to provision things
+        Iterable<NodePlan> nodePlans = Iterables.transform(instancesToRun, new Function<InstancesToRun, NodePlan>() {
 
-			public NodePlan apply(InstancesToRun instance) {
-				String cloudName = instance.cloudName;
-				String templateName = Util.replaceMacro(instance.getActualTemplateName(), build.getBuildVariableResolver());
-				// String templateName = getParameterString(parameters, instance.getActualTemplateName(), build);
-				Supplier<NodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
-				// take the hit here, as opposed to later
-				computeCache.getUnchecked(cloudName);
-				return new NodePlan(cloudName, templateName, instance.count, instance.suspendOrTerminate, nodeSupplier);
-			}
+            public NodePlan apply(InstancesToRun instance) {
+                String cloudName = instance.cloudName;
+                String templateName = Util.replaceMacro(instance.getActualTemplateName(), build.getBuildVariableResolver());
+                // String templateName = getParameterString(parameters, instance.getActualTemplateName(), build);
+                Supplier<NodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
+                // take the hit here, as opposed to later
+                computeCache.getUnchecked(cloudName);
+                return new NodePlan(cloudName, templateName, instance.count, instance.suspendOrTerminate, nodeSupplier);
+            }
 
-		});
+        });
 
-		// converting to a logger as it is an interface and easier to test
-		final Logger logger = new BuildListenerLogger(listener);
+        // converting to a logger as it is an interface and easier to test
+        final Logger logger = new BuildListenerLogger(listener);
 
-		final TerminateNodes terminateNodes = new TerminateNodes(logger, computeCache);
+        final TerminateNodes terminateNodes = new TerminateNodes(logger, computeCache);
 
-		ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
-				MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
+        ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
+                MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
 
-		final Iterable<RunningNode> runningNode = provisioner.apply(nodePlans);
+        final Iterable<RunningNode> runningNode = provisioner.apply(nodePlans);
 
-		return new Environment() {
-			@Override
-			public void buildEnvVars(Map<String, String> env) {
-				List<String> ips = getInstanceIPs(runningNode, listener.getLogger());
-				env.put("JCLOUDS_IPS", Util.join(ips, ","));
-			}
+        return new Environment() {
+            @Override
+            public void buildEnvVars(Map<String, String> env) {
+                List<String> ips = getInstanceIPs(runningNode, listener.getLogger());
+                env.put("JCLOUDS_IPS", Util.join(ips, ","));
+            }
 
-			@Override
-			public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
-				terminateNodes.apply(runningNode);
-				return true;
-			}
+            @Override
+            public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
+                terminateNodes.apply(runningNode);
+                return true;
+            }
 
-		};
+        };
 
-	}
+    }
 
-	public List<String> getInstanceIPs(Iterable<RunningNode> runningNodes, PrintStream logger) {
-		Builder<String> ips = ImmutableList.<String> builder();
+    public List<String> getInstanceIPs(Iterable<RunningNode> runningNodes, PrintStream logger) {
+        Builder<String> ips = ImmutableList.<String>builder();
 
-		for (RunningNode runningNode : runningNodes) {
-			String[] possibleIPs = JCloudsLauncher.getConnectionAddresses(runningNode.getNode(), logger);
-			if (possibleIPs[0] != null) {
-				ips.add(possibleIPs[0]);
-			}
-		}
+        for (RunningNode runningNode : runningNodes) {
+            String[] possibleIPs = JCloudsLauncher.getConnectionAddresses(runningNode.getNode(), logger);
+            if (possibleIPs[0] != null) {
+                ips.add(possibleIPs[0]);
+            }
+        }
 
-		return ips.build();
-	}
+        return ips.build();
+    }
 
-	private String getParameterString(ParametersAction parameters, String original, AbstractBuild<?, ?> build) {
-		if (parameters != null) {
-			original = parameters.substitute(build, original);
-		}
+    private String getParameterString(ParametersAction parameters, String original, AbstractBuild<?, ?> build) {
+        if (parameters != null) {
+            original = parameters.substitute(build, original);
+        }
 
-		return original;
-	}
+        return original;
+    }
 
-	@Extension
-	public static final class DescriptorImpl extends BuildWrapperDescriptor {
-		@Override
-		public String getDisplayName() {
-			return "JClouds Instance Creation";
-		}
+    @Extension
+    public static final class DescriptorImpl extends BuildWrapperDescriptor {
+        @Override
+        public String getDisplayName() {
+            return "JClouds Instance Creation";
+        }
 
-		@Override
-		public boolean isApplicable(AbstractProject item) {
-			return true;
-		}
+        @Override
+        public boolean isApplicable(AbstractProject item) {
+            return true;
+        }
 
-	}
+    }
 }
