@@ -240,9 +240,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             options.networks(csvToArray(networks));
         }
 
-        if (!Strings.isNullOrEmpty(securityGroups) && options instanceof NovaTemplateOptions) {
+        if (!Strings.isNullOrEmpty(securityGroups)) {
             LOGGER.info("Setting security groups to " + securityGroups);
-            options.as(NovaTemplateOptions.class).securityGroupNames(csvToArray(securityGroups));
+            options.securityGroups(csvToArray(securityGroups));
         }
 
         if (assignFloatingIp && options instanceof NovaTemplateOptions) {
