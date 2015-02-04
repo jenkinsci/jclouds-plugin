@@ -301,7 +301,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     .authorizeAdminPublicKey(true).adminPublicKey(getCloud().publicKey).adminHome(getFsRoot()).build();
 
             // Jenkins needs /jenkins dir.
-            Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
+            Statement jenkinsDirStatement = newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
                     Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
 
             initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
@@ -310,7 +310,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (preInstalledJava) {
             bootstrap = initStatement;
         } else {
-            bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
+            if (null == initStatement) {
+                bootstrap = newStatementList(InstallJDK.fromOpenJDK());
+            } else {
+                bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
+            }
         }
 
         options.inboundPorts(22).userMetadata(userMetadata);
