@@ -111,8 +111,12 @@ public class JCloudsSlave extends AbstractCloudSlave {
      */
     public LoginCredentials getCredentials() {
         LoginCredentials credentials = getNodeMetaData().getCredentials();
-        if (credentials == null)
+        if (credentials == null) {
+            LOGGER.info("Using credentials from CloudSlave instance");
             credentials = LoginCredentials.builder().user(user).password(password).privateKey(privateKey).authenticateSudo(authSudo).build();
+        } else {
+            LOGGER.info("Using credentials from JClouds");
+        }
         return credentials;
     }
 
