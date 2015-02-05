@@ -14,6 +14,8 @@ import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import jenkins.plugins.jclouds.compute.JCloudsComputer;
+import jenkins.plugins.jclouds.compute.JCloudsSlave;
+import org.jclouds.compute.domain.NodeMetadata;
 
 import java.util.logging.Logger;
 
@@ -46,8 +48,9 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
     public void doIndex(StaplerRequest req, StaplerResponse rsp) {
 
         String instanceId = req.getParameter("instance_id");
-        if (instanceId == null) {
-            throw new IllegalArgumentException("Not intended to be browsed interactively (must specify instance_id parameter)");
+        String hostName = req.getParameter("hostname");
+        if (null == instanceId || null == hostName) {
+            throw new IllegalArgumentException("Not intended to be browsed interactively (must specify instance_id and hostname parameter)");
         }
         LOGGER.info("Received POST for " + instanceId);
         // run in high privilege to see all the projects anonymous users don't see.
@@ -58,6 +61,10 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
         try {
             for (final Computer c : Jenkins.getInstance().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
+                    final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
+                    final NodeMetadata md = slave.getNodeMetaData();
+                    LOGGER.info("id=" + md.getId());
+                    LOGGER.info("hostname=" + md.getHostname());
                 }
             }
         } finally {
