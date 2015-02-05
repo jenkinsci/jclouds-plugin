@@ -50,6 +50,7 @@ public class JCloudsLauncher extends ComputerLauncher {
         final NodeMetadata nodeMetadata = slave.getNodeMetaData();
 
         try {
+            waitForPhoneHome(slave, logger);
             bootstrapConn = connectToSsh(nodeMetadata, logger);
             int bootstrapResult = bootstrap(bootstrapConn, nodeMetadata, credentials, logger);
             if (bootstrapResult == FAILED)
@@ -192,6 +193,22 @@ public class JCloudsLauncher extends ComputerLauncher {
                 // keep retrying until SSH comes up
                 logger.println("Waiting for SSH to come up. Sleeping 5.");
                 Thread.sleep(5000);
+            }
+        }
+    }
+
+    private void waitForPhoneHome(JCloudsSlave slave, PrintStream logger) throws InterruptedException {
+        long timeout = System.currentTimeMillis() + 1000 * 60 * 10;
+        while (true) {
+            if (System.currentTimeMillis() > timeout) {
+                throw new InterruptedException("wait for phone home timed out");
+            }
+            if (slave.isPendingDelete()) {
+                throw new InterruptedException("wait for phone home interrupted by delete request");
+            }
+            if (slave.isWaitPhoneHome()) {
+                logger.println("Waiting for slave to phone home. Sleeping 10.");
+                Thread.sleep(10000);
             }
         }
     }

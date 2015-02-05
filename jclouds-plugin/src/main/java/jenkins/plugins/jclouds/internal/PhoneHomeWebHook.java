@@ -47,24 +47,21 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
     @RequirePOST
     public void doIndex(StaplerRequest req, StaplerResponse rsp) {
 
-        String instanceId = req.getParameter("instance_id");
         String hostName = req.getParameter("hostname");
-        if (null == instanceId || null == hostName) {
-            throw new IllegalArgumentException("Not intended to be browsed interactively (must specify instance_id and hostname parameter)");
+        if (null == hostName) {
+            throw new IllegalArgumentException("Not intended to be browsed interactively (must specify hostname parameter)");
         }
-        LOGGER.info("Received POST for " + instanceId);
-        // run in high privilege to see all the projects anonymous users don't see.
-        // this is safe because when we actually schedule a build, it's a build that can
-        // happen at some random time anyway.
+        LOGGER.info("Received POST for " + hostName);
+        // run in high privilege to see all the nodes anonymous users don't see.
         Authentication old = SecurityContextHolder.getContext().getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
         try {
             for (final Computer c : Jenkins.getInstance().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
-                    final NodeMetadata md = slave.getNodeMetaData();
-                    LOGGER.info("id=" + md.getId());
-                    LOGGER.info("hostname=" + md.getHostname());
+                    if (slave.getNodeMetaData().getHostname().equals(hostName)) {
+                        slave.setWaitPhoneHome(false);
+                    }
                 }
             }
         } finally {
