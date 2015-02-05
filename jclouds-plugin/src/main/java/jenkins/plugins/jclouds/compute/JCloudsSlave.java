@@ -72,7 +72,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString, final String description,
                         final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions) throws IOException,
             Descriptor.FormException {
-        this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString, new JCloudsLauncher(),
+        this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.NORMAL, labelString, new JCloudsLauncher(),
                 new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials()
                         .getUser(), metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(), metadata.getCredentials()
                         .shouldAuthenticateSudo(), jvmOptions);
