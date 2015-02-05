@@ -45,6 +45,11 @@
             <artifactId>opencsv</artifactId>
             <version>2.3</version>
         </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>ssh-slaves</artifactId>
+            <version>1.9</version>
+        </dependency>
 
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>

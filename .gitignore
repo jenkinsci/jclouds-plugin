@@ -9,3 +9,4 @@ release.properties
 *.iml
 **/dependency-reduced-pom.xml
 **/target
+.DS_Store

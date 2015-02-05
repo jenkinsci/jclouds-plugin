@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
 import com.google.inject.Module;
@@ -115,7 +116,7 @@ public class JCloudsCloud extends Cloud {
         this.retentionTime = retentionTime;
         this.scriptTimeout = scriptTimeout;
         this.startTimeout = startTimeout;
-        this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate>emptyList());
+        this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate> emptyList());
         this.zones = Util.fixEmptyAndTrim(zones);
         readResolve();
     }
@@ -130,11 +131,7 @@ public class JCloudsCloud extends Cloud {
      * Get the retention time, defaulting to 30 minutes.
      */
     public int getRetentionTime() {
-        if (retentionTime == 0) {
-            return 30;
-        } else {
-            return retentionTime;
-        }
+        return retentionTime == 0 ? 30 : retentionTime;
     }
 
     static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new JDKLoggingModule() {
@@ -188,44 +185,57 @@ public class JCloudsCloud extends Cloud {
      */
     @Override
     public Collection<NodeProvisioner.PlannedNode> provision(Label label, int excessWorkload) {
-        final JCloudsSlaveTemplate t = getTemplate(label);
+        final JCloudsSlaveTemplate template = getTemplate(label);
+        List<PlannedNode> plannedNodeList = new ArrayList<PlannedNode>();
 
-        List<PlannedNode> r = new ArrayList<PlannedNode>();
-        while (excessWorkload > 0
-                && !Jenkins.getInstance().isQuietingDown()
-                && !Jenkins.getInstance().isTerminating()) {
-            if ((getRunningNodesCount() + r.size()) >= instanceCap) {
+        while (excessWorkload > 0 && !Jenkins.getInstance().isQuietingDown() && !Jenkins.getInstance().isTerminating()) {
+
+            if ((getRunningNodesCount() + plannedNodeList.size()) >= instanceCap) {
                 LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
                 break; // maxed out
             }
 
-            r.add(new PlannedNode(t.name, Computer.threadPoolForRemoting.submit(new Callable<Node>() {
+            plannedNodeList.add(new PlannedNode(template.name, Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                 public Node call() throws Exception {
                     // TODO: record the output somewhere
-                    JCloudsSlave s = t.provisionSlave(new StreamTaskListener(System.out));
-                    Hudson.getInstance().addNode(s);
-                    // Cloud instances may have a long init script. If
-                    // we declare
-                    // the provisioning complete by returning without
-                    // the connect
-                    // operation, NodeProvisioner may decide that it
-                    // still wants
-                    // one more instance, because it sees that (1) all
-                    // the slaves
-                    // are offline (because it's still being launched)
-                    // and
-                    // (2) there's no capacity provisioned yet.
-                    //
-                    // deferring the completion of provisioning until
-                    // the launch
-                    // goes successful prevents this problem.
-                    s.toComputer().connect(false).get();
-                    return s;
+                    JCloudsSlave jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout());
+                    Jenkins.getInstance().addNode(jcloudsSlave);
+
+                    /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
+                    without the connect operation, NodeProvisioner may decide that it still wants one more instance,
+                    because it sees that (1) all the slaves are offline (because it's still being launched) and (2)
+                    there's no capacity provisioned yet. Deferring the completion of provisioning until the launch goes
+                    successful prevents this problem.  */
+                    ensureLaunched(jcloudsSlave);
+                    return jcloudsSlave;
                 }
-            }), Util.tryParseNumber(t.numExecutors, 1).intValue()));
-            excessWorkload -= t.getNumExecutors();
+            }), Util.tryParseNumber(template.numExecutors, 1).intValue()));
+            excessWorkload -= template.getNumExecutors();
         }
-        return r;
+        return plannedNodeList;
+    }
+
+    private void ensureLaunched(JCloudsSlave jcloudsSlave) throws InterruptedException, ExecutionException {
+        Integer launchTimeoutSec = 5 * 60;
+        Computer computer = jcloudsSlave.toComputer();
+        long startMoment = System.currentTimeMillis();
+        while (computer.isOffline()) {
+            try {
+                LOGGER.info(String.format("Slave [%s] not connected yet", jcloudsSlave.getDisplayName()));
+                computer.connect(false).get();
+                Thread.sleep(5000l);
+            } catch (InterruptedException e) {
+                LOGGER.warning(String.format("Error while launching slave: %s", e));
+            } catch (ExecutionException e) {
+                LOGGER.warning(String.format("Error while launching slave: %s", e));
+            }
+
+            if ((System.currentTimeMillis() - startMoment) > 1000l * launchTimeoutSec) {
+                String message = String.format("Failed to connect to slave within timeout (%d s).", launchTimeoutSec);
+                LOGGER.warning(message);
+                throw new ExecutionException(new Throwable(message));
+            }
+        }
     }
 
     @Override
@@ -315,7 +325,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
-                                               @QueryParameter String privateKey, @QueryParameter String endPointUrl, @QueryParameter String zones) throws IOException {
+                                               @QueryParameter String privateKey, @QueryParameter String endPointUrl, @QueryParameter String zones)  throws IOException {
             if (identity == null)
                 return FormValidation.error("Invalid (AccessId).");
             if (credential == null)
@@ -344,7 +354,7 @@ public class JCloudsCloud extends Cloud {
             } catch (Exception ex) {
                 result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getMessage());
             } finally {
-                Closeables.close(ctx, true);
+                Closeables.close(ctx,true);
             }
             return result;
         }
@@ -382,7 +392,7 @@ public class JCloudsCloud extends Cloud {
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
             // with this stuff :)
-            Builder<String> builder = ImmutableSet.<String>builder();
+            Builder<String> builder = ImmutableSet.<String> builder();
             builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
             builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));
             Iterable<String> supportedProviders = ImmutableSortedSet.copyOf(builder.build());
@@ -398,7 +408,7 @@ public class JCloudsCloud extends Cloud {
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
             // with this stuff :)
-            Builder<String> builder = ImmutableSet.<String>builder();
+            Builder<String> builder = ImmutableSet.<String> builder();
             builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
             builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));
             Iterable<String> supportedProviders = builder.build();
