@@ -57,11 +57,11 @@ public class JCloudsLauncher extends ComputerLauncher {
             else if (bootstrapResult == SAMEUSER)
                 cleanupConn = bootstrapConn; // take over the connection
             else {
-                // connect fresh as ROOT
+                // connect fresh as admin user
                 cleanupConn = connectToSsh(nodeMetadata, logger);
                 if (!authenticate(cleanupConn, credentials)) {
                     logger.println("Authentication failed");
-                    return; // failed to connect as root.
+                    return; // failed to connect as admin user.
                 }
             }
             conn = cleanupConn;
