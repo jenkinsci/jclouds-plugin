@@ -57,7 +57,12 @@
             <version>2.9-SNAPSHOT</version>
         </dependency>
         <!-- Test Dependencies -->
-
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <pluginManagement>
