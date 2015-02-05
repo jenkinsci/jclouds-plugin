@@ -7,5 +7,6 @@ work
 release.properties
 .idea
 *.iml
+*.swp
 **/dependency-reduced-pom.xml
 **/target
