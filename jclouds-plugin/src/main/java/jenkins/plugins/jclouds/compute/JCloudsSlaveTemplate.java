@@ -94,6 +94,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     private final Object delayLockObject = new Object();
     public final boolean assignFloatingIp;
     public final boolean waitPhoneHome;
+    public final int waitPhoneHomeTimeout;
     public final String keyPairName;
     public final boolean assignPublicIp;
     public final String networks;
@@ -108,7 +109,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 final int ram, final String osFamily, final String osVersion, final String locationId, final String labelString, final String description,
                                 final String initScript, final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
                                 final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
-                                final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final boolean waitPhoneHome,
+                                final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout,
                                 final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups) {
 
         this.name = Util.fixEmptyAndTrim(name);
@@ -139,6 +140,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.spoolDelayMs = spoolDelayMs;
         this.assignFloatingIp = assignFloatingIp;
         this.waitPhoneHome = waitPhoneHome;
+        this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
         this.keyPairName = keyPairName;
         this.assignPublicIp = assignPublicIp;
         this.networks = networks;
@@ -195,7 +197,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
         try {
             return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate,
-                    overrideRetentionTime, getJvmOptions(), waitPhoneHome);
+                    overrideRetentionTime, getJvmOptions(), waitPhoneHome, waitPhoneHomeTimeout);
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }

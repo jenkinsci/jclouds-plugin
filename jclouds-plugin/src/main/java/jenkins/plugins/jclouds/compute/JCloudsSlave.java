@@ -33,6 +33,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
     private boolean pendingDelete;
     private boolean waitPhoneHome;
     private final int overrideRetentionTime;
+    private final int waitPhoneHomeTimeout;
     private final String user;
     private final String password;
     private final String privateKey;
@@ -43,7 +44,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
     @SuppressWarnings("rawtypes")
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
                         ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-                        int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, boolean waitPhoneHome) throws Descriptor.FormException,
+                        int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, boolean waitPhoneHome, int waitPhoneHomeTimeout) throws Descriptor.FormException,
             IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
@@ -55,6 +56,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.authSudo = authSudo;
         this.jvmOptions = jvmOptions;
         this.waitPhoneHome = waitPhoneHome;
+        this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
     }
 
     /**
@@ -72,12 +74,12 @@ public class JCloudsSlave extends AbstractCloudSlave {
      * @throws Descriptor.FormException
      */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString, final String description,
-                        final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions, final boolean waitPhoneHome) throws IOException,
+                        final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout) throws IOException,
             Descriptor.FormException {
         this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString, new JCloudsLauncher(),
                 new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials()
                         .getUser(), metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(), metadata.getCredentials()
-                        .shouldAuthenticateSudo(), jvmOptions, waitPhoneHome);
+                        .shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
@@ -158,6 +160,13 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public void setWaitPhoneHome(boolean value) {
         waitPhoneHome = value;
+    }
+
+    public long getWaitPhoneHomeTimeoutMs() {
+        if (0 < waitPhoneHomeTimeout) {
+            return waitPhoneHomeTimeout * 60000;
+        }
+        return 0;
     }
 
     /**

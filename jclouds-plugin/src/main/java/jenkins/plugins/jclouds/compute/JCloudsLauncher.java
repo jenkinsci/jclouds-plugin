@@ -198,7 +198,7 @@ public class JCloudsLauncher extends ComputerLauncher {
     }
 
     private void waitForPhoneHome(JCloudsSlave slave, PrintStream logger) throws InterruptedException {
-        long timeout = System.currentTimeMillis() + 600000;
+        long timeout = System.currentTimeMillis() + slave.getWaitPhoneHomeTimeoutMs();
         while (true) {
             long tdif = timeout - System.currentTimeMillis();
             if (tdif < 0) {
@@ -209,7 +209,7 @@ public class JCloudsLauncher extends ComputerLauncher {
             }
             if (slave.isWaitPhoneHome()) {
                 logger.println("Waiting for slave to phone home. " + tdif / 1000 + " seconds until timeout.");
-                Thread.sleep(10000);
+                Thread.sleep(30000);
             } else {
                 break;
             }
