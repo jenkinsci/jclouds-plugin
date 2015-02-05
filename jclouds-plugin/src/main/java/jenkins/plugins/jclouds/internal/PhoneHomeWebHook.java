@@ -61,6 +61,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
                     if (slave.getNodeMetaData().getHostname().equals(hostName)) {
                         slave.setWaitPhoneHome(false);
+                        LOGGER.info("Slave " + hostName + " has phoned home");
                     }
                 }
             }
