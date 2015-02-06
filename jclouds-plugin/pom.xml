@@ -71,6 +71,7 @@
                     <groupId>org.jenkins-ci.tools</groupId>
                     <artifactId>maven-hpi-plugin</artifactId>
                     <version>${hpi.plugin.version}</version>
+
                     <dependencies>
                         <dependency>
                             <groupId>com.google.guava</groupId>
@@ -84,6 +85,7 @@
                         </dependency>
                     </dependencies>
                     <configuration>
+                        <disabledTestInjection>true</disabledTestInjection>
                         <dependentWarExcludes>org.apache.jclouds*,com.google.guava*</dependentWarExcludes>
                         <archive>
                             <manifestEntries>
@@ -179,6 +181,7 @@
                 <configuration>
                     <excludes>
                         <exclude>**/*LiveTest.java</exclude>
+                        <exclude>**/*JCloudsSlaveTemplateTest.java</exclude>
                     </excludes>
                 </configuration>
             </plugin>
