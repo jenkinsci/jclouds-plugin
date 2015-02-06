@@ -264,13 +264,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
         }
 
+        String adminUser = vmUser;
+        if (this.preExistingJenkinsUser && Strings.isNullOrEmpty(adminUser)) {
+            adminUser = getJenkinsUser();
+        }
         if (!Strings.isNullOrEmpty(vmPassword)) {
-            LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
+            LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(vmPassword).build();
             options.overrideLoginCredentials(lc);
-        } else if (!Strings.isNullOrEmpty(getCloud().privateKey) && !Strings.isNullOrEmpty(vmUser)) {
+        } else if (!Strings.isNullOrEmpty(getCloud().privateKey) && !Strings.isNullOrEmpty(adminUser)) {
             // Skip overriding the credentials if we don't have a VM admin user specified - there are cases where we want the private
             // key but we don't to use it for the admin user creds.
-            LoginCredentials lc = LoginCredentials.builder().user(vmUser).privateKey(getCloud().privateKey).build();
+            LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(getCloud().privateKey).build();
             options.overrideLoginCredentials(lc);
         }
 
