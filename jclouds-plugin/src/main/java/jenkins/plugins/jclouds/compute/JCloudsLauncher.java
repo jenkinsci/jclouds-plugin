@@ -50,6 +50,7 @@ public class JCloudsLauncher extends ComputerLauncher {
         final NodeMetadata nodeMetadata = slave.getNodeMetaData();
 
         try {
+            waitForPhoneHome(slave, logger);
             bootstrapConn = connectToSsh(nodeMetadata, logger);
             int bootstrapResult = bootstrap(bootstrapConn, nodeMetadata, credentials, logger);
             if (bootstrapResult == FAILED)
@@ -57,11 +58,11 @@ public class JCloudsLauncher extends ComputerLauncher {
             else if (bootstrapResult == SAMEUSER)
                 cleanupConn = bootstrapConn; // take over the connection
             else {
-                // connect fresh as ROOT
+                // connect fresh as admin user
                 cleanupConn = connectToSsh(nodeMetadata, logger);
                 if (!authenticate(cleanupConn, credentials)) {
                     logger.println("Authentication failed");
-                    return; // failed to connect as root.
+                    return; // failed to connect as admin user.
                 }
             }
             conn = cleanupConn;
@@ -192,6 +193,25 @@ public class JCloudsLauncher extends ComputerLauncher {
                 // keep retrying until SSH comes up
                 logger.println("Waiting for SSH to come up. Sleeping 5.");
                 Thread.sleep(5000);
+            }
+        }
+    }
+
+    private void waitForPhoneHome(JCloudsSlave slave, PrintStream logger) throws InterruptedException {
+        long timeout = System.currentTimeMillis() + slave.getWaitPhoneHomeTimeoutMs();
+        while (true) {
+            long tdif = timeout - System.currentTimeMillis();
+            if (tdif < 0) {
+                throw new InterruptedException("wait for phone home timed out");
+            }
+            if (slave.isPendingDelete()) {
+                throw new InterruptedException("wait for phone home interrupted by delete request");
+            }
+            if (slave.isWaitPhoneHome()) {
+                logger.println("Waiting for slave to phone home. " + tdif / 1000 + " seconds until timeout.");
+                Thread.sleep(30000);
+            } else {
+                break;
             }
         }
     }

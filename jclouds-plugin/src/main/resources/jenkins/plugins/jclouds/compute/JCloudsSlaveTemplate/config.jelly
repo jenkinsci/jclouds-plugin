@@ -142,7 +142,16 @@
           <f:textbox />
         </f:entry>
       </f:section>
-      
+
+      <f:entry title="Wait for slave to phone home"
+               field="waitPhoneHome">
+        <f:checkbox />
+      </f:entry>
+
+      <f:entry title="Phone home timeout" field="waitPhoneHomeTimeout">
+            <f:textbox default="15"/>
+        </f:entry>
+ 
       <f:section title="Open Stack Options">
         <f:entry title="Assign Floating IP" field="assignFloatingIp">
           <f:checkbox />

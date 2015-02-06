@@ -93,6 +93,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final int spoolDelayMs;
     private final Object delayLockObject = new Object();
     public final boolean assignFloatingIp;
+    public final boolean waitPhoneHome;
+    public final int waitPhoneHomeTimeout;
     public final String keyPairName;
     public final boolean assignPublicIp;
     public final String networks;
@@ -107,7 +109,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 final int ram, final String osFamily, final String osVersion, final String locationId, final String labelString, final String description,
                                 final String initScript, final String userData, final String numExecutors, final boolean stopOnTerminate, final String vmPassword, final String vmUser,
                                 final boolean preInstalledJava, final String jvmOptions, final String jenkinsUser, final boolean preExistingJenkinsUser, final String fsRoot,
-                                final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp,
+                                final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs, final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout,
                                 final String keyPairName, final boolean assignPublicIp, final String networks, final String securityGroups) {
 
         this.name = Util.fixEmptyAndTrim(name);
@@ -137,6 +139,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.overrideRetentionTime = overrideRetentionTime;
         this.spoolDelayMs = spoolDelayMs;
         this.assignFloatingIp = assignFloatingIp;
+        this.waitPhoneHome = waitPhoneHome;
+        this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
         this.keyPairName = keyPairName;
         this.assignPublicIp = assignPublicIp;
         this.networks = networks;
@@ -193,7 +197,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
         try {
             return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description, numExecutors, stopOnTerminate,
-                    overrideRetentionTime, getJvmOptions());
+                    overrideRetentionTime, getJvmOptions(), waitPhoneHome, waitPhoneHomeTimeout);
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }
@@ -264,13 +268,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
         }
 
+        String adminUser = vmUser;
+        if (this.preExistingJenkinsUser && Strings.isNullOrEmpty(adminUser)) {
+            adminUser = getJenkinsUser();
+        }
         if (!Strings.isNullOrEmpty(vmPassword)) {
-            LoginCredentials lc = LoginCredentials.builder().user(vmUser).password(vmPassword).build();
+            LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(vmPassword).build();
             options.overrideLoginCredentials(lc);
-        } else if (!Strings.isNullOrEmpty(getCloud().privateKey) && !Strings.isNullOrEmpty(vmUser)) {
+        } else if (!Strings.isNullOrEmpty(getCloud().privateKey) && !Strings.isNullOrEmpty(adminUser)) {
             // Skip overriding the credentials if we don't have a VM admin user specified - there are cases where we want the private
             // key but we don't to use it for the admin user creds.
-            LoginCredentials lc = LoginCredentials.builder().user(vmUser).privateKey(getCloud().privateKey).build();
+            LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(getCloud().privateKey).build();
             options.overrideLoginCredentials(lc);
         }
 
@@ -301,7 +309,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     .authorizeAdminPublicKey(true).adminPublicKey(getCloud().publicKey).adminHome(getFsRoot()).build();
 
             // Jenkins needs /jenkins dir.
-            Statement jenkinsDirStatement = Statements.newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
+            Statement jenkinsDirStatement = newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
                     Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
 
             initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
@@ -310,7 +318,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (preInstalledJava) {
             bootstrap = initStatement;
         } else {
-            bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
+            if (null == initStatement) {
+                bootstrap = newStatementList(InstallJDK.fromOpenJDK());
+            } else {
+                bootstrap = newStatementList(initStatement, InstallJDK.fromOpenJDK());
+            }
         }
 
         options.inboundPorts(22).userMetadata(userMetadata);
