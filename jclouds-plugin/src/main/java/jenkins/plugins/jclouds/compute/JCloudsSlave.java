@@ -31,18 +31,21 @@ public class JCloudsSlave extends AbstractCloudSlave {
     private final String cloudName;
     private String nodeId;
     private boolean pendingDelete;
+    private boolean waitPhoneHome;
     private final int overrideRetentionTime;
+    private final int waitPhoneHomeTimeout;
     private final String user;
     private final String password;
     private final String privateKey;
     private final boolean authSudo;
     private final String jvmOptions;
+    private final String credentialsId;
 
     @DataBoundConstructor
     @SuppressWarnings("rawtypes")
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
                         ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-                        int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions) throws Descriptor.FormException,
+                        int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId) throws Descriptor.FormException,
             IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
@@ -53,29 +56,37 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.privateKey = privateKey;
         this.authSudo = authSudo;
         this.jvmOptions = jvmOptions;
+        this.waitPhoneHome = waitPhoneHome;
+        this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
+        this.credentialsId = credentialsId;
     }
 
     /**
      * Constructs a new slave from JCloud's NodeMetadata
      *
      * @param cloudName             - the name of the cloud that's provisioning this slave.
-     * @param fsRoot                - where on the slave the Jenkins slave root is.
+     * @param fsRoot                - Location of Jenkins root (homedir) on the slave.
      * @param metadata              - JCloudsNodeMetadata
      * @param labelString           - Label(s) for this slave.
      * @param description           - Description of this slave.
      * @param numExecutors          - Number of executors for this slave.
-     * @param stopOnTerminate       - if true, suspend the slave rather than terminating it.
+     * @param stopOnTerminate       - if {@code true}, suspend the slave rather than terminating it.
      * @param overrideRetentionTime - Retention time to use specifically for this slave, overriding the cloud default.
+     * @param jvmOptions            - Custom options for lauching the JVM on the slave.
+     * @param waitPhoneHome         - if {@code true}, delay initial SSH connect until slave has "phoned home" back to jenkins.
+     * @param waitPhoneHomeTimeout  - Timeout in minutes util giving up waiting for the "phone home" POST.
+     * @param credentialsId         - Id of the credentials in Jenkin's global credentials database.
      * @throws IOException
      * @throws Descriptor.FormException
      */
-    public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString, final String description,
-                        final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions) throws IOException,
-            Descriptor.FormException {
-        this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString, new JCloudsLauncher(),
-                new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials()
-                        .getUser(), metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(), metadata.getCredentials()
-                        .shouldAuthenticateSudo(), jvmOptions);
+    public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
+            final String description, final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime,
+            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId) throws IOException, Descriptor.FormException {
+        this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString,
+                new JCloudsLauncher(), new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
+                stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
+                metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(),
+                metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
@@ -111,8 +122,12 @@ public class JCloudsSlave extends AbstractCloudSlave {
      */
     public LoginCredentials getCredentials() {
         LoginCredentials credentials = getNodeMetaData().getCredentials();
-        if (credentials == null)
+        if (credentials == null) {
+            LOGGER.info("Using credentials from CloudSlave instance");
             credentials = LoginCredentials.builder().user(user).password(password).privateKey(privateKey).authenticateSudo(authSudo).build();
+        } else {
+            LOGGER.info("Using credentials from JClouds");
+        }
         return credentials;
     }
 
@@ -144,6 +159,25 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public void setPendingDelete(boolean pendingDelete) {
         this.pendingDelete = pendingDelete;
+    }
+
+    public boolean isWaitPhoneHome() {
+        return waitPhoneHome;
+    }
+
+    public void setWaitPhoneHome(boolean value) {
+        waitPhoneHome = value;
+    }
+
+    public long getWaitPhoneHomeTimeoutMs() {
+        if (0 < waitPhoneHomeTimeout) {
+            return waitPhoneHomeTimeout * 60000;
+        }
+        return 0;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
     }
 
     /**

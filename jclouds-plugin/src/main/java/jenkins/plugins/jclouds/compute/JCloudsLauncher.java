@@ -34,9 +34,9 @@ public class JCloudsLauncher extends ComputerLauncher {
         PrintStream logger = listener.getLogger();
 
         final JCloudsSlave slave = (JCloudsSlave) computer.getNode();
-        final NodeMetadata nodeMetadata = slave.getNodeMetaData();
-        final String[] addresses = getConnectionAddresses(nodeMetadata, logger);
-        LoginCredentials credentials = slave.getCredentials();
+        final String[] addresses = getConnectionAddresses(slave.getNodeMetaData(), logger);
+
+        waitForPhoneHome(slave, logger);
 
         String host = addresses[0];
         if ("0.0.0.0".equals(host)) {
@@ -44,7 +44,7 @@ public class JCloudsLauncher extends ComputerLauncher {
             throw new IOException("goto sleep");
         }
 
-        SSHLauncher launcher = new SSHLauncher(host, 22, credentials.getUser(), credentials.getPassword(), credentials.getPrivateKey(), slave.getJvmOptions());
+        SSHLauncher launcher = new SSHLauncher(host, 22, slave.getCredentialsId(), slave.getJvmOptions(), null, "", "", Integer.valueOf(0), null, null);
         launcher.launch(computer, listener);
     }
 
@@ -57,6 +57,25 @@ public class JCloudsLauncher extends ComputerLauncher {
         } else {
             logger.println("No public addresses found, so using private address.");
             return nodeMetadata.getPrivateAddresses().toArray(new String[nodeMetadata.getPrivateAddresses().size()]);
+        }
+    }
+
+    private void waitForPhoneHome(JCloudsSlave slave, PrintStream logger) throws InterruptedException {
+        long timeout = System.currentTimeMillis() + slave.getWaitPhoneHomeTimeoutMs();
+        while (true) {
+            long tdif = timeout - System.currentTimeMillis();
+            if (tdif < 0) {
+                throw new InterruptedException("wait for phone home timed out");
+            }
+            if (slave.isPendingDelete()) {
+                throw new InterruptedException("wait for phone home interrupted by delete request");
+            }
+            if (slave.isWaitPhoneHome()) {
+                logger.println("Waiting for slave to phone home. " + tdif / 1000 + " seconds until timeout.");
+                Thread.sleep(30000);
+            } else {
+                break;
+            }
         }
     }
 
