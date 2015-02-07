@@ -36,7 +36,7 @@ public class JCloudsLauncher extends ComputerLauncher {
         final JCloudsSlave slave = (JCloudsSlave) computer.getNode();
         final String[] addresses = getConnectionAddresses(slave.getNodeMetaData(), logger);
 
-        waitForPhoneHome(slave, logger);
+        slave.waitForPhoneHome(logger);
 
         String host = addresses[0];
         if ("0.0.0.0".equals(host)) {
@@ -57,25 +57,6 @@ public class JCloudsLauncher extends ComputerLauncher {
         } else {
             logger.println("No public addresses found, so using private address.");
             return nodeMetadata.getPrivateAddresses().toArray(new String[nodeMetadata.getPrivateAddresses().size()]);
-        }
-    }
-
-    private void waitForPhoneHome(JCloudsSlave slave, PrintStream logger) throws InterruptedException {
-        long timeout = System.currentTimeMillis() + slave.getWaitPhoneHomeTimeoutMs();
-        while (true) {
-            long tdif = timeout - System.currentTimeMillis();
-            if (tdif < 0) {
-                throw new InterruptedException("wait for phone home timed out");
-            }
-            if (slave.isPendingDelete()) {
-                throw new InterruptedException("wait for phone home interrupted by delete request");
-            }
-            if (slave.isWaitPhoneHome()) {
-                logger.println("Waiting for slave to phone home. " + tdif / 1000 + " seconds until timeout.");
-                Thread.sleep(30000);
-            } else {
-                break;
-            }
         }
     }
 

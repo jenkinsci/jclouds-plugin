@@ -10,6 +10,7 @@ import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
@@ -222,6 +223,30 @@ public class JCloudsSlave extends AbstractCloudSlave {
             }
         } else {
             LOGGER.info("Slave " + getNodeName() + " is already not running.");
+        }
+    }
+
+    public void waitForPhoneHome(PrintStream logger) throws InterruptedException {
+        long timeout = System.currentTimeMillis() + getWaitPhoneHomeTimeoutMs();
+        while (true) {
+            long tdif = timeout - System.currentTimeMillis();
+            if (tdif < 0) {
+                throw new InterruptedException("wait for phone home timed out");
+            }
+            if (isPendingDelete()) {
+                throw new InterruptedException("wait for phone home interrupted by delete request");
+            }
+            if (isWaitPhoneHome()) {
+                final String msg = "Waiting for slave to phone home. " + tdif / 1000 + " seconds until timeout.";
+                if (null != logger) {
+                    logger.println(msg);
+                } else {
+                    LOGGER.info(msg);
+                }
+                Thread.sleep(30000);
+            } else {
+                break;
+            }
         }
     }
 }
