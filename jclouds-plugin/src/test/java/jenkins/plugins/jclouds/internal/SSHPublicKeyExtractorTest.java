@@ -60,7 +60,16 @@ public class SSHPublicKeyExtractorTest {
         + "xvh95OCM7fStsl3oXDQ=\n"
         + "-----END DSA PRIVATE KEY-----\n";
 
-    private static final String DSA_EXPECTED = "ssh-dss AAAAB3NzaC1kc3MAAACBAKSZnbqhjcMknRwf8dXLrlY1IzGTty81ir8BS+hduAb/xL7YjvSVqaHqLQy8hixR09rAmTwUhk+j5g2tHySlWE4T2RZoksuy1K6faJ4LWSMZu9RDFAqhBTFVGNbOd516/lTehu6Ai0MXrwMTdC60JmXwxA3zEcx0lDye6RHa5eYpAAAAFQCCLUgjAMsLlA3HIFKfgHsHp1erlwAAAIBOQqS9HzRP+6axnPSR9J45LuPP5Lb9d4ZaW28e1VEpP9a4ENV2L/fVIMvdzls2LYas6lKhLhVYHWR85q70FUgCjumgrDxqYiC0ajyM18Xdio5rTJ3xiJZEPvmJ2kxvjH4qudxZMp91LgcjYRQm3/dTP6Bd0mW5R56Jf5OFkzotugAAAIApl9gsVy3swP5PtBi2qw67IYw1j3JRfaMef4FNelJLsPvz2A0UG+1VpsZ+IT3s2rLqz0euXVSjKK3IJRwmSyBAQcU7hWyntPGVE4WLGgrSjM+M06LIhNL/E3wu50YRBDvOdN/xusxDjOdAWyZh2qY/Z9CbVix7lwTQus1oEumEMQ==";
+    private static final String DSA_EXPECTED = "ssh-dss AAAAB3NzaC1kc3MAAACBAKS"
+        + "ZnbqhjcMknRwf8dXLrlY1IzGTty81ir8BS+hduAb/xL7YjvSVqaHqLQy8hixR09rAmTw"
+        + "Uhk+j5g2tHySlWE4T2RZoksuy1K6faJ4LWSMZu9RDFAqhBTFVGNbOd516/lTehu6Ai0M"
+        + "XrwMTdC60JmXwxA3zEcx0lDye6RHa5eYpAAAAFQCCLUgjAMsLlA3HIFKfgHsHp1erlwA"
+        + "AAIBOQqS9HzRP+6axnPSR9J45LuPP5Lb9d4ZaW28e1VEpP9a4ENV2L/fVIMvdzls2LYa"
+        + "s6lKhLhVYHWR85q70FUgCjumgrDxqYiC0ajyM18Xdio5rTJ3xiJZEPvmJ2kxvjH4qudx"
+        + "ZMp91LgcjYRQm3/dTP6Bd0mW5R56Jf5OFkzotugAAAIApl9gsVy3swP5PtBi2qw67IYw"
+        + "1j3JRfaMef4FNelJLsPvz2A0UG+1VpsZ+IT3s2rLqz0euXVSjKK3IJRwmSyBAQcU7hWy"
+        + "ntPGVE4WLGgrSjM+M06LIhNL/E3wu50YRBDvOdN/xusxDjOdAWyZh2qY/Z9CbVix7lwT"
+        + "Qus1oEumEMQ==";
 
     @Test
     public void testExtractRSA() throws IOException {
