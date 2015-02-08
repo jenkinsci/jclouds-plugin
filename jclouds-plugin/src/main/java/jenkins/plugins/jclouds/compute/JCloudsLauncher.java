@@ -34,9 +34,9 @@ public class JCloudsLauncher extends ComputerLauncher {
         PrintStream logger = listener.getLogger();
 
         final JCloudsSlave slave = (JCloudsSlave) computer.getNode();
-        final NodeMetadata nodeMetadata = slave.getNodeMetaData();
-        final String[] addresses = getConnectionAddresses(nodeMetadata, logger);
-        LoginCredentials credentials = slave.getCredentials();
+        final String[] addresses = getConnectionAddresses(slave.getNodeMetaData(), logger);
+
+        slave.waitForPhoneHome(logger);
 
         String host = addresses[0];
         if ("0.0.0.0".equals(host)) {
@@ -44,7 +44,7 @@ public class JCloudsLauncher extends ComputerLauncher {
             throw new IOException("goto sleep");
         }
 
-        SSHLauncher launcher = new SSHLauncher(host, 22, credentials.getUser(), credentials.getPassword(), credentials.getPrivateKey(), slave.getJvmOptions());
+        SSHLauncher launcher = new SSHLauncher(host, 22, slave.getCredentialsId(), slave.getJvmOptions(), null, "", "", Integer.valueOf(0), null, null);
         launcher.launch(computer, listener);
     }
 
