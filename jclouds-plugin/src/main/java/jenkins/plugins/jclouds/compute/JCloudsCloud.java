@@ -209,7 +209,7 @@ public class JCloudsCloud extends Cloud {
                     ensureLaunched(jcloudsSlave);
                     return jcloudsSlave;
                 }
-            }), Util.tryParseNumber(template.numExecutors, 1).intValue()));
+            }), template.getNumExecutors()));
             excessWorkload -= template.getNumExecutors();
         }
         return plannedNodeList;
