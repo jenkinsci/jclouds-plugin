@@ -10,11 +10,14 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.apache.commons.codec.binary.Base64;
 
 import hudson.Extension;
 import hudson.RelativePath;
@@ -24,6 +27,7 @@ import hudson.model.Describable;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Label;
+import hudson.model.Hudson;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
@@ -33,6 +37,8 @@ import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
+import hudson.util.XStream2;
+
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
@@ -58,15 +64,35 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
+
 import au.com.bytecode.opencsv.CSVReader;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.base.Supplier;
 import shaded.com.google.common.collect.ImmutableMap;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsMatcher;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.Domain;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
+
+import org.acegisecurity.context.SecurityContext;
+import org.acegisecurity.context.SecurityContextHolder;
+
+import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
+
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
+import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 
 import com.trilead.ssh2.Connection;
 
@@ -98,7 +124,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final boolean preInstalledJava;
     private final String jvmOptions;
     public final boolean preExistingJenkinsUser;
-    private final String jenkinsUser;
+    private String jenkinsUser;
     private final String fsRoot;
     public final boolean allowSudo;
     public final boolean installPrivateKey;
@@ -112,11 +138,19 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final boolean assignPublicIp;
     public final String networks;
     public final String securityGroups;
-    public final String credentialsId;
+    private String credentialsId;
 
     private transient Set<LabelAtom> labelSet;
 
     protected transient JCloudsCloud cloud;
+
+    public void setCredentialsId(final String value) {
+        credentialsId = value;
+    }
+
+    public String getCredentialsId() {
+        return credentialsId;
+    }
 
     @DataBoundConstructor
     public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex, final String hardwareId, final double cores,
@@ -159,7 +193,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.networks = networks;
         this.securityGroups = securityGroups;
         this.credentialsId = credentialsId;
-        jenkinsUser = (null == credentialsId) ? "" : SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
         this.vmPassword = Util.fixEmptyAndTrim(vmPassword);
         this.vmUser = Util.fixEmptyAndTrim(vmUser);
         readResolve();
@@ -178,10 +211,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     }
 
     public String getJenkinsUser() {
-        if (jenkinsUser == null || jenkinsUser.equals("")) {
+        if (null != jenkinsUser && !Util.fixEmptyAndTrim(jenkinsUser).isEmpty()) {
+            return jenkinsUser;
+        }
+        if (null == credentialsId
+                || null == SSHLauncher.lookupSystemCredentials(credentialsId).getUsername()
+                || SSHLauncher.lookupSystemCredentials(credentialsId).getUsername().isEmpty()) {
             return "jenkins";
         } else {
-            return jenkinsUser;
+            return SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
         }
     }
 
@@ -290,13 +328,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (this.preExistingJenkinsUser && Strings.isNullOrEmpty(adminUser)) {
             adminUser = getJenkinsUser();
         }
+        String privateKey = getCloud().getGlobalPrivateKey();
         if (!Strings.isNullOrEmpty(vmPassword)) {
             LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(vmPassword).build();
             options.overrideLoginCredentials(lc);
-        } else if (!Strings.isNullOrEmpty(getCloud().privateKey) && !Strings.isNullOrEmpty(adminUser)) {
+        } else if (!Strings.isNullOrEmpty(privateKey) && !Strings.isNullOrEmpty(adminUser)) {
             // Skip overriding the credentials if we don't have a VM admin user specified - there are cases where we want the private
             // key but we don't to use it for the admin user creds.
-            LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(getCloud().privateKey).build();
+            LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(privateKey).build();
             options.overrideLoginCredentials(lc);
         }
 
@@ -323,9 +362,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
                     .installAdminPrivateKey(installPrivateKey) // some VCS such as Git use SSH authentication
                     .grantSudoToAdminUser(allowSudo) // no need
-                    .adminPrivateKey(getCloud().privateKey) // temporary due to jclouds bug
-                    .authorizeAdminPublicKey(true).adminPublicKey(getCloud().publicKey).adminHome(getFsRoot()).build();
-
+                    .adminPrivateKey(privateKey) // temporary due to jclouds bug
+                    .authorizeAdminPublicKey(true).adminPublicKey(getCloud().getGlobalPublicKey()).adminHome(getFsRoot()).build();
             // Jenkins needs /jenkins dir.
             Statement jenkinsDirStatement = newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
                     Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
@@ -757,4 +795,118 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.validateNonNegativeInteger(value);
         }
     }
+
+    public void upgrade() {
+        try {
+            String ju = getJenkinsUser();
+            if (null == getCredentialsId() && null != ju && !ju.isEmpty()) {
+                setCredentialsId(convertJenkinsUser(ju, getCloud().name, name, getCloud().getGlobalPrivateKey()));
+                jenkinsUser = null; // Not used anymore;
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    /**
+     * Creates a new SSH credential for the jenkins user.
+     * If a record with the same username and private key already exists, only the id of the existing record is returned.
+     * @param user The username.
+     * @param cloud The name of the cloud.
+     * @param template The name of the slave template.
+     * @param privateKey The privateKey.
+     * @return The Id of the ssh-credential-plugin record (either newly created or already existing).
+     */
+    private String convertJenkinsUser(final String user, final String cloud, final String template, final String privateKey) {
+        StandardUsernameCredentials u = retrieveExistingCredentials(user, privateKey);
+        if (null == u) {
+            final String description = "JClouds cloud " + cloud + "." + template + " - auto-migrated";
+            u = new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, user,
+                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
+            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
+            try {
+                CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
+                try {
+                    s.addCredentials(Domain.global(), u);
+                    return u.getId();
+                } catch (IOException e) {
+                    // ignore
+                }
+            } finally {
+                SecurityContextHolder.setContext(previousContext);
+            }
+            return null;
+        }
+        return u.getId();
+    }
+
+    private StandardUsernameCredentials retrieveExistingCredentials(final String username, final String privkey) {
+        return CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class,
+                    Hudson.getInstance(), ACL.SYSTEM, SSHLauncher.SSH_SCHEME), CredentialsMatchers.allOf(
+                    CredentialsMatchers.withUsername(username),
+                    new CredentialsMatcher() {
+                        public boolean matches(Credentials item) {
+                            for (String key : SSHUserPrivateKey.class.cast(item).getPrivateKeys()) {
+                                if (pemKeyEquals(key, privkey)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+                    }));
+    }
+
+    /**
+     * Compares two SSH private keys.
+     * There are two levels of comparison: the first is a simple string comparison with all whitespace
+     * removed. If that fails then the Base64 decoded bytes of the first PEM entity will be compared
+     * (to allow for comments in the key outside the PEM boundaries).
+     *
+     * @param key1 the first key
+     * @param key2 the second key
+     * @return {@code true} if they two keys are the same.
+     */
+    private boolean pemKeyEquals(String key1, String key2) {
+        key1 = StringUtils.trim(key1);
+        key2 = StringUtils.trim(key2);
+        return StringUtils.equals(key1.replaceAll("\\s+", ""), key2.replace("\\s+", ""))
+            || Arrays.equals(quickNDirtyExtract(key1), quickNDirtyExtract(key2));
+    }
+
+    /**
+     * Extract the bytes of the first PEM encoded key in a string. This is a quick and dirty method just to
+     * establish if two keys are equal, we do not do any serious decoding of the key and this method could give "issues"
+     * but should be very unlikely to result in a false positive match.
+     *
+     * @param key the key to extract.
+     * @return the base64 decoded bytes from the key after discarding the key type and any header information.
+     */
+    private byte[] quickNDirtyExtract(String key) {
+        StringBuilder builder = new StringBuilder(key.length());
+        boolean begin = false;
+        boolean header = false;
+        for (String line : StringUtils.split(key, "\n")) {
+            line = line.trim();
+            if (line.startsWith("---") && line.endsWith("---")) {
+                if (begin && line.contains("---END")) {
+                    break;
+                }
+                if (!begin && line.contains("---BEGIN")) {
+                    header = true;
+                    begin = true;
+                    continue;
+                }
+            }
+            if (StringUtils.isBlank(line)) {
+                header = false;
+                continue;
+            }
+            if (!header) {
+                builder.append(line);
+            }
+        }
+        return Base64.decodeBase64(builder.toString());
+    }
+
 }
