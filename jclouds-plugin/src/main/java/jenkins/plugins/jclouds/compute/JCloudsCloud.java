@@ -130,7 +130,7 @@ public class JCloudsCloud extends Cloud {
     }
 
     public String getGlobalPrivateKey() {
-        if (null == cloudGlobalKeyId) {
+        if (Strings.isNullOrEmpty(cloudGlobalKeyId)) {
             return "";
         }
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
@@ -528,11 +528,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         @Override protected void callback(JCloudsCloud c, UnmarshallingContext context) {
-            // if (null == c.getCloudCredentialsId() && null != c.identity && null != c.credential) {
-            //     c.setCloudCredentialsId(convertCloudCredentials(c.name, c.identity, c.credential));
-            // }
-
-            if (null == c.getCloudGlobalKeyId() && null != c.privateKey && !c.privateKey.isEmpty()) {
+            if (Strings.isNullOrEmpty(c.getCloudGlobalKeyId()) && !Strings.isNullOrEmpty(c.privateKey)) {
                 c.setCloudGlobalKeyId(convertCloudPrivateKey(c.name, c.privateKey));
             }
             for (JCloudsSlaveTemplate t : c.templates) {

@@ -213,10 +213,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     }
 
     public String getJenkinsUser() {
-        if (null != jenkinsUser && jenkinsUser.isEmpty()) {
+        if (!Strings.isNullOrEmpty(jenkinsUser)) {
             return jenkinsUser;
         }
-        if (null == credentialsId
+        if (Strings.isNullOrEmpty(credentialsId)
                 || null == SSHLauncher.lookupSystemCredentials(credentialsId)
                 || null == Util.fixEmptyAndTrim(SSHLauncher.lookupSystemCredentials(credentialsId).getUsername())) {
             return "jenkins";
@@ -226,7 +226,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     }
 
     public String getJenkinsPrivateKey() {
-        if (null == credentialsId) {
+        if (Strings.isNullOrEmpty(credentialsId)) {
             return getCloud().getGlobalPrivateKey();
         }
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
@@ -251,7 +251,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (!Strings.isNullOrEmpty(vmUser)) {
             return vmUser;
         }
-        if (null == adminCredentialsId
+        if (Strings.isNullOrEmpty(adminCredentialsId)
                 || null == SSHLauncher.lookupSystemCredentials(adminCredentialsId)
                 || null == Util.fixEmptyAndTrim(SSHLauncher.lookupSystemCredentials(adminCredentialsId).getUsername())) {
             return "root";
@@ -834,11 +834,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         try {
             final String description = "JClouds cloud " + getCloud().name + "." + name + " - auto-migrated";
             String ju = getJenkinsUser();
-            if (null == getCredentialsId() && null != ju && !ju.isEmpty()) {
+            if (Strings.isNullOrEmpty(getCredentialsId()) && !Strings.isNullOrEmpty(ju)) {
                 setCredentialsId(convertJenkinsUser(ju, description, getCloud().getGlobalPrivateKey()));
                 jenkinsUser = null; // Not used anymore;
             }
-            if (null == getAdminCredentialsId()) {
+            if (Strings.isNullOrEmpty(getAdminCredentialsId())) {
                 StandardUsernameCredentials u = null;
                 String au = getAdminUser();
                 if (Strings.isNullOrEmpty(vmPassword)) {
