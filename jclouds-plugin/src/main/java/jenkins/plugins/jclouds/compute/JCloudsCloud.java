@@ -2,15 +2,12 @@ package jenkins.plugins.jclouds.compute;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -46,7 +43,6 @@ import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
-import org.jclouds.ssh.SshKeys;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
@@ -82,7 +78,6 @@ import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 
 import hudson.util.XStream2;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
-import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 
 /**
  * The JClouds version of the Jenkins Cloud.

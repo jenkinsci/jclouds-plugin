@@ -13,9 +13,11 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
     public void testConfigRoundtrip() throws Exception {
         String name = "testSlave";
         JCloudsSlaveTemplate originalTemplate = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId", 1, 512, "osFamily", "osVersion", "locationId",
-                "jclouds-slave-type1 jclouds-type2", "Description", "initScript", null, "1", false, null, null, true,
-                "jvmOptions", false, null, false,
-                false, 5, 0, true, false, 0, "jenkins", true, "network1_id,network2_id", "security_group1,security_group2", null);
+                "jclouds-slave-type1 jclouds-type2", "Description", "initScript", null /* userData */ , "1" /* numExecutors */, false /* stopOnTerminate */,
+                "jvmOptions", false /* preExistingJenkinsUser */, null /* fsRoot */, false /* allowSudo */, false /* installPrivateKey */,
+                5 /* overrideRetentionTime */, 0 /* spoolDelayMs */, true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
+                null /* keyPairName */, true /* assignPublicIp */, "network1_id,network2_id", "security_group1,security_group2", null /* credentialsId */,
+                null /* adminCredentialsId */);
 
         List<JCloudsSlaveTemplate> templates = new ArrayList<JCloudsSlaveTemplate>();
         templates.add(originalTemplate);
