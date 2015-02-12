@@ -62,7 +62,6 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-
 import au.com.bytecode.opencsv.CSVReader;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.base.Supplier;
@@ -368,7 +367,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             if (null != c) {
                 if (c instanceof StandardUsernamePasswordCredentials) {
                     String password = ((StandardUsernamePasswordCredentials)c).getPassword().toString();
-                    LOGGER.info("password=" + password);
                     LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(password).build();
                     options.overrideLoginCredentials(lc);
                 } else {
