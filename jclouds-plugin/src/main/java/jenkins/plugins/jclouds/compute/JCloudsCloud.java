@@ -2,15 +2,12 @@ package jenkins.plugins.jclouds.compute;
 
 import javax.annotation.Nullable;
 import javax.servlet.ServletException;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -23,6 +20,7 @@ import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Hudson;
+import hudson.model.ItemGroup;
 import hudson.model.Label;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
@@ -45,9 +43,9 @@ import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
-import org.jclouds.ssh.SshKeys;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -59,6 +57,27 @@ import shaded.com.google.common.collect.ImmutableSet.Builder;
 import shaded.com.google.common.collect.ImmutableSortedSet;
 import shaded.com.google.common.collect.Iterables;
 import shaded.com.google.common.io.Closeables;
+
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.cloudbees.plugins.credentials.domains.Domain;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
+import org.acegisecurity.context.SecurityContext;
+import hudson.security.ACL;
+import com.cloudbees.plugins.credentials.CredentialsStore;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import org.acegisecurity.context.SecurityContextHolder;
+import hudson.security.AccessControlled;
+
+import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
+
+import hudson.util.XStream2;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
 
 /**
  * The JClouds version of the Jenkins Cloud.
@@ -85,6 +104,8 @@ public class JCloudsCloud extends Cloud {
     private transient ComputeService compute;
     public final String zones;
 
+    private String cloudGlobalKeyId;
+
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
         for (Cloud c : Hudson.getInstance().clouds) {
@@ -100,17 +121,48 @@ public class JCloudsCloud extends Cloud {
         return (JCloudsCloud) Hudson.getInstance().clouds.getByName(name);
     }
 
+    public String getCloudGlobalKeyId() {
+        return cloudGlobalKeyId;
+    }
+
+    public void setCloudGlobalKeyId(final String value) {
+        cloudGlobalKeyId = value;
+    }
+
+    public String getGlobalPrivateKey() {
+        if (Strings.isNullOrEmpty(cloudGlobalKeyId)) {
+            return "";
+        }
+        SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, null),
+                CredentialsMatchers.withId(cloudGlobalKeyId));
+        if (null != supk) {
+            return supk.getPrivateKey();
+        }
+        return "";
+    }
+
+    public String getGlobalPublicKey() {
+        try {
+            return SSHPublicKeyExtractor.extract(getGlobalPrivateKey(), null);
+        } catch (IOException e) {
+            LOGGER.warning(String.format("Error while extracting public key: %s", e));
+        }
+        return "";
+    }
+
     @DataBoundConstructor
-    public JCloudsCloud(final String profile, final String providerName, final String identity, final String credential, final String privateKey,
-                        final String publicKey, final String endPointUrl, final int instanceCap, final int retentionTime, final int scriptTimeout, final int startTimeout,
-                        final String zones, final List<JCloudsSlaveTemplate> templates) {
+    public JCloudsCloud(final String profile, final String providerName, final String identity, final String credential, final String cloudGlobalKeyId,
+            final String endPointUrl, final int instanceCap, final int retentionTime, final int scriptTimeout, final int startTimeout,
+            final String zones, final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
         this.providerName = Util.fixEmptyAndTrim(providerName);
         this.identity = Util.fixEmptyAndTrim(identity);
         this.credential = Secret.fromString(credential);
-        this.privateKey = privateKey;
-        this.publicKey = publicKey;
+        this.privateKey = null; // No longer used
+        this.publicKey = null; // No longer used
+        this.cloudGlobalKeyId = cloudGlobalKeyId;
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
         this.retentionTime = retentionTime;
@@ -122,8 +174,9 @@ public class JCloudsCloud extends Cloud {
     }
 
     protected Object readResolve() {
-        for (JCloudsSlaveTemplate template : templates)
+        for (JCloudsSlaveTemplate template : templates) {
             template.cloud = this;
+        }
         return this;
     }
 
@@ -156,7 +209,7 @@ public class JCloudsCloud extends Cloud {
         // correct the classloader so that extensions can be found
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
         return ContextBuilder.newBuilder(providerName).credentials(identity, credential).overrides(overrides).modules(MODULES)
-                .buildView(ComputeServiceContext.class);
+            .buildView(ComputeServiceContext.class);
     }
 
     public ComputeService getCompute() {
@@ -202,14 +255,14 @@ public class JCloudsCloud extends Cloud {
                     Jenkins.getInstance().addNode(jcloudsSlave);
 
                     /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
-                    without the connect operation, NodeProvisioner may decide that it still wants one more instance,
-                    because it sees that (1) all the slaves are offline (because it's still being launched) and (2)
-                    there's no capacity provisioned yet. Deferring the completion of provisioning until the launch goes
-                    successful prevents this problem.  */
+                       without the connect operation, NodeProvisioner may decide that it still wants one more instance,
+                       because it sees that (1) all the slaves are offline (because it's still being launched) and (2)
+                       there's no capacity provisioned yet. Deferring the completion of provisioning until the launch goes
+                       successful prevents this problem.  */
                     ensureLaunched(jcloudsSlave);
                     return jcloudsSlave;
                 }
-            }), Util.tryParseNumber(template.numExecutors, 1).intValue()));
+            }), template.getNumExecutors()));
             excessWorkload -= template.getNumExecutors();
         }
         return plannedNodeList;
@@ -272,27 +325,27 @@ public class JCloudsCloud extends Cloud {
      * @throws Descriptor.FormException
      */
     public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String name) throws ServletException, IOException,
-            Descriptor.FormException {
-        checkPermission(PROVISION);
-        if (name == null) {
-            sendError("The slave template name query parameter is missing", req, rsp);
-            return;
-        }
-        JCloudsSlaveTemplate t = getTemplate(name);
-        if (t == null) {
-            sendError("No such slave template with name : " + name, req, rsp);
-            return;
-        }
+           Descriptor.FormException {
+               checkPermission(PROVISION);
+               if (name == null) {
+                   sendError("The slave template name query parameter is missing", req, rsp);
+                   return;
+               }
+               JCloudsSlaveTemplate t = getTemplate(name);
+               if (t == null) {
+                   sendError("No such slave template with name : " + name, req, rsp);
+                   return;
+               }
 
-        if (getRunningNodesCount() < instanceCap) {
-            StringWriter sw = new StringWriter();
-            StreamTaskListener listener = new StreamTaskListener(sw);
-            JCloudsSlave node = t.provisionSlave(listener);
-            Hudson.getInstance().addNode(node);
-            rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
-        } else {
-            sendError("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + name, req, rsp);
-        }
+               if (getRunningNodesCount() < instanceCap) {
+                   StringWriter sw = new StringWriter();
+                   StreamTaskListener listener = new StreamTaskListener(sw);
+                   JCloudsSlave node = t.provisionSlave(listener);
+                   Hudson.getInstance().addNode(node);
+                   rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
+               } else {
+                   sendError("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + name, req, rsp);
+               }
     }
 
     /**
@@ -308,7 +361,7 @@ public class JCloudsCloud extends Cloud {
                 if (getTemplate(nodeGroup) != null && !((NodeMetadata) cm).getStatus().equals(NodeMetadata.Status.SUSPENDED)
                         && !((NodeMetadata) cm).getStatus().equals(NodeMetadata.Status.TERMINATED)) {
                     nodeCount++;
-                }
+                        }
             }
         }
         return nodeCount;
@@ -326,13 +379,13 @@ public class JCloudsCloud extends Cloud {
         }
 
         public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
-                                               @QueryParameter String privateKey, @QueryParameter String endPointUrl, @QueryParameter String zones)  throws IOException {
+                @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones)  throws IOException {
             if (identity == null)
-                return FormValidation.error("Invalid (AccessId).");
+               return FormValidation.error("Invalid (AccessId).");
             if (credential == null)
-                return FormValidation.error("Invalid credential (secret key).");
-            if (privateKey == null)
-                return FormValidation.error("Private key is not specified. Click 'Generate Key' to generate one.");
+               return FormValidation.error("Invalid credential (secret key).");
+            //if (privateKey == null)
+            //   return FormValidation.error("Private key is not specified. Click 'Generate Key' to generate one.");
 
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
@@ -360,32 +413,6 @@ public class JCloudsCloud extends Cloud {
             return result;
         }
 
-        public FormValidation doGenerateKeyPair(StaplerResponse rsp, String identity, String credential) throws IOException, ServletException {
-            Map<String, String> keyPair = SshKeys.generate();
-            rsp.addHeader("script", "findPreviousFormItem(button,'privateKey').value='" + keyPair.get("private").replace("\n", "\\n") + "';"
-                    + "findPreviousFormItem(button,'publicKey').value='" + keyPair.get("public").replace("\n", "\\n") + "';");
-            return FormValidation.ok("Successfully generated private Key!");
-        }
-
-        public FormValidation doCheckPrivateKey(@QueryParameter String value) throws IOException, ServletException {
-            boolean hasStart = false, hasEnd = false;
-            BufferedReader br = new BufferedReader(new StringReader(value));
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.equals("-----BEGIN RSA PRIVATE KEY-----"))
-                    hasStart = true;
-                if (line.equals("-----END RSA PRIVATE KEY-----"))
-                    hasEnd = true;
-            }
-            if (!hasStart)
-                return FormValidation.error("Please make sure that the private key starts with '-----BEGIN RSA PRIVATE KEY-----'");
-            if (!hasEnd)
-                return FormValidation.error("The private key is missing the trailing 'END RSA PRIVATE KEY' marker. Copy&paste error?");
-            if (SshKeys.fingerprintPrivateKey(value) == null)
-                return FormValidation.error("Invalid private key, please check again or click on 'Generate Key' to generate a new key");
-            return FormValidation.ok();
-        }
-
         public ListBoxModel doFillProviderNameItems() {
             ListBoxModel m = new ListBoxModel();
 
@@ -402,6 +429,22 @@ public class JCloudsCloud extends Cloud {
                 m.add(supportedProvider, supportedProvider);
             }
             return m;
+        }
+
+        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+                return new ListBoxModel();
+            }
+            return new StandardUsernameListBoxModel().withAll(
+                CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, context, ACL.SYSTEM, null));
+        }
+
+        public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+                return new ListBoxModel();
+            }
+            return new StandardUsernameListBoxModel().withAll(
+                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, context, ACL.SYSTEM, null));
         }
 
         public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
@@ -475,4 +518,79 @@ public class JCloudsCloud extends Cloud {
             return FormValidation.ok();
         }
     }
+
+    public static class ConverterImpl extends XStream2.PassthruConverter<JCloudsCloud> {
+
+        static final Logger LOGGER = Logger.getLogger(ConverterImpl.class.getName());
+
+        public ConverterImpl(XStream2 xstream) {
+            super(xstream);
+        }
+
+        @Override protected void callback(JCloudsCloud c, UnmarshallingContext context) {
+            if (Strings.isNullOrEmpty(c.getCloudGlobalKeyId()) && !Strings.isNullOrEmpty(c.privateKey)) {
+                c.setCloudGlobalKeyId(convertCloudPrivateKey(c.name, c.privateKey));
+            }
+            for (JCloudsSlaveTemplate t : c.templates) {
+                t.upgrade();
+            }
+        }
+
+        /**
+         * Converts the old identity/credential pair into a new credential-plugin record.
+         * @param credential The name of the JCloudsCloud.
+         * @param identity The old username.
+         * @param credential The old password.
+         * @return The Id of the newly created  credential-plugin record.
+         */
+        private String convertCloudCredentials(final String name, final String identity, final String credential) {
+            final String username = Util.fixEmptyAndTrim(identity);
+            final String password = Secret.fromString(credential).getPlainText();
+            final String description = "Converted cloud credentials for \"" + name + "\"";
+            StandardUsernameCredentials u =
+                new UsernamePasswordCredentialsImpl(CredentialsScope.SYSTEM, null, description, username, password);
+            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
+            try {
+                CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
+                try {
+                    s.addCredentials(Domain.global(), u);
+                    return u.getId();
+                } catch (IOException e) {
+                    // ignore
+                }
+            } finally {
+                SecurityContextHolder.setContext(previousContext);
+            }
+            return null;
+        }
+
+        /**
+         * Converts the old privateKey into a new ssh-credential-plugin record.
+         * The name of this cloud instance is used as username.
+         * @param credential The name of the JCloudsCloud.
+         * @param privateKey The old privateKey.
+         * @return The Id of the newly created  ssh-credential-plugin record.
+         */
+        public String convertCloudPrivateKey(final String name, final String privateKey) {
+            final String description = "JClouds cloud " + name + " - auto-migrated";
+            StandardUsernameCredentials u =
+                new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, "Global key",
+                        new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
+            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
+            try {
+                CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
+                try {
+                    s.addCredentials(Domain.global(), u);
+                    return u.getId();
+                } catch (IOException e) {
+                    // ignore
+                }
+            } finally {
+                SecurityContextHolder.setContext(previousContext);
+            }
+            return null;
+        }
+
+    }
+
 }

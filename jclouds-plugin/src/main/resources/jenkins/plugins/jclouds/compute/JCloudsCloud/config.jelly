@@ -1,4 +1,4 @@
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:st="jelly:stapler">
     <f:entry title="Profile" field="profile">
         <f:textbox/>
     </f:entry>
@@ -20,11 +20,8 @@
     <f:entry title="Credential" field="credential">
         <f:password/>
     </f:entry>
-    <f:entry title="RSA Private Key" field="privateKey">
-        <f:textarea/>
-    </f:entry>
-    <f:entry title="Public Key" field="publicKey">
-        <f:textarea/>
+    <f:entry title="${%Cloud RSA key}" field="cloudGlobalKeyId">
+        <c:select/>
     </f:entry>
     <f:advanced>
         <f:entry title="Init Script Timeout" field="scriptTimeout">
@@ -42,6 +39,5 @@
             <st:include page="config.jelly" class="${descriptor.clazz}"/>
         </f:repeatable>
     </f:entry>
-    <f:validateButton title="${%Generate Key Pair}" progress="${%Generate...}" method="generateKeyPair" with="identity,credential"/>
-    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,privateKey,endPointUrl"/>
+    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,cloudGlobalKeyId,endPointUrl"/>
 </j:jelly>
