@@ -162,7 +162,7 @@ public class JCloudsCloud extends Cloud {
         this.credential = Secret.fromString(credential);
         this.privateKey = null; // No longer used
         this.publicKey = null; // No longer used
-        this.cloudGlobalKeyId = cloudGlobalKeyId;
+        this.cloudGlobalKeyId = Util.fixEmptyAndTrim(cloudGlobalKeyId);
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
         this.retentionTime = retentionTime;
@@ -413,6 +413,10 @@ public class JCloudsCloud extends Cloud {
             return result;
         }
 
+        public FormValidation doCheckCloudGlobalKeyId(@QueryParameter String value) {
+            return FormValidation.validateRequired(value);
+        }
+
         public ListBoxModel doFillProviderNameItems() {
             ListBoxModel m = new ListBoxModel();
 
@@ -429,14 +433,6 @@ public class JCloudsCloud extends Cloud {
                 m.add(supportedProvider, supportedProvider);
             }
             return m;
-        }
-
-        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
-                return new ListBoxModel();
-            }
-            return new StandardUsernameListBoxModel().withAll(
-                CredentialsProvider.lookupCredentials(StandardUsernamePasswordCredentials.class, context, ACL.SYSTEM, null));
         }
 
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context) {
