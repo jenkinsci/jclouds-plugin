@@ -113,11 +113,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final String userData;
     public final String numExecutors;
     public final boolean stopOnTerminate;
-    private String vmUser;
-    private String vmPassword;
+    private String vmUser;  // Not used anymore, but retained for backward compatibility.
+    private String vmPassword; // Not used anymore, but retained for backward compatibility.
     private final String jvmOptions;
     public final boolean preExistingJenkinsUser;
-    private String jenkinsUser;
+    private String jenkinsUser; // Not used anymore, but retained for backward compatibility.
     private final String fsRoot;
     public final boolean allowSudo;
     public final boolean installPrivateKey;
@@ -193,8 +193,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.assignPublicIp = assignPublicIp;
         this.networks = networks;
         this.securityGroups = securityGroups;
-        this.credentialsId = credentialsId;
-        this.adminCredentialsId = adminCredentialsId;
+        this.credentialsId = Util.fixEmptyAndTrim(credentialsId);
+        this.adminCredentialsId = Util.fixEmptyAndTrim(adminCredentialsId);
         readResolve();
         this.vmPassword = null; // Not used anymore, but retained for backward compatibility.
         this.vmUser = null; // Not used anymore, but retained for backward compatibility.
@@ -840,7 +840,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             String ju = getJenkinsUser();
             if (Strings.isNullOrEmpty(getCredentialsId()) && !Strings.isNullOrEmpty(ju)) {
                 setCredentialsId(convertJenkinsUser(ju, description, getCloud().getGlobalPrivateKey()));
-                jenkinsUser = null; // Not used anymore;
+                jenkinsUser = null; // Not used anymore, but retained for backward compatibility.
             }
             if (Strings.isNullOrEmpty(getAdminCredentialsId())) {
                 StandardUsernameCredentials u = null;

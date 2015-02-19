@@ -44,6 +44,8 @@ import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.sshj.config.SshjSshClientModule;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
@@ -92,8 +94,8 @@ public class JCloudsCloud extends Cloud {
     public final Secret credential;
     public final String providerName;
 
-    public final String privateKey;
-    public final String publicKey;
+    private final String privateKey;  // Not used anymore, but retained for backward compatibility.
+    private final String publicKey;  // Not used anymore, but retained for backward compatibility.
     public final String endPointUrl;
     public final String profile;
     private final int retentionTime;
@@ -160,8 +162,8 @@ public class JCloudsCloud extends Cloud {
         this.providerName = Util.fixEmptyAndTrim(providerName);
         this.identity = Util.fixEmptyAndTrim(identity);
         this.credential = Secret.fromString(credential);
-        this.privateKey = null; // No longer used
-        this.publicKey = null; // No longer used
+        this.privateKey = null; // Not used anymore, but retained for backward compatibility.
+        this.publicKey = null; // Not used anymore, but retained for backward compatibility.
         this.cloudGlobalKeyId = Util.fixEmptyAndTrim(cloudGlobalKeyId);
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
@@ -384,8 +386,9 @@ public class JCloudsCloud extends Cloud {
                return FormValidation.error("Invalid (AccessId).");
             if (credential == null)
                return FormValidation.error("Invalid credential (secret key).");
-            //if (privateKey == null)
-            //   return FormValidation.error("Private key is not specified. Click 'Generate Key' to generate one.");
+            if (null == Util.fixEmptyAndTrim(cloudGlobalKeyId)) {
+               return FormValidation.error("Cloud RSA key is not specified.");
+            }
 
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
@@ -515,6 +518,7 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
+    @Restricted(DoNotUse.class)
     public static class ConverterImpl extends XStream2.PassthruConverter<JCloudsCloud> {
 
         static final Logger LOGGER = Logger.getLogger(ConverterImpl.class.getName());
