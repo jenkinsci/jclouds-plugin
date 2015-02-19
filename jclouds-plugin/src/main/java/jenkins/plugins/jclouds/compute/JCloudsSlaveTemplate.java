@@ -113,11 +113,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final String userData;
     public final String numExecutors;
     public final boolean stopOnTerminate;
-    private String vmUser;  // Not used anymore, but retained for backward compatibility.
-    private String vmPassword; // Not used anymore, but retained for backward compatibility.
+    private transient String vmUser;  // Not used anymore, but retained for backward compatibility.
+    private transient String vmPassword; // Not used anymore, but retained for backward compatibility.
     private final String jvmOptions;
     public final boolean preExistingJenkinsUser;
-    private String jenkinsUser; // Not used anymore, but retained for backward compatibility.
+    private transient String jenkinsUser; // Not used anymore, but retained for backward compatibility.
     private final String fsRoot;
     public final boolean allowSudo;
     public final boolean installPrivateKey;

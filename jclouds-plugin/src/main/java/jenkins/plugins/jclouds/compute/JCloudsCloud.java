@@ -94,8 +94,8 @@ public class JCloudsCloud extends Cloud {
     public final Secret credential;
     public final String providerName;
 
-    private final String privateKey;  // Not used anymore, but retained for backward compatibility.
-    private final String publicKey;  // Not used anymore, but retained for backward compatibility.
+    private final transient String privateKey;  // Not used anymore, but retained for backward compatibility.
+    private final transient String publicKey;  // Not used anymore, but retained for backward compatibility.
     public final String endPointUrl;
     public final String profile;
     private final int retentionTime;
