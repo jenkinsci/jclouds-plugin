@@ -537,41 +537,13 @@ public class JCloudsCloud extends Cloud {
         }
 
         /**
-         * Converts the old identity/credential pair into a new credential-plugin record.
-         * @param credential The name of the JCloudsCloud.
-         * @param identity The old username.
-         * @param credential The old password.
-         * @return The Id of the newly created  credential-plugin record.
-         */
-        private String convertCloudCredentials(final String name, final String identity, final String credential) {
-            final String username = Util.fixEmptyAndTrim(identity);
-            final String password = Secret.fromString(credential).getPlainText();
-            final String description = "Converted cloud credentials for \"" + name + "\"";
-            StandardUsernameCredentials u =
-                new UsernamePasswordCredentialsImpl(CredentialsScope.SYSTEM, null, description, username, password);
-            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
-            try {
-                CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
-                try {
-                    s.addCredentials(Domain.global(), u);
-                    return u.getId();
-                } catch (IOException e) {
-                    // ignore
-                }
-            } finally {
-                SecurityContextHolder.setContext(previousContext);
-            }
-            return null;
-        }
-
-        /**
          * Converts the old privateKey into a new ssh-credential-plugin record.
          * The name of this cloud instance is used as username.
-         * @param credential The name of the JCloudsCloud.
+         * @param name The name of the JCloudsCloud.
          * @param privateKey The old privateKey.
          * @return The Id of the newly created  ssh-credential-plugin record.
          */
-        public String convertCloudPrivateKey(final String name, final String privateKey) {
+        private String convertCloudPrivateKey(final String name, final String privateKey) {
             final String description = "JClouds cloud " + name + " - auto-migrated";
             StandardUsernameCredentials u =
                 new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, "Global key",
