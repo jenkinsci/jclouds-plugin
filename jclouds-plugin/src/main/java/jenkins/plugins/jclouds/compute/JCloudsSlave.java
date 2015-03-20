@@ -41,12 +41,13 @@ public class JCloudsSlave extends AbstractCloudSlave {
     private final boolean authSudo;
     private final String jvmOptions;
     private final String credentialsId;
+    private final int waitPhoneHomeCheckInterval;
 
     @DataBoundConstructor
     @SuppressWarnings("rawtypes")
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
                         ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-                        int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId) throws Descriptor.FormException,
+                        int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId, final int waitPhoneHomeCheckInterval) throws Descriptor.FormException,
             IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
@@ -59,6 +60,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.jvmOptions = jvmOptions;
         this.waitPhoneHome = waitPhoneHome;
         this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
+        this.waitPhoneHomeCheckInterval = waitPhoneHomeCheckInterval;
         this.credentialsId = credentialsId;
     }
 
@@ -77,17 +79,18 @@ public class JCloudsSlave extends AbstractCloudSlave {
      * @param waitPhoneHome         - if {@code true}, delay initial SSH connect until slave has "phoned home" back to jenkins.
      * @param waitPhoneHomeTimeout  - Timeout in minutes util giving up waiting for the "phone home" POST.
      * @param credentialsId         - Id of the credentials in Jenkin's global credentials database.
+     * @param waitPhoneHomeCheckInterval - Interval in seconds between checking for "phone home" POST.
      * @throws IOException
      * @throws Descriptor.FormException
      */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
             final String description, final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime,
-            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId) throws IOException, Descriptor.FormException {
+            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId, final int waitPhoneHomeCheckInterval) throws IOException, Descriptor.FormException {
         this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString,
                 new JCloudsLauncher(), new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
                 stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
                 metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(),
-                metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId);
+                metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId, waitPhoneHomeCheckInterval);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
@@ -177,6 +180,13 @@ public class JCloudsSlave extends AbstractCloudSlave {
         return 0;
     }
 
+    public long getWaitPhoneHomeCheckIntervalMs() {
+        if (0 < waitPhoneHomeCheckInterval) {
+            return waitPhoneHomeCheckInterval * 1000;
+        }
+        return 30000;
+    }
+
     public String getCredentialsId() {
         return credentialsId;
     }
@@ -243,7 +253,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
                 } else {
                     LOGGER.info(msg);
                 }
-                Thread.sleep(30000);
+                Thread.sleep(getWaitPhoneHomeCheckIntervalMs());
             } else {
                 break;
             }

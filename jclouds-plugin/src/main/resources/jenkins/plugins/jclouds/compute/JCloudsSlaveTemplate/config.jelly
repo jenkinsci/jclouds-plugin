@@ -152,6 +152,10 @@
             <f:textbox default="15"/>
         </f:entry>
 
+      <f:entry title="${%Phone home check interval}" field="waitPhoneHomeCheckInterval">
+        <f:number clazz="positive-number" min="1" step="1" default="30"/>
+      </f:entry>
+
       <f:section title="Open Stack Options">
         <f:entry title="Assign Floating IP" field="assignFloatingIp">
           <f:checkbox />
