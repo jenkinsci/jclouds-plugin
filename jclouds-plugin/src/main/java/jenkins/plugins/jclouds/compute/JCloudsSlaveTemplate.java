@@ -69,6 +69,8 @@ import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 
 import com.trilead.ssh2.Connection;
+import java.net.URI;
+import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
 
 /**
  * @author Vijay Kiran
@@ -259,7 +261,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
         if (!Strings.isNullOrEmpty(networks)) {
             LOGGER.info("Setting networks to " + networks);
-            options.networks(csvToArray(networks));
+            
+            if (options instanceof GoogleComputeEngineTemplateOptions) {
+                try {
+                    options.as(GoogleComputeEngineTemplateOptions.class)
+                        .network(new URI(networks));
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "Unable to set networks to " + networks, e);
+                }
+            } else {
+                options.networks(csvToArray(networks));
+            }
         }
 
         if (!Strings.isNullOrEmpty(securityGroups)) {
