@@ -12,7 +12,6 @@
     <name>Jenkins JClouds plugin parent POM</name>
     <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/JClouds+Plugin</url>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
@@ -30,7 +29,7 @@
         <test.jenkins.blobstore.build-version />
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-        <jclouds.version>2.0.0-SNAPSHOT</jclouds.version>
+        <jclouds.version>1.8.1</jclouds.version>
         <guava.version>18.0</guava.version>
         <jsch.version>0.1.48</jsch.version>
         <stapler.version>1.207</stapler.version>
@@ -131,14 +130,6 @@
         <repository>
             <id>repo.jenkins-ci.org</id>
             <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-
-        <repository>
-            <id>jclouds-snapshots</id>
-            <url>https://repository.apache.org/content/repositories/snapshots</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
         </repository>
     </repositories>
     <pluginRepositories>
