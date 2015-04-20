@@ -2,7 +2,6 @@ package jenkins.plugins.jclouds.compute;
 
 import java.io.IOException;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import shaded.com.google.common.collect.ImmutableList;
 import shaded.com.google.common.util.concurrent.Futures;
@@ -18,10 +17,8 @@ import jenkins.model.Jenkins;
 @Extension
 public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 
-    private static final Logger LOGGER = Logger.getLogger(JCloudsCleanupThread.class.getName());
-
     public JCloudsCleanupThread() {
-        super(JCloudsCleanupThread.class.getName());
+        super("JClouds slave cleanup");
     }
 
     @Override
@@ -37,11 +34,8 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
         return Jenkins.getInstance().getExtensionList(AsyncPeriodicWork.class).get(JCloudsCleanupThread.class);
     }
 
-
     @Override
     protected void execute(TaskListener listener) {
-        LOGGER.info("Executing JCloudsCleanupThread");
-
         final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder = ImmutableList.<ListenableFuture<?>>builder();
         ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
         final ImmutableList.Builder<JCloudsComputer> computersToDeleteBuilder = ImmutableList.<JCloudsComputer>builder();
@@ -53,13 +47,13 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
                     computersToDeleteBuilder.add(comp);
                     ListenableFuture<?> f = executor.submit(new Runnable() {
                         public void run() {
-                            LOGGER.log(Level.INFO, "Deleting pending node " + comp.getName());
+                            logger.log(Level.INFO, "Deleting pending node " + comp.getName());
                             try {
                                 comp.getNode().terminate();
                             } catch (IOException e) {
-                                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
                             } catch (InterruptedException e) {
-                                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
                             }
                         }
                     });
@@ -74,9 +68,9 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
             try {
                 c.deleteSlave();
             } catch (IOException e) {
-                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
             } catch (InterruptedException e) {
-                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
             }
 
         }
