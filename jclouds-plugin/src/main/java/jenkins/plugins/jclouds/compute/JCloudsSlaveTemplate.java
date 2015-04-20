@@ -496,7 +496,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
 
             try {
-                final Set<? extends Image> images = listImages(providerName, identity, credential, endPointUrl, zones);
+                final Set<? extends Image> images = listImages(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
                 if (images != null) {
                     for (final Image image : images) {
                         if (image.getName().matches(imageNameRegex)) {

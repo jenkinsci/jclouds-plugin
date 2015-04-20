@@ -171,7 +171,7 @@ public class JCloudsCloud extends Cloud {
             if (startTimeout > 0) {
                 overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
             }
-            this.compute = ctx(this.providerName, this.identity, Secret.toString(this.credential), overrides, this.zones).getComputeService();
+            this.compute = ctx(this.providerName, this.identity, Secret.toString(credential), overrides, this.zones).getComputeService();
         }
         return compute;
     }
