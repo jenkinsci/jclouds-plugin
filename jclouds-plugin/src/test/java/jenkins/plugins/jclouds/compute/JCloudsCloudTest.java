@@ -37,11 +37,11 @@ public class JCloudsCloudTest {
         WebAssert.assertInputPresent(page2, "_.profile");
         WebAssert.assertInputPresent(page2, "_.endPointUrl");
         WebAssert.assertInputPresent(page2, "_.identity");
-        WebAssert.assertInputPresent(page2, "_.credential");
         WebAssert.assertInputPresent(page2, "_.instanceCap");
         WebAssert.assertInputPresent(page2, "_.retentionTime");
 
         HtmlForm configForm2 = page2.getFormByName("config");
+        assertNotNull(configForm2.getTextAreaByName("_.credential"));
         assertNotNull(configForm2.getTextAreaByName("_.privateKey"));
         assertNotNull(configForm2.getTextAreaByName("_.publicKey"));
         HtmlButton generateKeyPairButton = configForm2.getButtonByCaption("Generate Key Pair");

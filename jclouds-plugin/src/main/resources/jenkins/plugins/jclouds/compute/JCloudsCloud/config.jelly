@@ -18,7 +18,7 @@
         <f:textbox/>
     </f:entry>
     <f:entry title="Credential" field="credential">
-        <f:password/>
+        <f:textarea/>
     </f:entry>
     <f:entry title="RSA Private Key" field="privateKey">
         <f:textarea/>
