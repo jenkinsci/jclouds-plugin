@@ -60,6 +60,8 @@ import shaded.com.google.common.collect.ImmutableSortedSet;
 import shaded.com.google.common.collect.Iterables;
 import shaded.com.google.common.io.Closeables;
 
+import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
+
 /**
  * The JClouds version of the Jenkins Cloud.
  *
@@ -128,10 +130,11 @@ public class JCloudsCloud extends Cloud {
     }
 
     /**
-     * Get the retention time, defaulting to 30 minutes.
+     * Get the retention time in minutes or default value from CloudInstanceDefaults if it is zero.
+     * @see CloudInstanceDefaults#DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
      */
     public int getRetentionTime() {
-        return retentionTime == 0 ? 30 : retentionTime;
+        return retentionTime == 0 ? DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : retentionTime;
     }
 
     static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new JDKLoggingModule() {

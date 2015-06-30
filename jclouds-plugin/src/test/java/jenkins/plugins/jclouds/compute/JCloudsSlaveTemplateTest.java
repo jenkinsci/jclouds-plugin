@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.jvnet.hudson.test.HudsonTestCase;
 
+import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
+
 /**
  * @author Vijay Kiran
  */
@@ -20,7 +22,7 @@ public class JCloudsSlaveTemplateTest extends HudsonTestCase {
         List<JCloudsSlaveTemplate> templates = new ArrayList<JCloudsSlaveTemplate>();
         templates.add(originalTemplate);
 
-        JCloudsCloud originalCloud = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey", "endPointUrl", 1, 30,
+        JCloudsCloud originalCloud = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey", "endPointUrl", 1, DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
                 600 * 1000, 600 * 1000, null, templates);
 
         hudson.clouds.add(originalCloud);

@@ -20,6 +20,8 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.LoginCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
+
 /**
  * Jenkins Slave node - managed by JClouds.
  *
@@ -134,15 +136,19 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     /**
      * Get the retention time for this slave, defaulting to the parent cloud's if not set.
+     * Sometime parent cloud cannot be determined (returns Null as I see), in which case this method will
+     * return default value set in CloudInstanceDefaults.
      *
      * @return overrideTime
+     * @see CloudInstanceDefaults#DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
      */
     public int getRetentionTime() {
         if (overrideRetentionTime > 0) {
             return overrideRetentionTime;
-        } else {
-            return JCloudsCloud.getByName(cloudName).getRetentionTime();
         }
+
+        JCloudsCloud cloud = JCloudsCloud.getByName(cloudName);
+        return cloud == null ? DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : cloud.getRetentionTime();
     }
 
     /**
