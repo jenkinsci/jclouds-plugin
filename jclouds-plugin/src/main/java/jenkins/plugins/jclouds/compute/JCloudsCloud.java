@@ -16,6 +16,8 @@ import java.util.logging.Logger;
 import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
+import hudson.cli.declarative.CLIMethod;
+import hudson.cli.declarative.CLIResolver;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
@@ -26,6 +28,7 @@ import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
 import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.util.EditDistance;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import hudson.util.Secret;
@@ -44,13 +47,19 @@ import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.sshj.config.SshjSshClientModule;
+
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.base.Strings;
@@ -316,6 +325,14 @@ public class JCloudsCloud extends Cloud {
         return null;
     }
 
+    private JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
+        final StringWriter sw = new StringWriter();
+        final StreamTaskListener listener = new StreamTaskListener(sw);
+        JCloudsSlave node = t.provisionSlave(listener);
+        Hudson.getInstance().addNode(node);
+        return node;
+    }
+
     /**
      * Provisions a new node manually (by clicking a button in the computer list)
      *
@@ -340,14 +357,54 @@ public class JCloudsCloud extends Cloud {
                }
 
                if (getRunningNodesCount() < instanceCap) {
-                   StringWriter sw = new StringWriter();
-                   StreamTaskListener listener = new StreamTaskListener(sw);
-                   JCloudsSlave node = t.provisionSlave(listener);
-                   Hudson.getInstance().addNode(node);
+                   JCloudsSlave node = doProvisionFromTemplate(t);
                    rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
                } else {
                    sendError("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + name, req, rsp);
                }
+    }
+
+    /**
+     * Provisions a new node manually via CLI
+     * @param t The template to be provisioned.
+     */
+    @CLIMethod(name="node-provision")
+    public void doCliProvision(@Argument(required = true, metaVar = "NAME", usage = "Name of template to use for provisioning") final String name) throws ExecutionException, InterruptedException, CmdLineException, IOException {
+        checkPermission(PROVISION);
+        final JCloudsSlaveTemplate tpl = getTemplate(name);
+        if (null == tpl) {
+            final List<String> names = new ArrayList<>();
+            for (final JCloudsSlaveTemplate t : templates) {
+                names.add(t.name);
+            }
+            throw new CmdLineException(null, Messages.JClouds_NoSuchTemplateExists(name, EditDistance.findNearest(name, names)));
+        }
+        if (getRunningNodesCount() < instanceCap) {
+            doProvisionFromTemplate(tpl);
+        } else {
+            throw new CmdLineException("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + name);
+        }
+    }
+
+    @CLIResolver
+    public static JCloudsCloud resolveForCLI(
+            @Argument(required = true, metaVar = "CLOUD", usage = "Name of cloud to use for provisioning") final String name) throws CmdLineException {
+        final Jenkins.CloudList cl = Jenkins.getInstance().clouds;
+        final Cloud c = cl.getByName(name);
+        if (null != c && c instanceof JCloudsCloud) {
+            return (JCloudsCloud)c;
+        }
+        final List<String> names = new ArrayList<>();
+        for (final Cloud cloud : Jenkins.getInstance().clouds) {
+            if (cloud instanceof JCloudsCloud) {
+                String n = ((JCloudsCloud)cloud).profile;
+                if (n.length() > 0) {
+                    names.add(n);
+                }
+            }
+            throw new CmdLineException(null, Messages.JClouds_NoSuchCloudExists(name, EditDistance.findNearest(name, names)));
+        }
+        return null;
     }
 
     /**
