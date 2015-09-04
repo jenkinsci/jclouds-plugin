@@ -368,8 +368,8 @@ public class JCloudsCloud extends Cloud {
      * Provisions a new node manually via CLI
      * @param t The template to be provisioned.
      */
-    @CLIMethod(name="node-provision")
-    public void doCliProvision(@Argument(required = true, metaVar = "NAME", usage = "Name of template to use for provisioning") final String name) throws ExecutionException, InterruptedException, CmdLineException, IOException {
+    @CLIMethod(name="jclouds-provision")
+    public void doCliProvision(@Argument(required = true, metaVar = "TEMPLATE", usage = "Name of template to use") final String name) throws ExecutionException, InterruptedException, CmdLineException, IOException {
         checkPermission(PROVISION);
         final JCloudsSlaveTemplate tpl = getTemplate(name);
         if (null == tpl) {
@@ -388,7 +388,7 @@ public class JCloudsCloud extends Cloud {
 
     @CLIResolver
     public static JCloudsCloud resolveForCLI(
-            @Argument(required = true, metaVar = "CLOUD", usage = "Name of cloud to use for provisioning") final String name) throws CmdLineException {
+            @Argument(required = true, metaVar = "PROFILE", usage = "Name of jcloud profile to use") final String name) throws CmdLineException {
         final Jenkins.CloudList cl = Jenkins.getInstance().clouds;
         final Cloud c = cl.getByName(name);
         if (null != c && c instanceof JCloudsCloud) {
@@ -402,7 +402,7 @@ public class JCloudsCloud extends Cloud {
                     names.add(n);
                 }
             }
-            throw new CmdLineException(null, Messages.JClouds_NoSuchCloudExists(name, EditDistance.findNearest(name, names)));
+            throw new CmdLineException(null, Messages.JClouds_NoSuchProfileExists(name, EditDistance.findNearest(name, names)));
         }
         return null;
     }
