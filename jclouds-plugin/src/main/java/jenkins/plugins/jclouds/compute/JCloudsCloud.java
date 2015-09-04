@@ -368,7 +368,7 @@ public class JCloudsCloud extends Cloud {
      * Provisions a new node manually via CLI
      * @param t The template to be provisioned.
      */
-    @CLIMethod(name="jclouds-provision")
+    @CLIMethod(name="jclouds-createnode")
     public void doCliProvision(@Argument(required = true, metaVar = "TEMPLATE", usage = "Name of template to use") final String name) throws ExecutionException, InterruptedException, CmdLineException, IOException {
         checkPermission(PROVISION);
         final JCloudsSlaveTemplate tpl = getTemplate(name);
