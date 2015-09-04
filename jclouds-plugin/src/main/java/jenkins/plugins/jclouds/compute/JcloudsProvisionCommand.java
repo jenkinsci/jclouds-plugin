@@ -15,10 +15,10 @@ import org.kohsuke.args4j.Argument;
 @Extension
 public class JcloudsProvisionCommand extends CLICommand {
 
-    @Argument(required = true, metaVar = "PROFILE", usage = "Name of jcloud profile to use")
+    @Argument(required = true, metaVar = "PROFILE", index = 0, usage = "Name of jcloud profile to use")
         public String profile;
 
-    @Argument(required = true, metaVar = "TEMPLATE", usage = "Name of template to use")
+    @Argument(required = true, metaVar = "TEMPLATE", index = 1, usage = "Name of template to use")
         public String tmpl;
 
     @Override
