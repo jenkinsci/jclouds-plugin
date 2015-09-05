@@ -23,7 +23,7 @@ import org.jclouds.compute.domain.NodeMetadata;
  * @author Fritz Elfert
  */
 @Extension
-public class JcloudsProvisionCommand extends CLICommand {
+public class JCloudsProvisionCommand extends CLICommand {
 
     @Argument(required = true, metaVar = "PROFILE", index = 0, usage = "Name of jclouds profile to use")
         public String profile;
