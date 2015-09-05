@@ -599,8 +599,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
         }
 
-        public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
-                @RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl,
+        public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
+                @RelativePath("..") @QueryParameter String identity,
+                @RelativePath("..") @QueryParameter String credential,
+                @RelativePath("..") @QueryParameter String endPointUrl,
                 @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
@@ -626,6 +628,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             ComputeService computeService = null;
             m.add("None specified", "");
+
+            if (Boolean.getBoolean("underSurefireTest")) {
+                // Don't attempt to fetch during HW-Ids GUI testing
+                return m;
+            }
             try {
                 // TODO: endpoint is ignored
                 computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
@@ -697,8 +704,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return result;
         }
 
-        public ListBoxModel doFillLocationIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
-                @RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl,
+        public ListBoxModel doFillLocationIdItems(
+                @RelativePath("..") @QueryParameter String providerName,
+                @RelativePath("..") @QueryParameter String identity,
+                @RelativePath("..") @QueryParameter String credential,
+                @RelativePath("..") @QueryParameter String endPointUrl,
                 @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
@@ -724,6 +734,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             ComputeService computeService = null;
             m.add("None specified", "");
+
+            if (Boolean.getBoolean("underSurefireTest")) {
+                // Don't attempt to fetch locations during GUI testing
+                return m;
+            }
             try {
                 // TODO: endpoint is ignored
                 computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
