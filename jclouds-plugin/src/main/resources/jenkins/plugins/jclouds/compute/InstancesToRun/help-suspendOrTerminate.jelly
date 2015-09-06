@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <div>
   If selected, when the build finishes, suspend the instances rather than terminate them.
 </div>
