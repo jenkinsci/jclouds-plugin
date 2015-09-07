@@ -3,8 +3,9 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.580.3</version>
+        <version>1.609.3</version>
     </parent>
+
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>jclouds-jenkins-parent</artifactId>
     <version>2.9-SNAPSHOT</version>
@@ -12,6 +13,7 @@
     <name>Jenkins JClouds plugin parent POM</name>
     <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
     <url>https://wiki.jenkins-ci.org/display/JENKINS/JClouds+Plugin</url>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
@@ -30,11 +32,8 @@
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
         <jclouds.version>1.9.1</jclouds.version>
-        <guava.version>18.0</guava.version>
-        <jsch.version>0.1.48</jsch.version>
-        <stapler.version>1.237</stapler.version>
         <hpi.plugin.version>1.114</hpi.plugin.version>
-        <jsr305.version>1.3.9</jsr305.version>
+        <jenkins.version>1.609.3</jenkins.version>
         <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
     </properties>
     <modules>
@@ -76,13 +75,7 @@
             <dependency>
                 <groupId>org.jenkins-ci.main</groupId>
                 <artifactId>jenkins-core</artifactId>
-                <version>${project.parent.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.sonatype.sisu</groupId>
-                        <artifactId>sisu-guava</artifactId>
-                    </exclusion>
-                </exclusions>
+                <version>${jenkins.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -93,26 +86,47 @@
                     <groupId>org.jenkins-ci.tools</groupId>
                     <artifactId>maven-hpi-plugin</artifactId>
                     <version>${hpi.plugin.version}</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>com.google.guava</groupId>
-                            <artifactId>guava</artifactId>
-                            <version>${guava.version}</version>
-                        </dependency>
-                        <dependency>
-                            <groupId>org.kohsuke.stapler</groupId>
-                            <artifactId>stapler</artifactId>
-                            <version>${stapler.version}</version>
-                        </dependency>
-                    </dependencies>
                     <configuration>
-                        <dependentWarExcludes>org.apache.jclouds*,com.google.guava*</dependentWarExcludes>
+                        <disabledTestInjection>true</disabledTestInjection>
+                        <dependentWarExcludes>org.apache.jclouds*</dependentWarExcludes>
                         <archive>
                             <manifestEntries>
                                 <Mask-Classes>com.google.common</Mask-Classes>
                             </manifestEntries>
                         </archive>
                         <maskClasses>com.google.common.</maskClasses>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>2.2</version>
+                    <executions>
+                        <execution>
+                            <id>shade</id>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <artifactSet>
+                            <includes>
+                                <include>org.apache.jclouds*:*</include>
+                                <include>com.google.guava:*</include>
+                                <include>com.google.inject:guice</include>
+                            </includes>
+                        </artifactSet>
+                        <relocations>
+                            <relocation>
+                                <pattern>com.google.common</pattern>
+                                <shadedPattern>shaded.com.google.common</shadedPattern>
+                            </relocation>
+                        </relocations>
+                        <transformers>
+                            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+                        </transformers>
+                        <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
                     </configuration>
                 </plugin>
             </plugins>
