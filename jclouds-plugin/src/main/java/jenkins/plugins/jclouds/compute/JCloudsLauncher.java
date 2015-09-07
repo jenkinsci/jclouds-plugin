@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.domain.LoginCredentials;
 
 /**
  * The launcher that launches the jenkins slave.jar on the Slave. Uses the SSHKeyPair configured in the cloud profile settings, and logs in to the server via

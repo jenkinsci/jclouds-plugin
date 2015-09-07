@@ -15,7 +15,6 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import jenkins.plugins.jclouds.compute.JCloudsComputer;
 import jenkins.plugins.jclouds.compute.JCloudsSlave;
-import org.jclouds.compute.domain.NodeMetadata;
 
 import java.util.logging.Logger;
 

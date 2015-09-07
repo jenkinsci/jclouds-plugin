@@ -840,6 +840,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     return FormValidation.ok();
                 }
             } catch (NumberFormatException e) {
+                return FormValidation.error(e.getMessage());
             }
             return FormValidation.validateNonNegativeInteger(value);
         }
@@ -890,7 +891,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     s.addCredentials(Domain.global(), u);
                     return u.getId();
                 } catch (IOException e) {
-                    // ignore
+                    LOGGER.warning(String.format("Error while saving credentials: %s", e.getMessage()));
                 }
             } finally {
                 SecurityContextHolder.setContext(previousContext);
