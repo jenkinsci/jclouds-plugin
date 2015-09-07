@@ -26,7 +26,6 @@ import org.jclouds.rest.AuthorizationException;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -218,7 +217,6 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         private final CopyOnWriteList<BlobStoreProfile> profiles = new CopyOnWriteList<BlobStoreProfile>();
-        private static final Logger LOGGER = Logger.getLogger(DescriptorImpl.class.getName());
 
         public DescriptorImpl(Class<? extends Publisher> clazz) {
             super(clazz);

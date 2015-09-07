@@ -64,7 +64,6 @@ public class JCloudsBuildWrapper extends BuildWrapper {
             }
 
         });
-        // final ParametersAction parameters = build.getAction(ParametersAction.class);
 
         // eagerly lookup node supplier so that errors occur before we attempt to provision things
         Iterable<NodePlan> nodePlans = Iterables.transform(instancesToRun, new Function<InstancesToRun, NodePlan>() {
@@ -72,7 +71,6 @@ public class JCloudsBuildWrapper extends BuildWrapper {
             public NodePlan apply(InstancesToRun instance) {
                 String cloudName = instance.cloudName;
                 String templateName = Util.replaceMacro(instance.getActualTemplateName(), build.getBuildVariableResolver());
-                // String templateName = getParameterString(parameters, instance.getActualTemplateName(), build);
                 Supplier<NodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
                 // take the hit here, as opposed to later
                 computeCache.getUnchecked(cloudName);
@@ -119,14 +117,6 @@ public class JCloudsBuildWrapper extends BuildWrapper {
         }
 
         return ips.build();
-    }
-
-    private String getParameterString(ParametersAction parameters, String original, AbstractBuild<?, ?> build) {
-        if (parameters != null) {
-            original = parameters.substitute(build, original);
-        }
-
-        return original;
     }
 
     @Extension

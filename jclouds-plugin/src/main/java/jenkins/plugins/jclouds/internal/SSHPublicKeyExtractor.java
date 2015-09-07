@@ -1,7 +1,6 @@
 package jenkins.plugins.jclouds.internal;
 
 import java.io.IOException;
-import java.util.Arrays;
 import javax.xml.bind.DatatypeConverter;
 
 import com.trilead.ssh2.crypto.PEMDecoder;
@@ -22,7 +21,7 @@ public final class SSHPublicKeyExtractor {
      * @return A public key string in the form "<pubkey-type> <pubkey-base64>"
      * @throws IOException, if pem could not be decoded properly.
      */
-    public static final String extract(final String pem, final String passPhrase) throws IOException {
+    public static String extract(final String pem, final String passPhrase) throws IOException {
         final Object priv = PEMDecoder.decode(pem.toCharArray(), passPhrase);
         if (priv instanceof RSAPrivateKey) {
             return "ssh-rsa " + DatatypeConverter.printBase64Binary(RSASHA1Verify.encodeSSHRSAPublicKey(((RSAPrivateKey)priv).getPublicKey()));

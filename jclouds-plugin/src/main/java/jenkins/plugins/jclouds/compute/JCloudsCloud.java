@@ -64,10 +64,8 @@ import shaded.com.google.common.collect.Iterables;
 import shaded.com.google.common.io.Closeables;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.domains.Domain;
-import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
@@ -97,8 +95,11 @@ public class JCloudsCloud extends Cloud {
     public final Secret credential;
     public final String providerName;
 
-    private final transient String privateKey;  // Not used anymore, but retained for backward compatibility.
-    private final transient String publicKey;  // Not used anymore, but retained for backward compatibility.
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private final transient String privateKey;
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private final transient String publicKey;
+
     public final String endPointUrl;
     public final String profile;
     private final int retentionTime;
@@ -506,6 +507,7 @@ public class JCloudsCloud extends Cloud {
                 if (Integer.parseInt(value) == -1)
                     return FormValidation.ok();
             } catch (NumberFormatException e) {
+                return FormValidation.error(e.getMessage());
             }
             return FormValidation.validateNonNegativeInteger(value);
         }
@@ -563,7 +565,7 @@ public class JCloudsCloud extends Cloud {
                     s.addCredentials(Domain.global(), u);
                     return u.getId();
                 } catch (IOException e) {
-                    // ignore
+                    LOGGER.warning(String.format("Error while migrating privateKey: %s", e.getMessage()));
                 }
             } finally {
                 SecurityContextHolder.setContext(previousContext);

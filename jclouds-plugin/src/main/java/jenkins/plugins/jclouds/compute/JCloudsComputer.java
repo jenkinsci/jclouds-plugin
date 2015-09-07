@@ -28,11 +28,6 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
         return getName();
     }
 
-    @Override
-    public JCloudsSlave getNode() {
-        return super.getNode();
-    }
-
     public int getRetentionTime() {
         return getNode().getRetentionTime();
     }
@@ -42,7 +37,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
     }
 
     /**
-     * Really deletes the slave, by terminating the instance.
+     * Really deletes the slave, after terminating the instance.
      */
     @Override
     public HttpResponse doDoDelete() throws IOException {
