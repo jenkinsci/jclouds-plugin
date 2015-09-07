@@ -73,6 +73,6 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsRetentionStrategy.class.getName());
 
-    public static boolean disabled = Boolean.getBoolean(JCloudsRetentionStrategy.class.getName() + ".disabled");
+    public static final boolean disabled = Boolean.getBoolean(JCloudsRetentionStrategy.class.getName() + ".disabled");
 
 }

@@ -9,6 +9,7 @@ import static java.util.Collections.sort;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -382,8 +383,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             synchronized (delayLockObject) {
                 LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
                 try {
-                    Thread.sleep(spoolDelayMs);
+                    delayLockObject.wait(spoolDelayMs);
                 } catch (InterruptedException e) {
+                    LOGGER.warning(e.getMessage());
                 }
             }
         }
@@ -416,7 +418,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             try {
                 Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
                 LOGGER.info("Setting userData to " + userData);
-                userDataMethod.invoke(options, userData.getBytes());
+                userDataMethod.invoke(options, userData.getBytes(StandardCharsets.UTF_8));
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
             }

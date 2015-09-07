@@ -40,6 +40,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
     private static final Logger LOGGER = Logger.getLogger(BlobStorePublisher.class.getName());
 
     private String profileName;
+
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
     private final List<BlobStoreEntry> entries;

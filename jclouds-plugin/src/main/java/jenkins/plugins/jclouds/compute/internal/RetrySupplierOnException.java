@@ -8,7 +8,7 @@ import org.jclouds.logging.Logger;
 import shaded.com.google.common.base.Supplier;
 
 class RetrySupplierOnException implements Callable<NodeMetadata> {
-    private final int MAX_ATTEMPTS = 5;
+    private static final int MAX_ATTEMPTS = 5;
     private final Logger logger;
     private final Supplier<NodeMetadata> supplier;
 

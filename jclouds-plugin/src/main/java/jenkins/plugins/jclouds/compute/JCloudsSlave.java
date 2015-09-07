@@ -172,7 +172,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public long getWaitPhoneHomeTimeoutMs() {
         if (0 < waitPhoneHomeTimeout) {
-            return waitPhoneHomeTimeout * 60000;
+            return 60000L * waitPhoneHomeTimeout;
         }
         return 0;
     }
