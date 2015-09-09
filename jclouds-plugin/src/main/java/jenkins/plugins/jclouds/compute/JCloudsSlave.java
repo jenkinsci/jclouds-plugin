@@ -13,6 +13,10 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.jclouds.compute.ComputeService;
@@ -42,6 +46,9 @@ public class JCloudsSlave extends AbstractCloudSlave {
     private final String jvmOptions;
     private final String credentialsId;
 
+    private transient Lock phoneHomeLock;
+    private transient Condition doneWaitPhoneHome;
+
     @DataBoundConstructor
     @SuppressWarnings("rawtypes")
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
@@ -60,6 +67,16 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.waitPhoneHome = waitPhoneHome;
         this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
         this.credentialsId = credentialsId;
+        phoneHomeLock = new ReentrantLock();
+        doneWaitPhoneHome = phoneHomeLock.newCondition();
+    }
+
+    protected Object readResolve() {
+        if (null == phoneHomeLock) {
+            phoneHomeLock = new ReentrantLock();
+            doneWaitPhoneHome = phoneHomeLock.newCondition();
+        }
+        return this;
     }
 
     /**
@@ -158,8 +175,20 @@ public class JCloudsSlave extends AbstractCloudSlave {
         return pendingDelete;
     }
 
+    private void signalDoneWaitPhoneHome() {
+        phoneHomeLock.lock();
+        try {
+            doneWaitPhoneHome.signal();
+        } finally {
+            phoneHomeLock.unlock();
+        }
+    }
+
     public void setPendingDelete(boolean pendingDelete) {
         this.pendingDelete = pendingDelete;
+        if (pendingDelete) {
+            signalDoneWaitPhoneHome();
+        }
     }
 
     public boolean isWaitPhoneHome() {
@@ -168,6 +197,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public void setWaitPhoneHome(boolean value) {
         waitPhoneHome = value;
+        signalDoneWaitPhoneHome();
     }
 
     public long getWaitPhoneHomeTimeoutMs() {
@@ -231,19 +261,29 @@ public class JCloudsSlave extends AbstractCloudSlave {
         while (true) {
             long tdif = timeout - System.currentTimeMillis();
             if (tdif < 0) {
+                setWaitPhoneHome(false);
                 throw new InterruptedException("wait for phone home timed out");
             }
             if (isPendingDelete()) {
+                setWaitPhoneHome(false);
                 throw new InterruptedException("wait for phone home interrupted by delete request");
             }
             if (isWaitPhoneHome()) {
-                final String msg = "Waiting for slave to phone home. " + tdif / 1000 + " seconds until timeout.";
+                final String msg = "Waiting for " + getNodeName() + " to phone home. " + tdif / 1000 + " seconds until timeout.";
+                LOGGER.info(msg);
                 if (null != logger) {
                     logger.println(msg);
-                } else {
-                    LOGGER.info(msg);
                 }
-                Thread.sleep(30000);
+                if (tdif > 30000L) {
+                    // Wait exactly, but still log a message every 30sec.
+                    tdif = 30000L;
+                }
+                phoneHomeLock.lock();
+                try {
+                    doneWaitPhoneHome.await(tdif, TimeUnit.MILLISECONDS);
+                } finally {
+                    phoneHomeLock.unlock();
+                }
             } else {
                 break;
             }
