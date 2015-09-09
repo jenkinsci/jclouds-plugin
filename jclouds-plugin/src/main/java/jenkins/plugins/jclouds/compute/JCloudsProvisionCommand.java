@@ -14,6 +14,7 @@ import jenkins.model.Jenkins;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.Option;
 
 import org.jclouds.compute.domain.NodeMetadata;
 
@@ -25,11 +26,16 @@ import org.jclouds.compute.domain.NodeMetadata;
 @Extension
 public class JCloudsProvisionCommand extends CLICommand {
 
+    enum OutputFormat { HUMAN, JSON, PROPERTIES };
+
     @Argument(required = true, metaVar = "PROFILE", index = 0, usage = "Name of jclouds profile to use")
         public String profile;
 
     @Argument(required = true, metaVar = "TEMPLATE", index = 1, usage = "Name of template to use")
         public String tmpl;
+
+    @Option(required = false, name = "-f", aliases = "--format", usage = "Output format of provisioned slave properties")
+        public OutputFormat format = OutputFormat.HUMAN;
 
     @Override
     public String getShortDescription() {
@@ -72,8 +78,23 @@ public class JCloudsProvisionCommand extends CLICommand {
             final Set<String> a = new HashSet<>();
             a.addAll(nmd.getPrivateAddresses());
             a.addAll(nmd.getPublicAddresses());
-            final String allAddrs = a.toString().replaceAll("^\\[|\\]$", "");
-            stdout.println("Provisioned node " + s.getNodeName() + " with Address(es) " + allAddrs);
+            String allAddrs;
+            switch (format) {
+                case HUMAN:
+                    allAddrs = a.toString().replaceAll("^\\[|\\]$", "");
+                    stdout.println("Provisioned node " + s.getNodeName() + " with Address(es) " + allAddrs);
+                    break;
+                case JSON:
+                    allAddrs = a.toString().replaceAll("^\\[|\\]$", "").replaceAll(", ", "\", \"");
+                    stdout.println("{ \"name\": \"" + s.getNodeName() + "\", \"addr\": [\"" + allAddrs + "\"] }");
+                    break;
+                case PROPERTIES:
+                    stdout.println("name=" + s.getNodeName());
+                    for (final String addr : a) {
+                        stdout.println("addr=" + addr);
+                    }
+                    break;
+            }
         } else {
             throw new CmdLineException("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + tmpl);
         }
