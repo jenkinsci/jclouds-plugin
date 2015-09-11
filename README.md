@@ -1,5 +1,7 @@
 # JClouds Plugin for Jenkins
 
+[![Build Status](https://jenkins.ci.cloudbees.com/buildStatus/icon?job=plugins/jclouds-plugin)](https://jenkins.ci.cloudbees.com/job/plugins/job/jclouds-plugin/)
+
 JClouds Jenkins plugin provides option to launch jenkins slaves on any Cloud provider supported by JClouds (http://jclouds.apache.org/reference/providers/). 
 
 ### Configuration Options

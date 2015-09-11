@@ -42,6 +42,13 @@
     </modules>
     <developers>
         <developer>
+            <id>felfert</id>
+            <name>Fritz Elfert</name>
+            <email>fritz-github@fritz-elfert.de</email>
+            <url>http://fritz-elfert.de</url>
+            <timezone>+2</timezone>
+        </developer>
+        <developer>
             <id>sdirector</id>
             <name>Monty Taylor</name>
             <email>mordred@inaugust.com</email>
