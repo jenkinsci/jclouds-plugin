@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core"
          xmlns:f="/lib/form" xmlns:c="/lib/credentials">
   <table width="100%" class="pane">
@@ -11,6 +12,7 @@
       <f:entry title="${%Labels}" field="labelString">
         <f:textbox/>
       </f:entry>
+      <f:slave-mode name="mode" node="${it}"/>
       <f:entry title="${%Number of Executors}" field="numExecutors">
         <f:textbox default="2" />
       </f:entry>

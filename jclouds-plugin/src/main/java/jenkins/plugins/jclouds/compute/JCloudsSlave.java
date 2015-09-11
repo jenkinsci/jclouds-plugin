@@ -45,6 +45,8 @@ public class JCloudsSlave extends AbstractCloudSlave {
     private final boolean authSudo;
     private final String jvmOptions;
     private final String credentialsId;
+    private final Mode mode;
+
     private transient PhoneHomeMonitor phm;
 
     private static final class PhoneHomeMonitor {
@@ -88,6 +90,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.waitPhoneHome = waitPhoneHome;
         this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
         this.credentialsId = credentialsId;
+        this.mode = mode;
         phm = new PhoneHomeMonitor();
     }
 
@@ -113,13 +116,15 @@ public class JCloudsSlave extends AbstractCloudSlave {
      * @param waitPhoneHome         - if {@code true}, delay initial SSH connect until slave has "phoned home" back to jenkins.
      * @param waitPhoneHomeTimeout  - Timeout in minutes util giving up waiting for the "phone home" POST.
      * @param credentialsId         - Id of the credentials in Jenkin's global credentials database.
+     * @param mode                  - Jenkins usage mode for this node
      * @throws IOException
      * @throws Descriptor.FormException
      */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
+
             final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
-            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId) throws IOException, Descriptor.FormException {
-        this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString,
+            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId, final Mode mode) throws IOException, Descriptor.FormException {
+        this(cloudName, metadata.getName(), description, fsRoot, numExecutors, mode, labelString,
                 new JCloudsLauncher(), new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
                 stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
                 metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(),
@@ -212,13 +217,17 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public long getWaitPhoneHomeTimeoutMs() {
         if (0 < waitPhoneHomeTimeout) {
-            return waitPhoneHomeTimeout * 60000;
+            return 60000L * waitPhoneHomeTimeout;
         }
         return 0;
     }
 
     public String getCredentialsId() {
         return credentialsId;
+    }
+
+    public Mode getMode() {
+        return mode;
     }
 
     /**
