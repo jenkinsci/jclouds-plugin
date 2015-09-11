@@ -14,11 +14,7 @@
       </f:entry>
       <f:slave-mode name="mode" node="${it}"/>
       <f:entry title="${%Number of Executors}" field="numExecutors">
-<<<<<<< HEAD
-        <f:textbox default="2" />
-=======
         <f:number clazz="positive-number" min="1" step="1" default="2"/>
->>>>>>> upstream/master
       </f:entry>
     </f:section>
     
