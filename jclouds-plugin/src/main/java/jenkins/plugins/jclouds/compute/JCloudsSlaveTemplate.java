@@ -165,7 +165,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 final String fsRoot, final boolean allowSudo, final boolean installPrivateKey, final Integer overrideRetentionTime, final int spoolDelayMs,
                                 final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String keyPairName,
                                 final boolean assignPublicIp, final String networks, final String securityGroups, final String credentialsId,
-                                final String adminCredentialsId, final Mode mode) {
+                                final String adminCredentialsId, final String mode) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
