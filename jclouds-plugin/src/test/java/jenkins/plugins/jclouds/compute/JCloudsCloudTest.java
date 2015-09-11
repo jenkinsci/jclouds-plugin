@@ -40,14 +40,12 @@ public class JCloudsCloudTest {
         WebAssert.assertInputPresent(page2, "_.credential");
         WebAssert.assertInputPresent(page2, "_.instanceCap");
         WebAssert.assertInputPresent(page2, "_.retentionTime");
+        // WebAssert does not recognize select as input ?!
+        //WebAssert.assertInputPresent(page2, "_.cloudGlobalKeyId");
 
         HtmlForm configForm2 = page2.getFormByName("config");
-        assertNotNull(configForm2.getTextAreaByName("_.privateKey"));
-        assertNotNull(configForm2.getTextAreaByName("_.publicKey"));
-        HtmlButton generateKeyPairButton = configForm2.getButtonByCaption("Generate Key Pair");
         HtmlButton testConnectionButton = configForm2.getButtonByCaption("Test Connection");
         HtmlButton deleteCloudButton = configForm2.getButtonByCaption("Delete cloud");
-        assertNotNull(generateKeyPairButton);
         assertNotNull(testConnectionButton);
         assertNotNull(deleteCloudButton);
 
@@ -56,17 +54,17 @@ public class JCloudsCloudTest {
     @Test
     public void testConfigRoundtrip() throws Exception {
 
-        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "privateKey", "publicKey", "endPointUrl", 1, 30,
+        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "", "endPointUrl", 1, 30,
                 600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
 
         j.getInstance().clouds.add(original);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));
 
         j.assertEqualBeans(original, j.getInstance().clouds.getByName("aws-profile"),
-                "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap,retentionTime");
+                "profile,providerName,identity,credential,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
 
         j.assertEqualBeans(original, JCloudsCloud.getByName("aws-profile"),
-                "profile,providerName,identity,credential,privateKey,publicKey,endPointUrl,instanceCap,retentionTime");
+                "profile,providerName,identity,credential,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
     }
 
 }
