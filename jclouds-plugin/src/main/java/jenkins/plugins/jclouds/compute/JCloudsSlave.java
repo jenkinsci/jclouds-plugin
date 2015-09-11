@@ -45,16 +45,37 @@ public class JCloudsSlave extends AbstractCloudSlave {
     private final boolean authSudo;
     private final String jvmOptions;
     private final String credentialsId;
+    private transient PhoneHomeMonitor phm;
 
-    private transient Lock phoneHomeLock;
-    private transient Condition doneWaitPhoneHome;
+    private static final class PhoneHomeMonitor {
+        private final Lock phoneHomeLock = new ReentrantLock();
+        private final Condition doneWaitPhoneHome = phoneHomeLock.newCondition();
+    
+        public void signalCondition() {
+            phoneHomeLock.lock();
+            try {
+                doneWaitPhoneHome.signal();
+            } finally {
+                phoneHomeLock.unlock();
+            }
+        }
+
+        public void waitCondition(final long millis) throws InterruptedException {
+            phoneHomeLock.lock();
+            try {
+                doneWaitPhoneHome.await(millis, TimeUnit.MILLISECONDS);
+            } finally {
+                phoneHomeLock.unlock();
+            }
+        }
+    }
 
     @DataBoundConstructor
     @SuppressWarnings("rawtypes")
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
-                        ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-                        Integer overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome,
-                        final int waitPhoneHomeTimeout, final String credentialsId) throws Descriptor.FormException, IOException {
+            ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
+            Integer overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome,
+            final int waitPhoneHomeTimeout, final String credentialsId) throws Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
         this.cloudName = cloudName;
@@ -67,14 +88,12 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.waitPhoneHome = waitPhoneHome;
         this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
         this.credentialsId = credentialsId;
-        phoneHomeLock = new ReentrantLock();
-        doneWaitPhoneHome = phoneHomeLock.newCondition();
+        phm = new PhoneHomeMonitor();
     }
 
     protected Object readResolve() {
-        if (null == phoneHomeLock) {
-            phoneHomeLock = new ReentrantLock();
-            doneWaitPhoneHome = phoneHomeLock.newCondition();
+        if (null == phm) {
+            phm = new PhoneHomeMonitor();
         }
         return this;
     }
@@ -175,19 +194,10 @@ public class JCloudsSlave extends AbstractCloudSlave {
         return pendingDelete;
     }
 
-    private void signalDoneWaitPhoneHome() {
-        phoneHomeLock.lock();
-        try {
-            doneWaitPhoneHome.signal();
-        } finally {
-            phoneHomeLock.unlock();
-        }
-    }
-
     public void setPendingDelete(boolean pendingDelete) {
         this.pendingDelete = pendingDelete;
         if (pendingDelete) {
-            signalDoneWaitPhoneHome();
+            phm.signalCondition();
         }
     }
 
@@ -197,7 +207,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public void setWaitPhoneHome(boolean value) {
         waitPhoneHome = value;
-        signalDoneWaitPhoneHome();
+        phm.signalCondition();
     }
 
     public long getWaitPhoneHomeTimeoutMs() {
@@ -278,12 +288,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
                     // Wait exactly, but still log a message every 30sec.
                     tdif = 30000L;
                 }
-                phoneHomeLock.lock();
-                try {
-                    doneWaitPhoneHome.await(tdif, TimeUnit.MILLISECONDS);
-                } finally {
-                    phoneHomeLock.unlock();
-                }
+                phm.waitCondition(tdif);
             } else {
                 break;
             }
