@@ -9,6 +9,7 @@ import static java.util.Collections.sort;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -28,6 +29,7 @@ import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Hudson;
+import hudson.model.Node.Mode;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
@@ -131,6 +133,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final boolean assignPublicIp;
     public final String networks;
     public final String securityGroups;
+    public final Mode mode;
     private String credentialsId;
     private String adminCredentialsId;
 
@@ -161,7 +164,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 final String jvmOptions, final boolean preExistingJenkinsUser,
                                 final String fsRoot, final boolean allowSudo, final boolean installPrivateKey, final Integer overrideRetentionTime, final int spoolDelayMs,
                                 final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String keyPairName,
-                                final boolean assignPublicIp, final String networks, final String securityGroups, final String credentialsId, final String adminCredentialsId) {
+                                final boolean assignPublicIp, final String networks, final String securityGroups, final String credentialsId,
+                                final String adminCredentialsId, final String mode) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -195,6 +199,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.securityGroups = securityGroups;
         this.credentialsId = Util.fixEmptyAndTrim(credentialsId);
         this.adminCredentialsId = Util.fixEmptyAndTrim(adminCredentialsId);
+        this.mode = Mode.valueOf(Util.fixNull(mode));
         readResolve();
         this.vmPassword = null; // Not used anymore, but retained for backward compatibility.
         this.vmUser = null; // Not used anymore, but retained for backward compatibility.
@@ -290,7 +295,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         try {
             return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
                     numExecutors, stopOnTerminate, overrideRetentionTime, getJvmOptions(), waitPhoneHome,
-                    waitPhoneHomeTimeout, credentialsId);
+                    waitPhoneHomeTimeout, credentialsId, mode);
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }
@@ -382,8 +387,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             synchronized (delayLockObject) {
                 LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
                 try {
-                    Thread.sleep(spoolDelayMs);
+                    delayLockObject.wait(spoolDelayMs);
                 } catch (InterruptedException e) {
+                    LOGGER.warning(e.getMessage());
                 }
             }
         }
@@ -416,7 +422,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             try {
                 Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
                 LOGGER.info("Setting userData to " + userData);
-                userDataMethod.invoke(options, userData.getBytes());
+                userDataMethod.invoke(options, userData.getBytes(StandardCharsets.UTF_8));
             } catch (Exception e) {
                 LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
             }
@@ -603,8 +609,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
         }
 
-        public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
-                @RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl,
+        public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
+                @RelativePath("..") @QueryParameter String identity,
+                @RelativePath("..") @QueryParameter String credential,
+                @RelativePath("..") @QueryParameter String endPointUrl,
                 @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
@@ -630,6 +638,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             ComputeService computeService = null;
             m.add("None specified", "");
+
+            if (Boolean.getBoolean("underSurefireTest")) {
+                // Don't attempt to fetch during HW-Ids GUI testing
+                return m;
+            }
             try {
                 // TODO: endpoint is ignored
                 computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
@@ -701,8 +714,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return result;
         }
 
-        public ListBoxModel doFillLocationIdItems(@RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String identity,
-                @RelativePath("..") @QueryParameter String credential, @RelativePath("..") @QueryParameter String endPointUrl,
+        public ListBoxModel doFillLocationIdItems(
+                @RelativePath("..") @QueryParameter String providerName,
+                @RelativePath("..") @QueryParameter String identity,
+                @RelativePath("..") @QueryParameter String credential,
+                @RelativePath("..") @QueryParameter String endPointUrl,
                 @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
@@ -728,6 +744,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             ComputeService computeService = null;
             m.add("None specified", "");
+
+            if (Boolean.getBoolean("underSurefireTest")) {
+                // Don't attempt to fetch locations during GUI testing
+                return m;
+            }
             try {
                 // TODO: endpoint is ignored
                 computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
@@ -832,6 +853,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     return FormValidation.ok();
                 }
             } catch (NumberFormatException e) {
+                return FormValidation.error(e.getMessage());
             }
             return FormValidation.validateNonNegativeInteger(value);
         }
@@ -882,7 +904,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     s.addCredentials(Domain.global(), u);
                     return u.getId();
                 } catch (IOException e) {
-                    // ignore
+                    LOGGER.warning(String.format("Error while saving credentials: %s", e.getMessage()));
                 }
             } finally {
                 SecurityContextHolder.setContext(previousContext);
