@@ -29,6 +29,7 @@ import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Label;
 import hudson.model.Hudson;
+import hudson.model.Node.Mode;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
 import hudson.model.labels.LabelAtom;
@@ -132,6 +133,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final boolean assignPublicIp;
     public final String networks;
     public final String securityGroups;
+    public final Mode mode;
     private String credentialsId;
     private String adminCredentialsId;
 
@@ -162,7 +164,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 final String jvmOptions, final boolean preExistingJenkinsUser,
                                 final String fsRoot, final boolean allowSudo, final boolean installPrivateKey, final Integer overrideRetentionTime, final int spoolDelayMs,
                                 final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String keyPairName,
-                                final boolean assignPublicIp, final String networks, final String securityGroups, final String credentialsId, final String adminCredentialsId) {
+                                final boolean assignPublicIp, final String networks, final String securityGroups, final String credentialsId,
+                                final String adminCredentialsId, final Mode mode) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -196,6 +199,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.securityGroups = securityGroups;
         this.credentialsId = Util.fixEmptyAndTrim(credentialsId);
         this.adminCredentialsId = Util.fixEmptyAndTrim(adminCredentialsId);
+        this.mode = Mode.valueOf(Util.fixNull(mode));
         readResolve();
         this.vmPassword = null; // Not used anymore, but retained for backward compatibility.
         this.vmUser = null; // Not used anymore, but retained for backward compatibility.
@@ -291,7 +295,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         try {
             return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
                     numExecutors, stopOnTerminate, overrideRetentionTime, getJvmOptions(), waitPhoneHome,
-                    waitPhoneHomeTimeout, credentialsId);
+                    waitPhoneHomeTimeout, credentialsId, mode);
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }
