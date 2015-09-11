@@ -121,7 +121,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     private final String fsRoot;
     public final boolean allowSudo;
     public final boolean installPrivateKey;
-    public final int overrideRetentionTime;
+    public Integer overrideRetentionTime;
     public final int spoolDelayMs;
     private final Object delayLockObject = new Object();
     public final boolean assignFloatingIp;
@@ -159,7 +159,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 final int ram, final String osFamily, final String osVersion, final String locationId, final String labelString, final String description,
                                 final String initScript, final String userData, final String numExecutors, final boolean stopOnTerminate,
                                 final String jvmOptions, final boolean preExistingJenkinsUser,
-                                final String fsRoot, final boolean allowSudo, final boolean installPrivateKey, final int overrideRetentionTime, final int spoolDelayMs,
+                                final String fsRoot, final boolean allowSudo, final boolean installPrivateKey, final Integer overrideRetentionTime, final int spoolDelayMs,
                                 final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String keyPairName,
                                 final boolean assignPublicIp, final String networks, final String securityGroups, final String credentialsId, final String adminCredentialsId) {
 
@@ -449,6 +449,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         } catch (Exception e) {
             return new String[0];
         }
+    }
+
+    public boolean hasOverrideRetentionTime() {
+        return (null != overrideRetentionTime);
     }
 
     @Override
@@ -820,6 +824,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
 
         public FormValidation doCheckOverrideRetentionTime(@QueryParameter String value) {
+            if (Strings.isNullOrEmpty(value)) {
+                return FormValidation.ok();
+            }
             try {
                 if (Integer.parseInt(value) == -1) {
                     return FormValidation.ok();

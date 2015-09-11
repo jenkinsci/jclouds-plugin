@@ -80,9 +80,11 @@
                           with="providerName,identity,credential,endPointUrl,locationId"/>
       </f:section>
       <f:section title="${%General Options}">
-        <f:entry title="${%Override Retention Time}" field="overrideRetentionTime">
-          <f:textbox default="${instance.getDefaultRetentionTime()}" />
-        </f:entry>
+        <f:optionalBlock name="hasOverrideRetentionTime" title="${%Override Retention Time}" checked="${instance.hasOverrideRetentionTime()}" inline="true">
+          <f:entry title="${%Retention Time}" field="overrideRetentionTime">
+            <f:textbox />
+          </f:entry>
+        </f:optionalBlock>
       
         <f:entry title="${%Delay before spooling up (ms)}" field="spoolDelayMs">
           <f:textbox default="0" />

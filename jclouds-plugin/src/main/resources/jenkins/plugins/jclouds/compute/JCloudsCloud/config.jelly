@@ -12,7 +12,7 @@
         <f:textbox/>
     </f:entry>
     <f:entry title="Retention Time" field="retentionTime">
-        <f:textbox/>
+        <f:textbox default="30" />
     </f:entry>
     <f:entry title="Identity" field="identity">
         <f:textbox/>
@@ -34,10 +34,10 @@
             <f:textbox/>
         </f:entry>
     </f:advanced>
+    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,cloudGlobalKeyId,endPointUrl"/>
     <f:entry title="Cloud Instance Templates" description="${%List of Cloud Instances to be launched as slaves}">
         <f:repeatable field="templates">
             <st:include page="config.jelly" class="${descriptor.clazz}"/>
         </f:repeatable>
     </f:entry>
-    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,cloudGlobalKeyId,endPointUrl"/>
 </j:jelly>
