@@ -175,15 +175,18 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     /**
      * Get the retention time for this slave, defaulting to the parent cloud's if not set.
+     * Sometime parent cloud cannot be determined (returns Null as I see), in which case this method will
+     * return default value set in CloudInstanceDefaults.
      *
      * @return overrideTime
+     * @see CloudInstanceDefaults#DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
      */
     public int getRetentionTime() {
         if (null != overrideRetentionTime) {
             return overrideRetentionTime.intValue();
-        } else {
-            return JCloudsCloud.getByName(cloudName).getRetentionTime();
         }
+        final JCloudsCloud cloud = JCloudsCloud.getByName(cloudName);
+        return cloud == null ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : cloud.getRetentionTime();
     }
 
     /**

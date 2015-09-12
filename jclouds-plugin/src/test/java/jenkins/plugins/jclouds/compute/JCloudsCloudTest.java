@@ -54,8 +54,8 @@ public class JCloudsCloudTest {
     @Test
     public void testConfigRoundtrip() throws Exception {
 
-        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "", "endPointUrl", 1, 30,
-                600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
+        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "", "endPointUrl", 1,
+                CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
 
         j.getInstance().clouds.add(original);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));
