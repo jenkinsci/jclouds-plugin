@@ -43,7 +43,7 @@ public class JCloudsProvisionCommand extends CLICommand {
     }
 
     private JCloudsCloud resolveCloud() throws CmdLineException {
-        final Jenkins.CloudList cl = Jenkins.getInstance().clouds;
+        final Jenkins.CloudList cl = Jenkins.getActiveInstance().clouds;
         final Cloud c = cl.getByName(profile);
         if (null != c && c instanceof JCloudsCloud) {
             return (JCloudsCloud)c;

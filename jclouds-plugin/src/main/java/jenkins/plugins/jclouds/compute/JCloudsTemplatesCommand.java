@@ -28,7 +28,7 @@ public class JCloudsTemplatesCommand extends CLICommand {
     protected int run() throws IOException {
         int maxProfileLen = 0;
         int maxTemplateLen = 0;
-        for (final Cloud cloud : Jenkins.getInstance().clouds) {
+        for (final Cloud cloud : Jenkins.getActiveInstance().clouds) {
             if (cloud instanceof JCloudsCloud) {
                 final JCloudsCloud c = (JCloudsCloud)cloud;
                 if (c.profile.length() > maxProfileLen) {

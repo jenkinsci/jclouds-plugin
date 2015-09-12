@@ -114,7 +114,7 @@ public class JCloudsCloud extends Cloud {
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
-        for (Cloud c : Hudson.getInstance().clouds) {
+        for (Cloud c : Jenkins.getActiveInstance().clouds) {
             if (JCloudsCloud.class.isInstance(c)) {
                 cloudNames.add(c.name);
             }
@@ -124,7 +124,7 @@ public class JCloudsCloud extends Cloud {
     }
 
     public static JCloudsCloud getByName(String name) {
-        return (JCloudsCloud) Hudson.getInstance().clouds.getByName(name);
+        return (JCloudsCloud) Jenkins.getActiveInstance().clouds.getByName(name);
     }
 
     public String getCloudGlobalKeyId() {
@@ -248,7 +248,7 @@ public class JCloudsCloud extends Cloud {
         final JCloudsSlaveTemplate template = getTemplate(label);
         List<PlannedNode> plannedNodeList = new ArrayList<PlannedNode>();
 
-        while (excessWorkload > 0 && !Jenkins.getInstance().isQuietingDown() && !Jenkins.getInstance().isTerminating()) {
+        while (excessWorkload > 0 && !Jenkins.getActiveInstance().isQuietingDown() && !Jenkins.getActiveInstance().isTerminating()) {
 
             if ((getRunningNodesCount() + plannedNodeList.size()) >= instanceCap) {
                 LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
@@ -259,7 +259,7 @@ public class JCloudsCloud extends Cloud {
                 public Node call() throws Exception {
                     // TODO: record the output somewhere
                     JCloudsSlave jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout());
-                    Jenkins.getInstance().addNode(jcloudsSlave);
+                    Jenkins.getActiveInstance().addNode(jcloudsSlave);
 
                     /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
                        without the connect operation, NodeProvisioner may decide that it still wants one more instance,
@@ -325,7 +325,7 @@ public class JCloudsCloud extends Cloud {
         final StringWriter sw = new StringWriter();
         final StreamTaskListener listener = new StreamTaskListener(sw);
         JCloudsSlave node = t.provisionSlave(listener);
-        Hudson.getInstance().addNode(node);
+        Jenkins.getActiveInstance().addNode(node);
         return node;
     }
 
@@ -449,7 +449,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
                 return new ListBoxModel();
             }
             return new StandardUsernameListBoxModel().withAll(
