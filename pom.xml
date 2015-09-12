@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.580.3</version>
+        <version>1.609.3</version>
     </parent>
 
     <groupId>org.jenkins-ci.plugins</groupId>
@@ -33,7 +33,7 @@
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
         <jclouds.version>1.9.1</jclouds.version>
         <hpi.plugin.version>1.114</hpi.plugin.version>
-        <jenkins.version>1.580.3</jenkins.version>
+        <jenkins.version>1.609.3</jenkins.version>
         <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
     </properties>
     <modules>
