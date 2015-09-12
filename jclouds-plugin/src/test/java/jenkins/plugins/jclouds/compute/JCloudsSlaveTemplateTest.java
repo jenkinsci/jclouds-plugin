@@ -7,8 +7,6 @@ import org.jvnet.hudson.test.JenkinsRule;
 import org.junit.Test;
 import org.junit.Rule;
 
-import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
-
 /**
  * @author Vijay Kiran
  */

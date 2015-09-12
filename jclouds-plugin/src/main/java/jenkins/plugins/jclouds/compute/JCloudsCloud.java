@@ -82,8 +82,6 @@ import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 import hudson.util.XStream2;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 
-import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
-
 /**
  * The JClouds version of the Jenkins Cloud.
  *
@@ -193,7 +191,7 @@ public class JCloudsCloud extends Cloud {
      * @see CloudInstanceDefaults#DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
      */
     public int getRetentionTime() {
-        return retentionTime == 0 ? DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : retentionTime;
+        return retentionTime == 0 ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : retentionTime;
     }
 
     static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new JDKLoggingModule() {
