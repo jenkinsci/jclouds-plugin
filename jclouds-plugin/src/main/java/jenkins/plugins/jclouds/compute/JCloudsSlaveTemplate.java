@@ -350,6 +350,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (assignFloatingIp && options instanceof NovaTemplateOptions) {
             LOGGER.info("Setting autoAssignFloatingIp to true");
             options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
+            options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp();
         }
 
         if (!Strings.isNullOrEmpty(keyPairName) && options instanceof NovaTemplateOptions) {
