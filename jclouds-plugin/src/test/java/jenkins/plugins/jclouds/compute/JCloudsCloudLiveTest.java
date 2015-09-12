@@ -10,6 +10,8 @@ import junit.framework.TestCase;
 
 import org.jclouds.ssh.SshKeys;
 
+import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
+
 public class JCloudsCloudLiveTest extends TestCase {
 
     private ComputeTestFixture fixture;
@@ -25,7 +27,7 @@ public class JCloudsCloudLiveTest extends TestCase {
 
         // TODO: this may need to vary per test
         cloud = new JCloudsCloud(fixture.getProvider() + "-profile", fixture.getProvider(), fixture.getIdentity(), fixture.getCredential(),
-                null, fixture.getEndpoint(), 1, 30, 600 * 1000, 600 * 1000, null,
+                null, fixture.getEndpoint(), 1, DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
                 Collections.<JCloudsSlaveTemplate>emptyList());
     }
 
