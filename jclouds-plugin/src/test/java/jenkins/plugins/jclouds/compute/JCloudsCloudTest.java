@@ -41,7 +41,10 @@ public class JCloudsCloudTest {
         WebAssert.assertInputPresent(page2, "_.instanceCap");
         WebAssert.assertInputPresent(page2, "_.retentionTime");
         // WebAssert does not recognize select as input ?!
-        //WebAssert.assertInputPresent(page2, "_.cloudGlobalKeyId");
+        // WebAssert.assertSelectPresent(page2, "_.cloudGlobalKeyId");
+        WebAssert.assertInputPresent(page2, "_.scriptTimeout");
+        WebAssert.assertInputPresent(page2, "_.startTimeout");
+        WebAssert.assertInputPresent(page2, "_.zones");
 
         HtmlForm configForm2 = page2.getFormByName("config");
         HtmlButton testConnectionButton = configForm2.getButtonByCaption("Test Connection");
@@ -54,8 +57,9 @@ public class JCloudsCloudTest {
     @Test
     public void testConfigRoundtrip() throws Exception {
 
-        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity", "credential", "", "endPointUrl", 1,
-                CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
+        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity",
+                "credential", "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
+                600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
 
         j.getInstance().clouds.add(original);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));

@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <div>
     Allows Jenkins to build using Cloud Servers via JClouds.
 </div>
