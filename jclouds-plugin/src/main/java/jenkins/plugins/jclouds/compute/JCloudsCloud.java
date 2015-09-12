@@ -44,13 +44,16 @@ import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.sshj.config.SshjSshClientModule;
+
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
+
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+
 import shaded.com.google.common.base.Objects;
 import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.base.Strings;
@@ -317,6 +320,14 @@ public class JCloudsCloud extends Cloud {
         return null;
     }
 
+     JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
+        final StringWriter sw = new StringWriter();
+        final StreamTaskListener listener = new StreamTaskListener(sw);
+        JCloudsSlave node = t.provisionSlave(listener);
+        Hudson.getInstance().addNode(node);
+        return node;
+    }
+
     /**
      * Provisions a new node manually (by clicking a button in the computer list)
      *
@@ -341,10 +352,7 @@ public class JCloudsCloud extends Cloud {
                }
 
                if (getRunningNodesCount() < instanceCap) {
-                   StringWriter sw = new StringWriter();
-                   StreamTaskListener listener = new StreamTaskListener(sw);
-                   JCloudsSlave node = t.provisionSlave(listener);
-                   Hudson.getInstance().addNode(node);
+                   JCloudsSlave node = doProvisionFromTemplate(t);
                    rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
                } else {
                    sendError("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + name, req, rsp);
