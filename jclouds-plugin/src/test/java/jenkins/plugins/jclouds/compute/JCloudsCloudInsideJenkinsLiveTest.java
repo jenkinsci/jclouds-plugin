@@ -9,8 +9,6 @@ import java.util.Map;
 import org.jclouds.ssh.SshKeys;
 import org.jvnet.hudson.test.HudsonTestCase;
 
-import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
-
 public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
 
     private ComputeTestFixture fixture;
@@ -26,7 +24,7 @@ public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
 
         // TODO: this may need to vary per test
         cloud = new JCloudsCloud(fixture.getProvider() + "-profile", fixture.getProvider(), fixture.getIdentity(), fixture.getCredential(),
-                null, fixture.getEndpoint(), 1, DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
+                null, fixture.getEndpoint(), 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
                 Collections.<JCloudsSlaveTemplate>emptyList());
     }
 

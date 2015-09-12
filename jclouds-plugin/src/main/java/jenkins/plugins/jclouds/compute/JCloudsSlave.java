@@ -24,8 +24,6 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.LoginCredentials;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import static jenkins.plugins.jclouds.compute.CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES;
-
 /**
  * Jenkins Slave node - managed by JClouds.
  *
@@ -188,7 +186,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
             return overrideRetentionTime.intValue();
         }
         final JCloudsCloud cloud = JCloudsCloud.getByName(cloudName);
-        return cloud == null ? DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : cloud.getRetentionTime();
+        return cloud == null ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : cloud.getRetentionTime();
     }
 
     /**
