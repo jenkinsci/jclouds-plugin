@@ -1,7 +1,5 @@
 package jenkins.plugins.jclouds.compute;
 
-import java.io.Serializable;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
@@ -9,11 +7,8 @@ import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.export.ExportedBean;
 
 public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> {
     public final String cloudName;

@@ -9,12 +9,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.util.logging.Logger;
 
 @Extension
 public class PhoneHomeCrumbExclusion extends CrumbExclusion {
-
-	private static final Logger LOGGER = Logger.getLogger("jenkins.plugins.jclouds.internal.PhoneHomeCrumbExclusion");
 
 	@Override
 	public boolean process(HttpServletRequest req, HttpServletResponse resp, FilterChain chain) throws IOException, ServletException {
