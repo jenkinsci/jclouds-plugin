@@ -6,16 +6,24 @@
         <version>2.9-SNAPSHOT</version>
         <relativePath>..</relativePath>
     </parent>
+
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>jclouds-shaded</artifactId>
     <version>2.9-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>jclouds shaded jar for Jenkins plugin</name>
+
     <dependencies>
         <dependency>
             <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-core</artifactId>
             <version>${jclouds.version}</version>
+            <!-- <exclusions>
+                <exclusion>
+                    <groupId>com.google.inject</groupId>
+                    <artifactId>guice</artifactId>
+                </exclusion>
+            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.apache.jclouds</groupId>
@@ -58,21 +66,6 @@
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>${jsch.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-            <version>${jsr305.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-core</artifactId>
             <version>${jclouds.version}</version>
@@ -90,46 +83,12 @@
             <version>${jclouds.version}</version>
             <type>test-jar</type>
         </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.0.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
     <build>
-        <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.2</version>
-                <executions>
-                    <execution>
-                        <id>shade</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <artifactSet>
-                        <includes>
-                            <include>org.apache.jclouds*:*</include>
-                            <include>com.google.guava:*</include>
-                        </includes>
-                    </artifactSet>
-                    <relocations>
-                        <relocation>
-                            <pattern>com.google.common</pattern>
-                            <shadedPattern>shaded.com.google.common</shadedPattern>
-                        </relocation>
-                    </relocations>
-                    <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                    </transformers>
-                    <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-                </configuration>
+                <!-- version and config in from pluginManagement -->
             </plugin>
         </plugins>
     </build>
