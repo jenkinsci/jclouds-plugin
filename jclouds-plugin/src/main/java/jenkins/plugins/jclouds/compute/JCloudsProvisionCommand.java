@@ -49,7 +49,7 @@ public class JCloudsProvisionCommand extends CLICommand {
             return (JCloudsCloud)c;
         }
         final List<String> names = new ArrayList<>();
-        for (final Cloud cloud : Jenkins.getInstance().clouds) {
+        for (final Cloud cloud : Jenkins.getActiveInstance().clouds) {
             if (cloud instanceof JCloudsCloud) {
                 String n = ((JCloudsCloud)cloud).profile;
                 if (n.length() > 0) {

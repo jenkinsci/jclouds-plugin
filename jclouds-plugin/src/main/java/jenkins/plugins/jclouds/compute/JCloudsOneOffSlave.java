@@ -5,6 +5,7 @@ import hudson.Launcher;
 import hudson.model.BuildListener;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
+import hudson.model.Executor;
 import hudson.slaves.OfflineCause;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
@@ -28,8 +29,9 @@ public class JCloudsOneOffSlave extends BuildWrapper {
     @Override
     @SuppressWarnings("rawtypes")
     public Environment setUp(AbstractBuild build, Launcher launcher, final BuildListener listener) {
-        if (JCloudsComputer.class.isInstance(build.getExecutor().getOwner())) {
-            final JCloudsComputer c = (JCloudsComputer) build.getExecutor().getOwner();
+        final Executor x = build.getExecutor();
+        if (null != x && JCloudsComputer.class.isInstance(x.getOwner())) {
+            final JCloudsComputer c = (JCloudsComputer) x.getOwner();
             return new Environment() {
                 @Override
                 public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {

@@ -280,7 +280,7 @@ public class JCloudsCloud extends Cloud {
         Integer launchTimeoutSec = 5 * 60;
         Computer computer = jcloudsSlave.toComputer();
         long startMoment = System.currentTimeMillis();
-        while (computer.isOffline()) {
+        while (null != computer && computer.isOffline()) {
             try {
                 LOGGER.info(String.format("Slave [%s] not connected yet", jcloudsSlave.getDisplayName()));
                 computer.connect(false).get();
