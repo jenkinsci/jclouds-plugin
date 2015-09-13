@@ -33,18 +33,21 @@ public class JCloudsLauncher extends ComputerLauncher {
         PrintStream logger = listener.getLogger();
 
         final JCloudsSlave slave = (JCloudsSlave) computer.getNode();
-        final String[] addresses = getConnectionAddresses(slave.getNodeMetaData(), logger);
+        if (null != slave) {
+            final String[] addresses = getConnectionAddresses(slave.getNodeMetaData(), logger);
+            slave.waitForPhoneHome(logger);
 
-        slave.waitForPhoneHome(logger);
+            String host = addresses[0];
+            if ("0.0.0.0".equals(host)) {
+                logger.println("Invalid host 0.0.0.0, your host is most likely waiting for an ip address.");
+                throw new IOException("goto sleep");
+            }
 
-        String host = addresses[0];
-        if ("0.0.0.0".equals(host)) {
-            logger.println("Invalid host 0.0.0.0, your host is most likely waiting for an ip address.");
-            throw new IOException("goto sleep");
+            SSHLauncher launcher = new SSHLauncher(host, 22, slave.getCredentialsId(), slave.getJvmOptions(), null, "", "", Integer.valueOf(0), null, null);
+            launcher.launch(computer, listener);
+        } else {
+            throw new IOException("Could not launch NULL slave.");
         }
-
-        SSHLauncher launcher = new SSHLauncher(host, 22, slave.getCredentialsId(), slave.getJvmOptions(), null, "", "", Integer.valueOf(0), null, null);
-        launcher.launch(computer, listener);
     }
 
     /**

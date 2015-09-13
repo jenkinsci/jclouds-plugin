@@ -4,7 +4,7 @@ import hudson.Extension;
 import hudson.Plugin;
 import hudson.model.Describable;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
+import jenkins.model.Jenkins;
 
 /**
  * @author Vijay Kiran
@@ -18,11 +18,11 @@ public class PluginImpl extends Plugin implements Describable<PluginImpl> {
     }
 
     public Descriptor<PluginImpl> getDescriptor() {
-        return (DescriptorImpl) Hudson.getInstance().getDescriptorOrDie(getClass());
+        return (DescriptorImpl) Jenkins.getActiveInstance().getDescriptorOrDie(getClass());
     }
 
     public static PluginImpl get() {
-        return Hudson.getInstance().getPlugin(PluginImpl.class);
+        return Jenkins.getActiveInstance().getPlugin(PluginImpl.class);
     }
 
     @Extension

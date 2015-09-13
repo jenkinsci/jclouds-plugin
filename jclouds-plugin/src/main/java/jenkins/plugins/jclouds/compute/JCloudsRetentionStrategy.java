@@ -27,7 +27,8 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
             return 1;
         } else {
             try {
-                if (c.isIdle() && !c.getNode().isPendingDelete() && !disabled) {
+                final JCloudsSlave node = c.getNode();
+                if (null != node && c.isIdle() && !node.isPendingDelete() && !disabled) {
                     // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
                     final int retentionTime = c.getRetentionTime();
                     // check executor to ensure we are terminating online slaves
@@ -38,7 +39,7 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                             if (!c.isOffline()) {
                                 c.setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
                             }
-                            c.getNode().setPendingDelete(true);
+                            node.setPendingDelete(true);
                         }
                     }
                 }

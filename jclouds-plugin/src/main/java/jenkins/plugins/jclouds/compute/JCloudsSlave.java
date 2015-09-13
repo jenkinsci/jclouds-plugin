@@ -30,6 +30,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
  * @author Vijay Kiran
  */
 public class JCloudsSlave extends AbstractCloudSlave {
+
+    
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlave.class.getName());
     private transient NodeMetadata nodeMetaData;
     public final boolean stopOnTerminate;
