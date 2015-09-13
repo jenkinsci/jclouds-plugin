@@ -2,7 +2,6 @@ package jenkins.plugins.jclouds.internal;
 
 import hudson.Extension;
 import hudson.model.Computer;
-import hudson.model.Hudson;
 import hudson.model.RootAction;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
@@ -12,6 +11,8 @@ import org.acegisecurity.context.SecurityContextHolder;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
+
+import org.jclouds.compute.domain.NodeMetadata;
 
 import jenkins.plugins.jclouds.compute.JCloudsComputer;
 import jenkins.plugins.jclouds.compute.JCloudsSlave;
@@ -55,11 +56,14 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
         Authentication old = SecurityContextHolder.getContext().getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
         try {
-            for (final Computer c : Jenkins.getInstance().getComputers()) {
+            for (final Computer c : Jenkins.getActiveInstance().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
-                    if (slave.getNodeMetaData().getHostname().equals(hostName)) {
-                        slave.setWaitPhoneHome(false);
+                    if (null != slave) {
+                        final NodeMetadata nmd = slave.getNodeMetaData();
+                        if (null != nmd && nmd.getHostname().equals(hostName)) {
+                            slave.setWaitPhoneHome(false);
+                        }
                     }
                 }
             }
@@ -73,7 +77,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
     private static final Logger LOGGER = Logger.getLogger(PhoneHomeWebHook.class.getName());
 
     public static PhoneHomeWebHook get() {
-        return Hudson.getInstance().getExtensionList(RootAction.class).get(PhoneHomeWebHook.class);
+        return Jenkins.getActiveInstance().getExtensionList(RootAction.class).get(PhoneHomeWebHook.class);
     }
 
 }

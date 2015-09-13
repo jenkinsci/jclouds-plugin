@@ -1,5 +1,6 @@
 package jenkins.plugins.jclouds.compute;
 
+import hudson.remoting.VirtualChannel;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.OfflineCause;
 import hudson.slaves.SlaveComputer;
@@ -63,8 +64,9 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
         LOGGER.info("Terminating " + getName() + " slave");
         JCloudsSlave slave = getNode();
         if (null != slave ) {
-            if (slave.getChannel() != null) {
-                slave.getChannel().close();
+            final VirtualChannel ch = slave.getChannel();
+            if (null != ch) {
+                ch.close();
             }
             slave.terminate();
             Jenkins.getActiveInstance().removeNode(slave);
