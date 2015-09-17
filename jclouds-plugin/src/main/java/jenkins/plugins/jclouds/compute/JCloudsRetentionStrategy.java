@@ -41,6 +41,7 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                             if (!c.isOffline()) {
                                 c.setTemporarilyOffline(true, OfflineCause.create(Messages._DeletedCause()));
                             }
+                            node.setPendingDelete(true);
                         }
                     }
                 }
