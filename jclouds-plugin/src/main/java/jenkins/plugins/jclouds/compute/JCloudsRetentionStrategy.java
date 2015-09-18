@@ -34,6 +34,8 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                     // check executor to ensure we are terminating online slaves
                     if (retentionTime > -1 && c.countExecutors() > 0) {
                         final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
+                        LOGGER.info("Node " + c.getName() + " retentionTime: " + retentionTime + " idle: "
+                                + TimeUnit2.MILLISECONDS.toMinutes(idleMilliseconds) + "min");
                         if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
                             LOGGER.info("Setting " + c.getName() + " to be deleted.");
                             if (!c.isOffline()) {

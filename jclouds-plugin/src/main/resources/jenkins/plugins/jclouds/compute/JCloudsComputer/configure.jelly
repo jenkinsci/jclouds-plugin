@@ -19,7 +19,7 @@
                     <f:textbox />
                 </f:entry>
 
-                <f:slave-mode name="mode" node="${it}" />
+                <f:slave-mode name="mode" node="${instance}" />
 
                 <f:descriptorList title="${%Node Properties}" descriptors="${h.getNodePropertyDescriptors(descriptor.clazz)}" field="nodeProperties" />
 

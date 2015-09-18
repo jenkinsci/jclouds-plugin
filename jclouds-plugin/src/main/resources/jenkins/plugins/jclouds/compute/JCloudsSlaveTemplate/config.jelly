@@ -12,7 +12,7 @@
       <f:entry title="${%Labels}" field="labelString">
         <f:textbox/>
       </f:entry>
-      <f:slave-mode name="mode" node="${it}"/>
+      <f:slave-mode name="mode" node="${instance}"/>
       <f:entry title="${%Number of Executors}" field="numExecutors">
         <f:number clazz="positive-number" min="1" step="1" default="2"/>
       </f:entry>
