@@ -1,6 +1,7 @@
 package jenkins.plugins.jclouds.compute;
 
 import hudson.Extension;
+import hudson.XmlFile;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor;
 import hudson.slaves.AbstractCloudComputer;
@@ -9,6 +10,9 @@ import hudson.slaves.NodeProperty;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
 
+import jenkins.model.Jenkins;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
@@ -215,8 +219,31 @@ public class JCloudsSlave extends AbstractCloudSlave {
         return waitPhoneHome;
     }
 
+    /*
+     * This is extremely ugly!
+     * There should be a Jenkins#updateNode(Node) instead of just addNode() and removeNode().
+     * We MUST persist the value of the waitPhoneHome flag, because otherwise if jenkins is
+     * restarted after a node has successfully phoned home and that node is still running,
+     * jenkins would then repeat the whole thing, obviously timing out when the node does not
+     * phone home again.
+     * Another solution would be for jenkins to simply persist all nodes once before restarting.
+     */
+    private void updateXml() {
+        final File nodesDir = new File(Jenkins.getActiveInstance().getRootDir(), "nodes");
+        final File cfg = new File(new File(nodesDir, getNodeName()), "config.xml");
+        if (cfg.exists()) {
+            XmlFile xmlFile = new XmlFile(Jenkins.XSTREAM, cfg);
+            try {
+                xmlFile.write(this);
+            } catch (IOException e) {
+                LOGGER.warning(e.getMessage());
+            }
+        }
+    }
+
     public void setWaitPhoneHome(boolean value) {
         waitPhoneHome = value;
+        updateXml();
         phm.signalCondition();
     }
 
