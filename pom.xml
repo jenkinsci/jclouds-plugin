@@ -32,7 +32,6 @@
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
         <jclouds.version>1.9.1</jclouds.version>
-        <hpi.plugin.version>1.114</hpi.plugin.version>
         <jenkins.version>1.609.3</jenkins.version>
         <jenkins.parent.version>${project.parent.version}</jenkins.parent.version>
     </properties>
@@ -92,7 +91,6 @@
                 <plugin>
                     <groupId>org.jenkins-ci.tools</groupId>
                     <artifactId>maven-hpi-plugin</artifactId>
-                    <version>${hpi.plugin.version}</version>
                     <configuration>
                         <disabledTestInjection>true</disabledTestInjection>
                         <dependentWarExcludes>org.apache.jclouds*</dependentWarExcludes>
