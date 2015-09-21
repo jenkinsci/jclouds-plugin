@@ -35,6 +35,11 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
     }
 
     @Override
+    protected Level getNormalLoggingLevel() {
+        return Level.FINE;
+    }
+
+    @Override
     protected void execute(TaskListener listener) {
         final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder = ImmutableList.<ListenableFuture<?>>builder();
         ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
