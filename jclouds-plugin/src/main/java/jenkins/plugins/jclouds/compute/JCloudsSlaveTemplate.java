@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -310,8 +312,23 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             LOGGER.info("Setting image id to " + imageId);
             templateBuilder.imageId(imageId);
         } else if (!Strings.isNullOrEmpty(imageNameRegex)) {
-            LOGGER.info("Setting image name regex to " + imageNameRegex);
-            templateBuilder.imageNameMatches(imageNameRegex);
+            LOGGER.info("Resolving image name regex " + imageNameRegex);
+            // We do NOT use templateBuilder.imageNameMatches(imageNameRegex),
+            // because the corresponding image id gets cached for a LOOONG time
+            // and we do not want that. Therefore we always search for images
+            // ourselves and then use the Id of a found image. To work around
+            // caching, we need to do this using a freshly instantiated
+            // ComputeService.
+            // See: https://issues.apache.org/jira/browse/JCLOUDS-570
+            // and: https://issues.apache.org/jira/browse/JCLOUDS-512
+            // for some insight.
+            for (Image i : getCloud().newCompute().listImages()) {
+                if (i.getName().matches(imageNameRegex)) {
+                    LOGGER.info("Setting image id to " + i.getId());
+                    templateBuilder.imageId(i.getId());
+                    break;
+                }
+            }
         } else {
             if (!Strings.isNullOrEmpty(osFamily)) {
                 LOGGER.info("Setting osFamily to " + osFamily);
@@ -560,25 +577,38 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 return computeContextValidationResult;
             }
             if (Strings.isNullOrEmpty(imageNameRegex)) {
-                return FormValidation.error("Image Name Regex shouldn't be empty");
+                return FormValidation.error("Image Name Regex should not be empty.");
             }
-
             // Remove empty text/whitespace from the fields.
             imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
 
             try {
-                final Set<? extends Image> images = listImages(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
-                if (images != null) {
-                    for (final Image image : images) {
-                        if (image.getName().matches(imageNameRegex)) {
-                            return FormValidation.ok("Image Name Regex is valid.");
+                int matchcount = 0;
+                Pattern p = Pattern.compile(imageNameRegex);
+                try {
+                    final Set<? extends Image> images = listImages(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
+                    if (images != null) {
+                        for (final Image image : images) {
+                            if (p.matcher(image.getName()).matches()) {
+                                matchcount++;
+                            }
                         }
+                    } else {
+                        return FormValidation.ok("No images available to check against.");
                     }
+                } catch (Exception ex) {
+                    return FormValidation.error("Unable to check the image name regex, please check if the credentials you provided are correct.", ex);
                 }
-            } catch (Exception ex) {
-                return FormValidation.error("Unable to check the image name regex, " + "please check if the credentials you provided are correct.", ex);
+                if (1 == matchcount) {
+                    return FormValidation.ok("Image name regex matches exactly one image.");
+                }
+                if (1 < matchcount) {
+                    return FormValidation.error("Ambiguous image name regex matches multiple images, please check the value and try again.");
+                }
+            } catch (PatternSyntaxException ex) {
+                return FormValidation.error("Invalid image name regex syntax.");
             }
-            return FormValidation.error("Invalid Image Name Regex, please check the value and try again.");
+            return FormValidation.error("Image name regex does not match any image, please check the value and try again.");
         }
 
         private FormValidation validateComputeContextParameters(@QueryParameter String providerName, @QueryParameter String identity,
