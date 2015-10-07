@@ -19,6 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -305,168 +306,203 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     @Override
     public NodeMetadata get() {
-        LOGGER.info("Provisioning new jclouds node");
-        ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
-        TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
-        if (!Strings.isNullOrEmpty(imageId)) {
-            LOGGER.info("Setting image id to " + imageId);
-            templateBuilder.imageId(imageId);
-        } else if (!Strings.isNullOrEmpty(imageNameRegex)) {
-            LOGGER.info("Resolving image name regex " + imageNameRegex);
-            // We do NOT use templateBuilder.imageNameMatches(imageNameRegex),
-            // because the corresponding image id gets cached for a LOOONG time
-            // and we do not want that. Therefore we always search for images
-            // ourselves and then use the Id of a found image. To work around
-            // caching, we need to do this using a freshly instantiated
-            // ComputeService.
-            // See: https://issues.apache.org/jira/browse/JCLOUDS-570
-            // and: https://issues.apache.org/jira/browse/JCLOUDS-512
-            // for some insight.
-            for (Image i : getCloud().newCompute().listImages()) {
-                if (i.getName().matches(imageNameRegex)) {
-                    LOGGER.info("Setting image id to " + i.getId());
-                    templateBuilder.imageId(i.getId());
-                    break;
-                }
-            }
-        } else {
-            if (!Strings.isNullOrEmpty(osFamily)) {
-                LOGGER.info("Setting osFamily to " + osFamily);
-                templateBuilder.osFamily(OsFamily.fromValue(osFamily));
-            }
-            if (!Strings.isNullOrEmpty(osVersion)) {
-                LOGGER.info("Setting osVersion to " + osVersion);
-                templateBuilder.osVersionMatches(osVersion);
-            }
-        }
-        if (!Strings.isNullOrEmpty(hardwareId)) {
-            LOGGER.info("Setting hardware Id to " + hardwareId);
-            templateBuilder.hardwareId(hardwareId);
-        } else {
-            LOGGER.info("Setting minRam " + ram + " and minCores " + cores);
-            templateBuilder.minCores(cores).minRam(ram);
-        }
-        if (!Strings.isNullOrEmpty(locationId)) {
-            LOGGER.info("Setting location Id to " + locationId);
-            templateBuilder.locationId(locationId);
-        }
-
-        Template template = templateBuilder.build();
-        TemplateOptions options = template.getOptions();
-
-        if (!Strings.isNullOrEmpty(networks)) {
-            LOGGER.info("Setting networks to " + networks);
-            options.networks(csvToArray(networks));
-        }
-
-        if (!Strings.isNullOrEmpty(securityGroups)) {
-            LOGGER.info("Setting security groups to " + securityGroups);
-            String[] securityGroupsArray = csvToArray(securityGroups);
-            options.securityGroups(securityGroupsArray);
-
-            if (options instanceof NovaTemplateOptions) {
-              options.as(NovaTemplateOptions.class).securityGroupNames(securityGroupsArray);
-            }
-        }
-
-        if (assignFloatingIp && options instanceof NovaTemplateOptions) {
-            LOGGER.info("Setting autoAssignFloatingIp to true");
-            options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
-            options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp();
-        }
-
-        if (!Strings.isNullOrEmpty(keyPairName) && options instanceof NovaTemplateOptions) {
-            LOGGER.info("Setting keyPairName to " + keyPairName);
-            options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
-        }
-
-        if (options instanceof CloudStackTemplateOptions) {
-            /**
-             * This tells jclouds cloudstack module to assign a public ip, setup staticnat and configure the firewall when true. Only interesting when using
-             * cloudstack advanced networking.
-             */
-            LOGGER.info("Setting setupStaticNat to " + assignPublicIp);
-            options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
-        }
-
-        if (null != adminCredentialsId) {
-            String adminUser = getAdminUser();
-            StandardUsernameCredentials c = SSHLauncher.lookupSystemCredentials(adminCredentialsId);
-            if (null != c) {
-                if (c instanceof StandardUsernamePasswordCredentials) {
-                    String password = ((StandardUsernamePasswordCredentials)c).getPassword().toString();
-                    LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(password).build();
-                    options.overrideLoginCredentials(lc);
-                } else {
-                    String privateKey = ((SSHUserPrivateKey)c).getPrivateKey();
-                    LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(privateKey).build();
-                    options.overrideLoginCredentials(lc);
-                }
-            }
-        }
-
-        if (spoolDelayMs > 0) {
-            // (JENKINS-15970) Add optional delay before spooling. Author: Adam Rofer
-            synchronized (delayLockObject) {
-                LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
-                try {
-                    delayLockObject.wait(spoolDelayMs);
-                } catch (InterruptedException e) {
-                    LOGGER.warning(e.getMessage());
-                }
-            }
-        }
-
-        Statement initStatement = null;
-
-        if (this.preExistingJenkinsUser) {
-            if (this.initScript.length() > 0) {
-                initStatement = Statements.exec(this.initScript);
-            }
-        } else {
-            // provision jenkins user
-            AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
-                .installAdminPrivateKey(installPrivateKey) // some VCS such as Git use SSH authentication
-                .grantSudoToAdminUser(allowSudo) // no need
-                .adminPrivateKey(getJenkinsPrivateKey()) // temporary due to jclouds bug
-                .authorizeAdminPublicKey(true).adminPublicKey(getJenkinsPublicKey()).adminHome(getFsRoot()).build();
-            // Jenkins needs /jenkins dir.
-            Statement jenkinsDirStatement = newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
-                    Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
-            initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
-        }
-        options.inboundPorts(22).userMetadata(userMetadata);
-
-        if (null != initStatement) {
-            options.runScript(initStatement);
-        }
-
-        if (userData != null) {
-            try {
-                Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
-                LOGGER.info("Setting userData to " + userData);
-                userDataMethod.invoke(options, userData.getBytes(StandardCharsets.UTF_8));
-            } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
-            }
-        }
-
+        boolean brokenImageCacheHasThrown = false;
         NodeMetadata nodeMetadata = null;
 
-        try {
-            nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
-        } catch (RunNodesException e) {
-            throw destroyBadNodesAndPropagate(e);
-        }
+        do {
+            LOGGER.info("Provisioning new jclouds node");
+            ImmutableMap<String, String> userMetadata = ImmutableMap.of("Name", name);
+            TemplateBuilder templateBuilder = getCloud().getCompute().templateBuilder();
+            if (!Strings.isNullOrEmpty(imageId)) {
+                LOGGER.info("Setting image id to " + imageId);
+                templateBuilder.imageId(imageId);
+            } else if (!Strings.isNullOrEmpty(imageNameRegex)) {
+                if (brokenImageCacheHasThrown) {
+                    LOGGER.info("Resolving image name regex " + imageNameRegex);
+                    // We do NOT use templateBuilder.imageNameMatches(imageNameRegex),
+                    // because the corresponding image id gets cached for a LOOONG time
+                    // and we do not want that. Therefore we always search for images
+                    // ourselves and then use the Id of a found image. To work around
+                    // caching, we need to do this using a freshly instantiated
+                    // ComputeService.
+                    // See: https://issues.apache.org/jira/browse/JCLOUDS-570
+                    // and: https://issues.apache.org/jira/browse/JCLOUDS-512
+                    // for some insight.
+                    boolean foundAny = true;
+                    for (Image i : getCloud().newCompute().listImages()) {
+                        if (i.getName().matches(imageNameRegex)) {
+                            LOGGER.info("Setting image id to " + i.getId());
+                            templateBuilder.imageId(i.getId());
+                            foundAny = true;
+                            break;
+                        }
+                    }
+                    if (!foundAny) {
+                        throw new RuntimeException("No matching image available");
+                    }
+                } else {
+                    LOGGER.info("Setting image name regex to " + imageNameRegex);
+                    templateBuilder.imageNameMatches(imageNameRegex);
+                }
+            } else {
+                if (!Strings.isNullOrEmpty(osFamily)) {
+                    LOGGER.info("Setting osFamily to " + osFamily);
+                    templateBuilder.osFamily(OsFamily.fromValue(osFamily));
+                }
+                if (!Strings.isNullOrEmpty(osVersion)) {
+                    LOGGER.info("Setting osVersion to " + osVersion);
+                    templateBuilder.osVersionMatches(osVersion);
+                }
+            }
+            if (!Strings.isNullOrEmpty(hardwareId)) {
+                LOGGER.info("Setting hardware Id to " + hardwareId);
+                templateBuilder.hardwareId(hardwareId);
+            } else {
+                LOGGER.info("Setting minRam " + ram + " and minCores " + cores);
+                templateBuilder.minCores(cores).minRam(ram);
+            }
+            if (!Strings.isNullOrEmpty(locationId)) {
+                LOGGER.info("Setting location Id to " + locationId);
+                templateBuilder.locationId(locationId);
+            }
+
+            Template template = templateBuilder.build();
+            TemplateOptions options = template.getOptions();
+
+            if (!Strings.isNullOrEmpty(networks)) {
+                LOGGER.info("Setting networks to " + networks);
+                options.networks(csvToArray(networks));
+            }
+
+            if (!Strings.isNullOrEmpty(securityGroups)) {
+                LOGGER.info("Setting security groups to " + securityGroups);
+                String[] securityGroupsArray = csvToArray(securityGroups);
+                options.securityGroups(securityGroupsArray);
+
+                if (options instanceof NovaTemplateOptions) {
+                    options.as(NovaTemplateOptions.class).securityGroupNames(securityGroupsArray);
+                }
+            }
+
+            if (assignFloatingIp && options instanceof NovaTemplateOptions) {
+                LOGGER.info("Setting autoAssignFloatingIp to true");
+                options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
+                options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp();
+            }
+
+            if (!Strings.isNullOrEmpty(keyPairName) && options instanceof NovaTemplateOptions) {
+                LOGGER.info("Setting keyPairName to " + keyPairName);
+                options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+            }
+
+            if (options instanceof CloudStackTemplateOptions) {
+                /**
+                 * This tells jclouds cloudstack module to assign a public ip, setup staticnat and configure the firewall when true. Only interesting when using
+                 * cloudstack advanced networking.
+                 */
+                LOGGER.info("Setting setupStaticNat to " + assignPublicIp);
+                options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
+            }
+
+            if (null != adminCredentialsId) {
+                String adminUser = getAdminUser();
+                StandardUsernameCredentials c = SSHLauncher.lookupSystemCredentials(adminCredentialsId);
+                if (null != c) {
+                    if (c instanceof StandardUsernamePasswordCredentials) {
+                        String password = ((StandardUsernamePasswordCredentials)c).getPassword().toString();
+                        LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(password).build();
+                        options.overrideLoginCredentials(lc);
+                    } else {
+                        String privateKey = ((SSHUserPrivateKey)c).getPrivateKey();
+                        LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(privateKey).build();
+                        options.overrideLoginCredentials(lc);
+                    }
+                }
+            }
+
+            if (spoolDelayMs > 0) {
+                // (JENKINS-15970) Add optional delay before spooling. Author: Adam Rofer
+                synchronized (delayLockObject) {
+                    LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
+                    try {
+                        delayLockObject.wait(spoolDelayMs);
+                    } catch (InterruptedException e) {
+                        LOGGER.warning(e.getMessage());
+                    }
+                }
+            }
+
+            Statement initStatement = null;
+
+            if (this.preExistingJenkinsUser) {
+                if (this.initScript.length() > 0) {
+                    initStatement = Statements.exec(this.initScript);
+                }
+            } else {
+                // provision jenkins user
+                AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
+                    .installAdminPrivateKey(installPrivateKey) // some VCS such as Git use SSH authentication
+                    .grantSudoToAdminUser(allowSudo) // no need
+                    .adminPrivateKey(getJenkinsPrivateKey()) // temporary due to jclouds bug
+                    .authorizeAdminPublicKey(true).adminPublicKey(getJenkinsPublicKey()).adminHome(getFsRoot()).build();
+                // Jenkins needs /jenkins dir.
+                Statement jenkinsDirStatement = newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
+                        Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
+                initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
+            }
+            options.inboundPorts(22).userMetadata(userMetadata);
+
+            if (null != initStatement) {
+                options.runScript(initStatement);
+            }
+
+            if (userData != null) {
+                try {
+                    Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
+                    LOGGER.info("Setting userData to " + userData);
+                    userDataMethod.invoke(options, userData.getBytes(StandardCharsets.UTF_8));
+                } catch (Exception e) {
+                    LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
+                }
+            }
+
+
+            try {
+                nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
+                brokenImageCacheHasThrown = false;
+            } catch (RunNodesException e) {
+                boolean throwNow = true;
+                if (!(Strings.isNullOrEmpty(imageNameRegex) || brokenImageCacheHasThrown)) {
+                    Map<?, ? extends Throwable> xmap = e.getExecutionErrors();
+                    for (Throwable t : xmap.values()) {
+                        if (t.getMessage().contains("Image")) {
+                            LOGGER.fine("Exception message MATCHED: '" + t.getMessage() + "'");
+                            brokenImageCacheHasThrown = true;
+                            throwNow = false;
+                            destroyBadNodes(e);
+                            break;
+                        }
+                        LOGGER.fine("Exception message NOT MATCHED: '" + t.getMessage() + "'");
+                    }
+                }
+                if (throwNow) {
+                    throw destroyBadNodesAndPropagate(e);
+                }
+            }
+        } while (brokenImageCacheHasThrown);
 
         // Check if nodeMetadata is null and throw
         return nodeMetadata;
     }
 
-    private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
+    private void destroyBadNodes(RunNodesException e) {
         for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet()) {
             getCloud().getCompute().destroyNode(nodeError.getKey().getId());
         }
+    }
+
+    private RuntimeException destroyBadNodesAndPropagate(RunNodesException e) {
+        destroyBadNodes(e);
         throw propagate(e);
     }
 
@@ -809,7 +845,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
 
             return m;
-        }
+                }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
