@@ -219,19 +219,23 @@ public class JCloudsCloud extends Cloud {
             .buildView(ComputeServiceContext.class);
     }
 
+    public ComputeService newCompute() {
+        Properties overrides = new Properties();
+        if (!Strings.isNullOrEmpty(this.endPointUrl)) {
+            overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
+        }
+        if (scriptTimeout > 0) {
+            overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE, String.valueOf(scriptTimeout));
+        }
+        if (startTimeout > 0) {
+            overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
+        }
+        return ctx(this.providerName, this.identity, Secret.toString(credential), overrides, this.zones).getComputeService();
+    }
+
     public ComputeService getCompute() {
         if (this.compute == null) {
-            Properties overrides = new Properties();
-            if (!Strings.isNullOrEmpty(this.endPointUrl)) {
-                overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
-            }
-            if (scriptTimeout > 0) {
-                overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE, String.valueOf(scriptTimeout));
-            }
-            if (startTimeout > 0) {
-                overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
-            }
-            this.compute = ctx(this.providerName, this.identity, Secret.toString(credential), overrides, this.zones).getComputeService();
+            this.compute = newCompute();
         }
         return compute;
     }
@@ -321,7 +325,7 @@ public class JCloudsCloud extends Cloud {
         return null;
     }
 
-     JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
+    JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
         final StringWriter sw = new StringWriter();
         final StreamTaskListener listener = new StreamTaskListener(sw);
         JCloudsSlave node = t.provisionSlave(listener);
@@ -393,11 +397,11 @@ public class JCloudsCloud extends Cloud {
         public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
                 @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones)  throws IOException {
             if (identity == null)
-               return FormValidation.error("Invalid (AccessId).");
+                return FormValidation.error("Invalid (AccessId).");
             if (credential == null)
-               return FormValidation.error("Invalid credential (secret key).");
+                return FormValidation.error("Invalid credential (secret key).");
             if (null == Util.fixEmptyAndTrim(cloudGlobalKeyId)) {
-               return FormValidation.error("Cloud RSA key is not specified.");
+                return FormValidation.error("Cloud RSA key is not specified.");
             }
 
             // Remove empty text/whitespace from the fields.
