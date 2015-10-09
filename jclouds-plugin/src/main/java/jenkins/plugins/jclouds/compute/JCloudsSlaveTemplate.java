@@ -19,7 +19,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -77,22 +76,18 @@ import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
-
 import com.trilead.ssh2.Connection;
 
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 
 /**
@@ -224,12 +219,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (!Strings.isNullOrEmpty(jenkinsUser)) {
             return jenkinsUser;
         }
-        if (Strings.isNullOrEmpty(credentialsId)
-                || null == SSHLauncher.lookupSystemCredentials(credentialsId)
-                || null == Util.fixEmptyAndTrim(SSHLauncher.lookupSystemCredentials(credentialsId).getUsername())) {
+        final StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
+        if (null == u || null == Util.fixEmptyAndTrim(u.getUsername())) {
             return "jenkins";
         } else {
-            return SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
+            return u.getUsername();
         }
     }
 
@@ -259,12 +253,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (!Strings.isNullOrEmpty(vmUser)) {
             return vmUser;
         }
-        if (Strings.isNullOrEmpty(adminCredentialsId)
-                || null == SSHLauncher.lookupSystemCredentials(adminCredentialsId)
-                || null == Util.fixEmptyAndTrim(SSHLauncher.lookupSystemCredentials(adminCredentialsId).getUsername())) {
+        final StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
+        if (null == u || null == Util.fixEmptyAndTrim(u.getUsername())) {
             return "root";
         } else {
-            return SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
+            return u.getUsername();
         }
     }
 
@@ -406,7 +399,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             if (null != adminCredentialsId) {
                 String adminUser = getAdminUser();
-                StandardUsernameCredentials c = SSHLauncher.lookupSystemCredentials(adminCredentialsId);
+                StandardUsernameCredentials c = CredentialsHelper.getCredentialsById(adminCredentialsId);
                 if (null != c) {
                     if (c instanceof StandardUsernamePasswordCredentials) {
                         String password = ((StandardUsernamePasswordCredentials)c).getPassword().toString();
@@ -959,30 +952,16 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     u = new UsernamePasswordCredentialsImpl(
                             CredentialsScope.SYSTEM, null, description, au, vmPassword);
                 }
-                setAdminCredentialsId(storeCredentials(u));
+                try {
+                    setAdminCredentialsId(CredentialsHelper.storeCredentials(u));
+                } catch (IOException x) {
+                    LOGGER.warning(String.format("Error while saving credentials: %s", x.getMessage()));
+                }
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw e;
         }
-    }
-
-    private String storeCredentials(final StandardUsernameCredentials u) {
-        if (null != u) {
-            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
-            try {
-                CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
-                try {
-                    s.addCredentials(Domain.global(), u);
-                    return u.getId();
-                } catch (IOException e) {
-                    LOGGER.warning(String.format("Error while saving credentials: %s", e.getMessage()));
-                }
-            } finally {
-                SecurityContextHolder.setContext(previousContext);
-            }
-        }
-        return null;
     }
 
     /**
@@ -999,7 +978,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (null == u) {
             u = new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, user,
                     new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
-            return storeCredentials(u);
+            try {
+                return CredentialsHelper.storeCredentials(u);
+            } catch (IOException x) {
+                LOGGER.warning(String.format("Error while saving credentials: %s", x.getMessage()));
+                return null;
+            }
         }
         return u.getId();
     }

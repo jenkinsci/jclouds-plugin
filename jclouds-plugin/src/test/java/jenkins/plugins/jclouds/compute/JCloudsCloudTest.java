@@ -36,8 +36,8 @@ public class JCloudsCloudTest {
         HtmlPage page2 = page.getAnchorByText("Cloud (JClouds)").click();
         WebAssert.assertInputPresent(page2, "_.profile");
         WebAssert.assertInputPresent(page2, "_.endPointUrl");
-        WebAssert.assertInputPresent(page2, "_.identity");
-        WebAssert.assertInputPresent(page2, "_.credential");
+        // WebAssert does not recognize select as input ?!
+        // WebAssert.assertInputPresent(page2, "_.cloudCredentialsId");
         WebAssert.assertInputPresent(page2, "_.instanceCap");
         WebAssert.assertInputPresent(page2, "_.retentionTime");
         // WebAssert does not recognize select as input ?!
@@ -57,18 +57,18 @@ public class JCloudsCloudTest {
     @Test
     public void testConfigRoundtrip() throws Exception {
 
-        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "identity",
-                "credential", "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
+        JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "",
+                "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
                 600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
 
         j.getInstance().clouds.add(original);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));
 
         j.assertEqualBeans(original, j.getInstance().clouds.getByName("aws-profile"),
-                "profile,providerName,identity,credential,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
+                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
 
         j.assertEqualBeans(original, JCloudsCloud.getByName("aws-profile"),
-                "profile,providerName,identity,credential,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
+                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
     }
 
 }
