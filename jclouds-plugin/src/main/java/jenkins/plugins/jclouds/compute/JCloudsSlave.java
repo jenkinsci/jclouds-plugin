@@ -227,6 +227,8 @@ public class JCloudsSlave extends AbstractCloudSlave {
      * jenkins would then repeat the whole thing, obviously timing out when the node does not
      * phone home again.
      * Another solution would be for jenkins to simply persist all nodes once before restarting.
+     *
+     * TODO: Remove, after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
      */
     private void updateXml() {
         final File nodesDir = new File(Jenkins.getActiveInstance().getRootDir(), "nodes");
@@ -243,6 +245,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public void setWaitPhoneHome(boolean value) {
         waitPhoneHome = value;
+        // TODO: Replace after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
         updateXml();
         phm.signalCondition();
     }
