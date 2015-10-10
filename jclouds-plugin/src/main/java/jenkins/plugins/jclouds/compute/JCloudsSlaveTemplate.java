@@ -686,10 +686,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return false;
         }
 
-        public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
-                @RelativePath("..") @QueryParameter String cloudCredentialsId,
-                @RelativePath("..") @QueryParameter String endPointUrl,
-                @RelativePath("..") @QueryParameter String zones) {
+        public ListBoxModel doFillHardwareIdItems(
+                @RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String cloudCredentialsId,
+                @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
             if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, zones, m)) {
@@ -764,10 +763,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
 
         public ListBoxModel doFillLocationIdItems(
-                @RelativePath("..") @QueryParameter String providerName,
-                @RelativePath("..") @QueryParameter String cloudCredentialsId,
-                @RelativePath("..") @QueryParameter String endPointUrl,
-                @RelativePath("..") @QueryParameter String zones) {
+                @RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String cloudCredentialsId,
+                @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
             if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, zones, m)) {
