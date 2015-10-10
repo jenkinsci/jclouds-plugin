@@ -221,15 +221,8 @@ public class JCloudsCloud extends Cloud {
         }
     }, new EnterpriseConfigurationModule());
 
-    static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl, String zones) {
-        Properties overrides = new Properties();
-        if (!Strings.isNullOrEmpty(endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
-        }
-        return ctx(providerName, identity, credential, overrides, zones);
-    }
-
-    static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides, String zones) {
+    private static ComputeServiceContext ctx(final String providerName, final String identity, final String credential,
+            final Properties overrides, final String zones) {
         if (!Strings.isNullOrEmpty(zones)) {
             overrides.setProperty(LocationConstants.PROPERTY_ZONES, zones);
         }
@@ -239,13 +232,21 @@ public class JCloudsCloud extends Cloud {
             .buildView(ComputeServiceContext.class);
     }
 
-    static ComputeServiceContext ctx(final String providerName, final String credentialsId, final Properties overrides, final String zones) {
+    private static ComputeServiceContext ctx(final String providerName, final String credentialsId, final Properties overrides, final String zones) {
         StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
         if (null != u && u instanceof StandardUsernamePasswordCredentials) {
             StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
             return ctx(providerName, up.getUsername(), up.getPassword().toString(), overrides, zones);
         }
         throw new RuntimeException("Using keys as credential for google cloud is not (yet) supported");
+    }
+
+    static ComputeServiceContext ctx(final String providerName, final String credentialsId, final String endPointUrl, final String zones) {
+        final Properties overrides = new Properties();
+        if (!Strings.isNullOrEmpty(endPointUrl)) {
+            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
+        }
+        return ctx(providerName, credentialsId, overrides, zones);
     }
 
     public ComputeService newCompute() {
