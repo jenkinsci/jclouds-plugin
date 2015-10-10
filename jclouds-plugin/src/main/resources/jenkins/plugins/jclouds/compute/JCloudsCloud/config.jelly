@@ -15,11 +15,8 @@
     <f:entry title="Retention Time" field="retentionTime">
         <f:number clazz="number" min="-1" step="1" default="30"/>
     </f:entry>
-    <f:entry title="Identity" field="identity">
-        <f:textbox/>
-    </f:entry>
-    <f:entry title="Credential" field="credential">
-        <f:password/>
+    <f:entry title="${%Credentials}" field="cloudCredentialsId">
+        <c:select/>
     </f:entry>
     <f:entry title="${%Cloud RSA key}" field="cloudGlobalKeyId">
         <c:select/>
@@ -35,7 +32,7 @@
             <f:textbox/>
         </f:entry>
     </f:advanced>
-    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,identity,credential,cloudGlobalKeyId,endPointUrl"/>
+    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl"/>
     <f:entry title="Cloud Instance Templates" description="${%List of Cloud Instances to be launched as slaves}">
         <f:repeatable field="templates">
             <st:include page="config.jelly" class="${descriptor.clazz}"/>

@@ -31,7 +31,7 @@ public class JCloudsSlaveTemplateTest {
         templates.add(beforeTemplate);
 
         final JCloudsCloud beforeCloud = new JCloudsCloud("aws-profile",
-                "aws-ec2", "identity", "credential", "cloudGlobalKeyId",
+                "aws-ec2", "cloudCredentialsId", "cloudGlobalKeyId",
                 "http://localhost", 1, 30, 600 * 1000, 600 * 1000, null, templates);
 
         j.jenkins.clouds.add(beforeCloud);
@@ -41,7 +41,7 @@ public class JCloudsSlaveTemplateTest {
         final JCloudsSlaveTemplate afterTemplate = afterCloud.getTemplate(name);
 
         j.assertEqualBeans(beforeCloud, afterCloud,
-                "profile,providerName,identity,credential,endPointUrl");
+                "profile,providerName,endPointUrl");
         j.assertEqualBeans(beforeTemplate, afterTemplate,
                 "name,cores,ram,osFamily,osVersion,labelString,description,initScript,numExecutors,stopOnTerminate,mode");
     }

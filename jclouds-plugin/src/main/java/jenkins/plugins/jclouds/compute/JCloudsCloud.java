@@ -64,19 +64,17 @@ import shaded.com.google.common.collect.Iterables;
 import shaded.com.google.common.io.Closeables;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-import org.acegisecurity.context.SecurityContext;
 import hudson.security.ACL;
-import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
-import org.acegisecurity.context.SecurityContextHolder;
 import hudson.security.AccessControlled;
 
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 
 import hudson.util.XStream2;
@@ -91,8 +89,11 @@ public class JCloudsCloud extends Cloud {
 
     static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
-    public final String identity;
-    public final Secret credential;
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private final transient String identity;
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private final transient Secret credential;
+
     public final String providerName;
 
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
@@ -111,6 +112,7 @@ public class JCloudsCloud extends Cloud {
     public final String zones;
 
     private String cloudGlobalKeyId;
+    private String cloudCredentialsId;
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
@@ -127,6 +129,14 @@ public class JCloudsCloud extends Cloud {
         return (JCloudsCloud) Jenkins.getActiveInstance().clouds.getByName(name);
     }
 
+    public String getCloudCredentialsId() {
+        return cloudCredentialsId;
+    }
+
+    public void setCloudCredentialsId(final String value) {
+        cloudCredentialsId = value;
+    }
+
     public String getCloudGlobalKeyId() {
         return cloudGlobalKeyId;
     }
@@ -136,39 +146,49 @@ public class JCloudsCloud extends Cloud {
     }
 
     public String getGlobalPrivateKey() {
-        if (Strings.isNullOrEmpty(cloudGlobalKeyId)) {
-            return "";
-        }
-        SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, null),
-                CredentialsMatchers.withId(cloudGlobalKeyId));
-        if (null != supk) {
-            return supk.getPrivateKey();
+        return getPrivateKeyFromCredential(cloudGlobalKeyId);
+    }
+
+    public String getGlobalPublicKey() {
+        return getPublicKeyFromCredential(cloudGlobalKeyId);
+    }
+
+    private String getPrivateKeyFromCredential(final String id) {
+        if (!Strings.isNullOrEmpty(id)) {
+            SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
+                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, null),
+                    CredentialsMatchers.withId(id));
+            if (null != supk) {
+                return supk.getPrivateKey();
+            }
         }
         return "";
     }
 
-    public String getGlobalPublicKey() {
-        try {
-            return SSHPublicKeyExtractor.extract(getGlobalPrivateKey(), null);
-        } catch (IOException e) {
-            LOGGER.warning(String.format("Error while extracting public key: %s", e));
+    private String getPublicKeyFromCredential(final String id) {
+        if (!Strings.isNullOrEmpty(id)) {
+            try {
+                return SSHPublicKeyExtractor.extract(getPrivateKeyFromCredential(id), null);
+            } catch (IOException e) {
+                LOGGER.warning(String.format("Error while extracting public key: %s", e));
+            }
         }
         return "";
     }
 
     @DataBoundConstructor
-    public JCloudsCloud(final String profile, final String providerName, final String identity, final String credential, final String cloudGlobalKeyId,
+    public JCloudsCloud(final String profile, final String providerName, final String cloudCredentialsId, final String cloudGlobalKeyId,
             final String endPointUrl, final int instanceCap, final int retentionTime, final int scriptTimeout, final int startTimeout,
             final String zones, final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
         this.providerName = Util.fixEmptyAndTrim(providerName);
-        this.identity = Util.fixEmptyAndTrim(identity);
-        this.credential = Secret.fromString(credential);
+        this.identity = null; // Not used anymore, but retained for backward compatibility.
+        this.credential = null; // Not used anymore, but retained for backward compatibility.
         this.privateKey = null; // Not used anymore, but retained for backward compatibility.
         this.publicKey = null; // Not used anymore, but retained for backward compatibility.
         this.cloudGlobalKeyId = Util.fixEmptyAndTrim(cloudGlobalKeyId);
+        this.cloudCredentialsId = Util.fixEmptyAndTrim(cloudCredentialsId);
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
         this.retentionTime = retentionTime;
@@ -201,15 +221,8 @@ public class JCloudsCloud extends Cloud {
         }
     }, new EnterpriseConfigurationModule());
 
-    static ComputeServiceContext ctx(String providerName, String identity, String credential, String endPointUrl, String zones) {
-        Properties overrides = new Properties();
-        if (!Strings.isNullOrEmpty(endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
-        }
-        return ctx(providerName, identity, credential, overrides, zones);
-    }
-
-    static ComputeServiceContext ctx(String providerName, String identity, String credential, Properties overrides, String zones) {
+    private static ComputeServiceContext ctx(final String providerName, final String identity, final String credential,
+            final Properties overrides, final String zones) {
         if (!Strings.isNullOrEmpty(zones)) {
             overrides.setProperty(LocationConstants.PROPERTY_ZONES, zones);
         }
@@ -217,6 +230,23 @@ public class JCloudsCloud extends Cloud {
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
         return ContextBuilder.newBuilder(providerName).credentials(identity, credential).overrides(overrides).modules(MODULES)
             .buildView(ComputeServiceContext.class);
+    }
+
+    private static ComputeServiceContext ctx(final String providerName, final String credentialsId, final Properties overrides, final String zones) {
+        StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
+        if (null != u && u instanceof StandardUsernamePasswordCredentials) {
+            StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
+            return ctx(providerName, up.getUsername(), up.getPassword().toString(), overrides, zones);
+        }
+        throw new RuntimeException("Using keys as credential for google cloud is not (yet) supported");
+    }
+
+    static ComputeServiceContext ctx(final String providerName, final String credentialsId, final String endPointUrl, final String zones) {
+        final Properties overrides = new Properties();
+        if (!Strings.isNullOrEmpty(endPointUrl)) {
+            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
+        }
+        return ctx(providerName, credentialsId, overrides, zones);
     }
 
     public ComputeService newCompute() {
@@ -230,7 +260,7 @@ public class JCloudsCloud extends Cloud {
         if (startTimeout > 0) {
             overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
         }
-        return ctx(this.providerName, this.identity, Secret.toString(credential), overrides, this.zones).getComputeService();
+        return ctx(this.providerName, this.cloudCredentialsId, overrides, this.zones).getComputeService();
     }
 
     public ComputeService getCompute() {
@@ -394,20 +424,17 @@ public class JCloudsCloud extends Cloud {
             return "Cloud (JClouds)";
         }
 
-        public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
-                @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones)  throws IOException {
-            if (identity == null)
-                return FormValidation.error("Invalid (AccessId).");
-            if (credential == null)
-                return FormValidation.error("Invalid credential (secret key).");
+        public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
+                @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones) throws IOException {
+            if (null == Util.fixEmptyAndTrim(cloudCredentialsId)) {
+                return FormValidation.error("Cloud credentials not specified.");
+            }
             if (null == Util.fixEmptyAndTrim(cloudGlobalKeyId)) {
                 return FormValidation.error("Cloud RSA key is not specified.");
             }
 
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
-            identity = Util.fixEmptyAndTrim(identity);
-            credential = Secret.fromString(credential).getPlainText();
             endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
             zones = Util.fixEmptyAndTrim(zones);
 
@@ -419,11 +446,11 @@ public class JCloudsCloud extends Cloud {
                     overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
                 }
 
-                ctx = ctx(providerName, identity, credential, overrides, zones);
+                ctx = ctx(providerName, cloudCredentialsId, overrides, zones);
 
                 ctx.getComputeService().listNodes();
             } catch (Exception ex) {
-                result = FormValidation.error("Cannot connect to specified cloud, please check the identity and credentials: " + ex.getMessage());
+                result = FormValidation.error("Cannot connect to specified cloud, please check the credentials: " + ex.getMessage());
             } finally {
                 Closeables.close(ctx,true);
             }
@@ -450,6 +477,14 @@ public class JCloudsCloud extends Cloud {
                 m.add(supportedProvider, supportedProvider);
             }
             return m;
+        }
+
+        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
+                return new ListBoxModel();
+            }
+            return new StandardUsernameListBoxModel().withAll(
+                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, null));
         }
 
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context) {
@@ -546,6 +581,9 @@ public class JCloudsCloud extends Cloud {
             if (Strings.isNullOrEmpty(c.getCloudGlobalKeyId()) && !Strings.isNullOrEmpty(c.privateKey)) {
                 c.setCloudGlobalKeyId(convertCloudPrivateKey(c.name, c.privateKey));
             }
+            if (Strings.isNullOrEmpty(c.getCloudCredentialsId()) && !Strings.isNullOrEmpty(c.identity)) {
+                c.setCloudCredentialsId(CredentialsHelper.convertCloudCredentials(c.name, c.identity, c.credential));
+            }
             for (JCloudsSlaveTemplate t : c.templates) {
                 t.upgrade();
             }
@@ -563,18 +601,11 @@ public class JCloudsCloud extends Cloud {
             StandardUsernameCredentials u =
                 new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, "Global key",
                         new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
-            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
             try {
-                CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
-                try {
-                    s.addCredentials(Domain.global(), u);
-                    return u.getId();
-                } catch (IOException e) {
-                    LOGGER.warning(String.format("Error while migrating privateKey: %s", e.getMessage()));
-                }
-            } finally {
-                SecurityContextHolder.setContext(previousContext);
-            }
+                return CredentialsHelper.storeCredentials(u);
+            } catch (IOException e) {
+                LOGGER.warning(String.format("Error while migrating privateKey: %s", e.getMessage()));
+            } 
             return null;
         }
 

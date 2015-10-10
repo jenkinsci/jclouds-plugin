@@ -19,7 +19,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -41,7 +40,6 @@ import hudson.security.ACL;
 import hudson.security.AccessControlled;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import hudson.util.Secret;
 
 import jenkins.model.Jenkins;
 
@@ -77,22 +75,18 @@ import com.cloudbees.plugins.credentials.CredentialsMatcher;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
-
 import com.trilead.ssh2.Connection;
 
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 
 /**
@@ -224,12 +218,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (!Strings.isNullOrEmpty(jenkinsUser)) {
             return jenkinsUser;
         }
-        if (Strings.isNullOrEmpty(credentialsId)
-                || null == SSHLauncher.lookupSystemCredentials(credentialsId)
-                || null == Util.fixEmptyAndTrim(SSHLauncher.lookupSystemCredentials(credentialsId).getUsername())) {
+        final StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
+        if (null == u || null == Util.fixEmptyAndTrim(u.getUsername())) {
             return "jenkins";
         } else {
-            return SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
+            return u.getUsername();
         }
     }
 
@@ -259,12 +252,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (!Strings.isNullOrEmpty(vmUser)) {
             return vmUser;
         }
-        if (Strings.isNullOrEmpty(adminCredentialsId)
-                || null == SSHLauncher.lookupSystemCredentials(adminCredentialsId)
-                || null == Util.fixEmptyAndTrim(SSHLauncher.lookupSystemCredentials(adminCredentialsId).getUsername())) {
+        final StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
+        if (null == u || null == Util.fixEmptyAndTrim(u.getUsername())) {
             return "root";
         } else {
-            return SSHLauncher.lookupSystemCredentials(credentialsId).getUsername();
+            return u.getUsername();
         }
     }
 
@@ -406,7 +398,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             if (null != adminCredentialsId) {
                 String adminUser = getAdminUser();
-                StandardUsernameCredentials c = SSHLauncher.lookupSystemCredentials(adminCredentialsId);
+                StandardUsernameCredentials c = CredentialsHelper.getCredentialsById(adminCredentialsId);
                 if (null != c) {
                     if (c instanceof StandardUsernamePasswordCredentials) {
                         String password = ((StandardUsernamePasswordCredentials)c).getPassword().toString();
@@ -572,10 +564,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.validateRequired(value);
         }
 
-        public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+        public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String imageId, @QueryParameter String zones) {
 
-            final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, identity, credential, endPointUrl, zones);
+            final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, cloudCredentialsId, endPointUrl, zones);
             if (computeContextValidationResult != null) {
                 return computeContextValidationResult;
             }
@@ -587,7 +579,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             imageId = Util.fixEmptyAndTrim(imageId);
 
             try {
-                final Set<? extends Image> images = listImages(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
+                final Set<? extends Image> images = listImages(providerName, cloudCredentialsId, endPointUrl, zones);
                 if (images != null) {
                     for (final Image image : images) {
                         if (!image.getId().equals(imageId)) {
@@ -605,10 +597,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.error("Invalid Image Id, please check the value and try again.");
         }
 
-        public FormValidation doValidateImageNameRegex(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+        public FormValidation doValidateImageNameRegex(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String imageNameRegex, @QueryParameter String zones) {
 
-            final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
+            final FormValidation computeContextValidationResult = validateComputeContextParameters(providerName, cloudCredentialsId, endPointUrl, zones);
             if (computeContextValidationResult != null) {
                 return computeContextValidationResult;
             }
@@ -622,7 +614,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 int matchcount = 0;
                 Pattern p = Pattern.compile(imageNameRegex);
                 try {
-                    final Set<? extends Image> images = listImages(providerName, identity, Secret.fromString(credential).getPlainText(), endPointUrl, zones);
+                    final Set<? extends Image> images = listImages(providerName, cloudCredentialsId, endPointUrl, zones);
                     if (images != null) {
                         for (final Image image : images) {
                             if (p.matcher(image.getName()).matches()) {
@@ -647,13 +639,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.error("Image name regex does not match any image, please check the value and try again.");
         }
 
-        private FormValidation validateComputeContextParameters(@QueryParameter String providerName, @QueryParameter String identity,
-                @QueryParameter String credential, @QueryParameter String endPointUrl, @QueryParameter String zones) {
-            if (Strings.isNullOrEmpty(identity)) {
-                return FormValidation.error("Invalid identity (AccessId).");
-            }
-            if (Strings.isNullOrEmpty(credential)) {
-                return FormValidation.error("Invalid credential (secret key).");
+        private FormValidation validateComputeContextParameters(@QueryParameter String providerName,
+                @QueryParameter String cloudCredentialsId, @QueryParameter String endPointUrl, @QueryParameter String zones) {
+            if (Strings.isNullOrEmpty(cloudCredentialsId)) {
+                return FormValidation.error("No cloud credentials specified.");
             }
             if (Strings.isNullOrEmpty(providerName)) {
                 return FormValidation.error("Provider Name shouldn't be empty");
@@ -662,17 +651,15 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return null;
         }
 
-        private Set<? extends Image> listImages(String providerName, String identity, String credential, String endPointUrl, String zones) {
+        private Set<? extends Image> listImages(String providerName, String cloudCredentialsId, String endPointUrl, String zones) {
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
-            identity = Util.fixEmptyAndTrim(identity);
-            credential = Secret.fromString(credential).getPlainText();
             endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
             zones = Util.fixEmptyAndTrim(zones);
             ComputeService computeService = null;
 
             try {
-                computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
+                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
                 return computeService.listImages();
             } finally {
                 if (computeService != null) {
@@ -681,47 +668,42 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
         }
 
-        public ListBoxModel doFillHardwareIdItems(@RelativePath("..") @QueryParameter String providerName,
-                @RelativePath("..") @QueryParameter String identity,
-                @RelativePath("..") @QueryParameter String credential,
-                @RelativePath("..") @QueryParameter String endPointUrl,
-                @RelativePath("..") @QueryParameter String zones) {
-
-            ListBoxModel m = new ListBoxModel();
-
-            if (Strings.isNullOrEmpty(identity)) {
-                LOGGER.warning("identity is null or empty");
-                return m;
-            }
-            if (Strings.isNullOrEmpty(credential)) {
-                LOGGER.warning("credential is null or empty");
-                return m;
+        private boolean prepareListBoxModel(final String providerName, final String cloudCredentialsId,
+                final String endPointUrl, final String zones, final ListBoxModel model) {
+            if (Strings.isNullOrEmpty(cloudCredentialsId)) {
+                LOGGER.warning("cloudCredentialsId is null or empty");
+                return true;
             }
             if (Strings.isNullOrEmpty(providerName)) {
                 LOGGER.warning("providerName is null or empty");
+                return true;
+            }
+            model.add("None specified", "");
+            if (Boolean.getBoolean("underSurefireTest")) {
+                // Don't attempt to fetch during HW-Ids GUI testing
+                return true;
+            }
+            return false;
+        }
+
+        public ListBoxModel doFillHardwareIdItems(
+                @RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String cloudCredentialsId,
+                @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
+
+            ListBoxModel m = new ListBoxModel();
+            if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, zones, m)) {
                 return m;
             }
-
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
-            identity = Util.fixEmptyAndTrim(identity);
-            credential = Secret.fromString(credential).getPlainText();
             endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
             ComputeService computeService = null;
-            m.add("None specified", "");
-
-            if (Boolean.getBoolean("underSurefireTest")) {
-                // Don't attempt to fetch during HW-Ids GUI testing
-                return m;
-            }
             try {
                 // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
-
+                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
                 ArrayList<Hardware> hws = newArrayList(computeService.listHardwareProfiles());
                 sort(hws);
-
                 for (Hardware hardware : hws) {
                     m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()), hardware.getId());
                 }
@@ -732,30 +714,24 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     computeService.getContext().close();
                 }
             }
-
             return m;
         }
 
-        public FormValidation doValidateHardwareId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+        public FormValidation doValidateHardwareId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String hardwareId, @QueryParameter String zones) {
 
-            if (Strings.isNullOrEmpty(identity)) {
-                return FormValidation.error("Invalid identity (AccessId).");
-            }
-            if (Strings.isNullOrEmpty(credential)) {
-                return FormValidation.error("Invalid credential (secret key).");
+            if (Strings.isNullOrEmpty(cloudCredentialsId)) {
+                return FormValidation.error("No cloud credentials provided.");
             }
             if (Strings.isNullOrEmpty(providerName)) {
-                return FormValidation.error("Provider Name shouldn't be empty");
+                return FormValidation.error("Provider Name should not be empty");
             }
             if (Strings.isNullOrEmpty(hardwareId)) {
-                return FormValidation.error("Hardware Id shouldn't be empty");
+                return FormValidation.error("Hardware Id should not be empty");
             }
 
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
-            identity = Util.fixEmptyAndTrim(identity);
-            credential = Secret.fromString(credential).getPlainText();
             hardwareId = Util.fixEmptyAndTrim(hardwareId);
             endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
             zones = Util.fixEmptyAndTrim(zones);
@@ -764,7 +740,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             ComputeService computeService = null;
             try {
                 // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
+                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
                 Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
                 for (Hardware hardware : hardwareProfiles) {
                     if (!hardware.getId().equals(hardwareId)) {
@@ -787,43 +763,21 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
 
         public ListBoxModel doFillLocationIdItems(
-                @RelativePath("..") @QueryParameter String providerName,
-                @RelativePath("..") @QueryParameter String identity,
-                @RelativePath("..") @QueryParameter String credential,
-                @RelativePath("..") @QueryParameter String endPointUrl,
-                @RelativePath("..") @QueryParameter String zones) {
+                @RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String cloudCredentialsId,
+                @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
-
-            if (Strings.isNullOrEmpty(identity)) {
-                LOGGER.warning("identity is null or empty");
+            if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, zones, m)) {
                 return m;
             }
-            if (Strings.isNullOrEmpty(credential)) {
-                LOGGER.warning("credential is null or empty");
-                return m;
-            }
-            if (Strings.isNullOrEmpty(providerName)) {
-                LOGGER.warning("providerName is null or empty");
-                return m;
-            }
-
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
-            identity = Util.fixEmptyAndTrim(identity);
-            credential = Secret.fromString(credential).getPlainText();
             endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
             ComputeService computeService = null;
-            m.add("None specified", "");
-
-            if (Boolean.getBoolean("underSurefireTest")) {
-                // Don't attempt to fetch locations during GUI testing
-                return m;
-            }
             try {
                 // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
+                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
 
                 ArrayList<Location> locations = newArrayList(computeService.listAssignableLocations());
                 sort(locations, new Comparator<Location>() {
@@ -865,14 +819,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                         ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
         }
 
-        public FormValidation doValidateLocationId(@QueryParameter String providerName, @QueryParameter String identity, @QueryParameter String credential,
+        public FormValidation doValidateLocationId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String locationId, @QueryParameter String zones) {
 
-            if (Strings.isNullOrEmpty(identity)) {
-                return FormValidation.error("Invalid identity (AccessId).");
-            }
-            if (Strings.isNullOrEmpty(credential)) {
-                return FormValidation.error("Invalid credential (secret key).");
+            if (Strings.isNullOrEmpty(cloudCredentialsId)) {
+                return FormValidation.error("No cloud credentials provided.");
             }
             if (Strings.isNullOrEmpty(providerName)) {
                 return FormValidation.error("Provider Name shouldn't be empty");
@@ -884,8 +835,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
-            identity = Util.fixEmptyAndTrim(identity);
-            credential = Util.fixEmptyAndTrim(credential);
             locationId = Util.fixEmptyAndTrim(locationId);
             endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
             zones = Util.fixEmptyAndTrim(zones);
@@ -894,7 +843,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             ComputeService computeService = null;
             try {
                 // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, identity, credential, endPointUrl, zones).getComputeService();
+                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
                 Set<? extends Location> locations = computeService.listAssignableLocations();
                 for (Location location : locations) {
                     if (!location.getId().equals(locationId)) {
@@ -959,30 +908,16 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     u = new UsernamePasswordCredentialsImpl(
                             CredentialsScope.SYSTEM, null, description, au, vmPassword);
                 }
-                setAdminCredentialsId(storeCredentials(u));
+                try {
+                    setAdminCredentialsId(CredentialsHelper.storeCredentials(u));
+                } catch (IOException x) {
+                    LOGGER.warning(String.format("Error while saving credentials: %s", x.getMessage()));
+                }
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw e;
         }
-    }
-
-    private String storeCredentials(final StandardUsernameCredentials u) {
-        if (null != u) {
-            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
-            try {
-                CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
-                try {
-                    s.addCredentials(Domain.global(), u);
-                    return u.getId();
-                } catch (IOException e) {
-                    LOGGER.warning(String.format("Error while saving credentials: %s", e.getMessage()));
-                }
-            } finally {
-                SecurityContextHolder.setContext(previousContext);
-            }
-        }
-        return null;
     }
 
     /**
@@ -999,7 +934,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (null == u) {
             u = new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, user,
                     new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
-            return storeCredentials(u);
+            try {
+                return CredentialsHelper.storeCredentials(u);
+            } catch (IOException x) {
+                LOGGER.warning(String.format("Error while saving credentials: %s", x.getMessage()));
+                return null;
+            }
         }
         return u.getId();
     }

@@ -24,13 +24,13 @@ public class JCloudsCloudLiveTest extends TestCase {
         generatedKeys = SshKeys.generate();
 
         // TODO: this may need to vary per test
-        cloud = new JCloudsCloud(fixture.getProvider() + "-profile", fixture.getProvider(), fixture.getIdentity(), fixture.getCredential(),
+        cloud = new JCloudsCloud(fixture.getProvider() + "-profile", fixture.getProvider(), fixture.getCredentialsId(),
                 null, fixture.getEndpoint(), 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
                 Collections.<JCloudsSlaveTemplate>emptyList());
     }
 
     public void testDoTestConnectionCorrectCredentialsEtc() throws IOException {
-        FormValidation result = new JCloudsCloud.DescriptorImpl().doTestConnection(fixture.getProvider(), fixture.getIdentity(), fixture.getCredential(),
+        FormValidation result = new JCloudsCloud.DescriptorImpl().doTestConnection(fixture.getProvider(), fixture.getCredentialsId(),
                 generatedKeys.get("private"), fixture.getEndpoint(), null);
         assertEquals("Connection succeeded!", result.getMessage());
     }

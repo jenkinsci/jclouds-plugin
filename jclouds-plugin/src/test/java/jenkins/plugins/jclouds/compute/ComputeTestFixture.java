@@ -14,6 +14,10 @@ import shaded.com.google.common.base.Predicates;
 import shaded.com.google.common.collect.Maps;
 import com.google.inject.Module;
 
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
+
+import hudson.util.Secret;
+
 @SuppressWarnings("unchecked")
 public class ComputeTestFixture extends BaseComputeServiceContextLiveTest {
     public static String PROVIDER;
@@ -70,12 +74,8 @@ public class ComputeTestFixture extends BaseComputeServiceContextLiveTest {
         return endpoint;
     }
 
-    public String getIdentity() {
-        return identity;
-    }
-
-    public String getCredential() {
-        return credential;
+    public String getCredentialsId() {
+        return CredentialsHelper.convertCloudCredentials(provider, identity, Secret.fromString(credential));
     }
 
     public void setUp() {
