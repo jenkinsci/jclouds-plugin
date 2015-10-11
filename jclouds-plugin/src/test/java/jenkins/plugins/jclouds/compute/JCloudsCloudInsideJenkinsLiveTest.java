@@ -1,5 +1,8 @@
 package jenkins.plugins.jclouds.compute;
 
+import static org.junit.Assert.assertEquals;
+
+import org.jvnet.hudson.test.JenkinsRule;
 import hudson.util.FormValidation;
 
 import java.io.IOException;
@@ -7,17 +10,22 @@ import java.util.Collections;
 import java.util.Map;
 
 import org.jclouds.ssh.SshKeys;
-import org.jvnet.hudson.test.HudsonTestCase;
 
-public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.Rule;
+
+public class JCloudsCloudInsideJenkinsLiveTest {
+
+    @Rule public JenkinsRule j = new JenkinsRule();
 
     private ComputeTestFixture fixture;
     private JCloudsCloud cloud;
     private Map<String, String> generatedKeys;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         fixture = new ComputeTestFixture();
         fixture.setUp();
         generatedKeys = SshKeys.generate();
@@ -28,13 +36,14 @@ public class JCloudsCloudInsideJenkinsLiveTest extends HudsonTestCase {
                 Collections.<JCloudsSlaveTemplate>emptyList());
     }
 
+    @Test
     public void testDoTestConnectionCorrectCredentialsEtc() throws IOException {
         FormValidation result = new JCloudsCloud.DescriptorImpl().doTestConnection(fixture.getProvider(), fixture.getCredentialsId(),
                 generatedKeys.get("private"), fixture.getEndpoint(), null);
         assertEquals("Connection succeeded!", result.getMessage());
     }
 
-    @Override
+    @After
     public void tearDown() {
         if (fixture != null)
             fixture.tearDown();
