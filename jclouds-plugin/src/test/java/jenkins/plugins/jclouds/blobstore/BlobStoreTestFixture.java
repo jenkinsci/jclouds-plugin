@@ -11,12 +11,16 @@ import org.jclouds.util.Maps2;
 
 import shaded.com.google.common.base.Function;
 import shaded.com.google.common.base.Predicates;
+import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.collect.Maps;
 import shaded.com.google.common.reflect.TypeToken;
+
+import org.junit.Assume;
 
 @SuppressWarnings("unchecked")
 public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
     public static String PROVIDER;
+    private static boolean SKIPIT = false;
 
     /**
      * base jclouds tests expect properties to arrive in a different naming convention, based on provider name.
@@ -37,12 +41,14 @@ public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
      * </pre>
      */
     static {
-        PROVIDER = checkNotNull(System.getProperty("test.jenkins.blobstore.provider"), "test.blobstore.provider variable must be set!");
-        Map<String, String> filtered = Maps.filterKeys(Map.class.cast(System.getProperties()), Predicates.containsPattern("^test\\.jenkins\\.blobstore"));
+        PROVIDER = System.getProperty("test.jenkins.blobstore.provider");
+        SKIPIT = Strings.isNullOrEmpty(PROVIDER);
+        Map<String, String> filtered = Maps.filterKeys(Map.class.cast(System.getProperties()),
+                Predicates.containsPattern("^test\\.jenkins\\.blobstore"));
         Map<String, String> transformed = Maps2.transformKeys(filtered, new Function<String, String>() {
 
             public String apply(String arg0) {
-                return arg0.replaceAll("test.jenkins.blobstore", "test." + PROVIDER);
+                return arg0.replaceAll("test.jenkins.blobstore", "test." + (SKIPIT ? "" : PROVIDER));
             }
 
         });
@@ -74,11 +80,16 @@ public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
     }
 
     public void setUp() {
-        super.setupContext();
+        Assume.assumeFalse(SKIPIT);
+        if (!SKIPIT) {
+            super.setupContext();
+        }
     }
 
     public void tearDown() {
-        super.tearDownContext();
+        if (!SKIPIT) {
+            super.tearDownContext();
+        }
     }
 
     @Override

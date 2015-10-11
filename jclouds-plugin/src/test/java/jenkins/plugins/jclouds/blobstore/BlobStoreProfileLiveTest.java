@@ -1,15 +1,16 @@
 package jenkins.plugins.jclouds.blobstore;
 
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
-public class BlobStoreProfileLiveTest extends TestCase {
+public class BlobStoreProfileLiveTest  {
 
     private BlobStoreTestFixture fixture;
     private BlobStoreProfile profile;
 
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() {
         fixture = new BlobStoreTestFixture();
         fixture.setUp();
 
@@ -19,6 +20,7 @@ public class BlobStoreProfileLiveTest extends TestCase {
 
     public static final String CONTAINER_PREFIX = System.getProperty("user.name") + "-blobstore-profile";
 
+    @Test
     public void testUpload() {
         String container = CONTAINER_PREFIX + "-upload";
         try {
@@ -31,9 +33,10 @@ public class BlobStoreProfileLiveTest extends TestCase {
         }
     }
 
-    @Override
+    @After
     public void tearDown() {
-        if (fixture != null)
+        if (fixture != null) {
             fixture.tearDown();
+        }
     }
 }
