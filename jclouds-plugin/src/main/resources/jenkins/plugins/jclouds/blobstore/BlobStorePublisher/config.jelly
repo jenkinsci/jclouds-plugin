@@ -1,7 +1,7 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
 
-    <f:entry title="JClouds Cloud Storage profile" field="profileName">
+    <f:entry title="JClouds BlobStore profile" field="profileName">
         <f:select/>
     </f:entry>
 

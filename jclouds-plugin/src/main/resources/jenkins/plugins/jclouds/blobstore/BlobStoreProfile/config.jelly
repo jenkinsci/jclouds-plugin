@@ -1,0 +1,26 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+  <table width="100%" class="pane">
+    <f:entry title="${%Profile name}" field="profileName">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="${%Provider Name}" field="providerName">
+      <f:select/>
+    </f:entry>
+    <f:entry title="${%End Point URL}" field="endPointUrl">
+      <f:textbox/>
+    </f:entry>
+    <f:entry title="${%Credentials}" field="credentialsId">
+      <c:select/>
+    </f:entry>
+    <f:entry title="${%Relax security}" field="trustAll">
+      <f:checkbox/>
+    </f:entry>
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="providerName,credentialsId,endPointUrl,trustAll"/>
+    <f:entry title="">
+      <div align="right">
+        <f:repeatableDeleteButton/>
+      </div>
+    </f:entry>
+  </table>
+</j:jelly>

@@ -582,7 +582,8 @@ public class JCloudsCloud extends Cloud {
                 c.setCloudGlobalKeyId(convertCloudPrivateKey(c.name, c.privateKey));
             }
             if (Strings.isNullOrEmpty(c.getCloudCredentialsId()) && !Strings.isNullOrEmpty(c.identity)) {
-                c.setCloudCredentialsId(CredentialsHelper.convertCloudCredentials(c.name, c.identity, c.credential));
+                final String description = "JClouds cloud " + c.name + " - auto-migrated";
+                c.setCloudCredentialsId(CredentialsHelper.convertCredentials(description, c.identity, c.credential));
             }
             for (JCloudsSlaveTemplate t : c.templates) {
                 t.upgrade();

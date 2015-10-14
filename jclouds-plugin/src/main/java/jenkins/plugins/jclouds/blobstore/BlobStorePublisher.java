@@ -16,12 +16,21 @@ import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import org.jclouds.apis.Apis;
+import org.jclouds.blobstore.BlobStoreContext;
+import org.jclouds.providers.Providers;
 import org.jclouds.rest.AuthorizationException;
+
+import shaded.com.google.common.collect.ImmutableSet;
+import shaded.com.google.common.collect.ImmutableSet.Builder;
+import shaded.com.google.common.collect.ImmutableSortedSet;
+import shaded.com.google.common.collect.Iterables;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
@@ -29,6 +38,8 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import net.sf.json.JSONObject;
 
 /**
  * Publishes artifacts to Blobstore configured using JClouds
@@ -46,7 +57,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
     private final List<BlobStoreEntry> entries;
 
     /**
-     * Create a new Blobstore publisher for the cofigured profile identified by profileName
+     * Create a new Blobstore publisher for the configured profile identified by profileName
      *
      * @param profileName - the name of the configured profile name
      */
@@ -235,28 +246,18 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
         @Override
         public String getDisplayName() {
-            return "Publish artifacts to JClouds Clouds Storage ";
+            return "Publish artifacts to JClouds BlobStore";
         }
 
         @Override
-        public boolean configure(StaplerRequest req, net.sf.json.JSONObject json) throws FormException {
-            profiles.replaceBy(req.bindParametersToList(BlobStoreProfile.class, "jcblobstore."));
+        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+            profiles.replaceBy(req.bindJSONToList(BlobStoreProfile.class, formData.get("profiles")));
             save();
             return true;
         }
 
         public BlobStoreProfile[] getProfiles() {
             return profiles.toArray(new BlobStoreProfile[0]);
-        }
-
-        public FormValidation doLoginCheck(final StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
-            String name = Util.fixEmpty(req.getParameter("name"));
-            if (name == null) {// name is not entered yet
-                return FormValidation.ok();
-            }
-            BlobStoreProfile profile = new BlobStoreProfile(name, req.getParameter("providerName"), req.getParameter("identity"),
-                    req.getParameter("credential"));
-            return FormValidation.ok();
         }
 
         @Override
