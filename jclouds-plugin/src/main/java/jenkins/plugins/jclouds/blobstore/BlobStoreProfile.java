@@ -182,7 +182,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                 blobStore.createDirectory(container, path);
             }
             String destPath;
-            if (path.equals("")) {
+            if (path.isEmpty()) {
                 destPath = filePath.getName();
             } else {
                 destPath = path + "/" + filePath.getName();
