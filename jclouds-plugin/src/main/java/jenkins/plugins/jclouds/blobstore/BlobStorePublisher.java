@@ -14,25 +14,14 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
-import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
 
-import org.jclouds.apis.Apis;
-import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.providers.Providers;
 import org.jclouds.rest.AuthorizationException;
 
-import shaded.com.google.common.collect.ImmutableSet;
-import shaded.com.google.common.collect.ImmutableSet.Builder;
-import shaded.com.google.common.collect.ImmutableSortedSet;
-import shaded.com.google.common.collect.Iterables;
-
-import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
