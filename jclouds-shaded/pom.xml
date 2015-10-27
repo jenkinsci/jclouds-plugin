@@ -32,7 +32,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.jclouds.labs</groupId>
-            <artifactId>digitalocean</artifactId>
+            <artifactId>digitalocean2</artifactId>
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
