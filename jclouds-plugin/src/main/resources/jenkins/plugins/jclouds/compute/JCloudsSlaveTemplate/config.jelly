@@ -141,6 +141,10 @@
         <f:entry title="Security Groups" field="securityGroups">
           <f:textbox />
         </f:entry>
+
+        <f:entry title="${%Is Windows Image}" field="isWindows">
+          <f:checkbox />
+        </f:entry>
       </f:section>
       
       <f:section title="Open Stack Options">
@@ -157,7 +161,7 @@
           <f:checkbox default="true"/>
         </f:entry>
       </f:section>
-      
+
     </f:advanced>
     <f:entry title="">
       <div align="right">

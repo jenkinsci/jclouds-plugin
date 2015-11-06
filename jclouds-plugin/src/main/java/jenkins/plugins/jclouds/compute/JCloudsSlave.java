@@ -37,13 +37,14 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	private final String privateKey;
 	private final boolean authSudo;
 	private final String jvmOptions;
+	private final boolean isWindows;
 
 	@DataBoundConstructor
 	@SuppressWarnings("rawtypes")
 	public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
 			ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-			int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions) throws Descriptor.FormException,
-			IOException {
+			int overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, boolean isWindows)
+			throws Descriptor.FormException, IOException {
 		super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
 		this.stopOnTerminate = stopOnTerminate;
 		this.cloudName = cloudName;
@@ -53,6 +54,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 		this.privateKey = privateKey;
 		this.authSudo = authSudo;
 		this.jvmOptions = jvmOptions;
+		this.isWindows = isWindows;
 	}
 
 	/**
@@ -74,16 +76,18 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	 *            - if true, suspend the slave rather than terminating it.
 	 * @param overrideRetentionTime
 	 *            - Retention time to use specifically for this slave, overriding the cloud default.
+	 * @param isWindows
+	 *            - True if slave is Windows; false otherwise
 	 * @throws IOException
 	 * @throws Descriptor.FormException
 	 */
 	public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString, final String description,
-			final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions) throws IOException,
-			Descriptor.FormException {
+			final String numExecutors, final boolean stopOnTerminate, final int overrideRetentionTime, String jvmOptions, boolean isWindows)
+			throws IOException, Descriptor.FormException {
 		this(cloudName, metadata.getName(), description, fsRoot, numExecutors, Mode.EXCLUSIVE, labelString, new JCloudsLauncher(),
 				new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>> emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials()
 						.getUser(), metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(), metadata.getCredentials()
-						.shouldAuthenticateSudo(), jvmOptions);
+						.shouldAuthenticateSudo(), jvmOptions, isWindows);
 		this.nodeMetaData = metadata;
 		this.nodeId = nodeMetaData.getId();
 	}
@@ -144,6 +148,13 @@ public class JCloudsSlave extends AbstractCloudSlave {
 	 */
 	public String getCloudName() {
 		return cloudName;
+	}
+
+	/**
+	 * Get the flag for determining if the slave is a Windows machine
+	 */
+	public boolean isWindows() {
+		return isWindows;
 	}
 
 	public boolean isPendingDelete() {
