@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
@@ -155,8 +156,11 @@ public class JCloudsCloud extends Cloud {
 
     private String getPrivateKeyFromCredential(final String id) {
         if (!Strings.isNullOrEmpty(id)) {
+            // Added to remove ambiguous calling of lookupCredentials below
+            List<DomainRequirement> nullList = null;
+
             SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, null),
+                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, nullList),
                     CredentialsMatchers.withId(id));
             if (null != supk) {
                 return supk.getPrivateKey();
@@ -483,16 +487,22 @@ public class JCloudsCloud extends Cloud {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
                 return new ListBoxModel();
             }
+
+            // Added to remove ambiguous calling of lookupCredentials below
+            List<DomainRequirement> nullList = null;
             return new StandardUsernameListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, null));
+                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, nullList));
         }
 
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
                 return new ListBoxModel();
             }
+
+            // Added to remove ambiguous calling of lookupCredentials below
+            List<DomainRequirement> nullList = null;
             return new StandardUsernameListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, context, ACL.SYSTEM, null));
+                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, context, ACL.SYSTEM, nullList));
         }
 
         public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
