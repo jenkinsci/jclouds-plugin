@@ -18,6 +18,8 @@ import com.trilead.ssh2.SCPClient;
 import com.trilead.ssh2.ServerHostKeyVerifier;
 import com.trilead.ssh2.Session;
 
+import shaded.com.google.common.base.Strings;
+
 /**
  * The launcher that launches the jenkins slave.jar on the Slave. Uses the SSHKeyPair configured in the cloud profile settings, and logs in to the server via
  * SSH, and starts the slave.jar.
@@ -68,9 +70,14 @@ public class JCloudsLauncher extends ComputerLauncher {
 
 			SCPClient scp = conn.createSCPClient();
 			logger.println("Copying slave.jar");
-			scp.put(Hudson.getInstance().getJnlpJars("slave.jar").readFully(), "slave.jar", "/tmp");
+			String destinationDirectory = "";
+			if (!slave.isWindows())
+				destinationDirectory = "/tmp";
+			scp.put(Hudson.getInstance().getJnlpJars("slave.jar").readFully(), "slave.jar", destinationDirectory);
 
-			String launchString = "cd /tmp && java " + slave.getJvmOptions() + " -jar slave.jar";
+			String launchString = "java " + slave.getJvmOptions() + " -jar slave.jar";
+			if (!Strings.isNullOrEmpty(destinationDirectory))
+				launchString = "cd " + destinationDirectory + " && " + launchString;
 			logger.println("Launching slave agent: " + launchString);
 			final Session sess = conn.openSession();
 			sess.execCommand(launchString);
