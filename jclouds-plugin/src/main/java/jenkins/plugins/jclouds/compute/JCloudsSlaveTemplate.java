@@ -252,7 +252,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (!Strings.isNullOrEmpty(vmUser)) {
             return vmUser;
         }
-        final StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
+        final StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(adminCredentialsId);
         if (null == u || null == Util.fixEmptyAndTrim(u.getUsername())) {
             return "root";
         } else {
