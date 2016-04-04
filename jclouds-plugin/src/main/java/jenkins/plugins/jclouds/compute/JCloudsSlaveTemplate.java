@@ -10,16 +10,13 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import org.apache.commons.codec.binary.Base64;
 
 import hudson.Extension;
@@ -230,8 +227,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         if (Strings.isNullOrEmpty(credentialsId)) {
             return getCloud().getGlobalPrivateKey();
         }
+        // Added to remove ambiguous calling of lookupCredentials below
+        List<DomainRequirement> nullList = null;
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, null),
+                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, nullList),
                 CredentialsMatchers.withId(credentialsId));
         if (null != supk) {
             return supk.getPrivateKey();
@@ -382,9 +381,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp();
             }
 
-            if (!Strings.isNullOrEmpty(keyPairName) && options instanceof NovaTemplateOptions) {
+            if (!Strings.isNullOrEmpty(keyPairName)) {
                 LOGGER.info("Setting keyPairName to " + keyPairName);
-                options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+                if (options instanceof NovaTemplateOptions) {
+                    options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+                } else if (options instanceof CloudStackTemplateOptions) {
+                    LOGGER.info("Setting keyPair in CloudStack options to: " + keyPairName);
+                    options.as(CloudStackTemplateOptions.class).keyPair(keyPairName);
+                }
             }
 
             if (options instanceof CloudStackTemplateOptions) {
