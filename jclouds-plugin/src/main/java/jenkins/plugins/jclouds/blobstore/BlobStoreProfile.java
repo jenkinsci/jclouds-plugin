@@ -225,7 +225,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                 return new ListBoxModel();
             }
             return new StandardUsernameListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM, null));
+                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM));
         }
 
         public ListBoxModel doFillProviderNameItems(@AncestorInPath ItemGroup context) {

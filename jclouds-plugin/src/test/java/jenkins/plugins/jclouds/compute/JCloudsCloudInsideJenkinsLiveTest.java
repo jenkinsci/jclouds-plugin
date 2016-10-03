@@ -32,14 +32,14 @@ public class JCloudsCloudInsideJenkinsLiveTest {
 
         // TODO: this may need to vary per test
         cloud = new JCloudsCloud(fixture.getProvider() + "-profile", fixture.getProvider(), fixture.getCredentialsId(),
-                null, fixture.getEndpoint(), 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
-                Collections.<JCloudsSlaveTemplate>emptyList());
+                null, fixture.getEndpoint(), 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000,
+                null, true, Collections.<JCloudsSlaveTemplate>emptyList());
     }
 
     @Test
     public void testDoTestConnectionCorrectCredentialsEtc() throws IOException {
         FormValidation result = new JCloudsCloud.DescriptorImpl().doTestConnection(fixture.getProvider(), fixture.getCredentialsId(),
-                generatedKeys.get("private"), fixture.getEndpoint(), null);
+                generatedKeys.get("private"), fixture.getEndpoint(), null, true);
         assertEquals("Connection succeeded!", result.getMessage());
     }
 

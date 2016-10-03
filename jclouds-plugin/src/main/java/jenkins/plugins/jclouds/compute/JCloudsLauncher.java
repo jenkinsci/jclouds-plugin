@@ -9,6 +9,8 @@ import hudson.plugins.sshslaves.SSHLauncher;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import java.net.InetAddress;
+
 import org.jclouds.compute.domain.NodeMetadata;
 
 /**
@@ -38,7 +40,7 @@ public class JCloudsLauncher extends ComputerLauncher {
             slave.waitForPhoneHome(logger);
 
             String host = addresses[0];
-            if ("0.0.0.0".equals(host)) {
+            if (InetAddress.getByName(host).isAnyLocalAddress()) {
                 logger.println("Invalid host 0.0.0.0, your host is most likely waiting for an ip address.");
                 throw new IOException("goto sleep");
             }

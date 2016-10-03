@@ -18,6 +18,9 @@
     <f:entry title="${%Credentials}" field="cloudCredentialsId">
         <c:select/>
     </f:entry>
+    <f:entry title="${%Relax security}" field="trustAll">
+      <f:checkbox/>
+    </f:entry>
     <f:entry title="${%Cloud RSA key}" field="cloudGlobalKeyId">
         <c:select/>
     </f:entry>
@@ -32,7 +35,7 @@
             <f:textbox/>
         </f:entry>
     </f:advanced>
-    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl"/>
+    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,zones,trustAll"/>
     <f:entry title="Cloud Instance Templates" description="${%List of Cloud Instances to be launched as slaves}">
         <f:repeatable field="templates">
             <st:include page="config.jelly" class="${descriptor.clazz}"/>

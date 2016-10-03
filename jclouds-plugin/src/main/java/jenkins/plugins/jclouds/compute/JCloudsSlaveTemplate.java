@@ -4,7 +4,6 @@ import static shaded.com.google.common.base.Throwables.propagate;
 import static shaded.com.google.common.collect.Iterables.getOnlyElement;
 import static shaded.com.google.common.collect.Lists.newArrayList;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
-import static java.util.Collections.sort;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -12,6 +11,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
@@ -231,7 +231,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return getCloud().getGlobalPrivateKey();
         }
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM, null),
+                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM),
                 CredentialsMatchers.withId(credentialsId));
         if (null != supk) {
             return supk.getPrivateKey();
@@ -509,7 +509,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     }
 
     public boolean hasOverrideRetentionTime() {
-        return (null != overrideRetentionTime);
+        return null != overrideRetentionTime;
     }
 
     @Override
@@ -639,8 +639,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.error("Image name regex does not match any image, please check the value and try again.");
         }
 
+        private ComputeService getComputeService(final String providerName, final String credentialsId, final String endPointUrl, final String zones) {
+                return JCloudsCloud.ctx(Util.fixEmptyAndTrim(providerName), credentialsId,
+                        Util.fixEmptyAndTrim(endPointUrl), Util.fixEmptyAndTrim(zones), true).getComputeService();
+        }
+
         private FormValidation validateComputeContextParameters(@QueryParameter String providerName,
-                @QueryParameter String cloudCredentialsId, @QueryParameter String endPointUrl, @QueryParameter String zones) {
+                @QueryParameter String cloudCredentialsId, @QueryParameter String endPointUrl, @QueryParameter String zones) { // NOPMD - unused method parameter
             if (Strings.isNullOrEmpty(cloudCredentialsId)) {
                 return FormValidation.error("No cloud credentials specified.");
             }
@@ -652,14 +657,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
 
         private Set<? extends Image> listImages(String providerName, String cloudCredentialsId, String endPointUrl, String zones) {
-            // Remove empty text/whitespace from the fields.
-            providerName = Util.fixEmptyAndTrim(providerName);
-            endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-            zones = Util.fixEmptyAndTrim(zones);
             ComputeService computeService = null;
-
             try {
-                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
+                computeService = getComputeService(providerName, cloudCredentialsId, endPointUrl, zones);
                 return computeService.listImages();
             } finally {
                 if (computeService != null) {
@@ -669,7 +669,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
 
         private boolean prepareListBoxModel(final String providerName, final String cloudCredentialsId,
-                final String endPointUrl, final String zones, final ListBoxModel model) {
+                final String endPointUrl, final String zones, final ListBoxModel model) {  // NOPMD - unused method parameter
             if (Strings.isNullOrEmpty(cloudCredentialsId)) {
                 LOGGER.warning("cloudCredentialsId is null or empty");
                 return true;
@@ -694,16 +694,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, zones, m)) {
                 return m;
             }
-            // Remove empty text/whitespace from the fields.
-            providerName = Util.fixEmptyAndTrim(providerName);
-            endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-
             ComputeService computeService = null;
             try {
-                // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
+                computeService = getComputeService(providerName, cloudCredentialsId, endPointUrl, zones);
                 ArrayList<Hardware> hws = newArrayList(computeService.listHardwareProfiles());
-                sort(hws);
+                Collections.sort(hws);
                 for (Hardware hardware : hws) {
                     m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()), hardware.getId());
                 }
@@ -729,18 +724,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             if (Strings.isNullOrEmpty(hardwareId)) {
                 return FormValidation.error("Hardware Id should not be empty");
             }
-
-            // Remove empty text/whitespace from the fields.
-            providerName = Util.fixEmptyAndTrim(providerName);
             hardwareId = Util.fixEmptyAndTrim(hardwareId);
-            endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-            zones = Util.fixEmptyAndTrim(zones);
 
             FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
             ComputeService computeService = null;
             try {
-                // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
+                computeService = getComputeService(providerName, cloudCredentialsId, endPointUrl, zones);
                 Set<? extends Hardware> hardwareProfiles = computeService.listHardwareProfiles();
                 for (Hardware hardware : hardwareProfiles) {
                     if (!hardware.getId().equals(hardwareId)) {
@@ -770,17 +759,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, zones, m)) {
                 return m;
             }
-            // Remove empty text/whitespace from the fields.
-            providerName = Util.fixEmptyAndTrim(providerName);
-            endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-
             ComputeService computeService = null;
             try {
-                // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
-
+                computeService = getComputeService(providerName, cloudCredentialsId, endPointUrl, zones);
                 ArrayList<Location> locations = newArrayList(computeService.listAssignableLocations());
-                sort(locations, new Comparator<Location>() {
+                Collections.sort(locations, new Comparator<Location>() {
                     @Override
                     public int compare(Location o1, Location o2) {
                         return o1.getId().compareTo(o2.getId());
@@ -834,16 +817,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
 
             // Remove empty text/whitespace from the fields.
-            providerName = Util.fixEmptyAndTrim(providerName);
             locationId = Util.fixEmptyAndTrim(locationId);
-            endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
-            zones = Util.fixEmptyAndTrim(zones);
 
             FormValidation result = FormValidation.error("Invalid Location Id, please check the value and try again.");
             ComputeService computeService = null;
             try {
-                // TODO: endpoint is ignored
-                computeService = JCloudsCloud.ctx(providerName, cloudCredentialsId, endPointUrl, zones).getComputeService();
+                computeService = getComputeService(providerName, cloudCredentialsId, endPointUrl, zones);
                 Set<? extends Location> locations = computeService.listAssignableLocations();
                 for (Location location : locations) {
                     if (!location.getId().equals(locationId)) {
