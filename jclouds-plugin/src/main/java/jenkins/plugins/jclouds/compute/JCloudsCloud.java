@@ -19,7 +19,6 @@ import hudson.Util;
 import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
-import hudson.model.Hudson;
 import hudson.model.ItemGroup;
 import hudson.model.Label;
 import hudson.model.Node;
@@ -66,6 +65,7 @@ import shaded.com.google.common.io.Closeables;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
@@ -161,8 +161,8 @@ public class JCloudsCloud extends Cloud {
     private String getPrivateKeyFromCredential(final String id) {
         if (!Strings.isNullOrEmpty(id)) {
             SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM),
-                    CredentialsMatchers.withId(id));
+                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getActiveInstance(), ACL.SYSTEM,
+                        Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(id));
             if (null != supk) {
                 return supk.getPrivateKey();
             }
@@ -506,20 +506,20 @@ public class JCloudsCloud extends Cloud {
             return m;
         }
 
-        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context) {
+        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
-                return new ListBoxModel();
+                return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
-            return new StandardUsernameListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM));
+            return new StandardUsernameListBoxModel()
+                .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
-        public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context) {
+        public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
-                return new ListBoxModel();
+                return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
-            return new StandardUsernameListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, context, ACL.SYSTEM));
+            return new StandardUsernameListBoxModel()
+                .includeAs(ACL.SYSTEM, context, SSHUserPrivateKey.class).includeCurrentValue(currentValue);
         }
 
         public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {

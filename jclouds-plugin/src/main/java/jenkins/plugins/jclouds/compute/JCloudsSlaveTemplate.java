@@ -30,7 +30,6 @@ import hudson.model.Describable;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Label;
-import hudson.model.Hudson;
 import hudson.model.Node.Mode;
 import hudson.model.ItemGroup;
 import hudson.model.TaskListener;
@@ -78,6 +77,7 @@ import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
@@ -231,7 +231,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return getCloud().getGlobalPrivateKey();
         }
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Hudson.getInstance(), ACL.SYSTEM),
+                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getActiveInstance(), ACL.SYSTEM,
+                    Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(credentialsId));
         if (null != supk) {
             return supk.getPrivateKey();
@@ -784,22 +785,24 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return m;
                 }
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
-                return new ListBoxModel();
+                return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
-            return new StandardUsernameListBoxModel().withMatching(SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
-                        ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
+            return new StandardUsernameListBoxModel().includeMatchingAs(
+                    ACL.SYSTEM, context, StandardUsernameCredentials.class,
+                    Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
+                    SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
         }
 
-        public ListBoxModel doFillAdminCredentialsIdItems(@AncestorInPath ItemGroup context) {
+        public ListBoxModel doFillAdminCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
-                return new ListBoxModel();
+                return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
-            return new StandardUsernameListBoxModel().withEmptySelection().withMatching(SSHAuthenticator.matcher(Connection.class),
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context,
-                        ACL.SYSTEM, SSHLauncher.SSH_SCHEME));
+            return new StandardUsernameListBoxModel().includeMatchingAs(
+                    ACL.SYSTEM, context, StandardUsernameCredentials.class,
+                    Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
+                    SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
         }
 
         public FormValidation doValidateLocationId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
@@ -925,7 +928,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     private StandardUsernameCredentials retrieveExistingCredentials(final String username, final String privkey) {
         return CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class,
-                    Hudson.getInstance(), ACL.SYSTEM, SSHLauncher.SSH_SCHEME), CredentialsMatchers.allOf(
+                    Jenkins.getActiveInstance(), ACL.SYSTEM, SSHLauncher.SSH_SCHEME), CredentialsMatchers.allOf(
                     CredentialsMatchers.withUsername(username),
                     new CredentialsMatcher() {
                         public boolean matches(Credentials item) {

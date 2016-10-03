@@ -44,7 +44,6 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 
-import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
@@ -220,12 +219,12 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context) {
+        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
-                return new ListBoxModel();
+                return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
-            return new StandardUsernameListBoxModel().withAll(
-                    CredentialsProvider.lookupCredentials(StandardUsernameCredentials.class, context, ACL.SYSTEM));
+            return new StandardUsernameListBoxModel()
+                .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
         public ListBoxModel doFillProviderNameItems(@AncestorInPath ItemGroup context) {
