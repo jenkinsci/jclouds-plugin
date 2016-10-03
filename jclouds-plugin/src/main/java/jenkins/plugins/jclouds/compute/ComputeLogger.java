@@ -11,10 +11,11 @@ class ComputeLogger extends org.jclouds.logging.jdk.JDKLogger {
 
     public static class Factory extends JDKLoggerFactory {
         public org.jclouds.logging.Logger getLogger(String category) {
-            if (category.equals("jclouds.compute") || (category.equals("jclouds.wire") && wireLogging))
+            if (category.equals("jclouds.compute") || category.equals("jclouds.wire") && wireLogging) {
                 return new ComputeLogger(Logger.getLogger(category));
-            else
+            } else {
                 return super.getLogger(category);
+            }
         }
     }
 

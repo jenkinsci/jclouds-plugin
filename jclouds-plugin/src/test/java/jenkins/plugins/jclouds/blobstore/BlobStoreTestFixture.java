@@ -15,6 +15,10 @@ import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.collect.Maps;
 import shaded.com.google.common.reflect.TypeToken;
 
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
+
+import hudson.util.Secret;
+
 import org.junit.Assume;
 
 @SuppressWarnings("unchecked")
@@ -77,6 +81,10 @@ public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
 
     public String getCredential() {
         return credential;
+    }
+
+    public String getCredentialsId() {
+        return CredentialsHelper.convertCredentials(provider, identity, Secret.fromString(credential));
     }
 
     public void setUp() {

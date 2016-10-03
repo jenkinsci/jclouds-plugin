@@ -65,13 +65,12 @@ public final class CredentialsHelper {
 
     /**
      * Converts old identity/credential new UsernamePassword credential-plugin record.
-     * @param name The name of the JCloudsCloud.
+     * @param description The for the credentials record.
      * @param identity The old identity (AKA username).
      * @param credential The old credential (AKA password).
      * @return The Id of the newly created  credential-plugin record.
      */
-    public static String convertCloudCredentials(final String name, final String identity, final Secret credential) {
-        final String description = "JClouds cloud " + name + " - auto-migrated";
+    public static String convertCredentials(final String description, final String identity, final Secret credential) {
         StandardUsernameCredentials u = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, description, identity, Secret.toString(credential));
         try {

@@ -1,30 +1,9 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form">
-    <!-- nothing to configure -->
-    <f:section title="JClouds Cloud Storage Settings">
-        <f:entry title="Profiles" description="Profiles for publishing to Cloud Storage">
-            <f:repeatable var="profile" items="${descriptor.profiles}">
-                <table width="100%">
-                    <f:entry title="Profile name">
-                        <f:textbox name="jcblobstore.profileName" value="${profile.profileName}"/>
-                    </f:entry>
-                    <f:entry title="Provider Name">
-                        <f:textbox name="jcblobstore.providerName" value="${profile.providerName}"/>
-                    </f:entry>
-                    <f:entry title="Identity">
-                        <f:textbox name="jcblobstore.identity" value="${profile.identity}"/>
-                    </f:entry>
-                    <f:entry title="Credential" >
-                        <input class="setting-input" name="jcblobstore.credential"
-                               type="password" value="${profile.credential}" />
-                    </f:entry>
-                    <f:entry title="">
-                        <div align="right">
-                            <f:repeatableDeleteButton/>
-                        </div>
-                    </f:entry>
-                </table>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:st="jelly:stapler">
+    <f:section title="JClouds BlobStore Publisher">
+        <f:entry title="Profiles" description="Profiles for publishing build artifacts to Cloud Storage">
+            <f:repeatable field="profiles">
+              <st:include page="config.jelly" class="${descriptor.clazz}"/>
             </f:repeatable>
         </f:entry>
     </f:section>

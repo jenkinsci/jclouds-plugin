@@ -45,6 +45,7 @@ public class JCloudsCloudTest {
         WebAssert.assertInputPresent(page2, "_.scriptTimeout");
         WebAssert.assertInputPresent(page2, "_.startTimeout");
         WebAssert.assertInputPresent(page2, "_.zones");
+        WebAssert.assertInputPresent(page2, "_.trustAll");
 
         HtmlForm configForm2 = page2.getFormByName("config");
         HtmlButton testConnectionButton = configForm2.getButtonByCaption("Test Connection");
@@ -59,7 +60,7 @@ public class JCloudsCloudTest {
 
         JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "",
                 "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                600 * 1000, 600 * 1000, null, Collections.<JCloudsSlaveTemplate>emptyList());
+                600 * 1000, 600 * 1000, null, true, Collections.<JCloudsSlaveTemplate>emptyList());
 
         j.getInstance().clouds.add(original);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));
