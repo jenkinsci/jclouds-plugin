@@ -21,6 +21,8 @@ You can build and test this plugin using by cloning this repository and
 
 The above command will start jenkins with JClouds plugin pre-configured.
 
+**NOTE**: Due to the issue [MNG-5899](https://issues.apache.org/jira/browse/MNG-5899) in Maven 3.3, it is recommended to use Maven 3.2 or older to build the plugin. If using Maven 3.3 is mandatory, then you can workaround the issue by building the entire project first, and then enter the `jclouds-plugin` folder and build only the plugin project to produce the right hpi package.
+
 ## Adding a new Cloud Provider
 
 * Goto Jenkins Configuration page by clicking on Manage menu or browsing to the URL http://localhost:8080/configure
