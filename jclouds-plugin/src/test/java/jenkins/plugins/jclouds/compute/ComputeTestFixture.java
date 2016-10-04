@@ -80,7 +80,7 @@ public class ComputeTestFixture extends BaseComputeServiceContextLiveTest {
     }
 
     public String getCredentialsId() {
-        return CredentialsHelper.convertCloudCredentials(provider, identity, Secret.fromString(credential));
+        return CredentialsHelper.convertCredentials(provider, identity, Secret.fromString(credential));
     }
 
     public void setUp() {
