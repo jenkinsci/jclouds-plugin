@@ -36,7 +36,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
                 final int index = i;
                 logger.info("Queuing cloud instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(), nodePlan.getTemplateName());
 
-                ListenableFuture<NodeMetadata> provisionTemplate = executor.submit(new RetrySupplierOnException(nodePlan.getNodeSupplier(), logger));
+                ListenableFuture<NodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
 
                 Futures.addCallback(provisionTemplate, new FutureCallback<NodeMetadata>() {
                     public void onSuccess(NodeMetadata result) {

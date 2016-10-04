@@ -380,7 +380,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             if (assignFloatingIp && options instanceof NovaTemplateOptions) {
                 LOGGER.info("Setting autoAssignFloatingIp to true");
                 options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
-                options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp();
+                LOGGER.info("Setting autoAssignFloatingIp is now " +
+                        options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp());
             }
 
             if (!Strings.isNullOrEmpty(keyPairName) && options instanceof NovaTemplateOptions) {
@@ -605,11 +606,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             if (computeContextValidationResult != null) {
                 return computeContextValidationResult;
             }
+            // Remove empty text/whitespace from the fields.
+            imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
             if (Strings.isNullOrEmpty(imageNameRegex)) {
                 return FormValidation.error("Image Name Regex should not be empty.");
             }
-            // Remove empty text/whitespace from the fields.
-            imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
 
             try {
                 int matchcount = 0;

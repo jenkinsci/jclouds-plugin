@@ -35,7 +35,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
  */
 public class JCloudsSlave extends AbstractCloudSlave {
 
-    
+    private static final long serialVersionUID = 42L;
+
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlave.class.getName());
     private transient NodeMetadata nodeMetaData;
     public final boolean stopOnTerminate;
