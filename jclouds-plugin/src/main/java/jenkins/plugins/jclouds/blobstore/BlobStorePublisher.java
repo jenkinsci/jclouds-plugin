@@ -240,9 +240,24 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
         @Override
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
-            profiles.replaceBy(req.bindJSONToList(BlobStoreProfile.class, formData.get("profiles")));
+            setProfiles(req.bindJSONToList(BlobStoreProfile.class, formData.get("profiles")));
             save();
             return true;
+        }
+       
+        /**
+         * Set profiles.
+         * This method allows managing profiles from within a groovy script like this:
+         * <pre>
+         * // Get credentials from somewhere and build a list of profiles...
+         * BlobStorePublisher.DESCRIPTOR.setProfiles(profiles)
+         * BlobStorePublisher.DESCRIPTOR.save()
+         * </pre>
+         *
+         * @param newProfiles A list of BlobStoreProfile.
+         */ 
+        public void setProfiles(List<BlobStoreProfile> newProfiles) {
+            profiles.replaceBy(newProfiles);
         }
 
         public BlobStoreProfile[] getProfiles() {
