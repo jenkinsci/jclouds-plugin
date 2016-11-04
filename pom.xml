@@ -92,6 +92,7 @@
                     <groupId>org.jenkins-ci.tools</groupId>
                     <artifactId>maven-hpi-plugin</artifactId>
                     <configuration>
+                        <pluginFirstClassLoader>true</pluginFirstClassLoader>
                         <disabledTestInjection>true</disabledTestInjection>
                         <dependentWarExcludes>org.apache.jclouds*</dependentWarExcludes>
                         <archive>
