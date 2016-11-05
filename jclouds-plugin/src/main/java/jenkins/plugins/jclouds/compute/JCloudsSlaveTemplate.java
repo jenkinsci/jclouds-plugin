@@ -384,14 +384,20 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                         options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp());
             }
 
-            if (!Strings.isNullOrEmpty(keyPairName) && options instanceof NovaTemplateOptions) {
-                LOGGER.info("Setting keyPairName to " + keyPairName);
-                options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+            if (!Strings.isNullOrEmpty(keyPairName)) {
+                if (options instanceof NovaTemplateOptions) {
+                    LOGGER.info("Setting OpenStack keyPairName to: " + keyPairName);
+                    options.as(NovaTemplateOptions.class).keyPairName(keyPairName);
+                } else if (options instanceof CloudStackTemplateOptions) {
+                    LOGGER.info("Setting CloudStack keyPairName to: " + keyPairName);
+                    options.as(CloudStackTemplateOptions.class).keyPair(keyPairName);
+                }
             }
 
             if (options instanceof CloudStackTemplateOptions) {
                 /**
-                 * This tells jclouds cloudstack module to assign a public ip, setup staticnat and configure the firewall when true. Only interesting when using
+                 * This tells jclouds cloudstack module to assign a public ip, setup static NAT
+                 * and configure the firewall when true. Only interesting when using
                  * cloudstack advanced networking.
                  */
                 LOGGER.info("Setting setupStaticNat to " + assignPublicIp);

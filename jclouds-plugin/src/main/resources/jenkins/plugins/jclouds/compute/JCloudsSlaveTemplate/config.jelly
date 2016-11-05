@@ -149,12 +149,13 @@
         <f:number clazz="number" min="0" step="1" default="15"/>
       </f:entry>
 
+      <f:entry title="${%Key Pair Name}" field="keyPairName">
+        <f:textbox />
+      </f:entry>
+
       <f:section title="${%OpenStack Options}">
         <f:entry title="${%Assign Floating IP}" field="assignFloatingIp">
           <f:checkbox />
-        </f:entry>
-        <f:entry title="${%Key Pair Name}" field="keyPairName">
-          <f:textbox />
         </f:entry>
       </f:section>
 
