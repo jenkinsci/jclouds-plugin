@@ -127,7 +127,14 @@ public class JCloudsBuildWrapper extends BuildWrapper {
 
         @Override
         public boolean isApplicable(AbstractProject item) {
-            return true;
+            // Show only, if at least one cloud with a SlaveTemplate exists
+            for (String name : JCloudsCloud.getCloudNames()) {
+                JCloudsCloud c = JCloudsCloud.getByName(name);
+                if (c != null && c.getTemplates().size() > 0) {
+                    return true;
+                }
+            }
+            return false;
         }
 
     }
