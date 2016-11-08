@@ -11,6 +11,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> {
+
     public final String cloudName;
     public final String templateName;
     public final String manualTemplateName;
@@ -44,21 +45,28 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
 
     @Extension
     public static class DescriptorImpl extends Descriptor<InstancesToRun> {
+
+        public String defaultCloudName() {
+            if (JCloudsCloud.getCloudNames().size() > 0) {
+                return JCloudsCloud.getCloudNames().get(0);
+            }
+            return "";
+        }
+
         public ListBoxModel doFillCloudNameItems() {
             ListBoxModel m = new ListBoxModel();
-            for (String cloudName : JCloudsCloud.getCloudNames()) {
-                m.add(cloudName, cloudName);
+            for (String name : JCloudsCloud.getCloudNames()) {
+                m.add(name, name);
             }
-
             return m;
         }
 
-        public ListBoxModel doFillTemplateNameItems(@QueryParameter String cloudName) {
+        public ListBoxModel doFillTemplateNameItems(@QueryParameter("cloudName") String cname) {
             ListBoxModel m = new ListBoxModel();
-            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            JCloudsCloud c = JCloudsCloud.getByName(cname);
             if (c != null) {
                 for (JCloudsSlaveTemplate t : c.getTemplates()) {
-                    m.add(String.format("%s in cloud %s", t.name, cloudName), t.name);
+                    m.add(String.format("%s in cloud %s", t.name, cname), t.name);
                 }
             }
             return m;
