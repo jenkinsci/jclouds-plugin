@@ -12,18 +12,18 @@
     <version>2.10-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>jclouds shaded jar for Jenkins plugin</name>
+    <licenses>
+        <license>
+            <name>Apache License 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-core</artifactId>
             <version>${jclouds.version}</version>
-            <!-- <exclusions>
-                <exclusion>
-                    <groupId>com.google.inject</groupId>
-                    <artifactId>guice</artifactId>
-                </exclusion>
-            </exclusions>-->
         </dependency>
         <dependency>
             <groupId>org.apache.jclouds</groupId>
