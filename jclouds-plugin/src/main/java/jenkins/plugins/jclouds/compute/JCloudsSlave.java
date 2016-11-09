@@ -164,7 +164,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     /**
      * Get Jclouds LoginCredentials associated with this Slave.
-     * <p/>
+     * <p>
      * If Jclouds doesn't provide credentials, use stored ones.
      *
      * @return {@link LoginCredentials}

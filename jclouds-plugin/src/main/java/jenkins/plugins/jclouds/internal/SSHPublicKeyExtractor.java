@@ -18,8 +18,8 @@ public final class SSHPublicKeyExtractor {
      * Extracts a SSH public key from a PEM-encoded SSH private key.
      * @param pem The PEM-encoded string (either RSA or DSA).
      * @param passPhrase The passphrase to decrypt the private key (may be null, if the key is not encrypted).
-     * @return A public key string in the form "<pubkey-type> <pubkey-base64>"
-     * @throws IOException, if pem could not be decoded properly.
+     * @return A public key string in the form "&lt;pubkey-type&gt; &lt;pubkey-base64&gt;"
+     * @throws IOException if pem could not be decoded properly.
      */
     public static String extract(final String pem, final String passPhrase) throws IOException {
         final Object priv = PEMDecoder.decode(pem.toCharArray(), passPhrase);

@@ -103,7 +103,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
     /**
      * Perform the build step of uploading the configured file entries to the blobstore.
-     * <p/>
+     * <p>
      * <ul>
      * <li>If the build result is failure, will not do anything except logging the stuff.</li>
      * <li>If the blobstore profile isn't configured, or the uploading failed, the build is set to be unstable.</li>
@@ -211,14 +211,14 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
     /**
      * @return BuildStepMonitor.STEP
-     * @{see BuildStepMonitor#STEP}
+     * @see BuildStepMonitor#STEP
      */
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.STEP;
     }
 
     /**
-     * {@see hudson.model.Descriptor}
+     * @see hudson.model.Descriptor
      */
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
