@@ -3,12 +3,12 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>jclouds-jenkins-parent</artifactId>
-        <version>2.9-SNAPSHOT</version>
+        <version>2.9</version>
         <relativePath>..</relativePath>
     </parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>jclouds-jenkins</artifactId>
-    <version>2.9-SNAPSHOT</version>
+    <version>2.9</version>
     <packaging>hpi</packaging>
     <name>Jenkins JClouds plugin</name>
     <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
@@ -33,7 +33,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>jclouds-shaded</artifactId>
-            <version>2.9-SNAPSHOT</version>
+            <version>2.9</version>
         </dependency>
     </dependencies>
 
@@ -122,7 +122,8 @@
         <connection>scm:git:git://github.com/jenkinsci/jclouds-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:jenkinsci/jclouds-plugin.git</developerConnection>
         <url>http://github.com/jenkinsci/jclouds-plugin</url>
-    </scm>
+      <tag>jclouds-jenkins-2.9</tag>
+  </scm>
     <repositories>
         <repository>
             <id>repo.jenkins-ci.org</id>
