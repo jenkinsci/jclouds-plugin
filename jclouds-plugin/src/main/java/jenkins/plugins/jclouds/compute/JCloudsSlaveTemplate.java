@@ -529,9 +529,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     @Extension
     public static final class DescriptorImpl extends Descriptor<JCloudsSlaveTemplate> {
 
-        @Override
         public String getDisplayName() {
-            return null;
+            return "JCloudsSlaveTemplate";
         }
 
         public FormValidation doCheckName(@QueryParameter String value) {
