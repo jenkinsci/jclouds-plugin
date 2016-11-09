@@ -100,6 +100,8 @@
                     <configuration>
                         <pluginFirstClassLoader>true</pluginFirstClassLoader>
                         <compatibleSinceVersion>2.9</compatibleSinceVersion>
+                        <!-- jenkins injected tests wont run because they use a
+                            different guice API (4.0 vs. guice-3.0 in jclouds) -->
                         <disabledTestInjection>true</disabledTestInjection>
                         <dependentWarExcludes>org.apache.jclouds*</dependentWarExcludes>
                         <archive>
