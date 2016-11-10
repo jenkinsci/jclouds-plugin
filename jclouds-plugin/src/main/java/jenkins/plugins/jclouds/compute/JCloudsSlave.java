@@ -124,8 +124,8 @@ public class JCloudsSlave extends AbstractCloudSlave {
      * @param waitPhoneHomeTimeout  - Timeout in minutes util giving up waiting for the "phone home" POST.
      * @param credentialsId         - Id of the credentials in Jenkin's global credentials database.
      * @param mode                  - Jenkins usage mode for this node
-     * @throws IOException
-     * @throws Descriptor.FormException
+     * @throws IOException if an error occurs.
+     * @throws Descriptor.FormException if the form does not validate.
      */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
 

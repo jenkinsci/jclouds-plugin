@@ -43,6 +43,9 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
 
     /**
      * Receives the webhook call.
+     *
+     * @param req The stapler request.
+     * @param rsp The stapler response.
      */
     @RequirePOST
     public void doIndex(StaplerRequest req, StaplerResponse rsp) {

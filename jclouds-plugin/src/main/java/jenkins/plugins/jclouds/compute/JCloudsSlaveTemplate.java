@@ -208,6 +208,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     /**
      * Initializes data structure that we don't persist.
+     * @return The initialized object.
      */
     protected Object readResolve() {
         labelSet = Label.parse(labelString);

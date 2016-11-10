@@ -24,10 +24,10 @@ public class JCloudsLauncher extends ComputerLauncher {
     /**
      * Launch the Jenkins Slave on the SlaveComputer.
      *
-     * @param computer
-     * @param listener
-     * @throws IOException
-     * @throws InterruptedException
+     * @param computer The node on which to launch the slave.
+     * @param listener Task listener for notification purposes.
+     * @throws IOException if an error occurs.
+     * @throws InterruptedException if the launch gets interrupted.
      */
     @Override
     public void launch(SlaveComputer computer, TaskListener listener) throws IOException, InterruptedException {
@@ -54,6 +54,9 @@ public class JCloudsLauncher extends ComputerLauncher {
 
     /**
      * Get the potential addresses to connect to, opting for public first and then private.
+     * @param nodeMetadata The meta data of the configured node.
+     * @param logger Reference to a PrintStream for logging purposes.
+     * @return An array of Strings containing the IP addresses.
      */
     public static String[] getConnectionAddresses(NodeMetadata nodeMetadata, PrintStream logger) {
         if (nodeMetadata.getPublicAddresses().size() > 0) {

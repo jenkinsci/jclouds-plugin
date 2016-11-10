@@ -107,6 +107,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
 
     /**
      * Provider endpoint.
+     * @return The endpoint URL.
      */
     public String getEndPointUrl() {
         return endPointUrl;
@@ -115,7 +116,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
     /**
      * credentials.
      *
-     * @return
+     * @return The ID of the credentials object.
      */
     public String getCredentialsId() {
         return credentialsId;
@@ -162,8 +163,8 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
      * @param container - The container where the file needs to be uploaded.
      * @param path      - The path in container where the file needs to be uploaded.
      * @param filePath  - the {@link FilePath} of the file which needs to be uploaded.
-     * @throws IOException
-     * @throws InterruptedException
+     * @throws IOException if an IO error occurs.
+     * @throws InterruptedException  If the upload gets interrupted.
      */
     public void upload(String container, String path, FilePath filePath) throws IOException, InterruptedException {
         if (filePath.isDirectory()) {

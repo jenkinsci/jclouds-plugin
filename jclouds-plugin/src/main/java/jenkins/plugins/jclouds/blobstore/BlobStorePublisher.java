@@ -48,7 +48,8 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
     /**
      * Create a new Blobstore publisher for the configured profile identified by profileName
      *
-     * @param profileName - the name of the configured profile name
+     * @param profileName The name of the configured profile name.
+     * @param entries The list of entries to be handled.
      */
     @DataBoundConstructor
     public BlobStorePublisher(String profileName, List<BlobStoreEntry> entries) {
@@ -66,7 +67,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
     /**
      * Get list of entries to be uploaded.
      *
-     * @return
+     * @return The list of entries to be uploaded.
      */
     public List<BlobStoreEntry> getEntries() {
         return entries;
@@ -103,19 +104,18 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
     /**
      * Perform the build step of uploading the configured file entries to the blobstore.
-     * <p>
      * <ul>
      * <li>If the build result is failure, will not do anything except logging the stuff.</li>
      * <li>If the blobstore profile isn't configured, or the uploading failed, the build is set to be unstable.</li>
      * <li>If the upload is succesful, the build is set to be stable.</li>
      * </ul>
      *
-     * @param build    - reference to curerent build.
+     * @param build    - reference to current build.
      * @param launcher - {@link Launcher}
      * @param listener - {@link BuildListener}
-     * @return Always returns to indicate that build can continue, so we won't block other steps.
-     * @throws InterruptedException
-     * @throws IOException
+     * @return Always returns {@code true} to indicate that build can continue, so we won't block other steps.
+     * @throws InterruptedException if the upload gets interrupted.
+     * @throws IOException if an IO error occurs.
      */
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {

@@ -214,6 +214,7 @@ public class JCloudsCloud extends Cloud {
 
     /**
      * Get the retention time in minutes or default value from CloudInstanceDefaults if it is zero.
+     * @return The retention time in minutes.
      * @see CloudInstanceDefaults#DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
      */
     public int getRetentionTime() {
@@ -369,6 +370,8 @@ public class JCloudsCloud extends Cloud {
 
     /**
      * Gets {@link jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate} that has the matching {@link Label}.
+     * @param label The label to be matched.
+     * @return The slave template or {@code null} if the specified label did not match.
      */
     public JCloudsSlaveTemplate getTemplate(Label label) {
         for (JCloudsSlaveTemplate t : templates)
@@ -391,9 +394,9 @@ public class JCloudsCloud extends Cloud {
      * @param req  {@link StaplerRequest}
      * @param rsp  {@link StaplerResponse}
      * @param name Name of the template to provision
-     * @throws ServletException
-     * @throws IOException
-     * @throws Descriptor.FormException
+     * @throws ServletException if an error occurs.
+     * @throws IOException if an error occurs.
+     * @throws Descriptor.FormException if the form does not validate.
      */
     public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String name) throws ServletException, IOException,
            Descriptor.FormException {
@@ -418,16 +421,18 @@ public class JCloudsCloud extends Cloud {
 
     /**
      * Determine how many nodes are currently running for this cloud.
+     * @return number of running nodes.
      */
     public int getRunningNodesCount() {
         int nodeCount = 0;
 
         for (ComputeMetadata cm : getCompute().listNodes()) {
             if (NodeMetadata.class.isInstance(cm)) {
-                String nodeGroup = ((NodeMetadata) cm).getGroup();
+                NodeMetadata nm = (NodeMetadata) cm;
+                String nodeGroup = nm.getGroup();
 
-                if (getTemplate(nodeGroup) != null && !((NodeMetadata) cm).getStatus().equals(NodeMetadata.Status.SUSPENDED)
-                        && !((NodeMetadata) cm).getStatus().equals(NodeMetadata.Status.TERMINATED)) {
+                if (getTemplate(nodeGroup) != null && !nm.getStatus().equals(NodeMetadata.Status.SUSPENDED)
+                        && !nm.getStatus().equals(NodeMetadata.Status.TERMINATED)) {
                     nodeCount++;
                         }
             }
@@ -440,6 +445,7 @@ public class JCloudsCloud extends Cloud {
 
         /**
          * Human readable name of this kind of configurable object.
+         * @return The human readable name of this object. 
          */
         @Override
         public String getDisplayName() {
@@ -525,29 +531,6 @@ public class JCloudsCloud extends Cloud {
             }
             return new StandardUsernameListBoxModel()
                 .includeAs(ACL.SYSTEM, context, SSHUserPrivateKey.class).includeCurrentValue(currentValue);
-        }
-
-        public AutoCompletionCandidates doAutoCompleteProviderName(@QueryParameter final String value) {
-            // correct the classloader so that extensions can be found
-            Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-            // TODO: apis need endpoints, providers don't; do something smarter
-            // with this stuff :)
-            Builder<String> builder = ImmutableSet.<String> builder();
-            builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
-            builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));
-            Iterable<String> supportedProviders = builder.build();
-
-            Iterable<String> matchedProviders = Iterables.filter(supportedProviders, new Predicate<String>() {
-                public boolean apply(@Nullable String input) {
-                    return input != null && input.startsWith(value.toLowerCase());
-                }
-            });
-
-            AutoCompletionCandidates candidates = new AutoCompletionCandidates();
-            for (String matchedProvider : matchedProviders) {
-                candidates.add(matchedProvider);
-            }
-            return candidates;
         }
 
         public FormValidation doCheckProfile(@QueryParameter String value) {
