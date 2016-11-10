@@ -488,9 +488,7 @@ public class JCloudsCloud extends Cloud {
             return FormValidation.validateRequired(value);
         }
 
-        public ListBoxModel doFillProviderNameItems() {
-            ListBoxModel m = new ListBoxModel();
-
+        private ImmutableSortedSet<String> getAllProviders() {
             // correct the classloader so that extensions can be found
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
@@ -498,9 +496,16 @@ public class JCloudsCloud extends Cloud {
             Builder<String> builder = ImmutableSet.<String> builder();
             builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
             builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));
-            Iterable<String> supportedProviders = ImmutableSortedSet.copyOf(builder.build());
+            return ImmutableSortedSet.copyOf(builder.build());
+        }
 
-            for (String supportedProvider : supportedProviders) {
+        public String defaultProviderName() {
+            return getAllProviders().first();
+        }
+
+        public ListBoxModel doFillProviderNameItems() {
+            ListBoxModel m = new ListBoxModel();
+            for (String supportedProvider : getAllProviders()) {
                 m.add(supportedProvider, supportedProvider);
             }
             return m;

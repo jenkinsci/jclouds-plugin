@@ -1,18 +1,18 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:st="jelly:stapler">
-    <f:entry title="Profile" field="profile">
+    <f:entry title="${%Profile}" field="profile">
         <f:textbox/>
     </f:entry>
-    <f:entry title="Provider Name" field="providerName">
-        <f:select/>
+    <f:entry title="${%Provider Name}" field="providerName">
+        <f:select default="${descriptor.defaultProviderName()}" />
     </f:entry>
-    <f:entry title="End Point URL" field="endPointUrl">
+    <f:entry title="${%End Point URL}" field="endPointUrl">
         <f:textbox/>
     </f:entry>
-    <f:entry title="Max. No. of Instances" field="instanceCap">
+    <f:entry title="${%Max. No. of Instances}" field="instanceCap">
         <f:number clazz="positive-number" min="1" step="1"/>
     </f:entry>
-    <f:entry title="Retention Time" field="retentionTime">
+    <f:entry title="${%Retention Time}" field="retentionTime">
         <f:number clazz="number" min="-1" step="1" default="30"/>
     </f:entry>
     <f:entry title="${%Credentials}" field="cloudCredentialsId">
@@ -25,18 +25,18 @@
         <c:select/>
     </f:entry>
     <f:advanced>
-        <f:entry title="Init Script Timeout" field="scriptTimeout">
+        <f:entry title="${%Init Script Timeout}" field="scriptTimeout">
             <f:number clazz="positive-number" min="1" step="100000" default="600000"/>
         </f:entry>
-        <f:entry title="Instance Startup Timeout" field="startTimeout">
+        <f:entry title="${%Instance Startup Timeout}" field="startTimeout">
             <f:number clazz="positive-number" min="1" step="100000" default="600000"/>
         </f:entry>
-        <f:entry title="Available Openstack Zones" field="zones">
+        <f:entry title="${%Available Openstack Zones}" field="zones">
             <f:textbox/>
         </f:entry>
     </f:advanced>
-    <f:validateButton title="Test Connection" progress="${%Testing...}" method="testConnection" with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,zones,trustAll"/>
-    <f:entry title="Cloud Instance Templates" description="${%List of Cloud Instances to be launched as slaves}">
+    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,zones,trustAll"/>
+    <f:entry title="${%Templates}" description="${%Cloud templates that can be launched as slaves}">
         <f:repeatable field="templates">
             <st:include page="config.jelly" class="${descriptor.clazz}"/>
         </f:repeatable>
