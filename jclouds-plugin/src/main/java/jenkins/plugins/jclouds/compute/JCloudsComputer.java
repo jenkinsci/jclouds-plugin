@@ -70,7 +70,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
                 ch.close();
             }
             slave.terminate();
-            Jenkins.getActiveInstance().removeNode(slave);
+            Jenkins.getInstance().removeNode(slave);
         }
     }
 }

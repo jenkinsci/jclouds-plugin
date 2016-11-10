@@ -2,6 +2,7 @@ package jenkins.plugins.jclouds.compute;
 
 import java.io.IOException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import shaded.com.google.common.collect.ImmutableList;
 import shaded.com.google.common.util.concurrent.Futures;
@@ -17,6 +18,8 @@ import jenkins.model.Jenkins;
 @Extension
 public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 
+    private static final Logger LOGGER = Logger.getLogger(JCloudsCleanupThread.class.getName());
+
     public JCloudsCleanupThread() {
         super("JClouds slave cleanup");
     }
@@ -31,7 +34,7 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
     }
 
     private static JCloudsCleanupThread getInstance() {
-        return Jenkins.getActiveInstance().getExtensionList(AsyncPeriodicWork.class).get(JCloudsCleanupThread.class);
+        return Jenkins.getInstance().getExtensionList(AsyncPeriodicWork.class).get(JCloudsCleanupThread.class);
     }
 
     @Override
@@ -45,7 +48,7 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
         ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
         final ImmutableList.Builder<JCloudsComputer> computersToDeleteBuilder = ImmutableList.<JCloudsComputer>builder();
 
-        for (final Computer c : Jenkins.getActiveInstance().getComputers()) {
+        for (final Computer c : Jenkins.getInstance().getComputers()) {
             if (JCloudsComputer.class.isInstance(c)) {
                 final JCloudsComputer comp = (JCloudsComputer) c;
                 final JCloudsSlave node = comp.getNode();
@@ -53,13 +56,13 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
                     computersToDeleteBuilder.add(comp);
                     ListenableFuture<?> f = executor.submit(new Runnable() {
                         public void run() {
-                            logger.log(Level.INFO, "Deleting pending node " + comp.getName());
+                            LOGGER.log(Level.INFO, "Deleting pending node " + comp.getName());
                             try {
                                 node.terminate();
                             } catch (IOException e) {
-                                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
                             } catch (InterruptedException e) {
-                                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
                             }
                         }
                     });
@@ -74,9 +77,9 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
             try {
                 c.deleteSlave();
             } catch (IOException e) {
-                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
             } catch (InterruptedException e) {
-                logger.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
             }
 
         }

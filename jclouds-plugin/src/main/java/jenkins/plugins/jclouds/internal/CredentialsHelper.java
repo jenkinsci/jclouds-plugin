@@ -11,12 +11,10 @@ import shaded.com.google.common.base.Strings;
 
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 import hudson.util.Secret;
 
 import jenkins.model.Jenkins;
-
-import org.acegisecurity.context.SecurityContext;
-import org.acegisecurity.context.SecurityContextHolder;
 
 import java.io.IOException;
 import java.util.logging.Logger;
@@ -37,13 +35,10 @@ public final class CredentialsHelper {
      */
     public static String storeCredentials(final StandardUsernameCredentials u) throws IOException {
         if (null != u) {
-            final SecurityContext previousContext = ACL.impersonate(ACL.SYSTEM);
-            try {
+            try (final ACLContext ctx = ACL.as(ACL.SYSTEM)) {
                 final CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
                 s.addCredentials(Domain.global(), u);
                 return u.getId();
-            } finally {
-                SecurityContextHolder.setContext(previousContext);
             }
         }
         return null;

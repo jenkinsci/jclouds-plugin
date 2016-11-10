@@ -1,6 +1,5 @@
 package jenkins.plugins.jclouds.compute;
 
-import javax.annotation.Nullable;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -16,7 +15,6 @@ import java.util.logging.Logger;
 import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
-import hudson.model.AutoCompletionCandidates;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
@@ -54,7 +52,6 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
 import shaded.com.google.common.base.Objects;
-import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.collect.ImmutableSet;
 import shaded.com.google.common.collect.ImmutableSet.Builder;
@@ -117,7 +114,7 @@ public class JCloudsCloud extends Cloud {
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
-        for (Cloud c : Jenkins.getActiveInstance().clouds) {
+        for (Cloud c : Jenkins.getInstance().clouds) {
             if (JCloudsCloud.class.isInstance(c)) {
                 cloudNames.add(c.name);
             }
@@ -127,7 +124,7 @@ public class JCloudsCloud extends Cloud {
     }
 
     public static JCloudsCloud getByName(String name) {
-        return (JCloudsCloud) Jenkins.getActiveInstance().clouds.getByName(name);
+        return (JCloudsCloud) Jenkins.getInstance().clouds.getByName(name);
     }
 
     public String getCloudCredentialsId() {
@@ -161,7 +158,7 @@ public class JCloudsCloud extends Cloud {
     private String getPrivateKeyFromCredential(final String id) {
         if (!Strings.isNullOrEmpty(id)) {
             SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getActiveInstance(), ACL.SYSTEM,
+                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getInstance(), ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(id));
             if (null != supk) {
                 return supk.getPrivateKey();
@@ -305,7 +302,7 @@ public class JCloudsCloud extends Cloud {
         final JCloudsSlaveTemplate template = getTemplate(label);
         List<PlannedNode> plannedNodeList = new ArrayList<PlannedNode>();
 
-        while (excessWorkload > 0 && !Jenkins.getActiveInstance().isQuietingDown() && !Jenkins.getActiveInstance().isTerminating()) {
+        while (excessWorkload > 0 && !Jenkins.getInstance().isQuietingDown() && !Jenkins.getInstance().isTerminating()) {
 
             if ((getRunningNodesCount() + plannedNodeList.size()) >= instanceCap) {
                 LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
@@ -316,7 +313,7 @@ public class JCloudsCloud extends Cloud {
                 public Node call() throws Exception {
                     // TODO: record the output somewhere
                     JCloudsSlave jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout());
-                    Jenkins.getActiveInstance().addNode(jcloudsSlave);
+                    Jenkins.getInstance().addNode(jcloudsSlave);
 
                     /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
                        without the connect operation, NodeProvisioner may decide that it still wants one more instance,
@@ -384,7 +381,7 @@ public class JCloudsCloud extends Cloud {
         final StringWriter sw = new StringWriter();
         final StreamTaskListener listener = new StreamTaskListener(sw);
         JCloudsSlave node = t.provisionSlave(listener);
-        Jenkins.getActiveInstance().addNode(node);
+        Jenkins.getInstance().addNode(node);
         return node;
     }
 
@@ -518,7 +515,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
@@ -526,7 +523,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getActiveInstance()).hasPermission(Computer.CONFIGURE)) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()

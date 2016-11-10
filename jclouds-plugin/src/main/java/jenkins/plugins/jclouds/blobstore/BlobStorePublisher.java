@@ -146,7 +146,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
                     if (paths.length == 0) {
                         // try to do error diagnostics
                         log(listener.getLogger(), "No file(s) found: " + expandedSource);
-                        String error = ws.validateAntFileMask(expandedSource);
+                        String error = ws.validateAntFileMask(expandedSource, Integer.MAX_VALUE);
                         if (error != null)
                             log(listener.getLogger(), error);
                     }

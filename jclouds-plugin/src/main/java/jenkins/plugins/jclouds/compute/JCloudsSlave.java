@@ -134,7 +134,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this(cloudName, metadata.getName(), description, fsRoot, numExecutors, mode, labelString,
                 new JCloudsLauncher(), new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
                 stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
-                metadata.getCredentials().getPassword(), metadata.getCredentials().getPrivateKey(),
+                metadata.getCredentials().getOptionalPassword().orNull(), metadata.getCredentials().getOptionalPrivateKey().orNull(),
                 metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
@@ -232,7 +232,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
      * TODO: Remove, after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
      */
     private void updateXml() {
-        final File nodesDir = new File(Jenkins.getActiveInstance().getRootDir(), "nodes");
+        final File nodesDir = new File(Jenkins.getInstance().getRootDir(), "nodes");
         final File cfg = new File(new File(nodesDir, getNodeName()), "config.xml");
         if (cfg.exists()) {
             XmlFile xmlFile = new XmlFile(Jenkins.XSTREAM, cfg);
