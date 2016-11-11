@@ -84,7 +84,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <failOnViolation>false</failOnViolation>
+                    <failOnViolation>true</failOnViolation>
                     <verbose>true</verbose>
                 </configuration>
             </plugin>
@@ -95,7 +95,7 @@
                 <version>3.0.4</version>
                 <configuration>
                     <excludeFilterFile>src/findbugs/excludesFilter.xml</excludeFilterFile>
-                    <failOnError>false</failOnError>
+                    <failOnError>true</failOnError>
                 </configuration>
                 <executions>
                     <execution>
