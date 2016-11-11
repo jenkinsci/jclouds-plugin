@@ -205,8 +205,8 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
         if (resultPath.endsWith("/")) {
             resultPath = resultPath.substring(0, resultPath.length() - 1);
         }
-
-        return resultPath;
+        // Eliminate double slashes /./ and /../ for the same reason.
+        return resultPath.replaceAll("//+", "/").replaceAll("/\\.+/", "/");
     }
 
     /**

@@ -3,6 +3,9 @@ package jenkins.plugins.jclouds.blobstore;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Logger;
+import java.security.DigestInputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.collect.ImmutableSet;
@@ -34,7 +37,9 @@ import org.jclouds.apis.Apis;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.domain.Blob;
+import org.jclouds.domain.Location;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 
 import org.kohsuke.stapler.AncestorInPath;
@@ -126,7 +131,13 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         credentialsId = value;
     }
 
-    static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new EnterpriseConfigurationModule());
+    static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new JDKLoggingModule() {
+        @Override
+        public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
+            return new BlobStoreLogger.Factory();
+        }
+    }, new EnterpriseConfigurationModule());
+
 
     static BlobStoreContext ctx(String providerName, String credentialsId, Properties overrides) {
         StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
@@ -166,20 +177,17 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
      * @throws IOException if an IO error occurs.
      * @throws InterruptedException  If the upload gets interrupted.
      */
-    public void upload(String container, String path, FilePath filePath) throws IOException, InterruptedException {
+    public void upload(final String container, final String path, final FilePath filePath) throws IOException, InterruptedException {
         if (filePath.isDirectory()) {
             throw new IOException(filePath + " is a directory");
         }
-        final BlobStoreContext context = ctx(providerName, credentialsId, endPointUrl, trustAll);
+        BlobStoreContext context = ctx(providerName, credentialsId, endPointUrl, trustAll);
         try {
-            final BlobStore blobStore = context.getBlobStore();
+            BlobStore blobStore = context.getBlobStore();
+            final Location location = Iterables.getOnlyElement(blobStore.listAssignableLocations());
             if (!blobStore.containerExists(container)) {
                 LOGGER.info("Creating container " + container);
-                blobStore.createContainerInLocation(null, container);
-            }
-            if (!path.isEmpty() && !blobStore.directoryExists(container, path)) {
-                LOGGER.info("Creating directory " + path + " in container " + container);
-                blobStore.createDirectory(container, path);
+                blobStore.createContainerInLocation(location, container);
             }
             String destPath;
             if (path.isEmpty()) {
@@ -188,9 +196,39 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                 destPath = path + "/" + filePath.getName();
             }
             LOGGER.info("Publishing now to container: " + container + " path: " + destPath);
-            Blob blob = context.getBlobStore().blobBuilder(destPath).payload(filePath.read()).build();
-            context.getBlobStore().putBlob(container, blob);
-            LOGGER.info("Published " + destPath + " to container " + container + " with profile " + profileName);
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            DigestInputStream dis = new DigestInputStream(filePath.read(), md5);
+
+            Blob blob = blobStore.blobBuilder(destPath)
+                .payload(dis).contentLength(filePath.length()).build();
+            blobStore.putBlob(container, blob);
+            String md5local = Util.toHexString(md5.digest()).toLowerCase();
+
+            do {
+                context.close();
+                context = ctx(providerName, credentialsId, endPointUrl, trustAll);
+                blobStore = context.getBlobStore();
+                try {
+                    LOGGER.info("Fetching remote MD5sum for " + destPath);
+                    String md5remote = blobStore.blobMetadata(container, destPath)
+                        .getContentMetadata().getContentMD5AsHashCode().toString();
+                    if (md5local.equals(md5remote)) {
+                        LOGGER.info("Published " + destPath + " to container " + container + " with profile " + profileName);
+                    } else {
+                        LOGGER.warning("MD5 mismatch while publishing " + destPath + " to container " + container + " with profile " + profileName);
+                        throw new IOException("MD5 mismatch while publishing");
+                    }
+                    break;
+                } catch (IllegalStateException ise) {
+                    // Happens, if the remote MD5sum is not yet available.
+                    if (!ise.getMessage().contains("absent value")) {
+                        throw ise;
+                    }
+                    Thread.sleep(1000);
+                }
+            } while (true);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException("MD5 not installed (should never happen).");
         } finally {
             context.close();
         }
