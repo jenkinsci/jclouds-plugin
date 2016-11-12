@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -87,6 +86,7 @@ import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.trilead.ssh2.Connection;
 
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import jenkins.plugins.jclouds.internal.LocationHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 
 /**
@@ -766,17 +766,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             ComputeService computeService = null;
             try {
                 computeService = getComputeService(providerName, cloudCredentialsId, endPointUrl, zones);
-                ArrayList<Location> locations = newArrayList(computeService.listAssignableLocations());
-                Collections.sort(locations, new Comparator<Location>() {
-                    @Override
-                    public int compare(Location o1, Location o2) {
-                        return o1.getId().compareTo(o2.getId());
-                    }
-                });
-
-                for (Location location : locations) {
-                    m.add(String.format("%s (%s)", location.getId(), location.getDescription()), location.getId());
-                }
+                LocationHelper.fillLocations(m, computeService.listAssignableLocations());
             } catch (Exception ex) {
                 LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
             } finally {

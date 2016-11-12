@@ -20,7 +20,7 @@ public class BlobStoreProfileInsideJenkinsLiveTest {
 
         // TODO: this may need to vary per test
         profile = new BlobStoreProfile(fixture.getProvider() + "-profile", fixture.getProvider(),
-                fixture.getCredentialsId(), fixture.getEndpoint(), true);
+                fixture.getCredentialsId(), fixture.getEndpoint(), null, true);
     }
 
     public static final String CONTAINER_PREFIX = System.getProperty("user.name") + "-blobstore-profile";

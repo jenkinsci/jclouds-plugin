@@ -22,5 +22,14 @@
         <f:repeatableDeleteButton/>
       </div>
     </f:entry>
+    <f:advanced>
+      <f:section title="${%Location Options}">
+        <f:entry title="${%Location Id}" field="locationId">
+          <f:select />
+        </f:entry>
+        <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
+                          with="providerName,credentialsId,endPointUrl,locationId"/>
+      </f:section>
+    </f:advanced>
   </table>
 </j:jelly>

@@ -1,11 +1,13 @@
 package jenkins.plugins.jclouds.internal;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 
 import shaded.com.google.common.base.Strings;
 
@@ -18,6 +20,8 @@ import jenkins.model.Jenkins;
 
 import java.io.IOException;
 import java.util.logging.Logger;
+
+import org.jclouds.ContextBuilder;
 
 /**
  * Helper for dealing with credentials.
@@ -74,6 +78,27 @@ public final class CredentialsHelper {
             LOGGER.warning(String.format("Error while migrating identity/credentials: %s", e.getMessage()));
         } 
         return null;
+    }
+
+    /**
+     * Populates the credential of a JClouds ContextBuilder from a credentials record.
+     * @param cb The {@link org.jclouds.ContextBuilder} which should get the credential.
+     * @param id The Id of the credentials object.
+     * @return The modified {@link org.jclouds.ContextBuilder}
+     */
+    public static ContextBuilder setCredentials(final ContextBuilder cb, final String id) {
+        StandardUsernameCredentials u = getCredentialsById(id);
+        if (null != u) {
+            if (u instanceof StandardUsernamePasswordCredentials) {
+                StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
+                return cb.credentials(up.getUsername(), up.getPassword().toString());
+            } else if (u instanceof SSHUserPrivateKey) {
+                SSHUserPrivateKey up = (SSHUserPrivateKey)u;
+                return cb.credentials(up.getUsername(), up.getPrivateKey());
+            }
+            throw new RuntimeException("invalid credentials type");
+        }
+        throw new RuntimeException("Could not retrieve credentials");
     }
 
 }

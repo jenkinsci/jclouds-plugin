@@ -2,6 +2,8 @@ package jenkins.plugins.jclouds.blobstore;
 
 import java.io.IOException;
 import java.util.Properties;
+import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -12,7 +14,6 @@ import shaded.com.google.common.collect.ImmutableSet;
 import shaded.com.google.common.collect.ImmutableSet.Builder;
 import shaded.com.google.common.collect.ImmutableSortedSet;
 import shaded.com.google.common.collect.Iterables;
-import shaded.com.google.common.io.Closeables;
 import com.google.inject.Module;
 
 import hudson.Extension;
@@ -51,11 +52,11 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
 
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import jenkins.plugins.jclouds.internal.LocationHelper;
 
 /**
  * Model class for Blobstore profile. User can configure multiple profiles to upload artifacts to different providers.
@@ -69,6 +70,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
     private final String profileName;
     private final String providerName;
     private final String endPointUrl;
+    private final String locationId;
     private String credentialsId;
     private final boolean trustAll;
 
@@ -78,11 +80,13 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
     private final transient String credential;
 
     @DataBoundConstructor
-    public BlobStoreProfile(final String profileName, final String providerName, final String credentialsId, final String endPointUrl, final boolean trustAll) {
+    public BlobStoreProfile(final String profileName, final String providerName, final String credentialsId,
+            final String endPointUrl, final String locationId, final boolean trustAll) {
         this.profileName = profileName;
         this.providerName = providerName;
         this.credentialsId = credentialsId;
         this.endPointUrl = endPointUrl;
+        this.locationId = locationId;
         this.trustAll = trustAll;
         this.identity = null;
         this.credential = null;
@@ -131,6 +135,15 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         credentialsId = value;
     }
 
+    /**
+     * location.
+     *
+     * @return The ID of the selected location.
+     */
+    public String getLocationId() {
+        return locationId;
+    }
+
     static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new JDKLoggingModule() {
         @Override
         public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
@@ -139,32 +152,27 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
     }, new EnterpriseConfigurationModule());
 
 
-    static BlobStoreContext ctx(String providerName, String credentialsId, Properties overrides) {
-        StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
-        if (null != u) {
-            // correct the classloader so that extensions can be found
-            Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-            if (u instanceof StandardUsernamePasswordCredentials) {
-                StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
-                return ContextBuilder.newBuilder(providerName).credentials(up.getUsername(), up.getPassword().toString())
-                    .overrides(overrides).modules(MODULES).buildView(BlobStoreContext.class);
-            } else {
-                throw new RuntimeException("Using keys as credential for google cloud is not (yet) supported");
-            }
-        }
-        throw new RuntimeException("Could not retrieve credentials");
+    private static BlobStoreContext ctx(final String provider, final String credId, final Properties overrides) {
+        // correct the classloader so that extensions can be found
+        Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
+            .overrides(overrides).modules(MODULES).buildView(BlobStoreContext.class);
     }
 
-    static BlobStoreContext ctx(String providerName, String credentialsId, String endPointUrl, boolean trustAll) {
-        Properties overrides = new Properties();
-        if (!Strings.isNullOrEmpty(endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
+    private static Properties buildJCloudsOverrides(final String url, final boolean relaxed) {
+        Properties ret = new Properties();
+        if (!Strings.isNullOrEmpty(url)) {
+            ret.setProperty(Constants.PROPERTY_ENDPOINT, url);
         }
-        if (trustAll) {
-            overrides.put(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
-            overrides.put(Constants.PROPERTY_RELAX_HOSTNAME, "true");
+        if (relaxed) {
+            ret.put(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
+            ret.put(Constants.PROPERTY_RELAX_HOSTNAME, "true");
         }
-        return ctx(providerName, credentialsId, overrides);
+        return ret;
+    }
+
+    static BlobStoreContext ctx(final String provider, final String credId, final String url, final boolean relaxed) {
+        return ctx(provider, credId, buildJCloudsOverrides(url, relaxed));
     }
 
     /**
@@ -181,14 +189,22 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         if (filePath.isDirectory()) {
             throw new IOException(filePath + " is a directory");
         }
-        BlobStoreContext context = ctx(providerName, credentialsId, endPointUrl, trustAll);
-        try {
-            BlobStore blobStore = context.getBlobStore();
-            final Location location = Iterables.getOnlyElement(blobStore.listAssignableLocations());
-            if (!blobStore.containerExists(container)) {
-                LOGGER.info("Creating container " + container);
-                blobStore.createContainerInLocation(location, container);
+        try (BlobStoreContext bsc = ctx(providerName, credentialsId, endPointUrl, trustAll)) {
+            BlobStore blobStore = bsc.getBlobStore();
+            final String locId = Util.fixEmptyAndTrim(locationId);
+            Location location = null;
+            if (null != locId) {
+                for (Location loc : blobStore.listAssignableLocations()) {
+                    if (loc.getId().equals(locId)) {
+                        location = loc;
+                        break;
+                    }
+                }
             }
+            if (blobStore.createContainerInLocation(location, container)) {
+                LOGGER.info("Created container " + container);
+            }
+
             String destPath;
             if (path.isEmpty()) {
                 destPath = filePath.getName();
@@ -202,13 +218,12 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             Blob blob = blobStore.blobBuilder(destPath)
                 .payload(dis).contentLength(filePath.length()).build();
             blobStore.putBlob(container, blob);
+            bsc.close();
             String md5local = Util.toHexString(md5.digest()).toLowerCase();
 
             do {
-                context.close();
-                context = ctx(providerName, credentialsId, endPointUrl, trustAll);
-                blobStore = context.getBlobStore();
-                try {
+                try (BlobStoreContext bsc2 = ctx(providerName, credentialsId, endPointUrl, trustAll)) {
+                    blobStore = bsc2.getBlobStore();
                     LOGGER.info("Fetching remote MD5sum for " + destPath);
                     String md5remote = blobStore.blobMetadata(container, destPath)
                         .getContentMetadata().getContentMD5AsHashCode().toString();
@@ -229,8 +244,6 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             } while (true);
         } catch (NoSuchAlgorithmException e) {
             throw new IOException("MD5 not installed (should never happen).");
-        } finally {
-            context.close();
         }
     }
 
@@ -289,25 +302,77 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return m;
         }
 
-        public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String credentialsId,
-                @QueryParameter String endPointUrl, @QueryParameter boolean trustAll) throws IOException {
-            if (null == Util.fixEmptyAndTrim(credentialsId)) {
+        public FormValidation doTestConnection(@QueryParameter("providerName") final String provider,
+               @QueryParameter("credentialsId") final String credId,
+               @QueryParameter("endPointUrl") final String url,
+               @QueryParameter("trustAll") final boolean relaxed) throws IOException {
+
+            if (null == Util.fixEmptyAndTrim(credId)) {
                 return FormValidation.error("BlobStore credentials not specified.");
+            }
+            FormValidation res = FormValidation.ok("Connection succeeded!");
+            try (BlobStoreContext ctx = ctx(Util.fixEmptyAndTrim(provider), credId, Util.fixEmptyAndTrim(url), relaxed)) {
+                ctx.getBlobStore().list();
+            } catch (Exception ex) {
+                res = FormValidation.error("Cannot connect to specified BlobStore, please check the credentials: "
+                        + ex.getMessage());
+            }
+            return res;
+        }
+
+        public ListBoxModel doFillLocationIdItems(@QueryParameter String providerName,
+                @QueryParameter String credentialsId,
+                @QueryParameter String endPointUrl) {
+
+            ListBoxModel m = new ListBoxModel();
+            m.add("None specified", "");
+            if (null == Util.fixEmptyAndTrim(credentialsId)) {
+                return m;
             }
             // Remove empty text/whitespace from the fields.
             providerName = Util.fixEmptyAndTrim(providerName);
             endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
 
-            FormValidation result = FormValidation.ok("Connection succeeded!");
-            BlobStoreContext ctx = null;
-            try {
-                ctx(providerName, credentialsId, endPointUrl, trustAll).getBlobStore().list();
+            try (BlobStoreContext ctx = ctx(providerName, credentialsId, endPointUrl, true)) {
+                LocationHelper.fillLocations(m, ctx.getBlobStore().listAssignableLocations());
             } catch (Exception ex) {
-                result = FormValidation.error("Cannot connect to specified BlobStore, please check the credentials: " + ex.getMessage());
-            } finally {
-                Closeables.close(ctx, true);
+                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
             }
-            return result;
+            return m;
+        }
+
+        public FormValidation doValidateLocationId(@QueryParameter("providerName") final String provider,
+                @QueryParameter("credentialsId") final String credId,
+                @QueryParameter("endPointUrl") final String url,
+                @QueryParameter("locationId") final String locId) {
+
+            if (null == Util.fixEmptyAndTrim(credId)) {
+                return FormValidation.error("No cloud credentials provided.");
+            }
+            if (null == Util.fixEmptyAndTrim(provider)) {
+                return FormValidation.error("Provider Name shouldn't be empty");
+            }
+            final String testLoc = Util.fixEmptyAndTrim(locId);
+            if (null == testLoc) {
+                return FormValidation.ok("No location configured. jclouds automatically will choose one.");
+            }
+
+            FormValidation res = FormValidation.error("Invalid Location Id, please check the value and try again.");
+            try (BlobStoreContext ctx = ctx(provider, credId, url, true)) {
+                Set<? extends Location> locations = ctx.getBlobStore().listAssignableLocations();
+                for (Location location : locations) {
+                    if (!location.getId().equals(testLoc)) {
+                        if (location.getId().contains(testLoc)) {
+                            return FormValidation.warning("Sorry cannot find the location id, " + "Did you mean: " + location.getId() + "?\n" + location);
+                        }
+                    } else {
+                        return FormValidation.ok("Location Id is valid.");
+                    }
+                }
+            } catch (Exception ex) {
+                res = FormValidation.error("Unable to check the location id, " + "please check if the credentials you provided are correct.", ex);
+            }
+            return res;
         }
     }
 
@@ -320,10 +385,10 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         }
 
         @Override protected void callback(BlobStoreProfile bsp, UnmarshallingContext context) {
-            if (Strings.isNullOrEmpty(bsp.getCredentialsId()) && !Strings.isNullOrEmpty(bsp.identity)) {
-                final String description = "JClouds BlobStore " + bsp.profileName + " - auto-migrated";
-                bsp.setCredentialsId(CredentialsHelper.convertCredentials(description, bsp.identity, Secret.fromString(bsp.credential)));
-            }
+        if (Strings.isNullOrEmpty(bsp.getCredentialsId()) && !Strings.isNullOrEmpty(bsp.identity)) {
+            final String description = "JClouds BlobStore " + bsp.profileName + " - auto-migrated";
+            bsp.setCredentialsId(CredentialsHelper.convertCredentials(description, bsp.identity, Secret.fromString(bsp.credential)));
+        }
         }
     }
 }

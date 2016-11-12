@@ -57,10 +57,8 @@ import shaded.com.google.common.collect.ImmutableSet;
 import shaded.com.google.common.collect.ImmutableSet.Builder;
 import shaded.com.google.common.collect.ImmutableSortedSet;
 import shaded.com.google.common.collect.Iterables;
-import shaded.com.google.common.io.Closeables;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.cloudbees.plugins.credentials.CredentialsScope;
@@ -225,62 +223,45 @@ public class JCloudsCloud extends Cloud {
         }
     }, new EnterpriseConfigurationModule());
 
-    private static ComputeServiceContext ctx(final String providerName, final String identity, final String credential,
-            final Properties overrides, final String zones) {
-        if (!Strings.isNullOrEmpty(zones)) {
-            overrides.setProperty(LocationConstants.PROPERTY_ZONES, zones);
-        }
+    private static ComputeServiceContext ctx(final String provider, final String credId, final Properties overrides) {
         // correct the classloader so that extensions can be found
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-        return ContextBuilder.newBuilder(providerName).credentials(identity, credential).overrides(overrides).modules(MODULES)
-            .buildView(ComputeServiceContext.class);
+        return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
+            .overrides(overrides).modules(MODULES).buildView(ComputeServiceContext.class);
     }
 
-    private static ComputeServiceContext ctx(final String providerName, final String credentialsId, final Properties overrides, final String zones) {
-        StandardUsernameCredentials u = CredentialsHelper.getCredentialsById(credentialsId);
-        if (null != u && u instanceof StandardUsernamePasswordCredentials) {
-            StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
-            return ctx(providerName, up.getUsername(), up.getPassword().toString(), overrides, zones);
-        }
-        throw new RuntimeException("Using keys as credential for google cloud is not (yet) supported");
-    }
-
-    static ComputeServiceContext ctx(final String providerName, final String credentialsId, final String endPointUrl, final String zones) {
-        final Properties overrides = new Properties();
-        if (!Strings.isNullOrEmpty(endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
-        }
-        return ctx(providerName, credentialsId, overrides, zones);
-    }
-
-    static ComputeServiceContext ctx(final String providerName, final String credentialsId, final String endPointUrl, final String zones, final boolean trustAll) {
-        final Properties overrides = new Properties();
-        if (!Strings.isNullOrEmpty(endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
+    private static Properties buildJcloudsOverrides(final String url, final String zones, boolean trustAll) {
+        Properties ret = new Properties();
+        if (!Strings.isNullOrEmpty(url)) {
+            ret.setProperty(Constants.PROPERTY_ENDPOINT, url);
         }
         if (trustAll) {
-            overrides.put(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
-            overrides.put(Constants.PROPERTY_RELAX_HOSTNAME, "true");
+            ret.put(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
+            ret.put(Constants.PROPERTY_RELAX_HOSTNAME, "true");
         }
-        return ctx(providerName, credentialsId, overrides, zones);
+        if (!Strings.isNullOrEmpty(zones)) {
+            ret.setProperty(LocationConstants.PROPERTY_ZONES, zones);
+        }
+        return ret;
+    }
+
+    static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones) {
+        return ctx(provider, credId, buildJcloudsOverrides(url, zones, false));
+    }
+
+    static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones, final boolean trustAll) {
+        return ctx(provider, credId, buildJcloudsOverrides(url, zones, trustAll));
     }
 
     public ComputeService newCompute() {
-        Properties overrides = new Properties();
-        if (!Strings.isNullOrEmpty(this.endPointUrl)) {
-            overrides.setProperty(Constants.PROPERTY_ENDPOINT, this.endPointUrl);
-        }
-        if (trustAll) {
-            overrides.put(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
-            overrides.put(Constants.PROPERTY_RELAX_HOSTNAME, "true");
-        }
+        Properties overrides = buildJcloudsOverrides(endPointUrl, zones, trustAll);
         if (scriptTimeout > 0) {
             overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE, String.valueOf(scriptTimeout));
         }
         if (startTimeout > 0) {
             overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
         }
-        return ctx(this.providerName, this.cloudCredentialsId, overrides, this.zones).getComputeService();
+        return ctx(providerName, cloudCredentialsId, overrides).getComputeService();
     }
 
     public ComputeService getCompute() {
@@ -465,24 +446,10 @@ public class JCloudsCloud extends Cloud {
             zones = Util.fixEmptyAndTrim(zones);
 
             FormValidation result = FormValidation.ok("Connection succeeded!");
-            ComputeServiceContext ctx = null;
-            try {
-                Properties overrides = new Properties();
-                if (!Strings.isNullOrEmpty(endPointUrl)) {
-                    overrides.setProperty(Constants.PROPERTY_ENDPOINT, endPointUrl);
-                }
-                if (trustAll) {
-                    overrides.put(Constants.PROPERTY_TRUST_ALL_CERTS, "true");
-                    overrides.put(Constants.PROPERTY_RELAX_HOSTNAME, "true");
-                }
-
-                ctx = ctx(providerName, cloudCredentialsId, overrides, zones);
-
+            try (ComputeServiceContext ctx = ctx(providerName, cloudCredentialsId, endPointUrl, zones, trustAll)) {
                 ctx.getComputeService().listNodes();
             } catch (Exception ex) {
                 result = FormValidation.error("Cannot connect to specified cloud, please check the credentials: " + ex.getMessage());
-            } finally {
-                Closeables.close(ctx,true);
             }
             return result;
         }
