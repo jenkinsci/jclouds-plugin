@@ -266,8 +266,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                 .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
-        public ListBoxModel doFillProviderNameItems(@AncestorInPath ItemGroup context) {
-            ListBoxModel m = new ListBoxModel();
+        private ImmutableSortedSet<String> getAllProviders() {
             // correct the classloader so that extensions can be found
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
@@ -275,8 +274,16 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             Builder<String> builder = ImmutableSet.<String> builder();
             builder.addAll(Iterables.transform(Apis.viewableAs(BlobStoreContext.class), Apis.idFunction()));
             builder.addAll(Iterables.transform(Providers.viewableAs(BlobStoreContext.class), Providers.idFunction()));
-            Iterable<String> supportedProviders = ImmutableSortedSet.copyOf(builder.build());
-            for (String supportedProvider : supportedProviders) {
+            return ImmutableSortedSet.copyOf(builder.build());
+        }
+
+        public String defaultProviderName() {
+            return getAllProviders().first();
+        }
+
+        public ListBoxModel doFillProviderNameItems(@AncestorInPath ItemGroup context) {
+            ListBoxModel m = new ListBoxModel();
+            for (String supportedProvider : getAllProviders()) {
                 m.add(supportedProvider, supportedProvider);
             }
             return m;

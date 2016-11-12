@@ -1,17 +1,25 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
-    <f:entry title="Source" field="sourceFile">
+    <f:entry title="${%Source}" field="sourceFile">
         <f:textbox/>
     </f:entry>
-    <f:entry title="Destination Container" field="container">
+    <f:entry title="${%Destination Container}" field="container">
         <f:textbox/>
     </f:entry>
-    <f:entry title="Destination Path" field="path">
+    <f:entry title="${%Destination Path}" field="path">
         <f:textbox/>
     </f:entry>
-    <f:entry title="Keep Hierarchy" field="keepHierarchy">
-        <f:checkbox />
-    </f:entry>
+    <f:advanced>
+        <f:entry field="keepHierarchy">
+            <f:checkbox title="${%Keep hierarchy}"/>
+        </f:entry>
+        <f:entry field="allowEmptyFileset" >
+            <f:checkbox title="${%Do not fail build if file set is empty}"/>
+        </f:entry>
+        <f:entry field="onlyIfSuccessful" >
+            <f:checkbox title="${%Publish artifacts only if build is successful}"/>
+        </f:entry>
+    </f:advanced>
     <f:entry title="">
         <div align="right">
             <f:repeatableDeleteButton/>

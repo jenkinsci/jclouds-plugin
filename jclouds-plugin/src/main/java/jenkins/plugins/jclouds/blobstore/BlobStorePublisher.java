@@ -16,14 +16,12 @@ import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.ListBoxModel;
 
-import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
 import org.jclouds.rest.AuthorizationException;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -98,8 +96,8 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
         this.profileName = profileName;
     }
 
-    protected void log(final PrintStream logger, final String message) {
-        logger.println(StringUtils.defaultString(getDescriptor().getDisplayName()) + " " + message);
+    private void log(final BuildListener listener, final String message) {
+        listener.getLogger().println(getClass().getSimpleName() + ": " + message);
     }
 
     /**
@@ -120,55 +118,60 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
-        if (build.getResult() == Result.FAILURE) {
-            // build failed. don't post
-            LOGGER.info("Build failed, not publishing any files to blobstore");
-            return true;
-        }
         BlobStoreProfile blobStoreProfile = getProfile();
         if (blobStoreProfile == null) {
-            log(listener.getLogger(), "No JClouds Blob Store blobStoreProfile is configured.");
-            build.setResult(Result.UNSTABLE);
+            log(listener, "No BlobStore profile is configured.");
+            build.setResult(Result.FAILURE);
             return true;
         }
-        log(listener.getLogger(), "Using JClouds blobStoreProfile: " + blobStoreProfile.getProfileName());
+        log(listener, "using BlobStore profile: " + blobStoreProfile.getProfileName());
         try {
             Map<String, String> envVars = build.getEnvironment(listener);
-
-            for (BlobStoreEntry blobStoreEntry : entries) {
-                String expandedSource = Util.replaceMacro(blobStoreEntry.sourceFile, envVars);
-                String expandedContainer = Util.replaceMacro(blobStoreEntry.container, envVars);
+            for (final BlobStoreEntry bse : entries) {
+                final Result res = build.getResult();
+                if (bse.onlyIfSuccessful && null != res && res.isWorseThan(Result.UNSTABLE)) {
+                    log(listener, "Skip publishing entry, because build is not successful");
+                    continue;
+                }
+                String xSource = Util.replaceMacro(bse.sourceFile, envVars);
+                String xContainer = Util.replaceMacro(bse.container, envVars);
                 FilePath ws = build.getWorkspace();
                 if (null != ws) {
-                    FilePath[] paths = ws.list(expandedSource);
+                    FilePath[] paths = ws.list(xSource);
                     String wsPath = ws.getRemote();
-
                     if (paths.length == 0) {
                         // try to do error diagnostics
-                        log(listener.getLogger(), "No file(s) found: " + expandedSource);
-                        String error = ws.validateAntFileMask(expandedSource, Integer.MAX_VALUE);
-                        if (error != null)
-                            log(listener.getLogger(), error);
+                        String error = ws.validateAntFileMask(xSource, Integer.MAX_VALUE);
+                        if (error != null) {
+                            log(listener, error);
+                        }
+                        if (bse.allowEmptyFileset) {
+                            log(listener, "Ignoring empty file set for pattern: " + xSource);
+                        } else {
+                            log(listener, "Failing build");
+                            build.setResult(Result.FAILURE);
+                        }
                     }
                     for (FilePath src : paths) {
-                        String expandedPath = getDestinationPath(blobStoreEntry.path, blobStoreEntry.keepHierarchy, wsPath, src, envVars);
-                        log(listener.getLogger(), "container=" + expandedContainer + ", path=" + expandedPath + ", file=" + src.getName());
-                        blobStoreProfile.upload(expandedContainer, expandedPath, src);
+                        String xPath = getDestinationPath(bse.path, bse.keepHierarchy, wsPath, src, envVars);
+                        log(listener, String.format("Publishing \"%s\" to container \"%s\", path \"%s\"",
+                                    src.getName(), xContainer, xPath));
+                        blobStoreProfile.upload(xContainer, xPath, src);
                     }
                 } else {
-                    log(listener.getLogger(), "Unable to fetch workspace (NULL)");
-                    build.setResult(Result.UNSTABLE);
+                    log(listener, "Unable to fetch workspace (NULL)");
+                    build.setResult(Result.FAILURE);
                 }
             }
         } catch (AuthorizationException e) {
             LOGGER.severe("Failed to upload files to Blob Store due to authorization exception.");
-            RuntimeException overrideException = new RuntimeException("Failed to upload files to Blob Store due to authorization exception.");
-            overrideException.printStackTrace(listener.error("Failed to upload files"));
-            build.setResult(Result.UNSTABLE);
+            RuntimeException overrideException = new RuntimeException("Failed to publish files due to authorization exception.");
+            overrideException.printStackTrace(listener.error("Failed to publish files"));
+            build.setResult(Result.FAILURE);
         } catch (IOException e) {
-            LOGGER.severe("Failed to upload files to Blob Store: " + e.getMessage());
-            e.printStackTrace(listener.error("Failed to upload files"));
-            build.setResult(Result.UNSTABLE);
+            LOGGER.severe("Failed to publish files: " + e.getMessage());
+            e.printStackTrace(listener.error("Failed to publish files"));
+            build.setResult(Result.FAILURE);
         }
 
         return true;
@@ -266,7 +269,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
         @Override
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            return true;
+            return profiles != null && !profiles.isEmpty();
         }
 
         public ListBoxModel doFillProfileNameItems() {
