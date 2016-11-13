@@ -452,7 +452,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 options.runScript(initStatement);
             }
 
-            if (userData != null) {
+            if (!isNullOrEmpty(userData)) {
                 try {
                     Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
                     LOGGER.info("Setting userData to " + userData);
