@@ -293,17 +293,19 @@ public class JCloudsSlave extends AbstractCloudSlave {
     }
 
     /**
-     * Destroy the node calls {@link ComputeService#destroyNode}
+     * Destroy the node.
+     * If stopOnTerminate is {@code true}, calls {@link ComputeService#suspendNode},
+     * otherwise {@link ComputeService#destroyNode}.
      */
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
         final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
         if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
             if (stopOnTerminate) {
-                LOGGER.info("Suspending the Slave : " + getNodeName());
+                LOGGER.info("Suspending slave : " + getNodeName());
                 compute.suspendNode(nodeId);
             } else {
-                LOGGER.info("Terminating the Slave : " + getNodeName());
+                LOGGER.info("Terminating slave : " + getNodeName());
                 compute.destroyNode(nodeId);
             }
         } else {

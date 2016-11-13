@@ -21,6 +21,18 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
         readResolve();
     }
 
+    private void fastTerminate(final JCloudsComputer c) {
+        if (!c.isOffline()) {
+            LOGGER.info("Setting " + c.getName() + " to be deleted.");
+            try {
+                c.disconnect(OfflineCause.create(Messages._DeletedCause())).get();
+            } catch (Exception e) {
+                LOGGER.info("Caught " + e.toString());
+            }
+        }
+        c.deleteSlave(true);
+    }
+
     @Override
     public long check(JCloudsComputer c) {
         if (!checkLock.tryLock()) {
@@ -28,20 +40,23 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
         } else {
             try {
                 final JCloudsSlave node = c.getNode();
-                if (null != node && c.isIdle() && !node.isPendingDelete() && !disabled) {
-                    // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
-                    final int retentionTime = c.getRetentionTime();
-                    // check executor to ensure we are terminating online slaves
-                    if (retentionTime > -1 && c.countExecutors() > 0) {
-                        final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
-                        LOGGER.fine("Node " + c.getName() + " retentionTime: " + retentionTime + " idle: "
-                                + TimeUnit2.MILLISECONDS.toMinutes(idleMilliseconds) + "min");
-                        if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
-                            LOGGER.info("Setting " + c.getName() + " to be deleted.");
-                            if (!c.isOffline()) {
-                                c.disconnect(OfflineCause.create(Messages._DeletedCause()));
+                // check isIdle() to ensure we are terminating busy slaves (including FlyWeight)
+                if (null != node && c.isIdle()) {
+                    if (node.isPendingDelete()) {
+                        // Fixes JENKINS-28403
+                        fastTerminate(c);
+                    } else {
+                        // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
+                        final int retentionTime = c.getRetentionTime();
+                        if (retentionTime > -1) {
+                            final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
+                            LOGGER.fine("Node " + c.getName() + " retentionTime: " + retentionTime + " idle: "
+                                    + TimeUnit2.MILLISECONDS.toMinutes(idleMilliseconds) + "min");
+                            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
+                                LOGGER.info("Retention time for " + c.getName() + " has expired.");
+                                node.setPendingDelete(true);
+                                fastTerminate(c);
                             }
-                            node.setPendingDelete(true);
                         }
                     }
                 }
@@ -69,13 +84,11 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
         }
     }
 
+    // Serialization
     protected Object readResolve() {
         checkLock = new ReentrantLock(false);
         return this;
     }
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsRetentionStrategy.class.getName());
-
-    public static final boolean disabled = Boolean.getBoolean(JCloudsRetentionStrategy.class.getName() + ".disabled");
-
 }

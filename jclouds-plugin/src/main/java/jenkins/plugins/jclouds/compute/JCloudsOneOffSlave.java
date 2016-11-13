@@ -37,6 +37,8 @@ public class JCloudsOneOffSlave extends BuildWrapper {
                 public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
                     LOGGER.warning("Single-use slave " + c.getName() + " getting torn down.");
                     c.setTemporarilyOffline(true, OfflineCause.create(Messages._OneOffCause()));
+                    // Fixes JENKINS-28403
+                    c.deleteSlave();
                     return true;
                 }
             };
