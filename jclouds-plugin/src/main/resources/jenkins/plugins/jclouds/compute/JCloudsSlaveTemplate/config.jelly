@@ -157,6 +157,9 @@
         <f:entry title="${%Assign Floating IP}" field="assignFloatingIp">
           <f:checkbox />
         </f:entry>
+        <f:entry title="${%Use config drive}" field="useConfigDrive">
+          <f:checkbox />
+        </f:entry>
       </f:section>
 
       <f:section title="${%CloudStack Options}">

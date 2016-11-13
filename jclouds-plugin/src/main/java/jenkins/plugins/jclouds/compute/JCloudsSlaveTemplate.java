@@ -130,6 +130,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final String networks;
     public final String securityGroups;
     public final Mode mode;
+    public final boolean useConfigDrive;
     private String credentialsId;
     private String adminCredentialsId;
 
@@ -161,7 +162,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 final String fsRoot, final boolean allowSudo, final boolean installPrivateKey, final Integer overrideRetentionTime, final int spoolDelayMs,
                                 final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String keyPairName,
                                 final boolean assignPublicIp, final String networks, final String securityGroups, final String credentialsId,
-                                final String adminCredentialsId, final String mode) {
+                                final String adminCredentialsId, final String mode, final boolean useConfigDrive) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -196,6 +197,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.credentialsId = Util.fixEmptyAndTrim(credentialsId);
         this.adminCredentialsId = Util.fixEmptyAndTrim(adminCredentialsId);
         this.mode = Mode.valueOf(Util.fixNull(mode));
+        this.useConfigDrive = useConfigDrive;
         readResolve();
         this.vmPassword = null; // Not used anymore, but retained for backward compatibility.
         this.vmUser = null; // Not used anymore, but retained for backward compatibility.
@@ -378,6 +380,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
                 LOGGER.info("Setting autoAssignFloatingIp is now " +
                         options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp());
+            }
+
+            if (useConfigDrive && options instanceof NovaTemplateOptions) {
+                options.as(NovaTemplateOptions.class).configDrive(true);
             }
 
             if (!isNullOrEmpty(keyPairName)) {

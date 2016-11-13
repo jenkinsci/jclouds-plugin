@@ -25,7 +25,7 @@ public class JCloudsSlaveTemplateTest {
                 true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
                 null /* keyPairName */, true /* assignPublicIp */, "network1_id,network2_id",
                 "security_group1,security_group2", null /* credentialsId */,
-                null /* adminCredentialsId */, "NORMAL" /* mode */);
+                null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */);
 
         final List<JCloudsSlaveTemplate> templates = new ArrayList<>();
         templates.add(beforeTemplate);
@@ -43,7 +43,7 @@ public class JCloudsSlaveTemplateTest {
         j.assertEqualBeans(beforeCloud, afterCloud,
                 "profile,providerName,endPointUrl,trustAll");
         j.assertEqualBeans(beforeTemplate, afterTemplate,
-                "name,cores,ram,osFamily,osVersion,labelString,description,initScript,numExecutors,stopOnTerminate,mode");
+                "name,cores,ram,osFamily,osVersion,labelString,description,initScript,numExecutors,stopOnTerminate,mode,useConfigDrive");
     }
 
 }
