@@ -30,11 +30,12 @@ import jenkins.plugins.jclouds.compute.internal.TerminateNodes.Persistent;
  * instances which might have been left running when jenkins was forcibly restarted or
  * shutdown while running a job that uses JCloudsBuildWrapper.
  *
- * In order to do so, {@link TerminateNodes} persists a list of nodes to shutdown before
- * it is attempting the actual delete/suspend. After successfully handling all nodes, the
- * persisting xml file is removed. During a hard shutdown/restart, this process is usually
- * aborted prematurely and the xml file remains. This handler then picks those files up at
- * the next jenkins startup and completes the operation.
+ * In order to do so, {@link jenkins.plugins.jclouds.compute.internal.TerminateNodes}
+ * persists a list of nodes to shutdown before it is attempting the actual delete/suspend.
+ * After successfully handling all nodes, the persisting xml file is removed. During a
+ * hard shutdown/restart, this process is usually aborted prematurely and the xml file
+ * remains. This handler then picks those files up at the next jenkins startup and
+ * completes the operation.
  */
 @Extension
 public class JCloudsStartupHandler extends ItemListener {
