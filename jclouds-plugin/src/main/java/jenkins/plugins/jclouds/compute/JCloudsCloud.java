@@ -117,7 +117,6 @@ public class JCloudsCloud extends Cloud {
                 cloudNames.add(c.name);
             }
         }
-
         return cloudNames;
     }
 
@@ -412,7 +411,7 @@ public class JCloudsCloud extends Cloud {
                 if (getTemplate(nodeGroup) != null && !nm.getStatus().equals(NodeMetadata.Status.SUSPENDED)
                         && !nm.getStatus().equals(NodeMetadata.Status.TERMINATED)) {
                     nodeCount++;
-                        }
+                }
             }
         }
         return nodeCount;

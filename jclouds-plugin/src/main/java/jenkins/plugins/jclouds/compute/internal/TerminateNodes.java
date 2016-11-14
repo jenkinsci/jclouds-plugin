@@ -1,6 +1,12 @@
 package jenkins.plugins.jclouds.compute.internal;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
+
+import jenkins.model.Jenkins;
+import hudson.XmlFile;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -11,11 +17,64 @@ import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.cache.LoadingCache;
 import shaded.com.google.common.collect.ImmutableMultimap;
 import shaded.com.google.common.collect.Multimap;
+import shaded.com.google.common.collect.ArrayListMultimap;
 import shaded.com.google.common.collect.ImmutableMultimap.Builder;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
+
     private final Logger logger;
     private final LoadingCache<String, ComputeService> computeCache;
+
+    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
+    public static class Persistent implements Serializable {
+        private static final long serialVersionUID = 3970810124738772984L;
+        private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(TerminateNodes.class.getName());
+
+        private final transient File f;
+        private Multimap<String, String> nodesToSuspend;
+        private Multimap<String, String> nodesToDestroy;
+
+        public Persistent(final String name, final Multimap<String, String> toSuspend, final Multimap<String, String> toDestroy) {
+            nodesToSuspend = toSuspend;
+            nodesToDestroy = toDestroy;
+            f = new File(Jenkins.getInstance().getRootDir(), name + ".xml");
+            XmlFile xf = new XmlFile(f);
+            try {
+                xf.write(this);
+            } catch (IOException x) {
+                LOGGER.warning("Failed to persist");
+            }
+        }
+
+        public Persistent(final File src) {
+            f = src;
+            XmlFile xf = new XmlFile(f);
+            try {
+                xf.unmarshal(this);
+            } catch (IOException x) {
+                nodesToSuspend =  ArrayListMultimap.create();
+                nodesToDestroy =  ArrayListMultimap.create();
+                LOGGER.warning("Failed to unmarshal");
+            }
+        }
+
+        public void remove() {
+            if (!f.delete()) {
+                LOGGER.warning("Could not delete " + f.getPath());
+            }
+        }
+
+        public Multimap<String, String> getNodesToSuspend() {
+            return nodesToSuspend;
+        }
+
+        public Multimap<String, String> getNodesToDestroy() {
+            return nodesToDestroy;
+        }
+    }
+
 
     public TerminateNodes(Logger logger, LoadingCache<String, ComputeService> computeCache) {
         this.logger = logger;
@@ -32,24 +91,24 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
                 cloudNodesToDestroyBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
             }
         }
-        Multimap<String, String> cloudNodesToSuspend = cloudNodesToSuspendBuilder.build();
-        Multimap<String, String> cloudNodesToDestroy = cloudNodesToDestroyBuilder.build();
+        Multimap<String, String> toSuspend = cloudNodesToSuspendBuilder.build();
+        Multimap<String, String> toDestroy = cloudNodesToDestroyBuilder.build();
 
-        suspendIfSupported(cloudNodesToSuspend);
-        destroy(cloudNodesToDestroy);
+        Persistent p = new Persistent(this.toString(), toSuspend, toDestroy);
+        suspendIfSupported(toSuspend);
+        destroy(toDestroy);
+        p.remove();
         return null;
     }
 
     private void destroy(Multimap<String, String> cloudNodesToDestroy) {
-        for (String cloudToDestroy : cloudNodesToDestroy.keySet()) {
+        for (final String cloudToDestroy : cloudNodesToDestroy.keySet()) {
             final Collection<String> nodesToDestroy = cloudNodesToDestroy.get(cloudToDestroy);
             logger.info("Destroying nodes: " + nodesToDestroy);
             computeCache.getUnchecked(cloudToDestroy).destroyNodesMatching(new Predicate<NodeMetadata>() {
-
                 public boolean apply(NodeMetadata input) {
                     return nodesToDestroy.contains(input.getId());
                 }
-
             });
         }
     }

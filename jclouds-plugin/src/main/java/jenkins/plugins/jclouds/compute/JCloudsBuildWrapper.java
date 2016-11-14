@@ -7,14 +7,17 @@ import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Computer;
+import hudson.slaves.Cloud;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.internal.NodePlan;
 import jenkins.plugins.jclouds.compute.internal.ProvisionPlannedInstancesAndDestroyAllOnError;
 import jenkins.plugins.jclouds.compute.internal.RunningNode;
@@ -48,20 +51,51 @@ public class JCloudsBuildWrapper extends BuildWrapper {
         return instancesToRun;
     }
 
+    private boolean isBeyondInstanceCap(final String cloudName, int numOfNewInstances) {
+        final Jenkins.CloudList cl = Jenkins.getInstance().clouds;
+        final Cloud c = cl.getByName(cloudName);
+        if (null != c && c instanceof JCloudsCloud) {
+            JCloudsCloud jc = (JCloudsCloud)c;
+            return jc.getRunningNodesCount() + numOfNewInstances >= jc.instanceCap;
+        }
+        return false;
+    }
+
+    private String validateInstanceCaps() throws IOException {
+        Map<String, Integer> startPerCloud = new HashMap<>();
+        for (final InstancesToRun inst : instancesToRun) {
+            Integer old = startPerCloud.put(inst.cloudName, Integer.valueOf(inst.count));
+            if (null != old) {
+                startPerCloud.put(inst.cloudName, old + Integer.valueOf(inst.count));
+            }
+        }
+        for (final Map.Entry<String,Integer> entry : startPerCloud.entrySet()) {
+            final String cname = entry.getKey();
+            if (isBeyondInstanceCap(cname, entry.getValue().intValue())) {
+                return cname;
+            }
+        }
+        return null;
+    }
+
     //
     // convert Jenkins staticy stuff into pojos; performing as little critical stuff here as
     // possible, as this method is very hard to test due to static usage, etc.
     //
     @Override
-    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) {
-        // TODO: on shutdown, close all
+    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) throws IOException {
+        final String failedCloud = validateInstanceCaps();
+        if (null != failedCloud) {
+            listener.fatalError("Unable to launch supplemental JClouds instances:");
+            throw new IOException(String.format("Instance cap for cloud %s reached.", failedCloud));
+        }
+
         final LoadingCache<String, ComputeService> computeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, ComputeService>() {
 
             @Override
             public ComputeService load(String arg0) throws Exception {
                 return JCloudsCloud.getByName(arg0).getCompute();
             }
-
         });
 
         // eagerly lookup node supplier so that errors occur before we attempt to provision things
@@ -86,18 +120,18 @@ public class JCloudsBuildWrapper extends BuildWrapper {
         ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
                 MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
 
-        final Iterable<RunningNode> runningNode = provisioner.apply(nodePlans);
+        final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
 
         return new Environment() {
             @Override
             public void buildEnvVars(Map<String, String> env) {
-                List<String> ips = getInstanceIPs(runningNode, listener.getLogger());
+                List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
                 env.put("JCLOUDS_IPS", Util.join(ips, ","));
             }
 
             @Override
             public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
-                terminateNodes.apply(runningNode);
+                terminateNodes.apply(runningNodes);
                 return true;
             }
 
@@ -122,7 +156,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public String getDisplayName() {
-            return "JClouds Instance Creation";
+            return "Create supplemental instances";
         }
 
         @Override

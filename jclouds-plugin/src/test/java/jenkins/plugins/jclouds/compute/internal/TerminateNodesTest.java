@@ -1,9 +1,15 @@
 package jenkins.plugins.jclouds.compute.internal;
 
 import java.util.List;
+
+import org.junit.Test;
+import org.junit.Rule;
+import org.junit.BeforeClass;
+import org.junit.AfterClass;
+import static org.junit.Assert.assertEquals;
+
 import java.util.concurrent.ExecutionException;
 
-import junit.framework.TestCase;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
@@ -22,15 +28,20 @@ import shaded.com.google.common.collect.ImmutableMap;
 import shaded.com.google.common.collect.Iterables;
 import shaded.com.google.common.collect.Lists;
 
-public class TerminateNodesTest extends TestCase {
+import org.jvnet.hudson.test.JenkinsRule;
 
-    private ComputeService compute;
+public class TerminateNodesTest {
 
-    @Override
-    protected void setUp() throws Exception {
+    @Rule public JenkinsRule j = new JenkinsRule();
+
+    private static ComputeService compute;
+
+    @BeforeClass
+    public static void setUp() throws Exception {
         compute = ContextBuilder.newBuilder("stub").buildView(ComputeServiceContext.class).getComputeService();
     }
 
+    @Test
     public void testSuspendOnlySuspendsNodesInQuestion() throws InterruptedException, ExecutionException, RunNodesException {
 
         List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("suspend", 10));
@@ -59,6 +70,7 @@ public class TerminateNodesTest extends TestCase {
         return new TerminateNodes(Logger.NULL, cache);
     }
 
+    @Test
     public void testDestroyOnlyDestroysNodesInQuestion() throws InterruptedException, ExecutionException, RunNodesException {
 
         List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("destroy", 10));
@@ -81,6 +93,7 @@ public class TerminateNodesTest extends TestCase {
 
     }
 
+    @Test
     public void testSuspendAndDestroy() throws InterruptedException, ExecutionException, RunNodesException {
 
         List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("suspenddestroy", 10));
@@ -111,8 +124,8 @@ public class TerminateNodesTest extends TestCase {
 
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @AfterClass
+    public static void tearDown() throws Exception {
         compute.getContext().close();
     }
 }

@@ -53,7 +53,7 @@ public class JCloudsOneOffSlave extends BuildWrapper {
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public String getDisplayName() {
-            return "JClouds Single-Use Slave";
+            return "JClouds Single-use slave";
         }
 
         @Override

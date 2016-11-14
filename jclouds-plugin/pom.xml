@@ -100,7 +100,6 @@
                 <version>3.0.4</version>
                 <configuration>
                     <excludeFilterFile>src/findbugs/excludesFilter.xml</excludeFilterFile>
-                    <failOnError>true</failOnError>
                 </configuration>
                 <executions>
                     <execution>

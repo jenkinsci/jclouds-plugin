@@ -19,7 +19,7 @@
   </f:radioBlock>
   
   
-  <f:entry title="${%Number of Executors}" field="count">
+  <f:entry title="${%Number of instances}" field="count">
     <f:number clazz="positive-number" min="1" step="1" default="1"/>
   </f:entry>
   

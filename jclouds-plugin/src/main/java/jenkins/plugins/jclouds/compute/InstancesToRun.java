@@ -72,7 +72,7 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
             JCloudsCloud c = JCloudsCloud.getByName(cname);
             if (c != null) {
                 for (JCloudsSlaveTemplate t : c.getTemplates()) {
-                    m.add(String.format("%s in cloud %s", t.name, cname), t.name);
+                    m.add(t.name, t.name);
                 }
             }
             return m;
