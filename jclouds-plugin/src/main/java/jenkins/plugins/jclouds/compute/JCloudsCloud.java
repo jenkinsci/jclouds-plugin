@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
@@ -109,6 +110,7 @@ public class JCloudsCloud extends Cloud {
     private String cloudGlobalKeyId;
     private String cloudCredentialsId;
     private final boolean trustAll;
+    private transient List<PhoneHomeMonitor> phms;
 
     public static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
@@ -157,9 +159,7 @@ public class JCloudsCloud extends Cloud {
             SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
                     CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getInstance(), ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(id));
-            if (null != supk) {
-                return supk.getPrivateKey();
-            }
+            return CredentialsHelper.getPrivateKey(supk);
         }
         return "";
     }
@@ -415,6 +415,55 @@ public class JCloudsCloud extends Cloud {
             }
         }
         return nodeCount;
+    }
+
+    public void registerPhoneHomeMonitor (final PhoneHomeMonitor monitor) {
+        if (null == monitor) {
+            throw new IllegalArgumentException("monitor may not be null");
+        }
+        if (null == phms) {
+            phms = new CopyOnWriteArrayList<>();
+        }
+        phms.add(monitor);
+    }
+
+    public void unregisterPhoneHomeMonitor (final PhoneHomeMonitor monitor) {
+        if (null == monitor) {
+            throw new IllegalArgumentException("monitor may not be null");
+        }
+        if (null != phms) {
+            phms.remove(monitor);
+        }
+    }
+
+    public void phoneHomeAbort() {
+        if (null != phms) {
+            for (final PhoneHomeMonitor monitor : phms) {
+                monitor.interrupt();
+            }
+            phms.clear();
+        }
+    }
+
+    public boolean phoneHomeNotify(final String name) {
+        if (null != phms) {
+            for (final PhoneHomeMonitor monitor : phms) {
+                boolean ret = monitor.ring(name);
+                if (ret) {
+                    return ret;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void phoneHomeWaitAll() {
+        if (null != phms) {
+            for (final PhoneHomeMonitor monitor : phms) {
+                monitor.join();
+            }
+            phms.clear();
+        }
     }
 
     @Extension

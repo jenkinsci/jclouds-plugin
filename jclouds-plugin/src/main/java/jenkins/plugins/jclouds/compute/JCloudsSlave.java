@@ -17,10 +17,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 import org.jclouds.compute.ComputeService;
@@ -56,29 +52,6 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     private transient PhoneHomeMonitor phm;
 
-    private static final class PhoneHomeMonitor {
-        private final Lock phoneHomeLock = new ReentrantLock();
-        private final Condition doneWaitPhoneHome = phoneHomeLock.newCondition();
-    
-        public void signalCondition() {
-            phoneHomeLock.lock();
-            try {
-                doneWaitPhoneHome.signal();
-            } finally {
-                phoneHomeLock.unlock();
-            }
-        }
-
-        public void waitCondition(final long millis) throws InterruptedException {
-            phoneHomeLock.lock();
-            try {
-                doneWaitPhoneHome.await(millis, TimeUnit.MILLISECONDS);
-            } finally {
-                phoneHomeLock.unlock();
-            }
-        }
-    }
-
     @DataBoundConstructor
     @SuppressWarnings("rawtypes")
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
@@ -98,12 +71,12 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
         this.credentialsId = credentialsId;
         this.mode = mode;
-        phm = new PhoneHomeMonitor();
+        phm = new PhoneHomeMonitor(waitPhoneHome, waitPhoneHomeTimeout);
     }
 
     protected Object readResolve() {
         if (null == phm) {
-            phm = new PhoneHomeMonitor();
+            phm = new PhoneHomeMonitor(waitPhoneHome, waitPhoneHomeTimeout);
         }
         return this;
     }
@@ -212,7 +185,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
     public void setPendingDelete(boolean pendingDelete) {
         this.pendingDelete = pendingDelete;
         if (pendingDelete) {
-            phm.signalCondition();
+            phm.interrupt();
         }
     }
 
@@ -248,14 +221,9 @@ public class JCloudsSlave extends AbstractCloudSlave {
         waitPhoneHome = value;
         // TODO: Replace after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
         updateXml();
-        phm.signalCondition();
-    }
-
-    public long getWaitPhoneHomeTimeoutMs() {
-        if (0 < waitPhoneHomeTimeout) {
-            return 60000L * waitPhoneHomeTimeout;
+        if (!waitPhoneHome) {
+            phm.ring();
         }
-        return 0;
     }
 
     public String getCredentialsId() {
@@ -314,31 +282,6 @@ public class JCloudsSlave extends AbstractCloudSlave {
     }
 
     public void waitForPhoneHome(PrintStream logger) throws InterruptedException {
-        long timeout = System.currentTimeMillis() + getWaitPhoneHomeTimeoutMs();
-        while (true) {
-            long tdif = timeout - System.currentTimeMillis();
-            if (tdif < 0) {
-                setWaitPhoneHome(false);
-                throw new InterruptedException("wait for phone home timed out");
-            }
-            if (isPendingDelete()) {
-                setWaitPhoneHome(false);
-                throw new InterruptedException("wait for phone home interrupted by delete request");
-            }
-            if (isWaitPhoneHome()) {
-                final String msg = "Waiting for " + getNodeName() + " to phone home. " + tdif / 1000 + " seconds until timeout.";
-                LOGGER.info(msg);
-                if (null != logger) {
-                    logger.println(msg);
-                }
-                if (tdif > 30000L) {
-                    // Wait exactly, but still log a message every 30sec.
-                    tdif = 30000L;
-                }
-                phm.waitCondition(tdif);
-            } else {
-                break;
-            }
-        }
+        phm.waitForPhoneHome(getNodeName(), logger);
     }
 }

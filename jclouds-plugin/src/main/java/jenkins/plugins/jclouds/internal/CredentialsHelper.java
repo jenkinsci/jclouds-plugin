@@ -19,6 +19,7 @@ import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.logging.Logger;
 
 import org.jclouds.ContextBuilder;
@@ -91,15 +92,28 @@ public final class CredentialsHelper {
         if (null != u) {
             if (u instanceof StandardUsernamePasswordCredentials) {
                 StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
-                return cb.credentials(up.getUsername(), up.getPassword().toString());
+                return cb.credentials(up.getUsername(), getPassword(up.getPassword()));
             } else if (u instanceof SSHUserPrivateKey) {
                 SSHUserPrivateKey up = (SSHUserPrivateKey)u;
-                return cb.credentials(up.getUsername(), up.getPrivateKey());
+                return cb.credentials(up.getUsername(), getPrivateKey(up));
             }
             throw new RuntimeException("invalid credentials type");
         }
         throw new RuntimeException("Could not retrieve credentials");
     }
 
+    public static String getPrivateKey(final SSHUserPrivateKey supk) {
+        if (null == supk) {
+            return "";
+        }
+        List<String> privateKeys = supk.getPrivateKeys();
+        return privateKeys.isEmpty() ? "" : privateKeys.get(0);
+    }
+
+    public static String getPassword(final Secret s) {
+        // We explicitely DO want a possible null, because in jclouds
+        // this means: No password set (vs. an empty password).
+        return null == s ? null : s.getPlainText();
+    }
 }
 

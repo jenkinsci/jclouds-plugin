@@ -5,6 +5,7 @@ import hudson.model.Computer;
 import hudson.model.RootAction;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
+import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
 import org.acegisecurity.Authentication;
 import org.acegisecurity.context.SecurityContextHolder;
@@ -14,6 +15,7 @@ import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import org.jclouds.compute.domain.NodeMetadata;
 
+import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsComputer;
 import jenkins.plugins.jclouds.compute.JCloudsSlave;
 
@@ -66,8 +68,14 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
                         final NodeMetadata nmd = slave.getNodeMetaData();
                         if (null != nmd && nmd.getHostname().equals(hostName)) {
                             slave.setWaitPhoneHome(false);
+                            return;
                         }
                     }
+                }
+            }
+            for (Cloud c : Jenkins.getInstance().clouds) {
+                if (JCloudsCloud.class.isInstance(c) && ((JCloudsCloud)c).phoneHomeNotify(hostName)) {
+                    return;
                 }
             }
         } finally {

@@ -13,6 +13,7 @@ import hudson.tasks.BuildWrapperDescriptor;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,20 +124,61 @@ public class JCloudsBuildWrapper extends BuildWrapper {
         final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
 
         return new Environment() {
+            private JCloudsCloud waitCloud = null;
+
             @Override
             public void buildEnvVars(Map<String, String> env) {
                 List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
                 env.put("JCLOUDS_IPS", Util.join(ips, ","));
+                waitCloud = waitPhoneHome(runningNodes, listener.getLogger());
+                if (null != waitCloud) {
+                    waitCloud.phoneHomeWaitAll();
+                }
             }
 
             @Override
             public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
+                if (null != waitCloud) {
+                    waitCloud.phoneHomeAbort();
+                }
                 terminateNodes.apply(runningNodes);
                 return true;
             }
 
         };
 
+    }
+
+    private JCloudsCloud waitPhoneHome(final Iterable<RunningNode> runningNodes, PrintStream logger) {
+        Integer wto = null;
+        JCloudsCloud ret = null;
+        Map<Integer, List<String>> waitMap = new HashMap<>();
+        for (RunningNode rn : runningNodes) {
+            JCloudsCloud c = JCloudsCloud.getByName(rn.getCloudName());
+            if (null != c) {
+                JCloudsSlaveTemplate t = c.getTemplate(rn.getTemplateName());
+                if (null != t && t.waitPhoneHome && t.waitPhoneHomeTimeout > 0) {
+                    if (null == wto || wto.intValue() != t.waitPhoneHomeTimeout) {
+                        wto = Integer.valueOf(t.waitPhoneHomeTimeout);
+                    }
+                    if (null == ret) {
+                       ret = c;
+                    }
+                    List<String> tmp = new ArrayList<>();
+                    tmp.add(rn.getNode().getName());
+                    List<String> hosts = waitMap.put(wto, tmp);
+                    if (null != hosts) {
+                        waitMap.get(wto).addAll(hosts);
+                    }
+                }
+            }
+        }
+        for (Map.Entry<Integer, List<String>> entry : waitMap.entrySet()) {
+            final PhoneHomeMonitor phm = new PhoneHomeMonitor(true, entry.getKey().intValue());
+            phm.waitForPhoneHome(entry.getValue(), logger);
+            ret.registerPhoneHomeMonitor(phm);
+        }
+        return ret;
     }
 
     public List<String> getInstanceIPs(Iterable<RunningNode> runningNodes, PrintStream logger) {

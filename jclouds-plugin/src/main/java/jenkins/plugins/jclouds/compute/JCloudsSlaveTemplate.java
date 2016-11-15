@@ -236,10 +236,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getInstance(), ACL.SYSTEM,
                     Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(credentialsId));
-        if (null != supk) {
-            return supk.getPrivateKey();
-        }
-        return "";
+        return CredentialsHelper.getPrivateKey(supk);
     }
 
     public String getJenkinsPublicKey() {
@@ -411,11 +408,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 StandardUsernameCredentials c = CredentialsHelper.getCredentialsById(adminCredentialsId);
                 if (null != c) {
                     if (c instanceof StandardUsernamePasswordCredentials) {
-                        String password = ((StandardUsernamePasswordCredentials)c).getPassword().toString();
+                        String password = CredentialsHelper.getPassword(((StandardUsernamePasswordCredentials)c).getPassword());
                         LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(password).build();
                         options.overrideLoginCredentials(lc);
                     } else {
-                        String privateKey = ((SSHUserPrivateKey)c).getPrivateKey();
+                        String privateKey = CredentialsHelper.getPrivateKey((SSHUserPrivateKey)c);
                         LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(privateKey).build();
                         options.overrideLoginCredentials(lc);
                     }
