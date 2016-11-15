@@ -127,6 +127,7 @@ final class PhoneHomeMonitor {
 
     private void waitForPhoneHome(PrintStream logger) throws InterruptedException {
         long timeout = System.currentTimeMillis() + getWaitPhoneHomeTimeoutMs();
+        boolean hasWaitedAtAll = false;
         while (true) {
             long tdif = timeout - System.currentTimeMillis();
             if (tdif < 0) {
@@ -138,6 +139,7 @@ final class PhoneHomeMonitor {
                 throw new InterruptedException("wait for phone home interrupted");
             }
             if (isWaiting) {
+                hasWaitedAtAll = true;
                 final String tgs = getTargetString();
                 if (!tgs.isEmpty()) {
                     final String msg = "Waiting for " + tgs +
@@ -153,10 +155,12 @@ final class PhoneHomeMonitor {
                     waitCondition(tdif);
                 }
             } else {
-                final String msg = "Finished waiting for phone home";
-                LOGGER.info(msg);
-                if (null != logger) {
-                    logger.println(msg);
+                if (hasWaitedAtAll) {
+                    final String msg = "Finished waiting for phone home";
+                    LOGGER.info(msg);
+                    if (null != logger) {
+                        logger.println(msg);
+                    }
                 }
                 break;
             }
