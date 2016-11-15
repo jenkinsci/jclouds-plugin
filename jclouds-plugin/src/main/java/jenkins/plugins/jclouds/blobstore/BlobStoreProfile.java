@@ -178,7 +178,6 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
     /**
      * Upload the specified file from the
      *
-     * @param filePath  to container
      * @param container - The container where the file needs to be uploaded.
      * @param path      - The path in container where the file needs to be uploaded.
      * @param filePath  - the {@link FilePath} of the file which needs to be uploaded.

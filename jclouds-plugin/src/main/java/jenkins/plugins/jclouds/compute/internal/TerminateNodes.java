@@ -2,7 +2,6 @@ package jenkins.plugins.jclouds.compute.internal;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Collection;
 
 import jenkins.model.Jenkins;
@@ -20,16 +19,12 @@ import shaded.com.google.common.collect.Multimap;
 import shaded.com.google.common.collect.ArrayListMultimap;
 import shaded.com.google.common.collect.ImmutableMultimap.Builder;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
 
     private final Logger logger;
     private final LoadingCache<String, ComputeService> computeCache;
 
-    @SuppressFBWarnings("SE_TRANSIENT_FIELD_NOT_RESTORED")
-    public static class Persistent implements Serializable {
-        private static final long serialVersionUID = 3970810124738772984L;
+    public static class Persistent {
         private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(TerminateNodes.class.getName());
 
         private final transient File f;
