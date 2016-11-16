@@ -35,7 +35,7 @@ public class JCloudsCloudTest {
     public void testConfigurationUI() throws Exception {
         JCloudsCloud cloud = new JCloudsCloud("aws-profile", "aws-ec2", "",
                 "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                600 * 1000, 600 * 1000, null, true, Collections.<JCloudsSlaveTemplate>emptyList());
+                600 * 1000, 600 * 1000, null, "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
         j.getInstance().clouds.add(cloud);
 
         HtmlPage p = j.createWebClient().goTo("configure");
@@ -50,6 +50,7 @@ public class JCloudsCloudTest {
         WebAssert.assertInputPresent(p, "_.scriptTimeout");
         WebAssert.assertInputPresent(p, "_.startTimeout");
         WebAssert.assertInputPresent(p, "_.zones");
+        WebAssert.assertInputPresent(p, "_.groupPrefix");
         HtmlForm f = p.getFormByName("config");
         HtmlButton b = HtmlFormUtil.getButtonByCaption(f, "Test Connection");
         assertNotNull(b);
@@ -62,16 +63,16 @@ public class JCloudsCloudTest {
 
         JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "",
                 "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                600 * 1000, 600 * 1000, null, true, Collections.<JCloudsSlaveTemplate>emptyList());
+                600 * 1000, 600 * 1000, null, "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
 
         j.getInstance().clouds.add(original);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));
 
         j.assertEqualBeans(original, j.getInstance().clouds.getByName("aws-profile"),
-                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
+                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,groupPrefix");
 
         j.assertEqualBeans(original, JCloudsCloud.getByName("aws-profile"),
-                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime");
+                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,groupPrefix");
     }
 
 }

@@ -34,6 +34,9 @@
         <f:entry title="${%Available Openstack Zones}" field="zones">
             <f:textbox/>
         </f:entry>
+        <f:entry title="${%Group prefix}" field="groupPrefix">
+            <f:textbox/>
+        </f:entry>
     </f:advanced>
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,zones,trustAll"/>
     <f:entry title="${%Templates}" description="${%Cloud templates that can be launched as slaves}">

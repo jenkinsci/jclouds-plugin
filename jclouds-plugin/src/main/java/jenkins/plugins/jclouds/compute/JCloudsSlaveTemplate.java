@@ -467,7 +467,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
 
             try {
-                nodeMetadata = getOnlyElement(getCloud().getCompute().createNodesInGroup(name, 1, template));
+                nodeMetadata = getOnlyElement(getCloud().getCompute()
+                        .createNodesInGroup(getCloud().prependGroupPrefix(name), 1, template));
                 brokenImageCacheHasThrown = false;
             } catch (RunNodesException e) {
                 boolean throwNow = true;

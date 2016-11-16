@@ -109,6 +109,7 @@ public class JCloudsCloud extends Cloud {
 
     private String cloudGlobalKeyId;
     private String cloudCredentialsId;
+    private String groupPrefix;
     private final boolean trustAll;
     private transient List<PhoneHomeMonitor> phms;
 
@@ -154,6 +155,30 @@ public class JCloudsCloud extends Cloud {
         return getPublicKeyFromCredential(cloudGlobalKeyId);
     }
 
+    public String getGroupPrefix() {
+        return groupPrefix;
+    }
+
+    public String prependGroupPrefix(final String name) {
+        if (null == name) {
+            return null;
+        }
+        String tmp = Util.fixEmptyAndTrim(groupPrefix);
+        return tmp == null ? name : tmp + "-" + name;
+    }
+
+    private String removeGroupPrefix(final String name) {
+        if (null == name) {
+            return null;
+        }
+        String tmp = Util.fixEmptyAndTrim(groupPrefix);
+        if (null == tmp) {
+            return name;
+        }
+        tmp = tmp.concat("-");
+        return name.startsWith(tmp) ? name.substring(tmp.length()) : name;
+    }
+
     private String getPrivateKeyFromCredential(final String id) {
         if (!Strings.isNullOrEmpty(id)) {
             SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
@@ -178,7 +203,7 @@ public class JCloudsCloud extends Cloud {
     @DataBoundConstructor
     public JCloudsCloud(final String profile, final String providerName, final String cloudCredentialsId, final String cloudGlobalKeyId,
             final String endPointUrl, final int instanceCap, final int retentionTime, final int scriptTimeout, final int startTimeout,
-            final String zones, final boolean trustAll, final List<JCloudsSlaveTemplate> templates) {
+            final String zones, final String groupPrefix, final boolean trustAll, final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
         this.providerName = Util.fixEmptyAndTrim(providerName);
@@ -196,6 +221,7 @@ public class JCloudsCloud extends Cloud {
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate> emptyList());
         this.zones = Util.fixEmptyAndTrim(zones);
         this.trustAll = trustAll;
+        this.groupPrefix = groupPrefix;
         readResolve();
     }
 
@@ -406,7 +432,7 @@ public class JCloudsCloud extends Cloud {
         for (ComputeMetadata cm : getCompute().listNodes()) {
             if (NodeMetadata.class.isInstance(cm)) {
                 NodeMetadata nm = (NodeMetadata) cm;
-                String nodeGroup = nm.getGroup();
+                String nodeGroup = removeGroupPrefix(nm.getGroup());
 
                 if (getTemplate(nodeGroup) != null && !nm.getStatus().equals(NodeMetadata.Status.SUSPENDED)
                         && !nm.getStatus().equals(NodeMetadata.Status.TERMINATED)) {
@@ -590,6 +616,13 @@ public class JCloudsCloud extends Cloud {
         public FormValidation doCheckEndPointUrl(@QueryParameter String value) {
             if (!value.isEmpty() && !value.startsWith("http")) {
                 return FormValidation.error("The endpoint must be an URL");
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckGroupPrefix(@QueryParameter String value) {
+            if (!value.matches("^[a-z0-9]*$")) {
+                return FormValidation.error("The group prefix may contain lowercase letters and numbers only.");
             }
             return FormValidation.ok();
         }
