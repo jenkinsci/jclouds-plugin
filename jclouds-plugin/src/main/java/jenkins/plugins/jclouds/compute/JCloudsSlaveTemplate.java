@@ -667,7 +667,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
         }
 
-        private boolean prepareListBoxModel(final String provider, final String credId, final String url, final ListBoxModel m) {
+        private boolean prepareListBoxModel(final String provider, final String credId, final ListBoxModel m) {
             if (isNullOrEmpty(credId)) {
                 LOGGER.warning("cloudCredentialsId is null or empty");
                 return true;
@@ -689,7 +689,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
-            if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, m)) {
+            if (prepareListBoxModel(providerName, cloudCredentialsId, m)) {
                 return m;
             }
             try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
@@ -742,7 +742,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
 
             ListBoxModel m = new ListBoxModel();
-            if (prepareListBoxModel(providerName, cloudCredentialsId, endPointUrl, m)) {
+            if (prepareListBoxModel(providerName, cloudCredentialsId, m)) {
                 return m;
             }
             try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
