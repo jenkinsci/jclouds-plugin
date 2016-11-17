@@ -676,10 +676,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 LOGGER.warning("providerName is null or empty");
                 return true;
             }
-            if (isNullOrEmpty(url)) {
-                LOGGER.warning("endPointUrl is null or empty");
-                return true;
-            }
             m.add("None specified", "");
             if (Boolean.getBoolean("underSurefireTest")) {
                 // Don't attempt to fetch during HW-Ids GUI testing
