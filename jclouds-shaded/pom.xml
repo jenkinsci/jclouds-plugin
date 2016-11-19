@@ -31,16 +31,6 @@
             <version>${jclouds.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.jclouds.labs</groupId>
-            <artifactId>digitalocean2</artifactId>
-            <version>${jclouds.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.jclouds.labs</groupId>
-            <artifactId>google-compute-engine</artifactId>
-            <version>${jclouds.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.jclouds</groupId>
             <artifactId>jclouds-allblobstore</artifactId>
             <version>${jclouds.version}</version>

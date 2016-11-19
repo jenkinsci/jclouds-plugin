@@ -31,7 +31,7 @@
         <test.jenkins.blobstore.build-version />
         <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
         <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-        <jclouds.version>1.9.2</jclouds.version>
+        <jclouds.version>2.0.0</jclouds.version>
         <!-- Depend on latest Jenkins 2.x LTS
              See README of https://github.com/jenkinsci/plugin-pom/ -->
         <jenkins.version>2.19.2</jenkins.version>
@@ -100,11 +100,6 @@
                     <configuration>
                         <pluginFirstClassLoader>true</pluginFirstClassLoader>
                         <compatibleSinceVersion>2.9</compatibleSinceVersion>
-                        <!-- jenkins injected tests wont run because 2 lib clashes:
-                             1. guice (4.0 in jenkins vs. 3.0 in jclouds)
-                             2. guava (11.0 in jenkins vs. 16.0 in jclouds)
-                        -->
-                        <disabledTestInjection>true</disabledTestInjection>
                         <dependentWarExcludes>org.apache.jclouds*</dependentWarExcludes>
                         <archive>
                             <manifestEntries>
@@ -131,7 +126,6 @@
                             <includes>
                                 <include>org.apache.jclouds*:*</include>
                                 <include>com.google.guava:*</include>
-                                <include>com.google.inject:guice</include>
                             </includes>
                         </artifactSet>
                         <relocations>
