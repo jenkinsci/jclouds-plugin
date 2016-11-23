@@ -54,6 +54,7 @@ import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
+import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
 import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions;
 import org.jclouds.predicates.validators.DnsNameValidator;
 import org.jclouds.scriptbuilder.domain.Statement;
@@ -393,6 +394,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 }
             }
 
+            if (options instanceof GoogleComputeEngineTemplateOptions) {
+                // Always use our own credentials and let creation fail
+                // if no keys are provided.
+                options.as(GoogleComputeEngineTemplateOptions.class).autoCreateKeyPair(false);
+            }
+
             if (options instanceof CloudStackTemplateOptions) {
                 /**
                  * This tells jclouds cloudstack module to assign a public ip, setup static NAT
@@ -404,14 +411,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
 
             if (null != adminCredentialsId) {
+                LOGGER.info("Setting adminCredentialsId to " + adminCredentialsId);
                 String adminUser = getAdminUser();
                 StandardUsernameCredentials c = CredentialsHelper.getCredentialsById(adminCredentialsId);
                 if (null != c) {
                     if (c instanceof StandardUsernamePasswordCredentials) {
+                        LOGGER.info("Using username/password as adminCredentials");
                         String password = CredentialsHelper.getPassword(((StandardUsernamePasswordCredentials)c).getPassword());
                         LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(password).build();
                         options.overrideLoginCredentials(lc);
                     } else {
+                        LOGGER.info("Using username/privatekey as adminCredentials");
                         String privateKey = CredentialsHelper.getPrivateKey((SSHUserPrivateKey)c);
                         LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(privateKey).build();
                         options.overrideLoginCredentials(lc);
@@ -452,6 +462,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             options.inboundPorts(22).userMetadata(userMetadata);
 
             if (null != initStatement) {
+                if (!options.hasLoginPrivateKey()) {
+                    LOGGER.info("Init script without private admin key. Falling back to jenkins user credentials");
+                    LoginCredentials lc = LoginCredentials.builder()
+                        .user(getJenkinsUser()).privateKey(getJenkinsPrivateKey()).build();
+                    options.overrideLoginCredentials(lc);
+                }
                 options.runScript(initStatement);
             }
 
