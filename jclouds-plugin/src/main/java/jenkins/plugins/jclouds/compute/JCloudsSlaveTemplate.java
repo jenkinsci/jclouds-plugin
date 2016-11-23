@@ -42,6 +42,7 @@ import hudson.util.ListBoxModel;
 import jenkins.model.Jenkins;
 
 import org.apache.commons.lang.StringUtils;
+import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
@@ -391,6 +392,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 } else if (options instanceof CloudStackTemplateOptions) {
                     LOGGER.info("Setting CloudStack keyPairName to: " + keyPairName);
                     options.as(CloudStackTemplateOptions.class).keyPair(keyPairName);
+                } else if (options instanceof AWSEC2TemplateOptions) {
+                    LOGGER.info("Setting AWS EC2 keyPairName to: " + keyPairName);
+                    options.as(AWSEC2TemplateOptions.class).keyPair(keyPairName);
                 }
             }
 

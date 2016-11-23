@@ -104,13 +104,22 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
             final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
             String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId, final Mode mode) throws IOException, Descriptor.FormException {
-        this(cloudName, metadata.getName(), description, fsRoot, numExecutors, mode, labelString,
+        this(cloudName, uniqueName(metadata, cloudName), description, fsRoot, numExecutors, mode, labelString,
                 new JCloudsLauncher(), new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
                 stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
                 metadata.getCredentials().getOptionalPassword().orNull(), metadata.getCredentials().getOptionalPrivateKey().orNull(),
                 metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
+    }
+
+    // JENKINS-19935 Instances on EC2 don't get random suffix
+    final static String uniqueName(final NodeMetadata md, final String cloudName) {
+        JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+        if (c.providerName.equals("aws-ec2")) {
+            return md.getName() + "-" + md.getProviderId();
+        }
+        return md.getName();
     }
 
     /**
