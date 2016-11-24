@@ -113,22 +113,26 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final String userData;
     public final int numExecutors;
     public final boolean stopOnTerminate;
-    private transient String vmUser;  // Not used anymore, but retained for backward compatibility.
-    private transient String vmPassword; // Not used anymore, but retained for backward compatibility.
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private transient String vmUser;
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private transient String vmPassword;
     private final String jvmOptions;
     public final boolean preExistingJenkinsUser;
-    private transient String jenkinsUser; // Not used anymore, but retained for backward compatibility.
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private transient String jenkinsUser;
     private final String fsRoot;
     public final boolean allowSudo;
     public final boolean installPrivateKey;
     public Integer overrideRetentionTime;
     public final int spoolDelayMs;
     private final Object delayLockObject = new Object();
-    public final boolean assignFloatingIp;
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private transient boolean assignFloatingIp;
     public final boolean waitPhoneHome;
     public final int waitPhoneHomeTimeout;
     public final String keyPairName;
-    public final boolean assignPublicIp;
+    public boolean assignPublicIp;
     public final String networks;
     public final String securityGroups;
     public final Mode mode;
@@ -374,13 +378,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 options.securityGroups(securityGroupsArray);
             }
 
-            if (assignFloatingIp && options instanceof NovaTemplateOptions) {
-                LOGGER.info("Setting autoAssignFloatingIp to true");
-                options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
-                LOGGER.info("Setting autoAssignFloatingIp is now " +
-                        options.as(NovaTemplateOptions.class).shouldAutoAssignFloatingIp());
-            }
-
             if (useConfigDrive && options instanceof NovaTemplateOptions) {
                 options.as(NovaTemplateOptions.class).configDrive(true);
             }
@@ -404,14 +401,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 options.as(GoogleComputeEngineTemplateOptions.class).autoCreateKeyPair(false);
             }
 
-            if (options instanceof CloudStackTemplateOptions) {
-                /**
-                 * This tells jclouds cloudstack module to assign a public ip, setup static NAT
-                 * and configure the firewall when true. Only interesting when using
-                 * cloudstack advanced networking.
-                 */
-                LOGGER.info("Setting setupStaticNat to " + assignPublicIp);
-                options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
+            if (assignPublicIp) {
+                if (options instanceof NovaTemplateOptions) {
+                    LOGGER.info("Setting autoAssignFloatingIp to true");
+                    options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
+                } else if (options instanceof CloudStackTemplateOptions) {
+                    LOGGER.info("Setting setupStaticNat to true");
+                    options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
+                }
             }
 
             if (null != adminCredentialsId) {
@@ -850,6 +847,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     void upgrade() {
         try {
+            if (getCloud().providerName.equals("openstack-nova")) {
+                assignPublicIp = assignFloatingIp;
+            }
             final String description = "JClouds cloud " + getCloud().name + "." + name + " - auto-migrated";
             String ju = getJenkinsUser();
             if (isNullOrEmpty(getCredentialsId()) && !isNullOrEmpty(ju)) {
@@ -888,8 +888,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
      * Creates a new SSH credential for the jenkins user.
      * If a record with the same username and private key already exists, only the id of the existing record is returned.
      * @param user The username.
-     * @param cloud The name of the cloud.
-     * @param template The name of the slave template.
      * @param privateKey The privateKey.
      * @return The Id of the ssh-credential-plugin record (either newly created or already existing).
      */

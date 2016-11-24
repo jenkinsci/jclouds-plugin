@@ -1,5 +1,6 @@
 package jenkins.plugins.jclouds.compute;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -113,7 +114,7 @@ public class JCloudsCloud extends Cloud {
     private final boolean trustAll;
     private transient List<PhoneHomeMonitor> phms;
 
-    public static List<String> getCloudNames() {
+    static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
         for (Cloud c : Jenkins.getInstance().clouds) {
             if (JCloudsCloud.class.isInstance(c)) {
@@ -123,7 +124,7 @@ public class JCloudsCloud extends Cloud {
         return cloudNames;
     }
 
-    public static JCloudsCloud getByName(String name) {
+    static JCloudsCloud getByName(String name) {
         return (JCloudsCloud) Jenkins.getInstance().clouds.getByName(name);
     }
 
@@ -159,7 +160,7 @@ public class JCloudsCloud extends Cloud {
         return groupPrefix;
     }
 
-    public String prependGroupPrefix(final String name) {
+    String prependGroupPrefix(final String name) {
         if (null == name) {
             return null;
         }
@@ -241,7 +242,7 @@ public class JCloudsCloud extends Cloud {
         return retentionTime == 0 ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : retentionTime;
     }
 
-    static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new JDKLoggingModule() {
+    private static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new JDKLoggingModule() {
         @Override
         public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
             return new ComputeLogger.Factory();
@@ -345,9 +346,7 @@ public class JCloudsCloud extends Cloud {
                 LOGGER.info(String.format("Slave [%s] not connected yet", jcloudsSlave.getDisplayName()));
                 computer.connect(false).get();
                 Thread.sleep(5000l);
-            } catch (InterruptedException e) {
-                LOGGER.warning(String.format("Error while launching slave: %s", e));
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 LOGGER.warning(String.format("Error while launching slave: %s", e));
             }
 
@@ -426,7 +425,7 @@ public class JCloudsCloud extends Cloud {
      * Determine how many nodes are currently running for this cloud.
      * @return number of running nodes.
      */
-    public int getRunningNodesCount() {
+    int getRunningNodesCount() {
         int nodeCount = 0;
 
         for (ComputeMetadata cm : getCompute().listNodes()) {
@@ -443,7 +442,7 @@ public class JCloudsCloud extends Cloud {
         return nodeCount;
     }
 
-    public void registerPhoneHomeMonitor (final PhoneHomeMonitor monitor) {
+    void registerPhoneHomeMonitor(final PhoneHomeMonitor monitor) {
         if (null == monitor) {
             throw new IllegalArgumentException("monitor may not be null");
         }
@@ -462,7 +461,7 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-    public void phoneHomeAbort() {
+    void phoneHomeAbort() {
         if (null != phms) {
             for (final PhoneHomeMonitor monitor : phms) {
                 monitor.interrupt();
@@ -474,16 +473,15 @@ public class JCloudsCloud extends Cloud {
     public boolean phoneHomeNotify(final String name) {
         if (null != phms) {
             for (final PhoneHomeMonitor monitor : phms) {
-                boolean ret = monitor.ring(name);
-                if (ret) {
-                    return ret;
+                if (monitor.ring(name)) {
+                    return true;
                 }
             }
         }
         return false;
     }
 
-    public void phoneHomeWaitAll() {
+    void phoneHomeWaitAll() {
         if (null != phms) {
             for (final PhoneHomeMonitor monitor : phms) {
                 monitor.join();
@@ -499,6 +497,7 @@ public class JCloudsCloud extends Cloud {
          * Human readable name of this kind of configurable object.
          * @return The human readable name of this object. 
          */
+        @Nonnull
         @Override
         public String getDisplayName() {
             return "Cloud (JClouds)";

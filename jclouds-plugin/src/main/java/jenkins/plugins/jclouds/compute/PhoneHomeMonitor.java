@@ -27,12 +27,12 @@ final class PhoneHomeMonitor {
     private List<String> targets;
     private Thread waitThread = null;
 
-    public PhoneHomeMonitor(final boolean activate, final int timeout) {
+    PhoneHomeMonitor(final boolean activate, final int timeout) {
         isWaiting = activate;
         waitTimeout = timeout;
     }
 
-    public void join() {
+    void join() {
         if (null != waitThread) {
             try {
                 waitThread.join();
@@ -42,7 +42,7 @@ final class PhoneHomeMonitor {
         }
     }
 
-    public synchronized boolean ring(final String who) {
+    synchronized boolean ring(final String who) {
         boolean ret = targets.remove(who);
         if (targets.isEmpty()) {
             isWaiting = false;
@@ -51,17 +51,17 @@ final class PhoneHomeMonitor {
         return ret;
     }
 
-    public void ring() {
+    void ring() {
         isWaiting = false;
         signalCondition();
     }
 
-    public void interrupt() {
+    void interrupt() {
         isInterrupted = true;
         signalCondition();
     }
 
-    public synchronized String getTargetString() {
+    private synchronized String getTargetString() {
         return null == targets ? "" : Joiner.on(" and ").join(targets);
     }
 
@@ -94,7 +94,7 @@ final class PhoneHomeMonitor {
         return 0;
     }
 
-    public void waitForPhoneHome(final String who, final PrintStream logger) throws InterruptedException {
+    void waitForPhoneHome(final String who, final PrintStream logger) throws InterruptedException {
         if (null == who || who.isEmpty()) {
             throw new IllegalArgumentException("who may not me null or empty");
         }
@@ -104,7 +104,7 @@ final class PhoneHomeMonitor {
         waitForPhoneHome(logger);
     }
 
-    public void waitForPhoneHome(final List<String> who, final PrintStream logger) {
+    void waitForPhoneHome(final List<String> who, final PrintStream logger) {
         if (null == who || who.isEmpty()) {
             throw new IllegalArgumentException("who may not me null or empty");
         }
