@@ -533,13 +533,14 @@ public class JCloudsCloud extends Cloud {
         }
 
         private ImmutableSortedSet<String> getAllProviders() {
-            // correct the classloader so that extensions can be found
+            // correct the classloader so that jclouds extensions can be found
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
             // with this stuff :)
             Builder<String> builder = ImmutableSet.<String> builder();
             builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
-            builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));
+            builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class),
+                        Providers.idFunction()));
             return ImmutableSortedSet.copyOf(builder.build());
         }
 
@@ -549,22 +550,28 @@ public class JCloudsCloud extends Cloud {
 
         public ListBoxModel doFillProviderNameItems() {
             ListBoxModel m = new ListBoxModel();
-            for (String supportedProvider : getAllProviders()) {
-                m.add(supportedProvider, supportedProvider);
+            for (final String supportedProvider : getAllProviders()) {
+                if (!"stub".equals(supportedProvider)) {
+                    m.add(supportedProvider, supportedProvider);
+                }
             }
             return m;
         }
 
-        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter
+                String currentValue) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context :
+                        Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
                 .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
-        public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+        public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter
+                String currentValue) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context :
+                        Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
