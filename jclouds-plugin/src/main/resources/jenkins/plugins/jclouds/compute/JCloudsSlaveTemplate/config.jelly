@@ -1,8 +1,9 @@
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core"
-         xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
   <table width="100%" class="pane">
-    <f:section title="${%General Configuration}">
+
+    <f:block>
+      <b>${%General Configuration}</b>
       <f:entry title="${%Name}" field="name">
         <f:textbox/>
       </f:entry>
@@ -16,9 +17,10 @@
       <f:entry title="${%Number of Executors}" field="numExecutors">
         <f:number clazz="positive-number" min="1" step="1" default="2"/>
       </f:entry>
-    </f:section>
+    </f:block>
     
-    <f:section title="${%Hardware Options}">
+    <f:block>
+      <b>${%Hardware Options}</b>
       <f:radioBlock inline="true" name="jclouds.useHardwareId" value="true"
                     title="${%Specify Hardware Id}" checked="${instance.hardwareId != ''}">
         <f:entry title="${%Hardware Id}" field="hardwareId">
@@ -38,9 +40,10 @@
           <f:number clazz="positive-number" min="1.0" step="1.0" default="1.0"/>
         </f:entry>
       </f:radioBlock>
-    </f:section>
+    </f:block>
 
-    <f:section title="${%Image/OS Options}">
+    <f:block>
+      <b>${%Image/OS Options}</b>
       <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="imageId"
                     title="${%Specify Image ID}" checked="${(instance.imageId != null) &amp;&amp; !instance.imageId.isEmpty()}">
         <f:entry title="Image Id" field="imageId">
@@ -71,17 +74,19 @@
           <f:textbox/>
         </f:entry>
       </f:radioBlock>
-    </f:section>
+    </f:block>
 
     <f:advanced>
-      <f:section title="${%Location Options}">
+      <f:block>
+        <b>${%Location Options}</b>
         <f:entry title="${%Location Id}" field="locationId">
           <f:select />
         </f:entry>
         <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
-                          with="providerName,cloudCredentialsId,endPointUrl,locationId"/>
-      </f:section>
-      <f:section title="${%General Options}">
+          with="providerName,cloudCredentialsId,endPointUrl,locationId"/>
+      </f:block>
+      <f:block>
+        <b>${%Misc. Options}</b>
         <f:optionalBlock name="hasOverrideRetentionTime" title="${%Override Retention Time}" checked="${instance.hasOverrideRetentionTime()}" inline="true">
           <f:entry title="${%Retention Time}" field="overrideRetentionTime">
             <f:number clazz="number" min="-1" step="1"/>
@@ -138,40 +143,41 @@
         <f:entry title="${%Security Groups}" field="securityGroups">
           <f:textbox />
         </f:entry>
-      </f:section>
 
-      <f:entry title="${%Wait for slave to phone home}"
-               field="waitPhoneHome">
-        <f:checkbox />
-      </f:entry>
+        <f:entry title="${%Wait for slave to phone home}" field="waitPhoneHome">
+          <f:checkbox />
+        </f:entry>
 
-      <f:entry title="${%Phone home timeout}" field="waitPhoneHomeTimeout">
-        <f:number clazz="number" min="0" step="1" default="15"/>
-      </f:entry>
+        <f:entry title="${%Phone home timeout}" field="waitPhoneHomeTimeout">
+          <f:number clazz="number" min="0" step="1" default="15"/>
+        </f:entry>
 
-      <f:entry title="${%Key Pair Name}" field="keyPairName">
-        <f:textbox />
-      </f:entry>
+        <f:entry title="${%Key Pair Name}" field="keyPairName">
+          <f:textbox />
+        </f:entry>
+      </f:block>
 
-      <f:section title="${%OpenStack Options}">
+      <f:block>
+        <b>${%OpenStack Options}</b>
         <f:entry title="${%Assign Floating IP}" field="assignFloatingIp">
           <f:checkbox />
         </f:entry>
         <f:entry title="${%Use config drive}" field="useConfigDrive">
           <f:checkbox />
         </f:entry>
-      </f:section>
+      </f:block>
 
-      <f:section title="${%CloudStack Options}">
+      <f:block>
+        <b>${%CloudStack Options}</b>
         <f:entry title="${%Assign Public IP}" field="assignPublicIp">
           <f:checkbox default="true"/>
         </f:entry>
-      </f:section>
-      
+      </f:block>
     </f:advanced>
-    <f:entry title="">
+
+    <f:entry>
       <div align="right">
-        <f:repeatableDeleteButton/>
+        <f:repeatableDeleteButton value="${%Delete template}" />
       </div>
     </f:entry>
     

@@ -23,13 +23,14 @@
       </div>
     </f:entry>
     <f:advanced>
-      <f:section title="${%Location Options}">
+      <f:block>
+        <b>${%Location Options}</b>
         <f:entry title="${%Location Id}" field="locationId">
           <f:select />
         </f:entry>
         <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
-                          with="providerName,credentialsId,endPointUrl,locationId"/>
-      </f:section>
+          with="providerName,credentialsId,endPointUrl,locationId"/>
+      </f:block>
     </f:advanced>
   </table>
 </j:jelly>

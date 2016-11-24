@@ -34,7 +34,7 @@
         <jclouds.version>2.0.0</jclouds.version>
         <!-- Depend on latest Jenkins 2.x LTS
              See README of https://github.com/jenkinsci/plugin-pom/ -->
-        <jenkins.version>2.19.2</jenkins.version>
+        <jenkins.version>2.19.3</jenkins.version>
         <hpi-plugin.version>1.120</hpi-plugin.version>
         <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
         <stapler-plugin.version>1.17</stapler-plugin.version>
