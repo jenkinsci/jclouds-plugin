@@ -1,175 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Copyright 2010-2016 Adrian Cole, Andrew Bayer, Fritz Elfert, Marat Mavlyutov, Monty Taylor, Vijay Kiran et. al.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.jenkins-ci.plugins</groupId>
-        <artifactId>plugin</artifactId>
-        <version>2.17</version>
-    </parent>
-
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
-    <artifactId>jclouds-jenkins-parent</artifactId>
-    <version>2.11-SNAPSHOT</version>
-    <packaging>pom</packaging>
-    <name>Jenkins JClouds plugin parent POM</name>
-    <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/JClouds+Plugin</url>
+    <artifactId>plugin</artifactId>
+    <version>2.17</version>
+  </parent>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
-        <test.jenkins.compute.endpoint />
-        <test.jenkins.compute.api-version />
-        <test.jenkins.compute.build-version />
-        <test.jenkins.compute.identity>FIXME_IDENTITY</test.jenkins.compute.identity>
-        <test.jenkins.compute.credential>FIXME_CREDENTIALS</test.jenkins.compute.credential>
-        <test.jenkins.compute.image-id />
-        <test.jenkins.compute.image.login-user />
-        <test.jenkins.compute.image.authenticate-sudo />
-        <test.jenkins.blobstore.provider>FIXME_PROVIDER</test.jenkins.blobstore.provider>
-        <test.jenkins.blobstore.endpoint />
-        <test.jenkins.blobstore.api-version />
-        <test.jenkins.blobstore.build-version />
-        <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
-        <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-        <jclouds.version>2.0.0</jclouds.version>
-        <!-- Depend on latest Jenkins 2.x LTS
-             See README of https://github.com/jenkinsci/plugin-pom/ -->
-        <jenkins.version>2.19.3</jenkins.version>
-        <hpi-plugin.version>1.120</hpi-plugin.version>
-        <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
-        <stapler-plugin.version>1.17</stapler-plugin.version>
-        <java.level>7</java.level>
-    </properties>
-    <modules>
-        <module>jclouds-shaded</module>
-        <module>jclouds-plugin</module>
-    </modules>
-    <developers>
-        <developer>
-            <id>felfert</id>
-            <name>Fritz Elfert</name>
-            <email>fritz-github@fritz-elfert.de</email>
-            <url>http://fritz-elfert.de</url>
-            <timezone>+2</timezone>
-        </developer>
-        <developer>
-            <id>sdirector</id>
-            <name>Monty Taylor</name>
-            <email>mordred@inaugust.com</email>
-        </developer>
-        <developer>
-            <id>jclouds</id>
-            <name>Adrian Cole</name>
-            <email>adrian@jclouds.org</email>
-        </developer>
-        <developer>
-            <id>vijaykiran</id>
-            <name>Vijay Kiran</name>
-            <email>mail@vijaykiran.com</email>
-            <url>http://vijaykiran.com</url>
-        </developer>
-        <developer>
-            <id>abayer</id>
-            <name>Andrew Bayer</name>
-            <email>andrew.bayer@gmail.com</email>
-            <timezone>-8</timezone>
-        </developer>
-        <developer>
-            <id>mavlyutov</id>
-            <name>Marat Mavlyutov</name>
-            <email>m.mavlyutov@gmail.com</email>
-            <timezone>+3</timezone>
-        </developer>
-    </developers>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jenkins-ci.main</groupId>
-                <artifactId>jenkins-core</artifactId>
-                <version>${jenkins.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-    <build>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.jenkins-ci.tools</groupId>
-                    <artifactId>maven-hpi-plugin</artifactId>
-                    <extensions>true</extensions>
-                    <configuration>
-                        <pluginFirstClassLoader>true</pluginFirstClassLoader>
-                        <compatibleSinceVersion>2.9</compatibleSinceVersion>
-                        <dependentWarExcludes>org.apache.jclouds*</dependentWarExcludes>
-                        <archive>
-                            <manifestEntries>
-                                <Mask-Classes>com.google.common</Mask-Classes>
-                            </manifestEntries>
-                        </archive>
-                        <maskClasses>com.google.common.</maskClasses>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>2.2</version>
-                    <executions>
-                        <execution>
-                            <id>shade</id>
-                            <phase>package</phase>
-                            <goals>
-                                <goal>shade</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                    <configuration>
-                        <artifactSet>
-                            <includes>
-                                <include>org.apache.jclouds*:*</include>
-                                <include>com.google.guava:*</include>
-                            </includes>
-                        </artifactSet>
-                        <relocations>
-                            <relocation>
-                                <pattern>com.google.common</pattern>
-                                <shadedPattern>shaded.com.google.common</shadedPattern>
-                            </relocation>
-                        </relocations>
-                        <transformers>
-                            <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-                        </transformers>
-                        <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-                    </configuration>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <configuration>
-                        <autoVersionSubmodules>true</autoVersionSubmodules>
-                        <tagNameFormat>jclouds-jenkins-@{project.version}</tagNameFormat>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-        <finalName>${project.artifactId}</finalName>
-        <plugins>
-        </plugins>
-    </build>
-    <scm>
-        <connection>scm:git:git://github.com/jenkinsci/jclouds-plugin.git</connection>
-        <developerConnection>scm:git:git@github.com:jenkinsci/jclouds-plugin.git</developerConnection>
-        <url>http://github.com/jenkinsci/jclouds-plugin</url>
-      <tag>HEAD</tag>
+  <groupId>org.jenkins-ci.plugins</groupId>
+  <artifactId>jclouds-jenkins-parent</artifactId>
+  <version>2.11-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>Jenkins JClouds plugin parent POM</name>
+  <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
+  <url>https://wiki.jenkins-ci.org/display/JENKINS/JClouds+Plugin</url>
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
+    <test.jenkins.compute.endpoint />
+    <test.jenkins.compute.api-version />
+    <test.jenkins.compute.build-version />
+    <test.jenkins.compute.identity>FIXME_IDENTITY</test.jenkins.compute.identity>
+    <test.jenkins.compute.credential>FIXME_CREDENTIALS</test.jenkins.compute.credential>
+    <test.jenkins.compute.image-id />
+    <test.jenkins.compute.image.login-user />
+    <test.jenkins.compute.image.authenticate-sudo />
+    <test.jenkins.blobstore.provider>FIXME_PROVIDER</test.jenkins.blobstore.provider>
+    <test.jenkins.blobstore.endpoint />
+    <test.jenkins.blobstore.api-version />
+    <test.jenkins.blobstore.build-version />
+    <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
+    <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
+    <jclouds.version>2.0.0</jclouds.version>
+    <!-- Depend on latest Jenkins 2.x LTS
+         See README of https://github.com/jenkinsci/plugin-pom/ -->
+    <jenkins.version>2.19.3</jenkins.version>
+    <hpi-plugin.version>1.120</hpi-plugin.version>
+    <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
+    <stapler-plugin.version>1.17</stapler-plugin.version>
+    <java.level>7</java.level>
+  </properties>
+  <modules>
+    <module>jclouds-shaded</module>
+    <module>jclouds-plugin</module>
+  </modules>
+  <developers>
+    <developer>
+      <id>felfert</id>
+      <name>Fritz Elfert</name>
+      <email>fritz-github@fritz-elfert.de</email>
+      <url>http://fritz-elfert.de</url>
+      <timezone>+2</timezone>
+    </developer>
+    <developer>
+      <id>sdirector</id>
+      <name>Monty Taylor</name>
+      <email>mordred@inaugust.com</email>
+    </developer>
+    <developer>
+      <id>jclouds</id>
+      <name>Adrian Cole</name>
+      <email>adrian@jclouds.org</email>
+    </developer>
+    <developer>
+      <id>vijaykiran</id>
+      <name>Vijay Kiran</name>
+      <email>mail@vijaykiran.com</email>
+      <url>http://vijaykiran.com</url>
+    </developer>
+    <developer>
+      <id>abayer</id>
+      <name>Andrew Bayer</name>
+      <email>andrew.bayer@gmail.com</email>
+      <timezone>-8</timezone>
+    </developer>
+    <developer>
+      <id>mavlyutov</id>
+      <name>Marat Mavlyutov</name>
+      <email>m.mavlyutov@gmail.com</email>
+      <timezone>+3</timezone>
+    </developer>
+  </developers>
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.jenkins-ci.main</groupId>
+        <artifactId>jenkins-core</artifactId>
+        <version>${jenkins.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.jenkins-ci.tools</groupId>
+          <artifactId>maven-hpi-plugin</artifactId>
+          <extensions>true</extensions>
+          <configuration>
+            <pluginFirstClassLoader>true</pluginFirstClassLoader>
+            <compatibleSinceVersion>2.9</compatibleSinceVersion>
+            <dependentWarExcludes>org.apache.jclouds*</dependentWarExcludes>
+            <archive>
+              <manifestEntries>
+                <Mask-Classes>com.google.common</Mask-Classes>
+              </manifestEntries>
+            </archive>
+            <maskClasses>com.google.common.</maskClasses>
+          </configuration>
+        </plugin>
+        <plugin>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>2.2</version>
+          <executions>
+            <execution>
+              <id>shade</id>
+              <phase>package</phase>
+              <goals>
+                <goal>shade</goal>
+              </goals>
+            </execution>
+          </executions>
+          <configuration>
+            <artifactSet>
+              <includes>
+                <include>org.apache.jclouds*:*</include>
+                <include>com.google.guava:*</include>
+              </includes>
+            </artifactSet>
+            <relocations>
+              <relocation>
+                <pattern>com.google.common</pattern>
+                <shadedPattern>shaded.com.google.common</shadedPattern>
+              </relocation>
+            </relocations>
+            <transformers>
+              <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
+            </transformers>
+            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-release-plugin</artifactId>
+          <configuration>
+            <autoVersionSubmodules>true</autoVersionSubmodules>
+            <tagNameFormat>jclouds-jenkins-@{project.version}</tagNameFormat>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <finalName>${project.artifactId}</finalName>
+    <plugins>
+    </plugins>
+  </build>
+  <scm>
+    <connection>scm:git:git://github.com/jenkinsci/jclouds-plugin.git</connection>
+    <developerConnection>scm:git:git@github.com:jenkinsci/jclouds-plugin.git</developerConnection>
+    <url>http://github.com/jenkinsci/jclouds-plugin</url>
+    <tag>HEAD</tag>
   </scm>
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
-    <pluginRepositories>
-        <pluginRepository>
-            <id>repo.jenkins-ci.org</id>
-            <url>http://repo.jenkins-ci.org/public/</url>
-        </pluginRepository>
-    </pluginRepositories>
+  <repositories>
+    <repository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </repository>
+  </repositories>
+  <pluginRepositories>
+    <pluginRepository>
+      <id>repo.jenkins-ci.org</id>
+      <url>http://repo.jenkins-ci.org/public/</url>
+    </pluginRepository>
+  </pluginRepositories>
 </project>
