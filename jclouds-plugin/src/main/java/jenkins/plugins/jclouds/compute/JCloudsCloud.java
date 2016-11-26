@@ -17,6 +17,7 @@ package jenkins.plugins.jclouds.compute;
 
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -58,6 +59,8 @@ import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.sshj.config.SshjSshClientModule;
+
+import static org.jclouds.reflect.Reflection2.typeToken;
 
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -264,6 +267,13 @@ public class JCloudsCloud extends Cloud {
         }
     }, new EnterpriseConfigurationModule());
 
+    private static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final Properties overrides) {
+        // correct the classloader so that extensions can be found
+        Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
+            .overrides(overrides).modules(MODULES).buildApi(typeToken(apitype));
+    }
+
     private static ComputeServiceContext ctx(final String provider, final String credId, final Properties overrides) {
         // correct the classloader so that extensions can be found
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
@@ -286,11 +296,33 @@ public class JCloudsCloud extends Cloud {
         return ret;
     }
 
+    static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final String url,
+            final String zones) {
+        return api(apitype, provider, credId, buildJcloudsOverrides(url, zones, false));
+    }
+
+    static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final String url,
+            final String zones, final boolean trustAll) {
+        return api(apitype, provider, credId, buildJcloudsOverrides(url, zones, trustAll));
+    }
+
+    public <A extends Closeable> A newApi(Class<A> apitype) {
+        Properties overrides = buildJcloudsOverrides(endPointUrl, zones, trustAll);
+        if (scriptTimeout > 0) {
+            overrides.setProperty(ComputeServiceProperties.TIMEOUT_SCRIPT_COMPLETE, String.valueOf(scriptTimeout));
+        }
+        if (startTimeout > 0) {
+            overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
+        }
+        return api(apitype, providerName, cloudCredentialsId, overrides);
+    }
+
     static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones) {
         return ctx(provider, credId, buildJcloudsOverrides(url, zones, false));
     }
 
-    static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones, final boolean trustAll) {
+    static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones,
+            final boolean trustAll) {
         return ctx(provider, credId, buildJcloudsOverrides(url, zones, trustAll));
     }
 
@@ -565,7 +597,8 @@ public class JCloudsCloud extends Cloud {
         public ListBoxModel doFillProviderNameItems() {
             ListBoxModel m = new ListBoxModel();
             for (final String supportedProvider : getAllProviders()) {
-                if (!"stub".equals(supportedProvider)) {
+                // docker is not really usable with jclouds (yet?). Too many semantic differences.
+                if (!"stub".equals(supportedProvider) && !"docker".equals(supportedProvider)) {
                     m.add(supportedProvider, supportedProvider);
                 }
             }

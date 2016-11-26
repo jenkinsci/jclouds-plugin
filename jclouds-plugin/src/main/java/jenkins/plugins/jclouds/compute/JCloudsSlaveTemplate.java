@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
@@ -68,6 +69,9 @@ import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.digitalocean2.compute.options.DigitalOcean2TemplateOptions;
+import org.jclouds.digitalocean2.domain.Key;
+import org.jclouds.digitalocean2.DigitalOcean2Api;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
@@ -81,6 +85,8 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import au.com.bytecode.opencsv.CSVReader;
+import shaded.com.google.common.base.Optional;
+import shaded.com.google.common.base.Predicate;
 import shaded.com.google.common.base.Supplier;
 import shaded.com.google.common.collect.ImmutableMap;
 
@@ -407,6 +413,33 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 } else if (options instanceof AWSEC2TemplateOptions) {
                     LOGGER.info("Setting AWS EC2 keyPairName to: " + keyPairName);
                     options.as(AWSEC2TemplateOptions.class).keyPair(keyPairName);
+                } else if (options instanceof DigitalOcean2TemplateOptions) {
+                    // DigitalOcean does it different:
+                    // The use key Ids (ints) and provide an api for listing them. So we have
+                    // to find the named key in the list and use its numeric id.
+                    try (DigitalOcean2Api do2api = getCloud().newApi(DigitalOcean2Api.class)) {
+                        Optional<Key> key = do2api.keyApi().list().concat().firstMatch(
+                                new Predicate<Key>() {
+                                    @Override
+                                    public boolean apply(final Key k) {
+                                        return keyPairName.equals(k.name());
+                                    }
+                                });
+                        if (key.isPresent()) {
+                            Key k = key.get();
+                            LOGGER.info(String.format("Setting DigitalOcean keyPairName to %s (%d)",
+                                        keyPairName, k.id()));
+                            List<Integer> kids = new ArrayList<>();
+                            kids.add(Integer.valueOf(k.id()));
+                            options.as(DigitalOcean2TemplateOptions.class)
+                                .sshKeyIds(kids).autoCreateKeyPair(false);
+                        } else {
+                            LOGGER.warning(String.format("The specified keyPairName %s does not exist",
+                                        keyPairName));
+                        }
+                    } catch (IOException x) {
+                        throw new IllegalArgumentException("Could not fetch list of keys", x);
+                    }
                 }
             }
 
@@ -489,9 +522,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             if (!isNullOrEmpty(userData)) {
                 try {
-                    Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
-                    LOGGER.info("Setting userData to " + userData);
-                    userDataMethod.invoke(options, userData.getBytes(StandardCharsets.UTF_8));
+                    if (options instanceof DigitalOcean2TemplateOptions) {
+                        options.userMetadata("user_data", userData);
+                    } else {
+                        Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
+                        LOGGER.finest("Setting userData to " + userData);
+                        userDataMethod.invoke(options, userData.getBytes(StandardCharsets.UTF_8));
+                    }
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, "userData is not supported by provider options class " + options.getClass().getName(), e);
                 }
