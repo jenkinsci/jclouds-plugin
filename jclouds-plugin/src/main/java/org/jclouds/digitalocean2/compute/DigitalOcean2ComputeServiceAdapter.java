@@ -26,7 +26,6 @@ import static shaded.com.google.common.collect.Sets.newHashSet;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_NODE_RUNNING;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_NODE_SUSPENDED;
 import static org.jclouds.compute.config.ComputeServiceProperties.TIMEOUT_NODE_TERMINATED;
-import static org.jclouds.compute.util.ComputeServiceUtils.metadataAndTagsAsCommaDelimitedValue;
 
 import java.util.List;
 import java.util.Map;
@@ -99,7 +98,7 @@ public class DigitalOcean2ComputeServiceAdapter implements ComputeServiceAdapter
 
       // In DigitalOcean, user_data is a SINGLE string, NOT a map!
       // Encoding tags or anything else than user_data in here breaks their functionality.
-      Map<String, String> metadataAndTags = metadataAndTagsAsCommaDelimitedValue(templateOptions);
+      Map<String, String> metadataAndTags = templateOptions.getUserMetadata();
       if (!metadataAndTags.isEmpty()) {
          @SuppressWarnings("unchecked")
          List<String> regionFeatures = (List<String>) template.getLocation().getMetadata().get("features");
