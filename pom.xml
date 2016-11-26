@@ -160,6 +160,16 @@ limitations under the License.
               <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
             </transformers>
             <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+            <filters>
+              <!-- Temporarily replace DigitalOcean2ComputeServiceAdapter by our own, fixed version
+                   See: https://issues.apache.org/jira/browse/JCLOUDS-1206 -->
+              <filter>
+                <artifact>org.apache.jclouds.provider:digitalocean2</artifact>
+                <excludes>
+                  <exclude>org/jclouds/digitalocean2/compute/DigitalOcean2ComputeServiceAdapter.java</exclude>
+                </excludes>
+              </filter>
+            </filters>
           </configuration>
         </plugin>
         <plugin>
