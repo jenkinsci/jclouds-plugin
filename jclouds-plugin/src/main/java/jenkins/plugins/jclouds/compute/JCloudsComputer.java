@@ -22,6 +22,7 @@ import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,6 +30,11 @@ import javax.annotation.CheckForNull;
 
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
+
+import org.jclouds.compute.domain.NodeMetadata;
+
+import shaded.com.google.common.base.Joiner;
+import shaded.com.google.common.collect.ImmutableSet;
 
 /**
  * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.
@@ -128,4 +134,31 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
         }
     }
 
+    private Set<String> getIpAddresses(final boolean wantPublic) {
+        final JCloudsSlave node = getNode();
+        if (null != node) {
+            final NodeMetadata md = node.getNodeMetaData();
+            Set<String> ret = wantPublic ? md.getPublicAddresses() : md.getPrivateAddresses();
+            if (!ret.isEmpty()) {
+                return ret;
+            }
+        }
+        return ImmutableSet.<String>of("None");
+    }
+
+    public String getPublicIpAddressHeader() {
+        return "Public IP-Address" + (getIpAddresses(true).size() > 1 ? "es" : "");
+    }
+
+    public String getPrivateIpAddressHeader() {
+        return "Private IP-Address" + (getIpAddresses(false).size() > 1 ? "es" : "");
+    }
+
+    public String getPublicIpAddresses() {
+        return Joiner.on(" ").join(getIpAddresses(true));
+    }
+
+    public String getPrivateIpAddresses() {
+        return Joiner.on(" ").join(getIpAddresses(false));
+    }
 }
