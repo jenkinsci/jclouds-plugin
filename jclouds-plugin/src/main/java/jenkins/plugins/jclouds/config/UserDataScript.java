@@ -16,10 +16,11 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
-import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataScript extends Config {
 
@@ -29,10 +30,11 @@ public class UserDataScript extends Config {
     }
 
     @Extension(ordinal = 70)
-    public static class UserDataScriptProvider extends AbstractConfigProviderImpl {
+    @ConfigSuitableFor(target=UserData.class)
+    public static class UserDataScriptProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "#!";
-        private static final String DEFAULT_CONTENT = SIGNATURE + "/bin/sh\n";
+        private static final String SIGNATURE = "^#!.*";
+        private static final String DEFAULT_CONTENT = "#!/bin/sh\n";
         private static final String DEFAULT_NAME = "jclouds.sh";
 
         public UserDataScriptProvider() {

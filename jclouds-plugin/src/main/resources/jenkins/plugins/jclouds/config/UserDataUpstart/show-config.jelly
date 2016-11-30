@@ -15,9 +15,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core">
-  A cloud-init configuration starts with the signature <b>#cloud-config</b> in the first line and is a yaml definition
-  and the simplest way to accomplish some things via user-data. Using cloud-config syntax, the user can specify certain
-  things in a human friendly format.<br/>
-  More information and examples can be found <a href="http://cloudinit.readthedocs.io/en/latest/index.html">here</a>.
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form">
+  <f:entry title="${%ID}">
+    <f:textbox readonly="readonly" name="config.id" value="${config.id}" />
+  </f:entry>
+  <f:entry title="${%Name}">
+    <f:textbox readonly="readonly" name="config.name" value="${config.name}" />
+  </f:entry>
+  <f:entry title="${%Comment}">
+    <f:textbox readonly="readonly" name="config.comment" value="${config.comment}" />
+  </f:entry>
+  <f:entry title="${%Content}">
+    <f:textarea readonly="readonly" id="config.content" name="config.content" value="${config.content}" /> 
+  </f:entry>
 </j:jelly>

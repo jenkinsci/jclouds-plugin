@@ -16,10 +16,11 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
-import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataBoothook extends Config {
     private static final long serialVersionUID = 1L;
@@ -30,10 +31,11 @@ public class UserDataBoothook extends Config {
     }
 
     @Extension(ordinal = 70)
-    public static class UserDataBoothookProvider extends AbstractConfigProviderImpl {
+    @ConfigSuitableFor(target=UserData.class)
+    public static class UserDataBoothookProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "#cloud-boothook\n";
-        private static final String DEFAULT_CONTENT = SIGNATURE;
+        private static final String SIGNATURE = "^#cloud-boothook[\\r\\n]+.*";
+        private static final String DEFAULT_CONTENT = "#cloud-boothook\n";
         private static final String DEFAULT_NAME = "jclouds.boothook";
 
         public UserDataBoothookProvider() {

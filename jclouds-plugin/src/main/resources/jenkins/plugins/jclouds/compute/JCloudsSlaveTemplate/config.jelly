@@ -117,8 +117,8 @@ limitations under the License.
           <f:textarea />
         </f:entry>
       
-        <f:entry title="${%User Data }(${%if supported by provider})" field="userData">
-          <f:textarea />
+        <f:entry title="${%User Data}">
+          <f:repeatableProperty field="userDataEntries"/>
         </f:entry>
 
         <f:entry title="${%Jenkins Credentials}" field="credentialsId">

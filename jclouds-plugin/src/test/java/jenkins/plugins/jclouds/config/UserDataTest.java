@@ -53,7 +53,7 @@ public class UserDataTest {
         createConfig(idlist, CloudInitContentType.CLOUDCONFIG);
         assertEquals("Number of configs", 1, idlist.size());
         byte[] udata = ConfigHelper.buildUserData(idlist);
-        final String expected = "#cloud-init\n";
+        final String expected = "#cloud-config\n";
         assertEquals(expected, new String(udata));
     }
 

@@ -16,10 +16,11 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
-import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataPartHandler extends Config {
 
@@ -29,10 +30,11 @@ public class UserDataPartHandler extends Config {
     }
 
     @Extension(ordinal = 70)
-    public static class UserDataPartHandlerProvider extends AbstractConfigProviderImpl {
+    @ConfigSuitableFor(target=UserData.class)
+    public static class UserDataPartHandlerProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "#part-handler\n";
-        private static final String DEFAULT_CONTENT = SIGNATURE + "\n" +
+        private static final String SIGNATURE = "^#part-handler[\\r\\n]+.*";
+        private static final String DEFAULT_CONTENT = "#part-handler\n" +
             "def list_types():\n" +
             "   # return a list of mime-types that are handled by this module\n" +
             "   return([\"text/go-cubs-go\"])\n\n" +

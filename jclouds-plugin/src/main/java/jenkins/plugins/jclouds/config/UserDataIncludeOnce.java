@@ -16,10 +16,11 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
-import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataIncludeOnce extends Config {
 
@@ -29,10 +30,11 @@ public class UserDataIncludeOnce extends Config {
     }
 
     @Extension(ordinal = 70)
-    public static class UserDataIncludeOnceProvider extends AbstractConfigProviderImpl {
+    @ConfigSuitableFor(target=UserData.class)
+    public static class UserDataIncludeOnceProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "#include-once\n";
-        private static final String DEFAULT_CONTENT = SIGNATURE;
+        private static final String SIGNATURE = "^#include-once[\\r\\n]+.*";
+        private static final String DEFAULT_CONTENT = "#include-once\n";
         private static final String DEFAULT_NAME = "jclouds.include-once";
 
         public UserDataIncludeOnceProvider() {
@@ -48,6 +50,7 @@ public class UserDataIncludeOnce extends Config {
             return null;
         }
 
+        @Override
         public ContentType getRealContentType() {
             return CloudInitContentType.INCLUDEONCE;
         }

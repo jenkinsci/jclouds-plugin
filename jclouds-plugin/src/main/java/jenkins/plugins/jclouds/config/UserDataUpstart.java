@@ -16,10 +16,11 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
-import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataUpstart extends Config {
     private static final long serialVersionUID = 1L;
@@ -30,10 +31,11 @@ public class UserDataUpstart extends Config {
     }
 
     @Extension(ordinal = 70)
-    public static class UserDataUpstartProvider extends AbstractConfigProviderImpl {
+    @ConfigSuitableFor(target=UserData.class)
+    public static class UserDataUpstartProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "#upstart-job";
-        private static final String DEFAULT_CONTENT = SIGNATURE + "\n";
+        private static final String SIGNATURE = "^#upstart-job[\\r\\n]+.*";
+        private static final String DEFAULT_CONTENT = "#upstart-job\n";
         private static final String DEFAULT_NAME = "jclouds.upstart";
 
         public UserDataUpstartProvider() {

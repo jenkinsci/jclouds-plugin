@@ -19,13 +19,14 @@ public class JCloudsSlaveTemplateTest {
         final String name = "testSlave";
         final JCloudsSlaveTemplate beforeTemplate = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId",
                 1, 512, "osFamily", "osVersion", "locationId", "jclouds-slave-type1 jclouds-type2",
-                "Description", "initScript", null /* userData */ , 1 /* numExecutors */, false /* stopOnTerminate */,
+                "Description", "initScript", 1 /* numExecutors */, false /* stopOnTerminate */,
                 "jvmOptions", false /* preExistingJenkinsUser */, null /* fsRoot */, false /* allowSudo */,
                 false /* installPrivateKey */, 5 /* overrideRetentionTime */, 0 /* spoolDelayMs */,
                 true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
                 null /* keyPairName */, true /* assignPublicIp */, "network1_id,network2_id",
                 "security_group1,security_group2", null /* credentialsId */,
-                null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */);
+                null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */,
+                null /* configDataIds */);
 
         final List<JCloudsSlaveTemplate> templates = new ArrayList<>();
         templates.add(beforeTemplate);

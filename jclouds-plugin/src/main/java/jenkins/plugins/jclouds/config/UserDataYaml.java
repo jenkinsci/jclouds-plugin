@@ -16,10 +16,11 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
-import org.jenkinsci.lib.configprovider.AbstractConfigProviderImpl;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataYaml extends Config {
 
@@ -29,10 +30,11 @@ public class UserDataYaml extends Config {
     }
 
     @Extension(ordinal = 70)
-    public static class UserDataYamlProvider extends AbstractConfigProviderImpl {
+    @ConfigSuitableFor(target=UserData.class)
+    public static class UserDataYamlProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "#cloud-init\n";
-        private static final String DEFAULT_CONTENT = SIGNATURE;
+        private static final String SIGNATURE = "^#cloud-config[\\r\\n]+.*";
+        private static final String DEFAULT_CONTENT = "#cloud-config\n";
         private static final String DEFAULT_NAME = "jclouds.yaml";
 
         public UserDataYamlProvider() {

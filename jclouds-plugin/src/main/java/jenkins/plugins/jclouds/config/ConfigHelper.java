@@ -22,8 +22,6 @@ import org.jenkinsci.lib.configprovider.ConfigProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import java.lang.reflect.Method;
-
 import java.nio.charset.StandardCharsets;
 
 import java.util.ArrayList;
@@ -50,19 +48,10 @@ public class ConfigHelper {
     private ConfigHelper() {
     }
 
-    @edu.umd.cs.findbugs.annotations.SuppressWarnings(value="REC_CATCH_EXCEPTION", justification="false positive")
     public static ContentType getRealContentType(ConfigProvider p) {
         ContentType ct = p.getContentType();
-        if (null == ct) {
-            try {
-                Method m = p.getClass().getMethod("getRealContentType");
-                Object o = m.invoke(p);
-                if (o instanceof ContentType) {
-                    ct = (ContentType)o;
-                }
-            } catch (Exception x) {
-                ct = null;
-            }
+        if (null == ct && p instanceof JCloudsConfig) {
+            ct = ((JCloudsConfig)p).getRealContentType();
         }
         return ct;
     }
