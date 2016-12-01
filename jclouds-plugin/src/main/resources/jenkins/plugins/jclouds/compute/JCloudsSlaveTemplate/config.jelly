@@ -15,7 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
   <table width="100%" class="pane">
 
     <f:block>
@@ -117,7 +117,11 @@ limitations under the License.
           <f:textarea />
         </f:entry>
       
+        <st:once>
+          <script type="text/javascript" src="${rootURL}/plugin/jclouds-jenkins/jclouds.js"/>
+        </st:once>
         <f:entry title="${%User Data}">
+          <input type="button" value="${%Manage config files...}" class="jclouds-managecf"  onclick="window.JClouds.managecf(event);"/>
           <f:repeatableProperty field="userDataEntries"/>
         </f:entry>
 
