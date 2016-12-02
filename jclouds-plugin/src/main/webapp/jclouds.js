@@ -1,29 +1,93 @@
 window.JClouds = window.JClouds || {
+    "initdlg": function initdlg() {
+        if (!(window.JClouds.dlg)) {
+            var div = document.createElement('DIV');
+            document.body.appendChild(div);
+            div.innerHTML = '<div id="jcloudsDialog" class="bd" style="overflow-y: scroll;"></div>';
+            window.JClouds.body = $('jcloudsDialog');
+            window.JClouds.dlg = new YAHOO.widget.Panel(div, {
+                fixedcenter: true,
+                close: true,
+                draggable: true,
+                zindex: 1000,
+                modal: true,
+                visible: false,
+                keylisteners: [
+                    new YAHOO.util.KeyListener(
+                        document, {"keys": 27},
+                        {
+                            "fn": function() {
+                                window.JClouds.dlg.hide();
+                                window.JClouds.body.innerHTML = '';
+                            },
+                            scope:document,
+                            correctScope:false
+                        })
+                ]
+            });
+            window.JClouds.dlg.render();
+        }
+    },
+    "showdlg": function showdlg(url, postfunc) {
+        window.JClouds.initdlg();
+        new Ajax.Request(url, {
+            method: 'get',
+            requestHeaders: {'Crumb': crumb},
+            onSuccess: function (t) {
+                var r = YAHOO.util.Dom.getClientRegion();
+                var dlg = window.JClouds.dlg;
+                window.JClouds.body.innerHTML = t.responseText;
+                dlg.cfg.setProperty("width", r.width * 3 / 4 + "px");
+                dlg.cfg.setProperty("height", r.height * 3 / 4 + "px");
+                dlg.center();
+                if (null != postfunc) {
+                    postfunc();
+                }
+                dlg.show();
+            }
+        });
+    },
+    "showcfpost": function showcfpost() {
+        var body = window.JClouds.body;
+        body.down('#page-head').remove();
+        body.down('#side-panel').remove();
+        body.down('footer').remove();
+        Behaviour.applySubtree(body, false);
+    },
+    "mancfpost": function mancfpost() {
+        var body = window.JClouds.body;
+        body.down('#page-head').remove();
+        body.down('#side-panel').remove();
+        body.down('footer').remove();
+        Behaviour.applySubtree(body, false);
+    },
     "showcf": function(evt) {
         var but = evt.target || evt.srcElement;
         var fid = $(but).up('tr').down('select').getValue();
-        window.open(rootURL + '/configfiles/show?id=' + fid, 'window', 'width=900,height=640,resizable,scrollbars');
+        evt.stop();
+        window.JClouds.showdlg(rootURL + '/configfiles/show?id=' + fid, window.JClouds.showcfpost);
     },
     "managecf": function(evt) {
+        evt.stop();
         window.open(rootURL + '/configfiles', 'window', 'width=900,height=640,resizable,scrollbars');
-    },
-    "scan": function() {
-        //$$('.jclouds-showcf').each(function (e) {
-        //    Behaviour.applySubtree(e, true);
-        //});
-        $$('.jclouds-managecf').each(function (e) {
-            Behaviour.applySubtree(e, true);
-        });
     }
 };
-// YUI-Buttons are broken in that their event handlers are not duplicated properly
-// if they are inside a repeatable chunk. Normal buttons work like a charm.
-//Behaviour.specify('INPUT.jclouds-showcf', 'jclouds.showcf', 0, function (e) {
-//    makeButton(e, window.JClouds.showcf);
-//    e = null;
-//});
-Behaviour.specify('INPUT.jclouds-managecf', 'jclouds.managecf', 0, function (e) {
-    makeButton(e, window.JClouds.managecf);
+Behaviour.specify('INPUT.jclouds-showcf', 'jclouds', 99, function (e) {
+    // Jenkins' makeButton is complete crap when it comes to event handling
+    // inside a repeatable chunk.
+    // Therefore, we specify a null event handler here and let the
+    // SPAN... behavior install EXACTLY ONE click handler on the resulting
+    // YUI button. (An YUI button's outermost element is a SPAN.)
+    makeButton(e, null);
+    e = null;
+});
+Behaviour.specify('INPUT.jclouds-managecf', 'jclouds', 99, function (e) {
+    makeButton(e, null);
     e = null;
 }); 
-window.setTimeout(window.JClouds.scan, 50);
+Behaviour.specify('SPAN.jclouds-showcf', 'jclouds', 100, function (e) {
+    $(e).observe('click', window.JClouds.showcf);
+});
+Behaviour.specify('SPAN.jclouds-managecf', 'jclouds', 100, function (e) {
+    $(e).observe('click', window.JClouds.managecf);
+});
