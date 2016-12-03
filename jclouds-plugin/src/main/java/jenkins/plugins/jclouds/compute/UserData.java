@@ -18,6 +18,9 @@ package jenkins.plugins.jclouds.compute;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -30,7 +33,7 @@ import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 
 import jenkins.plugins.jclouds.config.JCloudsConfig;
-import jenkins.plugins.jclouds.config.ConfigSuitableFor;
+import jenkins.plugins.jclouds.config.ConfigHelper;
 import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
 
 /**
@@ -48,6 +51,7 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
         this.fileId = fileId;
     }
 
+    @NonNull
     static UserData createFromData(final String data, final String name) {
         ConfigProvider provider = ConfigProvider.all().get(UserDataScriptProvider.class);
         for (ConfigProvider p : ConfigProvider.all()) {
@@ -73,24 +77,9 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
             return "";
         }
 
-        public ListBoxModel doFillFileIdItems(@QueryParameter final String currentValue) {
-            ListBoxModel m = new ListBoxModel();
-            for (ConfigProvider p : ConfigProvider.all()) {
-                ConfigSuitableFor a = p.getClass().getAnnotation(ConfigSuitableFor.class);
-                if (null != a && a.target() == UserData.class) {
-                    for (Config cfg : p.getAllConfigs()) {
-                        String label = p.getDisplayName() + " " + cfg.name;
-                        if (cfg.comment != null && !cfg.comment.isEmpty()) {
-                            label += String.format(" [%s]", cfg.comment);
-                        }
-                        m.add(label, cfg.id);
-                        if (cfg.id.equals(currentValue)) {
-                            m.get(m.size() - 1).selected = true;
-                        }
-                    }
-                }
-            }
-            return m;
+        @NonNull
+        public ListBoxModel doFillFileIdItems(@QueryParameter @Nullable final String currentValue) {
+            return ConfigHelper.doFillFileItems(currentValue);
         }
     }
 }

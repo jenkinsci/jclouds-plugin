@@ -67,6 +67,16 @@ window.JClouds = window.JClouds || {
         evt.stop();
         window.JClouds.showdlg(rootURL + '/configfiles/show?id=' + fid, window.JClouds.showcfpost);
     },
+    "chgbutton": function(sel) {
+        var dis = $(sel).getValue() == '';
+        var but = $(sel).up('tr').down('.yui-button').yb;
+        but.set('disabled', dis, true);
+    },
+    "chsel": function(evt) {
+        var sel = evt.target || evt.srcElement;
+        evt.stop();
+        window.JClouds.chgbutton(sel);
+    },
     "managecf": function(evt) {
         evt.stop();
         window.open(rootURL + '/configfiles', 'window', 'width=900,height=640,resizable,scrollbars');
@@ -78,16 +88,26 @@ Behaviour.specify('INPUT.jclouds-showcf', 'jclouds', 99, function (e) {
     // Therefore, we specify a null event handler here and let the
     // SPAN... behavior install EXACTLY ONE click handler on the resulting
     // YUI button. (An YUI button's outermost element is a SPAN.)
-    makeButton(e, null);
+    var b = makeButton(e, null);
+    // Attach the YUI button object to the DOM element, so we can retrieve
+    // it later (for disabling/enabling the button) from within our onchange
+    // event handler for the selects.
+    b.get("element").yb =  b;
     e = null;
 });
 Behaviour.specify('INPUT.jclouds-managecf', 'jclouds', 99, function (e) {
-    makeButton(e, null);
+    var b = makeButton(e, null);
     e = null;
 }); 
 Behaviour.specify('SPAN.jclouds-showcf', 'jclouds', 100, function (e) {
+    $(e).stopObserving('click');
     $(e).observe('click', window.JClouds.showcf);
 });
 Behaviour.specify('SPAN.jclouds-managecf', 'jclouds', 100, function (e) {
+    $(e).stopObserving('click');
     $(e).observe('click', window.JClouds.managecf);
+});
+Behaviour.specify('SELECT.jclouds', 'jclouds', 101, function (e) {
+    $(e).stopObserving('change');
+    $(e).observe('change', window.JClouds.chsel);
 });

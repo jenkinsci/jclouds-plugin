@@ -1,0 +1,13 @@
+<div>
+    User data is used for configuring/augmenting the provisioning process of a new VM instance by the cloud provider.
+    In the simplest case, this is just another shell script. However, many cloud providers provide images with
+    pre-configured <b>cloud-init</b>. This tool can do a lot more in an easier way. It even allows multipart
+    config data which is why you can add multiple snippets here. Please be aware, that some providers limit the
+    total amount of data. Please read the
+    <a href="http://cloudinit.readthedocs.io/en/latest/index.html">cloud-init documentation</a> and ask your provider
+    about those limits.<br/>
+    Also note: <b>If</b> using multipart data, we enforce <b>merging</b> of multiple <b>yaml</b> snippets. More info
+    about this feature
+    <a href="https://wiki.jenkins-ci.org/display/JENKINS/JClouds+Plugin#JCloudsPlugin-MergedcloudinitYAMLdefinitions">here</a>.
+</div>
+

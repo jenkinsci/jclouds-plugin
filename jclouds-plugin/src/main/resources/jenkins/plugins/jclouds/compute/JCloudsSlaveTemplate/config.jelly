@@ -114,11 +114,17 @@ limitations under the License.
           <f:number clazz="number" min="0" step="1" default="0"/>
         </f:entry>
       
-        <f:entry title="${%Init Script}" field="initScript">
-          <f:textarea />
+        <f:entry title="${%Init Script}" help="${descriptor.getHelpFile('initScriptId')}">
+          <table width="100%">
+            <tr>
+              <td><f:select field="initScriptId" clazz="jclouds"/></td>
+              <td><input type="button" value="${%Show content}" class="jclouds-showcf"
+                  disabled="${empty(instance.initScriptId)?'true':null}"/></td>
+            </tr>
+          </table>
         </f:entry>
       
-        <f:entry title="${%User Data}">
+        <f:entry title="${%User Data}" help="${descriptor.getHelpFile('userDataEntries')}">
           <input type="button" value="${%Manage config files...}" class="jclouds-managecf"/>
           <f:repeatableProperty field="userDataEntries"/>
         </f:entry>

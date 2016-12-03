@@ -691,7 +691,8 @@ public class JCloudsCloud extends Cloud {
             super(xstream);
         }
 
-        @Override protected void callback(JCloudsCloud c, UnmarshallingContext context) {
+        @Override
+        protected void callback(JCloudsCloud c, UnmarshallingContext context) {
             if (Strings.isNullOrEmpty(c.getCloudGlobalKeyId()) && !Strings.isNullOrEmpty(c.privateKey)) {
                 c.setCloudGlobalKeyId(convertCloudPrivateKey(c.name, c.privateKey));
             }

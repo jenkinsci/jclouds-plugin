@@ -22,7 +22,9 @@ import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +36,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -107,6 +113,8 @@ import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 
 import com.trilead.ssh2.Connection;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.LocationHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
@@ -131,7 +139,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final String description;
     public final String osVersion;
     public final String locationId;
-    public final String initScript;
+    /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    private transient String initScript;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
     private transient String userData;
     public final int numExecutors;
@@ -147,7 +156,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     private final String fsRoot;
     public final boolean allowSudo;
     public final boolean installPrivateKey;
-    public Integer overrideRetentionTime;
+    public final Integer overrideRetentionTime;
     public final int spoolDelayMs;
     private final Object delayLockObject = new Object();
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
@@ -155,28 +164,21 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final boolean waitPhoneHome;
     public final int waitPhoneHomeTimeout;
     public final String keyPairName;
-    public boolean assignPublicIp;
+    public final boolean assignPublicIp;
     public final String networks;
     public final String securityGroups;
     public final Mode mode;
     public final boolean useConfigDrive;
-    private String credentialsId;
-    private String adminCredentialsId;
-    private List<UserData> userDataEntries;
+    private final String credentialsId;
+    private final String adminCredentialsId;
+    private final List<UserData> userDataEntries;
+    private final String initScriptId;
 
     transient JCloudsCloud cloud;
     private transient Set<LabelAtom> labelSet;
 
-    public void setCredentialsId(final String value) {
-        credentialsId = value;
-    }
-
     public String getCredentialsId() {
         return credentialsId;
-    }
-
-    public void setAdminCredentialsId(final String value) {
-        adminCredentialsId = value;
     }
 
     public String getAdminCredentialsId() {
@@ -187,10 +189,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return userDataEntries;
     }
 
+    public String getInitScriptId() {
+        return initScriptId;
+    }
+
     @DataBoundConstructor
     public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex,
             final String hardwareId, final double cores, final int ram, final String osFamily, final String osVersion,
-            final String locationId, final String labelString, final String description, final String initScript,
+            final String locationId, final String labelString, final String description, final String initScriptId,
             final int numExecutors, final boolean stopOnTerminate, final String jvmOptions,
             final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo,
             final boolean installPrivateKey, final Integer overrideRetentionTime, final int spoolDelayMs,
@@ -210,7 +216,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.locationId = Util.fixEmptyAndTrim(locationId);
         this.labelString = Util.fixNull(labelString);
         this.description = Util.fixNull(description);
-        this.initScript = Util.fixNull(initScript);
+        this.initScriptId = Util.fixNull(initScriptId);
         this.numExecutors = numExecutors;
         this.jvmOptions = Util.fixEmptyAndTrim(jvmOptions);
         this.stopOnTerminate = stopOnTerminate;
@@ -338,6 +344,24 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             ret.add(ud.fileId);
         }
         return ret;
+    }
+
+    private void setUserData(final TemplateOptions options, final byte[] udata) {
+        final String sudata = new String(udata, StandardCharsets.UTF_8);
+        if (options instanceof DigitalOcean2TemplateOptions) {
+            LOGGER.finest("Setting userData to " + sudata);
+            options.userMetadata("user_data", sudata);
+        } else {
+            try {
+                Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
+                LOGGER.finest("Setting userData to " + sudata);
+                userDataMethod.invoke(options, udata);
+            } catch (ReflectiveOperationException e) {
+                LOGGER.log(Level.WARNING,
+                        "userData is not supported by provider options class " + options.getClass().getName(), e);
+            }
+        }
+
     }
 
     @Override
@@ -509,9 +533,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             Statement initStatement = null;
 
+            final String initscript = ConfigHelper.getConfig(initScriptId);
             if (this.preExistingJenkinsUser) {
-                if (this.initScript.length() > 0) {
-                    initStatement = Statements.exec(this.initScript);
+                if (!initscript.isEmpty()) {
+                    initStatement = Statements.exec(initscript);
                 }
             } else {
                 // provision jenkins user
@@ -523,7 +548,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 // Jenkins needs /jenkins dir.
                 Statement jenkinsDirStatement = newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
                         Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
-                initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(this.initScript));
+                initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(initscript));
             }
             options.inboundPorts(22).userMetadata(userMetadata);
 
@@ -540,19 +565,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             if (null != userDataEntries) {
                 byte[] udata = ConfigHelper.buildUserData(getUserDataIds());
                 if (null != udata) {
-                    String sudata = new String(udata, StandardCharsets.UTF_8);
-                    if (options instanceof DigitalOcean2TemplateOptions) {
-                        options.userMetadata("user_data", sudata);
-                    } else {
-                        try {
-                            Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
-                            LOGGER.finest("Setting userData to " + sudata);
-                            userDataMethod.invoke(options, udata);
-                        } catch (Exception e) {
-                            LOGGER.log(Level.WARNING,
-                                    "userData is not supported by provider options class " + options.getClass().getName(), e);
-                        }
-                    }
+                    setUserData(options, udata);
                 }
             }
 
@@ -661,7 +674,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.validateRequired(value);
         }
 
-        @edu.umd.cs.findbugs.annotations.SuppressWarnings(value="REC_CATCH_EXCEPTION", justification="false positive")
         public boolean isUserDataSupported(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String zones) {
                 // Temporary hack for digitalocean2
@@ -671,7 +683,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
                 TemplateOptions o = ctx.getComputeService().templateOptions();
                 o.getClass().getMethod("userData", new byte[0].getClass());
-            } catch (Exception x) {
+            } catch (ReflectiveOperationException x) {
                 return false;
             }
             return true;
@@ -880,6 +892,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
         }
 
+        @NonNull
+        public ListBoxModel doFillInitScriptIdItems(@QueryParameter @Nullable final String currentValue) {
+            return ConfigHelper.doFillFileItems(currentValue);
+        }
+
         public FormValidation doValidateLocationId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String locationId, @QueryParameter String zones) {
 
@@ -934,18 +951,37 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
     }
 
+    /* Upgrading requires us to set some normally final variables. */
+    private void setFinal(final String fieldName, Object newValue) throws ReflectiveOperationException {
+        Field field = getClass().getDeclaredField(fieldName);
+        if ((field.getModifiers() & Modifier.FINAL) != 0) {
+            Field modifiers = Field.class.getDeclaredField("modifiers");
+            modifiers.setAccessible(true);
+            modifiers.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+            field.set(this, newValue);
+            modifiers.setInt(field, field.getModifiers() | Modifier.FINAL);
+            modifiers.setAccessible(false);
+        } else {
+            field.set(this, newValue);
+        }
+    }
+
+    @SuppressFBWarnings(value={"REC_CATCH_EXCEPTION","NP_NULL_ON_SOME_PATH"}, justification="false positives")
     void upgrade() {
         try {
             if (getCloud().providerName.equals("openstack-nova")) {
-                assignPublicIp = assignFloatingIp;
+                LOGGER.info("Upgrading config data: assignFloatingIp");
+                setFinal("assignPublicIp", assignFloatingIp);
             }
             final String description = "JClouds cloud " + getCloud().name + "." + name + " - auto-migrated";
             String ju = getJenkinsUser();
             if (isNullOrEmpty(getCredentialsId()) && !isNullOrEmpty(ju)) {
-                setCredentialsId(convertJenkinsUser(ju, description, getCloud().getGlobalPrivateKey()));
+                LOGGER.info("Upgrading config data: jenkins credentals -> via credentials plugin");
+                setFinal("credentialsId", convertJenkinsUser(ju, description, getCloud().getGlobalPrivateKey()));
                 jenkinsUser = null; // Not used anymore, but retained for backward compatibility.
             }
             if (isNullOrEmpty(getAdminCredentialsId())) {
+                LOGGER.info("Upgrading config data: admin credentals -> via credentials plugin");
                 StandardUsernameCredentials u = null;
                 String au = getAdminUser();
                 if (isNullOrEmpty(vmPassword)) {
@@ -962,23 +998,30 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                             CredentialsScope.SYSTEM, null, description, au, vmPassword);
                 }
                 try {
-                    setAdminCredentialsId(CredentialsHelper.storeCredentials(u));
+                    setFinal("adminCredentialsId", CredentialsHelper.storeCredentials(u));
                 } catch (IOException x) {
                     LOGGER.warning(String.format("Error while saving credentials: %s", x.getMessage()));
                 }
             }
             if (!isNullOrEmpty(userData)) {
+                LOGGER.info("Upgrading config data: userData -> via config-file-provider");
                 UserData ud = UserData.createFromData(userData,
                         getCloud().name + "." + name + ".cfg");
                 if (null == userDataEntries) {
-                    userDataEntries = new ArrayList<>();
+                    setFinal("userDataEntries", new ArrayList<>());
                 }
                 userDataEntries.add(ud);
                 userData = null;
             }
+            if (!isNullOrEmpty(initScript)) {
+                LOGGER.info("Upgrading config data: initScript -> via config-file-provider");
+                setFinal("initScriptId", UserData.createFromData(initScript,
+                        getCloud().name + "." + name + ".sh").fileId);
+                initScript = null;
+            }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
-            throw e;
+            throw new IllegalStateException("Could not upgrade config data", e);
         }
     }
 
@@ -989,6 +1032,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
      * @param privateKey The privateKey.
      * @return The Id of the ssh-credential-plugin record (either newly created or already existing).
      */
+    @CheckForNull
     private String convertJenkinsUser(final String user, final String  description, final String privateKey) {
         StandardUsernameCredentials u = retrieveExistingCredentials(user, privateKey);
         if (null == u) {

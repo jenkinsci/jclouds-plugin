@@ -19,7 +19,7 @@ public class JCloudsSlaveTemplateTest {
         final String name = "testSlave";
         final JCloudsSlaveTemplate beforeTemplate = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId",
                 1, 512, "osFamily", "osVersion", "locationId", "jclouds-slave-type1 jclouds-type2",
-                "Description", "initScript", 1 /* numExecutors */, false /* stopOnTerminate */,
+                "Description", "initScriptId", 1 /* numExecutors */, false /* stopOnTerminate */,
                 "jvmOptions", false /* preExistingJenkinsUser */, null /* fsRoot */, false /* allowSudo */,
                 false /* installPrivateKey */, 5 /* overrideRetentionTime */, 0 /* spoolDelayMs */,
                 true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
@@ -44,7 +44,7 @@ public class JCloudsSlaveTemplateTest {
         j.assertEqualBeans(beforeCloud, afterCloud,
                 "profile,providerName,endPointUrl,trustAll,groupPrefix");
         j.assertEqualBeans(beforeTemplate, afterTemplate,
-                "name,cores,ram,osFamily,osVersion,labelString,description,initScript,numExecutors,stopOnTerminate,mode,useConfigDrive");
+                "name,cores,ram,osFamily,osVersion,labelString,description,numExecutors,stopOnTerminate,mode,useConfigDrive");
     }
 
 }

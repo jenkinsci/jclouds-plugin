@@ -15,6 +15,8 @@
  */
 package jenkins.plugins.jclouds.config;
 
+import hudson.util.ListBoxModel;
+
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
@@ -32,6 +34,10 @@ import java.util.logging.Level;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 
+import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
@@ -41,6 +47,8 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
+import jenkins.plugins.jclouds.compute.UserData;
+
 public class ConfigHelper {
 
     private static final Logger LOGGER = Logger.getLogger(ConfigHelper.class.getName());
@@ -48,7 +56,16 @@ public class ConfigHelper {
     private ConfigHelper() {
     }
 
-    public static ContentType getRealContentType(ConfigProvider p) {
+    @NonNull
+    public static String getConfig(@Nullable final String id) {
+        final Config cfg = Config.getByIdOrNull(id);
+        if (null != cfg && null != cfg.content) {
+            return cfg.content;
+        }
+        return "";
+    }
+
+    public static ContentType getRealContentType(@NonNull ConfigProvider p) {
         ContentType ct = p.getContentType();
         if (null == ct && p instanceof JCloudsConfig) {
             ct = ((JCloudsConfig)p).getRealContentType();
@@ -56,6 +73,7 @@ public class ConfigHelper {
         return ct;
     }
 
+    @CheckForNull
     private static BodyPart buildBody(final Config cfg) {
         DataSource source = new ConfigDataSource(cfg);
         if (null != source) {
@@ -77,7 +95,8 @@ public class ConfigHelper {
         return null;
     }
 
-    private static List<Config> getConfigs(final List<String> configIds) {
+    @NonNull
+    private static List<Config> getConfigs(@NonNull final List<String> configIds) {
         List<Config> ret = new ArrayList<>();
         for (final String id : configIds) {
             final Config cfg = Config.getByIdOrNull(id);
@@ -88,7 +107,8 @@ public class ConfigHelper {
         return ret;
     }
 
-    public static byte [] buildUserData(final List<String> configIds) {
+    @CheckForNull
+    public static byte [] buildUserData(@NonNull final List<String> configIds) {
         List<Config> configs = getConfigs(configIds);
         if (configs.isEmpty()) {
             return null;
@@ -119,4 +139,26 @@ public class ConfigHelper {
         }
         return null;
     }
+
+    @NonNull
+    public static ListBoxModel doFillFileItems(@Nullable final String currentValue) {
+            ListBoxModel m = new ListBoxModel();
+            m.add("- none -", "");
+            for (ConfigProvider p : ConfigProvider.all()) {
+                ConfigSuitableFor a = p.getClass().getAnnotation(ConfigSuitableFor.class);
+                if (null != a && a.target() == UserData.class) {
+                    for (Config cfg : p.getAllConfigs()) {
+                        String label = p.getDisplayName() + " " + cfg.name;
+                        if (cfg.comment != null && !cfg.comment.isEmpty()) {
+                            label += String.format(" [%s]", cfg.comment);
+                        }
+                        m.add(label, cfg.id);
+                        if (cfg.id.equals(currentValue)) {
+                            m.get(m.size() - 1).selected = true;
+                        }
+                    }
+                }
+            }
+            return m;
+        }
 }

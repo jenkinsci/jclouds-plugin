@@ -17,8 +17,9 @@ limitations under the License.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <tr>
-    <td><f:select field="fileId" clazz="jclouds"/></td>
-    <td><input type="button" value="${%Show content}" class="jclouds-showcf" onclick="window.JClouds.showcf(event);"/></td>
+    <td><f:select field="fileId" clazz="jclouds" default=""/></td>
+    <td><input type="button" value="${%Show content}" class="jclouds-showcf"
+        disabled="${empty(instance.fileId)?'true':null}"/></td>
     <td><f:repeatableDeleteButton/></td>
   </tr>
 </j:jelly>
