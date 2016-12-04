@@ -33,7 +33,7 @@ public class UserDataPartHandler extends Config {
     @ConfigSuitableFor(target=UserData.class)
     public static class UserDataPartHandlerProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "^#part-handler[\\r\\n]+.*";
+        private static final String SIGNATURE = "^#part-handler[\\r\\n]+";
         private static final String DEFAULT_CONTENT = "#part-handler\n" +
             "def list_types():\n" +
             "   # return a list of mime-types that are handled by this module\n" +

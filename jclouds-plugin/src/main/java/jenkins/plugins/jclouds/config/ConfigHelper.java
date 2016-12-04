@@ -75,7 +75,7 @@ public class ConfigHelper {
 
     @CheckForNull
     private static BodyPart buildBody(final Config cfg) {
-        DataSource source = new ConfigDataSource(cfg);
+        DataSource source = new ConfigDataSource(cfg, true);
         if (null != source) {
             try {
                 BodyPart body = new MimeBodyPart();

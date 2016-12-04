@@ -33,7 +33,7 @@ public class UserDataScript extends Config {
     @ConfigSuitableFor(target=UserData.class)
     public static class UserDataScriptProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "^#!.*";
+        private static final String SIGNATURE = "^#!";
         private static final String DEFAULT_CONTENT = "#!/bin/sh\n";
         private static final String DEFAULT_NAME = "jclouds.sh";
 

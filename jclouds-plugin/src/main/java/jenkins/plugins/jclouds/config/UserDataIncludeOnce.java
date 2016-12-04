@@ -33,7 +33,7 @@ public class UserDataIncludeOnce extends Config {
     @ConfigSuitableFor(target=UserData.class)
     public static class UserDataIncludeOnceProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "^#include-once[\\r\\n]+.*";
+        private static final String SIGNATURE = "^#include-once[\\r\\n]+";
         private static final String DEFAULT_CONTENT = "#include-once\n";
         private static final String DEFAULT_NAME = "jclouds.include-once";
 

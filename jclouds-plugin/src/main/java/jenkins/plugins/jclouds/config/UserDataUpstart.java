@@ -34,7 +34,7 @@ public class UserDataUpstart extends Config {
     @ConfigSuitableFor(target=UserData.class)
     public static class UserDataUpstartProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "^#upstart-job[\\r\\n]+.*";
+        private static final String SIGNATURE = "^#upstart-job[\\r\\n]+";
         private static final String DEFAULT_CONTENT = "#upstart-job\n";
         private static final String DEFAULT_NAME = "jclouds.upstart";
 

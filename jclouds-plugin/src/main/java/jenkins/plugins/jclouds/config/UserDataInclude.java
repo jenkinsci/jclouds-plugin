@@ -33,7 +33,7 @@ public class UserDataInclude extends Config {
     @ConfigSuitableFor(target=UserData.class)
     public static class UserDataIncludeProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "^#include[\\r\\n]+.*";
+        private static final String SIGNATURE = "^#include[\\r\\n]+";
         private static final String DEFAULT_CONTENT = "#include\n";
         private static final String DEFAULT_NAME = "jclouds.include";
 

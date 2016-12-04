@@ -34,7 +34,7 @@ public class UserDataBoothook extends Config {
     @ConfigSuitableFor(target=UserData.class)
     public static class UserDataBoothookProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "^#cloud-boothook[\\r\\n]+.*";
+        private static final String SIGNATURE = "^#cloud-boothook[\\r\\n]+";
         private static final String DEFAULT_CONTENT = "#cloud-boothook\n";
         private static final String DEFAULT_NAME = "jclouds.boothook";
 

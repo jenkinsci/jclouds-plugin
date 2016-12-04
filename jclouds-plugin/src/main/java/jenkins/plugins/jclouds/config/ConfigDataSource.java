@@ -20,11 +20,16 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 
 import javax.activation.DataSource;
 
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
+
+import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
+
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 
 /**
  * A readonly DataSource, backed by a {@link Config}.
@@ -32,20 +37,30 @@ import org.jenkinsci.lib.configprovider.model.ContentType;
 public class ConfigDataSource implements DataSource {
 
     private final Config cfg;
+    private final boolean stripSignature;
 
     /**
      * Creates a new instance from the supplied config.
      * @param config The config to be used for supplying the content.
+     * @param strip If {@code true}, then any leading signature will be stripped if possible.
      */
-    public ConfigDataSource(final Config config) {
+    public ConfigDataSource(final Config config, final boolean strip) {
         cfg = config;
+        stripSignature = strip;
     }
 
     /**
      * {@inheritDoc}
      */
     public InputStream getInputStream() throws IOException {
-        final String content = null == cfg.content ? "" : cfg.content;
+        String content = null == cfg.content ? "" : cfg.content;
+        if (stripSignature) {
+            ConfigProvider p = cfg.getProvider();
+            if (p instanceof JCloudsConfig && !(p instanceof UserDataScriptProvider)) {
+                String sig = ((JCloudsConfig)p).getSignature();
+                content = Pattern.compile(sig, Pattern.DOTALL).matcher(content).replaceFirst("");
+            }
+        }
         return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
     }
 

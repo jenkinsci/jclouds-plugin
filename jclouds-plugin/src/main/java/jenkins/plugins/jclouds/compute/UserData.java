@@ -57,7 +57,7 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
         for (ConfigProvider p : ConfigProvider.all()) {
             if (p instanceof JCloudsConfig) {
                 String sig = ((JCloudsConfig)p).getSignature();
-                if (Pattern.compile(sig, Pattern.DOTALL).matcher(data).matches()) {
+                if (Pattern.compile(sig, Pattern.DOTALL).matcher(data).find()) {
                     provider = p;
                     break;
                 }

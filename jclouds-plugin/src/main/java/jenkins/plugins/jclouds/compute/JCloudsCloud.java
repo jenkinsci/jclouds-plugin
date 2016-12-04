@@ -558,7 +558,7 @@ public class JCloudsCloud extends Cloud {
         public boolean isUserDataSupported(String provider, String credId, String url, String zones, boolean trustAll) {
             // GCE uses meta_data['user-data']
             if ("google-compute-engine".equals(provider)) {
-                return false; // TODO: test, if userMetadata['user-data'] works
+                return true;
             }
             // Temporary hack for digitalocean2
             if ("digitalocean2".equals(provider)) {

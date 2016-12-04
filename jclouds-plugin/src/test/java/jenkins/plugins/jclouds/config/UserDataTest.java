@@ -73,4 +73,5 @@ public class UserDataTest {
         assertTrue("Result contains include part", sudata.contains(
                     "Content-Type: text/x-include-url; charset=utf8; name=jclouds.include"));
     }
+
 }

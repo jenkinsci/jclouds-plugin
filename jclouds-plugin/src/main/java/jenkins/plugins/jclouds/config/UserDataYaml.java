@@ -33,7 +33,7 @@ public class UserDataYaml extends Config {
     @ConfigSuitableFor(target=UserData.class)
     public static class UserDataYamlProvider extends AbstractJCloudsConfigProviderImpl {
 
-        private static final String SIGNATURE = "^#cloud-config[\\r\\n]+.*";
+        private static final String SIGNATURE = "^#cloud-config[\\r\\n]+";
         private static final String DEFAULT_CONTENT = "#cloud-config\n";
         private static final String DEFAULT_NAME = "jclouds.yaml";
 
