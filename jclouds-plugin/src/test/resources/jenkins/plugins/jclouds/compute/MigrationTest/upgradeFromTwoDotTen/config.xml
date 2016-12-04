@@ -1,0 +1,387 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<hudson>
+  <disabledAdministrativeMonitors>
+    <string>OldData</string>
+    <string>jenkins.security.RekeySecretAdminMonitor</string>
+    <string>hudson.node_monitors.MonitorMarkedNodeOffline</string>
+  </disabledAdministrativeMonitors>
+  <version>2.19.3</version>
+  <numExecutors>0</numExecutors>
+  <mode>EXCLUSIVE</mode>
+  <useSecurity>true</useSecurity>
+  <authorizationStrategy class="hudson.security.ProjectMatrixAuthorizationStrategy">
+    <permission>hudson.model.Computer.Configure:felfert</permission>
+    <permission>hudson.model.Computer.Connect:felfert</permission>
+    <permission>hudson.model.Computer.Create:felfert</permission>
+    <permission>hudson.model.Computer.Delete:felfert</permission>
+    <permission>hudson.model.Computer.Disconnect:felfert</permission>
+    <permission>hudson.model.Hudson.Administer:felfert</permission>
+    <permission>hudson.model.Hudson.ConfigureUpdateCenter:felfert</permission>
+    <permission>hudson.model.Hudson.Read:anonymous</permission>
+    <permission>hudson.model.Hudson.Read:felfert</permission>
+    <permission>hudson.model.Hudson.Read:fritzgit</permission>
+    <permission>hudson.model.Hudson.Read:github</permission>
+    <permission>hudson.model.Hudson.Read:slavejar</permission>
+    <permission>hudson.model.Hudson.RunScripts:felfert</permission>
+    <permission>hudson.model.Hudson.UploadPlugins:felfert</permission>
+    <permission>hudson.model.Item.Build:felfert</permission>
+    <permission>hudson.model.Item.Build:fritzgit</permission>
+    <permission>hudson.model.Item.Build:github</permission>
+    <permission>hudson.model.Item.Cancel:felfert</permission>
+    <permission>hudson.model.Item.Cancel:fritzgit</permission>
+    <permission>hudson.model.Item.Cancel:github</permission>
+    <permission>hudson.model.Item.Configure:felfert</permission>
+    <permission>hudson.model.Item.Create:felfert</permission>
+    <permission>hudson.model.Item.Delete:felfert</permission>
+    <permission>hudson.model.Item.Read:felfert</permission>
+    <permission>hudson.model.Item.Read:fritzgit</permission>
+    <permission>hudson.model.Item.Read:github</permission>
+    <permission>hudson.model.Item.Workspace:felfert</permission>
+    <permission>hudson.model.Run.Delete:felfert</permission>
+    <permission>hudson.model.Run.Update:felfert</permission>
+    <permission>hudson.model.View.Configure:felfert</permission>
+    <permission>hudson.model.View.Create:felfert</permission>
+    <permission>hudson.model.View.Delete:felfert</permission>
+    <permission>hudson.model.View.Read:felfert</permission>
+    <permission>hudson.model.View.Read:fritzgit</permission>
+    <permission>hudson.model.View.Read:github</permission>
+    <permission>hudson.scm.SCM.Tag:felfert</permission>
+  </authorizationStrategy>
+  <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
+    <disableSignup>true</disableSignup>
+    <enableCaptcha>false</enableCaptcha>
+  </securityRealm>
+  <disableRememberMe>false</disableRememberMe>
+  <projectNamingStrategy class="jenkins.model.ProjectNamingStrategy$DefaultProjectNamingStrategy"/>
+  <workspaceDir>${ITEM_ROOTDIR}/workspace</workspaceDir>
+  <buildsDir>${ITEM_ROOTDIR}/builds</buildsDir>
+  <systemMessage>&lt;h2&gt;FritzE&apos;s personal jenkins&lt;/h2&gt;</systemMessage>
+  <markupFormatter class="hudson.markup.RawHtmlMarkupFormatter" plugin="antisamy-markup-formatter@1.1">
+    <disableSyntaxHighlighting>false</disableSyntaxHighlighting>
+  </markupFormatter>
+  <jdks/>
+  <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
+  <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
+  <clouds>
+    <jenkins.plugins.jclouds.compute.JCloudsCloud>
+      <name>openstack</name>
+      <providerName>openstack-nova</providerName>
+      <endPointUrl>https://my.openstack.provider/url</endPointUrl>
+      <profile>openstack</profile>
+      <retentionTime>30</retentionTime>
+      <instanceCap>10</instanceCap>
+      <templates>
+        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+          <name>bh-wheezy-64</name>
+          <imageNameRegex>^bh\.wheezy\.64\.tpl$</imageNameRegex>
+          <hardwareId>RegionOne/00b629cc-3263-4a16-b5c9-740400278483</hardwareId>
+          <cores>1.0</cores>
+          <ram>512</ram>
+          <osFamily></osFamily>
+          <labelString>linux debian wheezy amd64 x86_64</labelString>
+          <description>Buildhost based on Debian Wheezy 64bit</description>
+          <osVersion></osVersion>
+          <initScript></initScript>
+          <userData>#include
+http://cloud-init.my.openstack.provider/cloud-init/phone-home-fritz.yaml
+</userData>
+          <numExecutors>2</numExecutors>
+          <stopOnTerminate>false</stopOnTerminate>
+          <preExistingJenkinsUser>true</preExistingJenkinsUser>
+          <fsRoot>/home/jenkins</fsRoot>
+          <allowSudo>false</allowSudo>
+          <installPrivateKey>false</installPrivateKey>
+          <overrideRetentionTime>5</overrideRetentionTime>
+          <spoolDelayMs>0</spoolDelayMs>
+          <delayLockObject/>
+          <waitPhoneHome>true</waitPhoneHome>
+          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <keyPairName></keyPairName>
+          <assignPublicIp>false</assignPublicIp>
+          <assignFloatingIp>true</assignFloatingIp>
+          <networks>73cbec8a-f53d-41af-843b-1cd4a6afc025</networks>
+          <securityGroups>default</securityGroups>
+          <mode>NORMAL</mode>
+          <useConfigDrive>true</useConfigDrive>
+          <credentialsId>2461e0e5-fb30-43d5-84bd-cae3c62823bd</credentialsId>
+          <adminCredentialsId>e154479a-5c3b-48cf-bbf2-2f59f842ad51</adminCredentialsId>
+        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+          <name>bh-f24-64</name>
+          <imageNameRegex>^bh\.f24\.64\.tpl$</imageNameRegex>
+          <hardwareId>RegionOne/00b629cc-3263-4a16-b5c9-740400278483</hardwareId>
+          <cores>1.0</cores>
+          <ram>512</ram>
+          <osFamily></osFamily>
+          <labelString>linux fedora fc24 fc2464 amd64 x86_64 fedora64</labelString>
+          <description>Buildhost based on Fedora 24 64bit</description>
+          <osVersion></osVersion>
+          <initScript></initScript>
+          <userData>#include
+http://cloud-init.my.openstack.provider/cloud-init/phone-home-fritz.yaml</userData>
+          <numExecutors>4</numExecutors>
+          <stopOnTerminate>false</stopOnTerminate>
+          <preExistingJenkinsUser>true</preExistingJenkinsUser>
+          <fsRoot>/home/jenkins</fsRoot>
+          <allowSudo>false</allowSudo>
+          <installPrivateKey>false</installPrivateKey>
+          <overrideRetentionTime>240</overrideRetentionTime>
+          <spoolDelayMs>0</spoolDelayMs>
+          <delayLockObject/>
+          <waitPhoneHome>true</waitPhoneHome>
+          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <keyPairName></keyPairName>
+          <assignPublicIp>false</assignPublicIp>
+          <assignFloatingIp>false</assignFloatingIp>
+          <networks>73cbec8a-f53d-41af-843b-1cd4a6afc025</networks>
+          <securityGroups>default</securityGroups>
+          <mode>NORMAL</mode>
+          <useConfigDrive>false</useConfigDrive>
+          <credentialsId>2461e0e5-fb30-43d5-84bd-cae3c62823bd</credentialsId>
+          <adminCredentialsId>e154479a-5c3b-48cf-bbf2-2f59f842ad51</adminCredentialsId>
+        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+          <name>bh-f23-64</name>
+          <imageNameRegex>^bh\.f23\.64\.tpl$</imageNameRegex>
+          <hardwareId>RegionOne/00b629cc-3263-4a16-b5c9-740400278483</hardwareId>
+          <cores>1.0</cores>
+          <ram>512</ram>
+          <osFamily></osFamily>
+          <labelString>linux fedora fc23 fc2364 amd64 x86_64 fedora64</labelString>
+          <description>Buildhost based on Fedora 24 64bit</description>
+          <osVersion></osVersion>
+          <initScript></initScript>
+          <userData>#include
+http://cloud-init.my.openstack.provider/cloud-init/phone-home-fritz.yaml</userData>
+          <numExecutors>4</numExecutors>
+          <stopOnTerminate>false</stopOnTerminate>
+          <preExistingJenkinsUser>true</preExistingJenkinsUser>
+          <fsRoot>/home/jenkins</fsRoot>
+          <allowSudo>false</allowSudo>
+          <installPrivateKey>false</installPrivateKey>
+          <overrideRetentionTime>240</overrideRetentionTime>
+          <spoolDelayMs>0</spoolDelayMs>
+          <delayLockObject/>
+          <waitPhoneHome>true</waitPhoneHome>
+          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <keyPairName></keyPairName>
+          <assignPublicIp>false</assignPublicIp>
+          <assignFloatingIp>false</assignFloatingIp>
+          <networks>73cbec8a-f53d-41af-843b-1cd4a6afc025</networks>
+          <securityGroups>default</securityGroups>
+          <mode>NORMAL</mode>
+          <useConfigDrive>false</useConfigDrive>
+          <credentialsId>2461e0e5-fb30-43d5-84bd-cae3c62823bd</credentialsId>
+          <adminCredentialsId>e154479a-5c3b-48cf-bbf2-2f59f842ad51</adminCredentialsId>
+        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+      </templates>
+      <scriptTimeout>600000</scriptTimeout>
+      <startTimeout>600000</startTimeout>
+      <cloudGlobalKeyId>b6d9fc8c-57e6-41ea-b74a-f7d0471fbff9</cloudGlobalKeyId>
+      <cloudCredentialsId>02749790-418d-4efa-8c4a-22c605357396</cloudCredentialsId>
+      <groupPrefix>fritz</groupPrefix>
+      <trustAll>false</trustAll>
+    </jenkins.plugins.jclouds.compute.JCloudsCloud>
+    <jenkins.plugins.jclouds.compute.JCloudsCloud>
+      <name>aws-ec2-frankfurt</name>
+      <providerName>aws-ec2</providerName>
+      <profile>aws-ec2-frankfurt</profile>
+      <retentionTime>30</retentionTime>
+      <instanceCap>2</instanceCap>
+      <templates>
+        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+          <name>aws-ub1404</name>
+          <imageId>eu-central-1/ami-8504fdea</imageId>
+          <hardwareId>t2.micro</hardwareId>
+          <cores>1.0</cores>
+          <ram>512</ram>
+          <osFamily></osFamily>
+          <labelString></labelString>
+          <description></description>
+          <osVersion></osVersion>
+          <locationId>eu-central-1b</locationId>
+          <initScript></initScript>
+          <userData>#cloud-config
+apt_upgrade: true
+packages:
+  - openjdk-8-jdk-headless
+phone_home:
+  url: http://phonehome.my.jenkins.de/jclouds-phonehome/
+  tries: 3</userData>
+          <numExecutors>2</numExecutors>
+          <stopOnTerminate>false</stopOnTerminate>
+          <preExistingJenkinsUser>true</preExistingJenkinsUser>
+          <fsRoot>/home/ubuntu</fsRoot>
+          <allowSudo>false</allowSudo>
+          <installPrivateKey>false</installPrivateKey>
+          <spoolDelayMs>0</spoolDelayMs>
+          <delayLockObject/>
+          <waitPhoneHome>true</waitPhoneHome>
+          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <keyPairName>frankfurt</keyPairName>
+          <assignPublicIp>false</assignPublicIp>
+          <assignFloatingIp>false</assignFloatingIp>
+          <networks>vpc-00000000</networks>
+          <securityGroups>default</securityGroups>
+          <mode>EXCLUSIVE</mode>
+          <useConfigDrive>false</useConfigDrive>
+          <credentialsId>2616a6fe-6ad5-475c-aaa1-c16fd7173b00</credentialsId>
+        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+      </templates>
+      <scriptTimeout>600000</scriptTimeout>
+      <startTimeout>600000</startTimeout>
+      <cloudGlobalKeyId>2616a6fe-6ad5-475c-aaa1-c16fd7173b00</cloudGlobalKeyId>
+      <cloudCredentialsId>fe8a077e-4d7d-4310-ada7-451194188986</cloudCredentialsId>
+      <groupPrefix></groupPrefix>
+      <trustAll>true</trustAll>
+    </jenkins.plugins.jclouds.compute.JCloudsCloud>
+    <jenkins.plugins.jclouds.compute.JCloudsCloud>
+      <name>google</name>
+      <providerName>google-compute-engine</providerName>
+      <profile>google</profile>
+      <retentionTime>30</retentionTime>
+      <instanceCap>10</instanceCap>
+      <templates>
+        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+          <name>googlefoo</name>
+          <imageId>https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/centos-6-v20161027</imageId>
+          <imageNameRegex>ubuntu</imageNameRegex>
+          <hardwareId>https://www.googleapis.com/compute/v1/projects/whatever-000000/zones/us-central1-c/machineTypes/n1-standard-1</hardwareId>
+          <cores>1.0</cores>
+          <ram>512</ram>
+          <osFamily></osFamily>
+          <labelString>googlefoo</labelString>
+          <description></description>
+          <osVersion></osVersion>
+          <locationId>us-central1-c</locationId>
+          <initScript>yum install -y java-1.8.0-openjdk</initScript>
+          <userData></userData>
+          <numExecutors>2</numExecutors>
+          <stopOnTerminate>false</stopOnTerminate>
+          <preExistingJenkinsUser>true</preExistingJenkinsUser>
+          <fsRoot>/home/jenkins</fsRoot>
+          <allowSudo>false</allowSudo>
+          <installPrivateKey>false</installPrivateKey>
+          <spoolDelayMs>0</spoolDelayMs>
+          <delayLockObject/>
+          <waitPhoneHome>false</waitPhoneHome>
+          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <keyPairName></keyPairName>
+          <assignPublicIp>true</assignPublicIp>
+          <assignFloatingIp>false</assignFloatingIp>
+          <networks></networks>
+          <securityGroups></securityGroups>
+          <mode>EXCLUSIVE</mode>
+          <useConfigDrive>false</useConfigDrive>
+          <credentialsId>5d7e61f2-c90d-415b-b9c3-e1b7ab2e095b</credentialsId>
+        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+      </templates>
+      <scriptTimeout>600000</scriptTimeout>
+      <startTimeout>600000</startTimeout>
+      <cloudGlobalKeyId>5d7e61f2-c90d-415b-b9c3-e1b7ab2e095b</cloudGlobalKeyId>
+      <cloudCredentialsId>39adf314-0225-48a7-accd-f0af9c4f5365</cloudCredentialsId>
+      <groupPrefix></groupPrefix>
+      <trustAll>false</trustAll>
+    </jenkins.plugins.jclouds.compute.JCloudsCloud>
+    <jenkins.plugins.jclouds.compute.JCloudsCloud>
+      <name>DigitalOcean</name>
+      <providerName>digitalocean2</providerName>
+      <endPointUrl>https://api.digitalocean.com/v2</endPointUrl>
+      <profile>DigitalOcean</profile>
+      <retentionTime>30</retentionTime>
+      <instanceCap>10</instanceCap>
+      <templates>
+        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+          <name>jessie64</name>
+          <imageId>fra1/debian-8-x64</imageId>
+          <hardwareId>2gb</hardwareId>
+          <cores>1.0</cores>
+          <ram>512</ram>
+          <osFamily></osFamily>
+          <labelString></labelString>
+          <description></description>
+          <osVersion></osVersion>
+          <locationId>fra1</locationId>
+          <initScript></initScript>
+          <userData>#cloud-config
+disable_root: true
+apt_upgrade: true
+users:
+  - name: felfert
+    gecos: Fritz Elfert
+    sudo: [&quot;ALL=(ALL) NOPASSWD:ALL&quot;]
+    shell: /bin/bash
+    ssh-authorized-keys:
+      - ssh-rsa AAAANotReally me@myself.com
+  - name: jenkins
+    gecos: James Jenkins
+    sudo: [&quot;ALL=(ALL) NOPASSWD:ALL&quot;]
+    shell: /bin/bash
+    ssh-authorized-keys:
+      - ssh-rsa AAAANotReally Jenkins Remoting
+packages:
+  - openjdk-7-jdk
+</userData>
+          <numExecutors>2</numExecutors>
+          <stopOnTerminate>false</stopOnTerminate>
+          <preExistingJenkinsUser>true</preExistingJenkinsUser>
+          <fsRoot>/home/jenkins</fsRoot>
+          <allowSudo>false</allowSudo>
+          <installPrivateKey>false</installPrivateKey>
+          <spoolDelayMs>0</spoolDelayMs>
+          <delayLockObject/>
+          <waitPhoneHome>true</waitPhoneHome>
+          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <keyPairName>mykeypair</keyPairName>
+          <assignPublicIp>true</assignPublicIp>
+          <assignFloatingIp>false</assignFloatingIp>
+          <networks></networks>
+          <securityGroups></securityGroups>
+          <mode>NORMAL</mode>
+          <useConfigDrive>false</useConfigDrive>
+          <credentialsId>2bd5fbe1-01f8-4253-9886-d45e61e0743a</credentialsId>
+        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+      </templates>
+      <scriptTimeout>600000</scriptTimeout>
+      <startTimeout>600000</startTimeout>
+      <cloudGlobalKeyId>2bd5fbe1-01f8-4253-9886-d45e61e0743a</cloudGlobalKeyId>
+      <cloudCredentialsId>e117c477-bc8d-432b-8ff5-768f975a43ee</cloudCredentialsId>
+      <groupPrefix></groupPrefix>
+      <trustAll>false</trustAll>
+    </jenkins.plugins.jclouds.compute.JCloudsCloud>
+  </clouds>
+  <quietPeriod>5</quietPeriod>
+  <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
+  <views>
+    <listView>
+      <owner class="hudson" reference="../../.."/>
+      <name>All</name>
+      <filterExecutors>false</filterExecutors>
+      <filterQueue>false</filterQueue>
+      <properties class="hudson.model.View$PropertyList"/>
+      <jobNames>
+        <comparator class="hudson.util.CaseInsensitiveComparator"/>
+        <string>blubb</string>
+      </jobNames>
+      <jobFilters/>
+      <columns>
+        <hudson.views.StatusColumn/>
+        <hudson.views.WeatherColumn/>
+        <org.jenkins.ci.plugins.column.console.LastBuildColumn plugin="console-column-plugin@1.5"/>
+        <hudson.views.JobColumn/>
+        <hudson.views.LastSuccessColumn/>
+        <hudson.views.LastFailureColumn/>
+        <hudson.views.LastDurationColumn/>
+        <hudson.views.BuildButtonColumn/>
+      </columns>
+      <includeRegex>.*</includeRegex>
+      <recurse>false</recurse>
+    </listView>
+  </views>
+  <primaryView>All</primaryView>
+  <slaveAgentPort>0</slaveAgentPort>
+  <label>master</label>
+  <nodeProperties/>
+  <globalNodeProperties/>
+  <noUsageStatistics>true</noUsageStatistics>
+</hudson>
