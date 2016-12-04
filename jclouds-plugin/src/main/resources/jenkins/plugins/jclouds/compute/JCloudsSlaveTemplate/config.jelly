@@ -123,10 +123,18 @@ limitations under the License.
             </tr>
           </table>
         </f:entry>
-      
+
         <f:entry title="${%User Data}" help="${descriptor.getHelpFile('userDataEntries')}">
-          <input type="button" value="${%Manage config files...}" class="jclouds-managecf"/>
-          <f:repeatableProperty field="userDataEntries"/>
+          <j:choose>
+            <j:when test="${udata}">
+              <input type="button" value="${%Manage config files...}" class="jclouds-managecf"/>
+              <f:repeatableProperty field="userDataEntries"/>
+            </j:when>
+            <j:otherwise>
+              <div>Not supported with jclouds and this provider.<br/>If you believe this to be wrong,
+                <a href="https://wiki.jenkins-ci.org/display/JENKINS/How+to+report+an+issue">file an issue</a>!</div>
+            </j:otherwise>
+          </j:choose>
         </f:entry>
 
         <f:entry title="${%Jenkins Credentials}" field="credentialsId">

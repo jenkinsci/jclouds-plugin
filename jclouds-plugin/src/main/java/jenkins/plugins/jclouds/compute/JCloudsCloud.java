@@ -54,6 +54,7 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.config.ComputeServiceProperties;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
@@ -274,13 +275,6 @@ public class JCloudsCloud extends Cloud {
             .overrides(overrides).modules(MODULES).buildApi(typeToken(apitype));
     }
 
-    private static ComputeServiceContext ctx(final String provider, final String credId, final Properties overrides) {
-        // correct the classloader so that extensions can be found
-        Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
-        return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
-            .overrides(overrides).modules(MODULES).buildView(ComputeServiceContext.class);
-    }
-
     private static Properties buildJcloudsOverrides(final String url, final String zones, boolean trustAll) {
         Properties ret = new Properties();
         if (!Strings.isNullOrEmpty(url)) {
@@ -315,6 +309,13 @@ public class JCloudsCloud extends Cloud {
             overrides.setProperty(ComputeServiceProperties.TIMEOUT_NODE_RUNNING, String.valueOf(startTimeout));
         }
         return api(apitype, providerName, cloudCredentialsId, overrides);
+    }
+
+    private static ComputeServiceContext ctx(final String provider, final String credId, final Properties overrides) {
+        // correct the classloader so that extensions can be found
+        Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
+            .overrides(overrides).modules(MODULES).buildView(ComputeServiceContext.class);
     }
 
     static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones) {
@@ -550,6 +551,25 @@ public class JCloudsCloud extends Cloud {
             return "Cloud (JClouds)";
         }
 
+        public boolean isUserDataSupported(String provider, String credId, String url, String zones, boolean trustAll) {
+            // GCE uses meta_data['user-data']
+            if ("google-compute-engine".equals(provider)) {
+                return false; // TODO: test, if userMetadata['user-data'] works
+            }
+            // Temporary hack for digitalocean2
+            if ("digitalocean2".equals(provider)) {
+                return true;
+            }
+            try (ComputeServiceContext ctx = ctx(provider, credId, url, zones, trustAll)) {
+                TemplateOptions o = ctx.getComputeService().templateOptions();
+                o.getClass().getMethod("userData", new byte[0].getClass());
+            } catch (ReflectiveOperationException x) {
+                return false;
+            }
+
+            return true;
+        }
+
         public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones,
                 @QueryParameter boolean trustAll) throws IOException {
@@ -693,15 +713,25 @@ public class JCloudsCloud extends Cloud {
 
         @Override
         protected void callback(JCloudsCloud c, UnmarshallingContext context) {
+            boolean any = false;
             if (Strings.isNullOrEmpty(c.getCloudGlobalKeyId()) && !Strings.isNullOrEmpty(c.privateKey)) {
+                LOGGER.info("Upgrading config data: cloud global key -> via credentials plugin");
                 c.setCloudGlobalKeyId(convertCloudPrivateKey(c.name, c.privateKey));
+                any = true;
             }
             if (Strings.isNullOrEmpty(c.getCloudCredentialsId()) && !Strings.isNullOrEmpty(c.identity)) {
+                LOGGER.info("Upgrading config data: cloud credentals -> via credentials plugin");
                 final String description = "JClouds cloud " + c.name + " - auto-migrated";
                 c.setCloudCredentialsId(CredentialsHelper.convertCredentials(description, c.identity, c.credential));
+                any = true;
             }
             for (JCloudsSlaveTemplate t : c.templates) {
-                t.upgrade();
+                if (t.upgrade()) {
+                    any = true;
+                }
+            }
+            if (any) {
+                LOGGER.info("############################# global config needs to be saved!");
             }
         }
 

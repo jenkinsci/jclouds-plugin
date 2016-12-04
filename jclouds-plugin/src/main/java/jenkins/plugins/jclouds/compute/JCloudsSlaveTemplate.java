@@ -160,7 +160,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final int spoolDelayMs;
     private final Object delayLockObject = new Object();
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
-    private transient boolean assignFloatingIp;
+    private transient Boolean assignFloatingIp;
     public final boolean waitPhoneHome;
     public final int waitPhoneHomeTimeout;
     public final String keyPairName;
@@ -348,7 +348,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     private void setUserData(final TemplateOptions options, final byte[] udata) {
         final String sudata = new String(udata, StandardCharsets.UTF_8);
-        if (options instanceof DigitalOcean2TemplateOptions) {
+        if (options instanceof GoogleComputeEngineTemplateOptions) {
+            LOGGER.finest("Setting userData to " + sudata);
+            options.userMetadata("user-data", sudata);
+        } else if (options instanceof DigitalOcean2TemplateOptions) {
             LOGGER.finest("Setting userData to " + sudata);
             options.userMetadata("user_data", sudata);
         } else {
@@ -674,21 +677,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.validateRequired(value);
         }
 
-        public boolean isUserDataSupported(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
-                @QueryParameter String endPointUrl, @QueryParameter String zones) {
-                // Temporary hack for digitalocean2
-                if ("digitalocean2".equals(providerName)) {
-                    return true;
-                }
-            try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
-                TemplateOptions o = ctx.getComputeService().templateOptions();
-                o.getClass().getMethod("userData", new byte[0].getClass());
-            } catch (ReflectiveOperationException x) {
-                return false;
-            }
-            return true;
-        }
-
         public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String imageId, @QueryParameter String zones) {
 
@@ -967,11 +955,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     }
 
     @SuppressFBWarnings(value={"REC_CATCH_EXCEPTION","NP_NULL_ON_SOME_PATH"}, justification="false positives")
-    void upgrade() {
+    boolean upgrade() {
+        boolean any = false;
         try {
-            if (getCloud().providerName.equals("openstack-nova")) {
+            if (getCloud().providerName.equals("openstack-nova") && null != assignFloatingIp) {
                 LOGGER.info("Upgrading config data: assignFloatingIp");
                 setFinal("assignPublicIp", assignFloatingIp);
+                assignFloatingIp = null;
+                any = true;
             }
             final String description = "JClouds cloud " + getCloud().name + "." + name + " - auto-migrated";
             String ju = getJenkinsUser();
@@ -979,8 +970,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 LOGGER.info("Upgrading config data: jenkins credentals -> via credentials plugin");
                 setFinal("credentialsId", convertJenkinsUser(ju, description, getCloud().getGlobalPrivateKey()));
                 jenkinsUser = null; // Not used anymore, but retained for backward compatibility.
+                any = true;
             }
-            if (isNullOrEmpty(getAdminCredentialsId())) {
+            if (isNullOrEmpty(getAdminCredentialsId()) && !isNullOrEmpty(vmUser)) {
                 LOGGER.info("Upgrading config data: admin credentals -> via credentials plugin");
                 StandardUsernameCredentials u = null;
                 String au = getAdminUser();
@@ -999,6 +991,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 }
                 try {
                     setFinal("adminCredentialsId", CredentialsHelper.storeCredentials(u));
+                    any = true;
                 } catch (IOException x) {
                     LOGGER.warning(String.format("Error while saving credentials: %s", x.getMessage()));
                 }
@@ -1009,6 +1002,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                         getCloud().name + "." + name + ".cfg");
                 if (null == userDataEntries) {
                     setFinal("userDataEntries", new ArrayList<>());
+                    any = true;
                 }
                 userDataEntries.add(ud);
                 userData = null;
@@ -1017,12 +1011,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 LOGGER.info("Upgrading config data: initScript -> via config-file-provider");
                 setFinal("initScriptId", UserData.createFromData(initScript,
                         getCloud().name + "." + name + ".sh").fileId);
+                any = true;
                 initScript = null;
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, e.getMessage(), e);
             throw new IllegalStateException("Could not upgrade config data", e);
         }
+        return any;
     }
 
     /**

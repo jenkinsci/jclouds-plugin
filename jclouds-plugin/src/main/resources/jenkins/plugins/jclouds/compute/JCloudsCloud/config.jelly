@@ -58,7 +58,8 @@ limitations under the License.
     with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,zones,trustAll"/>
   <f:block>
     <b>${%Templates}</b>
-    <f:repeatable field="templates">
+    <j:set var="udata" value="${descriptor.isUserDataSupported(instance.providerName,instance.cloudCredentialsId,instance.endPointUrl,instance.zones,instance.trustAll)}"/>
+    <f:repeatable field="templates" header="${%Template}" add="${%Add template}">
       <st:include page="config.jelly" class="${descriptor.clazz}"/>
     </f:repeatable>
   </f:block>
