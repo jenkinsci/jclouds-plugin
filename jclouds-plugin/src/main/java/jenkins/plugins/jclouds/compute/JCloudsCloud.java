@@ -33,6 +33,8 @@ import java.util.logging.Logger;
 import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
+import hudson.init.Initializer;
+import hudson.init.InitMilestone;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
@@ -541,6 +543,8 @@ public class JCloudsCloud extends Cloud {
     @Extension
     public static class DescriptorImpl extends Descriptor<Cloud> {
 
+        static boolean needSave = false;
+
         /**
          * Human readable name of this kind of configurable object.
          * @return The human readable name of this object. 
@@ -700,12 +704,22 @@ public class JCloudsCloud extends Cloud {
             }
             return FormValidation.ok();
         }
+
+        @Initializer(after=InitMilestone.JOB_LOADED)
+        public static void completed() throws IOException {
+            if (needSave) {
+                needSave = false;
+                LOGGER.info(">>>>>> auto-saving migrated config data...");
+                Jenkins.getInstance().save();
+            }
+        }
     }
 
     @Restricted(DoNotUse.class)
     public static class ConverterImpl extends XStream2.PassthruConverter<JCloudsCloud> {
 
         static final Logger LOGGER = Logger.getLogger(ConverterImpl.class.getName());
+
 
         public ConverterImpl(XStream2 xstream) {
             super(xstream);
@@ -731,7 +745,8 @@ public class JCloudsCloud extends Cloud {
                 }
             }
             if (any) {
-                LOGGER.info("############################# global config needs to be saved!");
+                LOGGER.info(String.format(">>>>>> cloud %s needs saving migrated config data", c.name));
+                ((JCloudsCloud.DescriptorImpl)c.getDescriptor()).needSave = true;
             }
         }
 
@@ -754,7 +769,6 @@ public class JCloudsCloud extends Cloud {
             } 
             return null;
         }
-
     }
 
 }
