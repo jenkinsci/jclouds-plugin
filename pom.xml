@@ -116,6 +116,16 @@ limitations under the License.
     <pluginManagement>
       <plugins>
         <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <configuration>
+            <links>
+              <link>http://javadoc.jenkins.io</link>
+              <link>http://jclouds.apache.org/reference/javadoc/2.0.x</link>
+              <link>http://google.github.io/guice/api-docs/4.0/javadoc</link>
+            </links>
+          </configuration>
+        </plugin>
+        <plugin>
           <groupId>org.jenkins-ci.tools</groupId>
           <artifactId>maven-hpi-plugin</artifactId>
           <extensions>true</extensions>
