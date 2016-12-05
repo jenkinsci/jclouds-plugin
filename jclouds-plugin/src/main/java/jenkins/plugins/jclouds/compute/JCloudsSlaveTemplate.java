@@ -346,25 +346,26 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return ret;
     }
 
-    private void setUserData(final TemplateOptions options, final byte[] udata) {
-        final String sudata = new String(udata, StandardCharsets.UTF_8);
-        if (options instanceof GoogleComputeEngineTemplateOptions) {
-            LOGGER.finest("Setting userData to " + sudata);
-            options.userMetadata("user-data", sudata);
-        } else if (options instanceof DigitalOcean2TemplateOptions) {
-            LOGGER.finest("Setting userData to " + sudata);
-            options.userMetadata("user_data", sudata);
-        } else {
-            try {
-                Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
+    private void setUserData(@NonNull final TemplateOptions options, @Nullable final byte[] udata) {
+        if (null != udata) {
+            final String sudata = new String(udata, StandardCharsets.UTF_8);
+            if (options instanceof GoogleComputeEngineTemplateOptions) {
                 LOGGER.finest("Setting userData to " + sudata);
-                userDataMethod.invoke(options, udata);
-            } catch (ReflectiveOperationException e) {
-                LOGGER.log(Level.WARNING,
-                        "userData is not supported by provider options class " + options.getClass().getName(), e);
+                options.userMetadata("user-data", sudata);
+            } else if (options instanceof DigitalOcean2TemplateOptions) {
+                LOGGER.finest("Setting userData to " + sudata);
+                options.userMetadata("user_data", sudata);
+            } else {
+                try {
+                    Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
+                    LOGGER.finest("Setting userData to " + sudata);
+                    userDataMethod.invoke(options, udata);
+                } catch (ReflectiveOperationException e) {
+                    LOGGER.log(Level.WARNING,
+                            "userData is not supported by provider options class " + options.getClass().getName(), e);
+                }
             }
         }
-
     }
 
     @Override
@@ -566,9 +567,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
 
             if (null != userDataEntries) {
-                byte[] udata = ConfigHelper.buildUserData(getUserDataIds());
-                if (null != udata) {
+                try {
+                    byte[] udata = ConfigHelper.buildUserData(getUserDataIds(), false);
+                    if (null != udata && getCloud().allowGzippedUserData()) {
+                        byte[] zipped = ConfigHelper.buildUserData(getUserDataIds(), true);
+                        if (null != zipped && zipped.length < udata.length) {
+                            udata = zipped;
+                        }
+                    }
                     setUserData(options, udata);
+                } catch (IOException x) {
+                    LOGGER.log(Level.SEVERE, "Unable to build userData", x);
                 }
             }
 

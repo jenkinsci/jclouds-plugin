@@ -52,7 +52,7 @@ public class UserDataTest {
         List<String> idlist = new ArrayList<>();
         createConfig(idlist, CloudInitContentType.CLOUDCONFIG);
         assertEquals("Number of configs", 1, idlist.size());
-        byte[] udata = ConfigHelper.buildUserData(idlist);
+        byte[] udata = ConfigHelper.buildUserData(idlist, false);
         final String expected = "#cloud-config\n";
         assertEquals(expected, new String(udata));
     }
@@ -63,7 +63,7 @@ public class UserDataTest {
         createConfig(idlist, CloudInitContentType.CLOUDCONFIG);
         createConfig(idlist, CloudInitContentType.INCLUDE);
         assertEquals("Number of configs", 2, idlist.size());
-        byte[] udata = ConfigHelper.buildUserData(idlist);
+        byte[] udata = ConfigHelper.buildUserData(idlist, false);
         String sudata = new String(udata);
         assertTrue("Result contains multipart header", sudata.contains("Content-Type: multipart/mixed;"));
         assertTrue("Result contains cloud-config part", sudata.contains(

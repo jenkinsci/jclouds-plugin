@@ -23,6 +23,7 @@ import org.jenkinsci.lib.configprovider.ConfigProvider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import java.nio.charset.StandardCharsets;
 
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
+import java.util.zip.GZIPOutputStream;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -42,7 +44,7 @@ import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
-import javax.mail.internet.InternetAddress;
+// import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
@@ -108,36 +110,40 @@ public class ConfigHelper {
     }
 
     @CheckForNull
-    public static byte [] buildUserData(@NonNull final List<String> configIds) {
+    public static byte [] buildUserData(@NonNull final List<String> configIds, boolean gzip) throws IOException {
         List<Config> configs = getConfigs(configIds);
         if (configs.isEmpty()) {
             return null;
         }
-        if (configs.size() > 1) {
-            try {
-                final ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                final MimeMessage msg = new MimeMessage((Session)null);
-                final Multipart multipart = new MimeMultipart();
-                msg.setFrom(new InternetAddress("nobody"));
-                for (final Config cfg : configs) {
-                    BodyPart body = buildBody(cfg);
-                    if (null != body) {
-                        multipart.addBodyPart(body);
+        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            try (final OutputStream os = gzip ? new GZIPOutputStream(baos) : baos) {
+                if (configs.size() > 1) {
+                    try {
+                        final MimeMessage msg = new MimeMessage((Session)null);
+                        final Multipart multipart = new MimeMultipart();
+                        // msg.setFrom(new InternetAddress("nobody"));
+                        for (final Config cfg : configs) {
+                            BodyPart body = buildBody(cfg);
+                            if (null != body) {
+                                multipart.addBodyPart(body);
+                            }
+                        }
+                        msg.setContent(multipart);
+                        msg.writeTo(os);
+                    } catch (IOException | MessagingException e) {
+                        LOGGER.log(Level.WARNING, "", e);
+                    }
+                } else {
+                    Config cfg = configs.get(0);
+                    if (null != cfg.content && !cfg.content.isEmpty()) {
+                        os.write(cfg.content.getBytes(StandardCharsets.UTF_8));
+                    } else {
+                        return null;
                     }
                 }
-                msg.setContent(multipart);
-                msg.writeTo(bos);
-                return bos.toByteArray();
-            } catch (IOException | MessagingException e) {
-                LOGGER.log(Level.WARNING, "", e);
             }
-        } else {
-            Config cfg = configs.get(0);
-            if (null != cfg.content && !cfg.content.isEmpty()) {
-                return cfg.content.getBytes(StandardCharsets.UTF_8);
-            }
+            return baos.toByteArray();
         }
-        return null;
     }
 
     @NonNull

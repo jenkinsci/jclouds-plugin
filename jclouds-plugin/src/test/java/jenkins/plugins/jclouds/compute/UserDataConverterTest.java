@@ -98,7 +98,7 @@ public class UserDataConverterTest {
     }
 
     @Test
-    public void testBuildStrip() {
+    public void testBuildStrip() throws Exception {
         List<String> idlist = new ArrayList<>();
         UserData ud = UserData.createFromData("#cloud-boothook\nfoo 1\n", "test1.cfg");
         idlist.add(ud.fileId);
@@ -112,7 +112,7 @@ public class UserDataConverterTest {
         idlist.add(ud.fileId);
         ud = UserData.createFromData("#cloud-config\nfoo 6\n", "test6.cfg");
         idlist.add(ud.fileId);
-        byte[] udata = ConfigHelper.buildUserData(idlist);
+        byte[] udata = ConfigHelper.buildUserData(idlist, false);
         String sudata = new String(udata);
 
         assertFalse("Result contains boothook signature", sudata.contains("#cloud-boothook\n"));

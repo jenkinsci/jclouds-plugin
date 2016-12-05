@@ -25,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -538,6 +539,12 @@ public class JCloudsCloud extends Cloud {
             }
             phms.clear();
         }
+    }
+
+    private static final Set<String> CONFIRMED_GZIP_SUPPORTERS = ImmutableSet.<String>of("aws-ec2", "openstack-nova", "openstack-nova-ec2");
+
+    public boolean allowGzippedUserData() {
+        return !Strings.isNullOrEmpty(providerName) && CONFIRMED_GZIP_SUPPORTERS.contains(providerName);
     }
 
     @Extension
