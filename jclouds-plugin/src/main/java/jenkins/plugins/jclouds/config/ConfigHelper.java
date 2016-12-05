@@ -44,7 +44,6 @@ import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Session;
-// import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
@@ -121,7 +120,6 @@ public class ConfigHelper {
                     try {
                         final MimeMessage msg = new MimeMessage((Session)null);
                         final Multipart multipart = new MimeMultipart();
-                        // msg.setFrom(new InternetAddress("nobody"));
                         for (final Config cfg : configs) {
                             BodyPart body = buildBody(cfg);
                             if (null != body) {
