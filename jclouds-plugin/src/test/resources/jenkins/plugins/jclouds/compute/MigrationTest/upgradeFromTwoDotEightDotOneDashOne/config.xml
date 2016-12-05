@@ -14,7 +14,86 @@
   <jdks/>
   <viewsTabBar class="hudson.views.DefaultViewsTabBar"/>
   <myViewsTabBar class="hudson.views.DefaultMyViewsTabBar"/>
-  <clouds/>
+  <clouds>
+    <jenkins.plugins.jclouds.compute.JCloudsCloud plugin="jclouds-jenkins@2.8.1-1">
+      <name>openstack</name>
+      <identity>buildenv:jenkins</identity>
+      <credential>not-so-secret-cloud-credential</credential>
+      <providerName>openstack-nova</providerName>
+      <privateKey>-----BEGIN RSA PRIVATE KEY-----
+MIIEpgIBAAKCAQEA9aj/m731sS7xxzp5PIEAyU+We5abwm8Qug9Mx3lHKa3UXneA
+eJiOkv68fd0Mj+KM/WKmWYD53hzZ0/Bb64GGrYHCCEhgF3+N2+mZYSnVgjCCL/VT
+TF2kIHOPDXESm41WI1/SlTtHf9IB/P8qshwNulz2QWS8zUgZ2EGnLc/WhEHt8QGs
+QdbX/S8J+6m06/2NGqV/F1ZN9PG9ryEfM2b6OimSZ8b+uTije2ZMUwZjEhOLw/ip
+l3KSiA8eBkkULeAiipMlMrTVpidAhuNnqb1nylkoVJZPsYnC12I+PYhpjtM16Bzv
+ouM/QazOwf9juHXo8YeWEHkLgAKGJAl3sVPhKQIDAQABAoIBAQCiBYxQU8Ev0x5z
+oAVF+m9iVrORX4vreQU3MdAZ38snmhZvF7IL19Jw8MGw4ZHfdDQ5Ck9cyMwDylOA
+jQ6TDSKeXO50OAfod6BAYplelBDVhNjYeJ0vyLLvFEhNPT5giZ8+RXzGIArQKtpU
+2pZ2Ujpbp+RizOYZHmytTN/OPz3ki6xjV4x53TYqpjHF7T6ZfJWfeG9TQ644ri/N
+3Utevh7scGnt6xUAQCuM7dU8VNo0XsCgDJ9f/jaem4gqRS2fvan9MuSRT+fx7HV8
+eBV9c3IaKKi8YJVv6JlMKr56e5OAC0nQAND8pQY8AhGtLm2TBrqa3diWvqxhR1RJ
+mGvcCorhAoGBAP775+TVO8+MBBh73tLtDrJ9mwNcGU1WgPPNTHCXDSdn9++GYCMa
+mIBcsc0dVJ5srqyL5o1G35nWVBRwFCITLb7kLEbRk9uRjriS/19lN/GqUwnAi4TZ
+rZQd8DSFHUvDK1moJYyb97pepg5QvwrimJBvAq0aXysdWHTbRPIRUtpHAoGBAPaj
+lPiM0JLLr+p2XpcYBrEhh6vZQpWnariQZl8g9jHmVbPykkn/cRzV30TrDoyKJOzf
+Mzu/mi59mUMSsVJaf+sMVkZbId6izskw4nUFl/11rCxJ+ksBkSvOUQuJi95g0Yty
+FHkTA5JWQWA3QZwnwtOMj7FC6QIS2kS8ELnQArEPAoGBAIjS5cGeRoT9bikxNwVa
+HXvb+LVZ013zoCizLmRwOae+m4WVRrsvh0vB8crOBV0plqWSQLnooQ2su9tntPX/
+8pkvWS77QOsedUZH4u7uopF0QzDFeFhmckU7t2yHTYwdA4MNvnBwNQN1zId7/re5
+lgJS/02iDBVXnuK90oZOk3X7AoGBAJylWMBj7zTM2XX4qCsev2FRAnJLEtcp9cYz
+MFHLBZK70ELyFaeZ7aV60Mtc32izdLBdMpUIJEzSyLyo6qZ7hDMtKr6UsvZMQTnX
+Kn1YiCgazLd0ZNuuqx0/dIn3WjZrF6uRUR90zBftYKhTcABV4I+r/rd+367Jeoed
+SqI5UvxRAoGBAJZL0EcIxV3o9WV9UI1D/IsQ2Qft5hdPhlH8NZvx4ouGQPE2vziG
+cvYl/G0zA3uIRcg8Oix3GVTFGBJhdLbw99FG1OUTFTTzb46z4OKKvUq3j3HHn+B5
+n2tKUF/u9GxSyvIP0NUZhkpPzexZYPuJCiOiYRAuEhIbclqmbxmbeOVb
+-----END RSA PRIVATE KEY-----</privateKey>
+      <publicKey>ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQD1qP+bvfWxLvHHOnk8gQDJT5Z7lpvCbxC6D0zHeUcprdRed4B4mI6S/rx93QyP4oz9YqZZgPneHNnT8FvrgYatgcIISGAXf43b6ZlhKdWCMIIv9VNMXaQgc48NcRKbjVYjX9KVO0d/0gH8/yqyHA26XPZBZLzNSBnYQactz9aEQe3xAaxB1tf9Lwn7qbTr/Y0apX8XVk308b2vIR8zZvo6KZJnxv65OKN7ZkxTBmMSE4vD+KmXcpKIDx4GSRQt4CKKkyUytNWmJ0CG42epvWfKWShUlk+xicLXYj49iGmO0zXoHO+i4z9BrM7B/2O4dejxh5YQeQuAAoYkCXexU+Ep mycoolkey@whatever</publicKey>
+      <endPointUrl>https://my.provider.com:5000/v2.0</endPointUrl>
+      <profile>openstack</profile>
+      <retentionTime>30</retentionTime>
+      <instanceCap>10</instanceCap>
+      <templates>
+        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+          <name>foo</name>
+          <imageId>12345</imageId>
+          <hardwareId>RegionOne/00b629cc-3263-4a16-b5c9-740400278483</hardwareId>
+          <cores>1.0</cores>
+          <ram>512</ram>
+          <osFamily></osFamily>
+          <labelString>foo</labelString>
+          <description></description>
+          <osVersion></osVersion>
+          <locationId>RegionOne</locationId>
+          <initScript>#!/bin/sh
+echo holderidei</initScript>
+          <userData>#cloud-config
+packages:
+  - screen</userData>
+          <numExecutors>2</numExecutors>
+          <stopOnTerminate>false</stopOnTerminate>
+          <vmUser>root</vmUser>
+          <vmPassword>geheim</vmPassword>
+          <preInstalledJava>false</preInstalledJava>
+          <preExistingJenkinsUser>true</preExistingJenkinsUser>
+          <jenkinsUser>jenkins</jenkinsUser>
+          <fsRoot>/home/jenkins</fsRoot>
+          <allowSudo>false</allowSudo>
+          <installPrivateKey>false</installPrivateKey>
+          <overrideRetentionTime>30</overrideRetentionTime>
+          <spoolDelayMs>0</spoolDelayMs>
+          <delayLockObject/>
+          <assignFloatingIp>true</assignFloatingIp>
+          <keyPairName>mykeypairName</keyPairName>
+          <assignPublicIp>true</assignPublicIp>
+          <networks></networks>
+          <securityGroups></securityGroups>
+          <isWindows>false</isWindows>
+        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
+      </templates>
+      <scriptTimeout>600000</scriptTimeout>
+      <startTimeout>600000</startTimeout>
+    </jenkins.plugins.jclouds.compute.JCloudsCloud>
+  </clouds>
   <scmCheckoutRetryCount>0</scmCheckoutRetryCount>
   <views>
     <hudson.model.AllView>
