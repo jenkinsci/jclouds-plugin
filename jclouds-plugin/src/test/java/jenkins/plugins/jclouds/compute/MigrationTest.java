@@ -21,6 +21,7 @@ import org.junit.Rule;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.recipes.LocalData;
@@ -29,6 +30,7 @@ import jenkins.model.Jenkins;
 import hudson.FilePath;
 
 import java.io.File;
+import java.util.Scanner;
 
 public class MigrationTest {
 
@@ -43,6 +45,33 @@ public class MigrationTest {
             target.mkdirs();
             new FilePath(src).copyRecursiveTo("**/*",new FilePath(target));
         }
+    }
+
+    private void checkTags(final File f) throws Exception {
+        // Verify that the obsoleted tags are gone
+        String content = new Scanner(f).useDelimiter("\\Z").next();
+        assertFalse("Tag <identity> still in file", content.contains("<identity>"));
+        assertFalse("Tag <credential> still in file", content.contains("<credential>"));
+        assertFalse("Tag <privateKey> still in file", content.contains("<privateKey>"));
+        assertFalse("Tag <publicKey> still in file", content.contains("<publicKey>"));
+        assertFalse("Tag <initScript> still in file", content.contains("<initScript>"));
+        assertFalse("Tag <userData> still in file", content.contains("<userData>"));
+        assertFalse("Tag <vmUser> still in file", content.contains("<vmUser>"));
+        assertFalse("Tag <vmPassword> still in file", content.contains("<vmPassword>"));
+        assertFalse("Tag <preInstalledJava> still in file", content.contains("<preInstalledJava>"));
+        assertFalse("Tag <preInstalledJava> still in file", content.contains("<preInstalledJava>"));
+        assertFalse("Tag <assignFloatingIp> still in file", content.contains("<assignFloatingIp>"));
+        assertFalse("Tag <isWindows> still in file", content.contains("<isWindows>"));
+        // Verify, that new tags are there
+        assertTrue("Tag <cloudCredentialsId> in file", content.contains("<cloudCredentialsId>"));
+        assertTrue("Tag <cloudGlobalKeyId> in file", content.contains("<cloudGlobalKeyId>"));
+        assertTrue("Tag <credentialsId> in file", content.contains("<credentialsId>"));
+        assertTrue("Tag <initScriptId> in file", content.contains("<initScriptId>"));
+        assertTrue("Tag <userDataEntries> in file", content.contains("<userDataEntries>"));
+        assertTrue("Tag <adminCredentialsId> in file", content.contains("<adminCredentialsId>"));
+        assertTrue("Tag <useConfigDrive> in file", content.contains("<useConfigDrive>"));
+        assertTrue("Tag <waitPhoneHome> in file", content.contains("<waitPhoneHome>"));
+        assertTrue("Tag <waitPhoneHomeTimeout> in file", content.contains("<waitPhoneHomeTimeout>"));
     }
 
     @Test
@@ -63,6 +92,7 @@ public class MigrationTest {
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
         assertEquals("File size of config.xml", 3720, f.length());
+        checkTags(f);
     }
 
     @Test
@@ -79,6 +109,7 @@ public class MigrationTest {
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
         assertEquals("File size of config.xml", 3750, f.length());
+        checkTags(f);
     }
 
     @Test
@@ -100,5 +131,6 @@ public class MigrationTest {
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
         assertEquals("File size of config.xml", 17495, f.length());
+        checkTags(f);
     }
 }
