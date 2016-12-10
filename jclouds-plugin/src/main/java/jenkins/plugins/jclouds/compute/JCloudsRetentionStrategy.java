@@ -60,7 +60,7 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                     if (node.isPendingDelete()) {
                         // Fixes JENKINS-28403
                         fastTerminate(c);
-                    } else {
+                    } else if (!node.isWaitPhoneHome()) {
                         // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
                         final int retentionTime = c.getRetentionTime();
                         if (retentionTime > -1) {
