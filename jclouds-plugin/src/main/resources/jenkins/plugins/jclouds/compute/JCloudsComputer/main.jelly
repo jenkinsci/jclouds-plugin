@@ -17,7 +17,7 @@ limitations under the License.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
   <h2>${it.privateIpAddressHeader}</h2>
-  <p>${it.privateIpAddresses}</p>
+  <p><j:out value="${it.privateIpAddresses}"/></p>
   <h2>${it.publicIpAddressHeader}</h2>
-  <p>${it.publicIpAddresses}</p>
+  <p><j:out value="${it.publicIpAddresses}"/></p>
 </j:jelly>

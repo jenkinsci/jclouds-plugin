@@ -98,14 +98,20 @@ public class JCloudsLauncher extends ComputerLauncher {
                     LOGGER.info(addr + " does NOT match against " + preferredAddress);
                 }
             } catch (UnknownHostException x) {
-                logger.println("Error during address match: " + x.getMessage());
+                if (null != logger) {
+                    logger.println("Error during address match: " + x.getMessage());
+                }
             }
-            logger.println("Unable to match any address against " + preferredAddress + ". Falling back to simple selection.");
+            if (null != logger) {
+                logger.println("Unable to match any address against " + preferredAddress + ". Falling back to simple selection.");
+            }
         }
         if (nodeMetadata.getPublicAddresses().size() > 0) {
             return nodeMetadata.getPublicAddresses().iterator().next();
         } else {
-            logger.println("No public addresses found, so using private address.");
+            if (null != logger) {
+                logger.println("No public addresses found, so using private address.");
+            }
             return nodeMetadata.getPrivateAddresses().iterator().next();
         }
     }

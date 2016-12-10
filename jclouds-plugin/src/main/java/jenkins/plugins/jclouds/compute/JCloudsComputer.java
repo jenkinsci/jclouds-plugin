@@ -146,6 +146,16 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
         return ImmutableSet.<String>of("None");
     }
 
+    private String markSshAddress(final String txt, final String pre, final String post) {
+        final JCloudsSlave node = getNode();
+        if (null != node) {
+            final NodeMetadata md = node.getNodeMetaData();
+            final String match = JCloudsLauncher.getConnectionAddress(md, null, node.getPreferredAddress());
+            return txt.replace(match, pre + match + post);
+        }
+        return txt;
+    }
+
     public String getPublicIpAddressHeader() {
         return "Public IP-Address" + (getIpAddresses(true).size() > 1 ? "es" : "");
     }
@@ -155,10 +165,10 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
     }
 
     public String getPublicIpAddresses() {
-        return Joiner.on(" ").join(getIpAddresses(true));
+        return markSshAddress(Joiner.on(" ").join(getIpAddresses(true)), "<b>", "</b>");
     }
 
     public String getPrivateIpAddresses() {
-        return Joiner.on(" ").join(getIpAddresses(false));
+        return markSshAddress(Joiner.on(" ").join(getIpAddresses(false)), "<b>", "</b>");
     }
 }
