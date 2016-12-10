@@ -25,8 +25,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 import org.jclouds.compute.domain.NodeMetadata;
+
+import edazdarevic.commons.net.CIDRUtils;
 
 /**
  * The launcher that launches the jenkins slave.jar on the Slave. Uses the SSHKeyPair configured in the cloud profile settings, and logs in to the server via
@@ -35,6 +42,8 @@ import org.jclouds.compute.domain.NodeMetadata;
  * @author Vijay Kiran
  */
 public class JCloudsLauncher extends ComputerLauncher {
+
+    private static final Logger LOGGER = Logger.getLogger(JCloudsLauncher.class.getName());
 
     /**
      * Launch the Jenkins Slave on the SlaveComputer.
@@ -51,16 +60,15 @@ public class JCloudsLauncher extends ComputerLauncher {
 
         final JCloudsSlave slave = (JCloudsSlave) computer.getNode();
         if (null != slave) {
-            final String[] addresses = getConnectionAddresses(slave.getNodeMetaData(), logger);
+            final String address = getConnectionAddress(slave.getNodeMetaData(), logger, slave.getPreferredAddress());
             slave.waitForPhoneHome(logger);
 
-            String host = addresses[0];
-            if (InetAddress.getByName(host).isAnyLocalAddress()) {
-                logger.println("Invalid host 0.0.0.0, your host is most likely waiting for an ip address.");
+            if (InetAddress.getByName(address).isAnyLocalAddress()) {
+                logger.println("Invalid address 0.0.0.0, your host is most likely waiting for an ip address.");
                 throw new IOException("goto sleep");
             }
 
-            SSHLauncher launcher = new SSHLauncher(host, 22, slave.getCredentialsId(), slave.getJvmOptions(), null, "", "", Integer.valueOf(0), null, null);
+            SSHLauncher launcher = new SSHLauncher(address, 22, slave.getCredentialsId(), slave.getJvmOptions(), null, "", "", Integer.valueOf(0), null, null);
             launcher.launch(computer, listener);
         } else {
             throw new IOException("Could not launch NULL slave.");
@@ -68,17 +76,37 @@ public class JCloudsLauncher extends ComputerLauncher {
     }
 
     /**
-     * Get the potential addresses to connect to, opting for public first and then private.
+     * Get the potential address to connect to, opting for public first and then private.
      * @param nodeMetadata The meta data of the configured node.
      * @param logger Reference to a PrintStream for logging purposes.
-     * @return An array of Strings containing the IP addresses.
+     * @param preferredAddress An optional String, containing an address/prefix expression which will be used for matching.
+     * @return A String containing the IP address to connect to.
      */
-    public static String[] getConnectionAddresses(NodeMetadata nodeMetadata, PrintStream logger) {
+    public static String getConnectionAddress(NodeMetadata nodeMetadata, PrintStream logger, final String preferredAddress) {
+        if (null != preferredAddress && !preferredAddress.isEmpty()) {
+            LOGGER.info("preferredAddress is " + preferredAddress);
+            try {
+                CIDRUtils cu = new CIDRUtils(preferredAddress);
+                List<String> addrs = new ArrayList<>();
+                addrs.addAll(nodeMetadata.getPublicAddresses());
+                addrs.addAll(nodeMetadata.getPrivateAddresses());
+                for (final String addr : addrs) {
+                    if (null != addr && !addr.isEmpty() && cu.isInRange(addr)) {
+                        LOGGER.info(addr + " matches against " + preferredAddress);
+                        return addr;
+                    }
+                    LOGGER.info(addr + " does NOT match against " + preferredAddress);
+                }
+            } catch (UnknownHostException x) {
+                logger.println("Error during address match: " + x.getMessage());
+            }
+            logger.println("Unable to match any address against " + preferredAddress + ". Falling back to simple selection.");
+        }
         if (nodeMetadata.getPublicAddresses().size() > 0) {
-            return nodeMetadata.getPublicAddresses().toArray(new String[nodeMetadata.getPublicAddresses().size()]);
+            return nodeMetadata.getPublicAddresses().iterator().next();
         } else {
             logger.println("No public addresses found, so using private address.");
-            return nodeMetadata.getPrivateAddresses().toArray(new String[nodeMetadata.getPrivateAddresses().size()]);
+            return nodeMetadata.getPrivateAddresses().iterator().next();
         }
     }
 

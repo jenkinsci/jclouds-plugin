@@ -120,6 +120,8 @@ import jenkins.plugins.jclouds.internal.LocationHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 import jenkins.plugins.jclouds.config.ConfigHelper;
 
+import edazdarevic.commons.net.CIDRUtils;
+
 /**
  * @author Vijay Kiran
  */
@@ -173,6 +175,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     private final String adminCredentialsId;
     private final List<UserData> userDataEntries;
     private final String initScriptId;
+    private final String preferredAddress;
 
     transient JCloudsCloud cloud;
     private transient Set<LabelAtom> labelSet;
@@ -193,6 +196,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return initScriptId;
     }
 
+    public String getPreferredAddress() {
+        return preferredAddress;
+    }
+
     @DataBoundConstructor
     public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex,
             final String hardwareId, final double cores, final int ram, final String osFamily, final String osVersion,
@@ -203,7 +210,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout,
             final String keyPairName, final boolean assignPublicIp, final String networks,
             final String securityGroups, final String credentialsId, final String adminCredentialsId,
-            final String mode, final boolean useConfigDrive, List<UserData> userDataEntries) {
+            final String mode, final boolean useConfigDrive, final List<UserData> userDataEntries,
+            final String preferredAddress) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -239,6 +247,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.mode = Mode.valueOf(Util.fixNull(mode));
         this.useConfigDrive = useConfigDrive;
         this.userDataEntries = userDataEntries;
+        this.preferredAddress = preferredAddress;
         readResolve();
         this.userData = null; // Not used anymore, but retained for backward compatibility.
         this.vmPassword = null; // Not used anymore, but retained for backward compatibility.
@@ -332,7 +341,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         try {
             return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
                     Integer.toString(numExecutors), stopOnTerminate, overrideRetentionTime, getJvmOptions(), waitPhoneHome,
-                    waitPhoneHomeTimeout, credentialsId, mode);
+                    waitPhoneHomeTimeout, credentialsId, mode, preferredAddress);
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }
@@ -646,6 +655,17 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
         public String getDisplayName() {
             return "JCloudsSlaveTemplate";
+        }
+
+        public FormValidation doCheckPreferredAddress(@QueryParameter String value) {
+            try {
+                if (!isNullOrEmpty(value)) {
+                    new CIDRUtils(value);
+                }
+                return FormValidation.ok();
+            } catch (Exception e) {
+                return FormValidation.error(e.getMessage());
+            }
         }
 
         public FormValidation doCheckName(@QueryParameter String value) {

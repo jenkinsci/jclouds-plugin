@@ -199,10 +199,18 @@ public class JCloudsBuildWrapper extends BuildWrapper {
     public List<String> getInstanceIPs(Iterable<RunningNode> runningNodes, PrintStream logger) {
         Builder<String> ips = ImmutableList.<String>builder();
 
-        for (RunningNode runningNode : runningNodes) {
-            String[] possibleIPs = JCloudsLauncher.getConnectionAddresses(runningNode.getNode(), logger);
-            if (possibleIPs[0] != null) {
-                ips.add(possibleIPs[0]);
+        for (RunningNode rn : runningNodes) {
+            String preferredAddress = null;
+            JCloudsCloud c = JCloudsCloud.getByName(rn.getCloudName());
+            if (null != c) {
+                JCloudsSlaveTemplate t = c.getTemplate(rn.getTemplateName());
+                if (null != t) {
+                    preferredAddress = t.getPreferredAddress();
+                }
+            }
+            String ip = JCloudsLauncher.getConnectionAddress(rn.getNode(), logger, preferredAddress);
+            if (null != ip) {
+                ips.add(ip);
             }
         }
 

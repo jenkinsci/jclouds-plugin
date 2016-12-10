@@ -193,6 +193,9 @@ limitations under the License.
         <f:entry title="${%Assign Public IP}" field="assignPublicIp">
           <f:checkbox default="true"/>
         </f:entry>
+        <f:entry title="${%Preferred Address}" field="preferredAddress">
+          <f:textbox />
+        </f:entry>
       </f:block>
     </f:advanced>
 
