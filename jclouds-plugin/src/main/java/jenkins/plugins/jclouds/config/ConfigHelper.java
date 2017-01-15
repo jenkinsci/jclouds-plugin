@@ -17,6 +17,7 @@ package jenkins.plugins.jclouds.config;
 
 import hudson.util.ListBoxModel;
 
+import jenkins.model.Jenkins;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
@@ -49,6 +50,7 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
 import jenkins.plugins.jclouds.compute.UserData;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
 
 public class ConfigHelper {
 
@@ -59,9 +61,11 @@ public class ConfigHelper {
 
     @NonNull
     public static String getConfig(@Nullable final String id) {
-        final Config cfg = Config.getByIdOrNull(id);
-        if (null != cfg && null != cfg.content) {
-            return cfg.content;
+        if(id != null) {
+            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getActiveInstance(), id);
+            if (null != cfg && null != cfg.content) {
+                return cfg.content;
+            }
         }
         return "";
     }
@@ -100,7 +104,7 @@ public class ConfigHelper {
     private static List<Config> getConfigs(@NonNull final List<String> configIds) {
         List<Config> ret = new ArrayList<>();
         for (final String id : configIds) {
-            final Config cfg = Config.getByIdOrNull(id);
+            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getActiveInstance(), id);
             if (null != cfg) {
                 ret.add(cfg);
             }

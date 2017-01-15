@@ -17,9 +17,13 @@ package jenkins.plugins.jclouds.compute;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import jenkins.model.Jenkins;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.junit.Test;
 import org.junit.Rule;
 import static org.junit.Assert.assertEquals;
@@ -47,7 +51,7 @@ public class UserDataConverterTest {
     public void testMigrationBoothook() {
         String data = "#cloud-boothook\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
-        Config c = Config.getById(ud.fileId);
+        final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
         assertTrue("Provider is an instance of UserDataBoothookProvider", p instanceof UserDataBoothookProvider);
     }
@@ -56,7 +60,7 @@ public class UserDataConverterTest {
     public void testMigrationInclude() {
         String data = "#include\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
-        Config c = Config.getById(ud.fileId);
+        final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
         assertTrue("Provider is an instance of UserDataIncludeProvider", p instanceof UserDataIncludeProvider);
     }
@@ -65,7 +69,7 @@ public class UserDataConverterTest {
     public void testMigrationIncludeOnce() {
         String data = "#include-once\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
-        Config c = Config.getById(ud.fileId);
+        final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
         assertTrue("Provider is an instance of UserDataIncludeOnceProvider", p instanceof UserDataIncludeOnceProvider);
     }
@@ -74,7 +78,7 @@ public class UserDataConverterTest {
     public void testMigrationScript() {
         String data = "#!/bin/sh\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
-        Config c = Config.getById(ud.fileId);
+        final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
         assertTrue("Provider is an instance of UserDataScriptProvider", p instanceof UserDataScriptProvider);
     }
@@ -83,7 +87,7 @@ public class UserDataConverterTest {
     public void testMigrationUpstart() {
         String data = "#upstart-job\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
-        Config c = Config.getById(ud.fileId);
+        final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
         assertTrue("Provider is an instance of UserDataUpstartProvider", p instanceof UserDataUpstartProvider);
     }
@@ -92,7 +96,7 @@ public class UserDataConverterTest {
     public void testMigrationYaml() {
         String data = "#cloud-config\napt_upgrade: true";
         UserData ud = UserData.createFromData(data, "test1.cfg");
-        Config c = Config.getById(ud.fileId);
+        final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
         assertTrue("Provider is an instance of UserDataYamlProvider", p instanceof UserDataYamlProvider);
     }

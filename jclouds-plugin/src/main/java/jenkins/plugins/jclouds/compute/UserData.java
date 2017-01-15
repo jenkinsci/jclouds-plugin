@@ -15,10 +15,12 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import hudson.Extension;
@@ -26,6 +28,9 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
 
+import static hudson.util.ReflectionUtils.*;
+
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -56,7 +61,7 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
         ConfigProvider provider = ConfigProvider.all().get(UserDataScriptProvider.class);
         for (ConfigProvider p : ConfigProvider.all()) {
             if (p instanceof JCloudsConfig) {
-                String sig = ((JCloudsConfig)p).getSignature();
+                String sig = ((JCloudsConfig) p).getSignature();
                 if (Pattern.compile(sig, Pattern.DOTALL).matcher(data).find()) {
                     provider = p;
                     break;
@@ -64,9 +69,20 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
             }
         }
         final String id = UUID.randomUUID().toString();
-        Config c = new Config(id, name, "auto-migrated", data, provider.getProviderId());
-        provider.save(c);
-        return new UserData(id);
+        Config c = provider.newConfig(id);
+        setField(getConfigField("name"), c, name);
+        setField(getConfigField("comment"), c, "auto-migrated");
+        setField(getConfigField("content"), c, data);
+
+        // migrated data is stored on global scope
+        GlobalConfigFiles.get().save(c);
+        return new UserData(c.id);
+    }
+
+    private static Field getConfigField(String name) {
+        Field field = findField(Config.class, name);
+        field.setAccessible(true);
+        return field;
     }
 
     @Extension

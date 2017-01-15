@@ -16,11 +16,12 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
+import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.compute.UserData;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataPartHandler extends Config {
 
@@ -29,8 +30,13 @@ public class UserDataPartHandler extends Config {
         super(id, name, comment, content);
     }
 
+    @Override
+    public ConfigProvider getDescriptor() {
+        return Jenkins.getActiveInstance().getDescriptorByType(UserDataPartHandlerProvider.class);
+    }
+
     @Extension(ordinal = 70)
-    @ConfigSuitableFor(target=UserData.class)
+    @ConfigSuitableFor(target = UserData.class)
     public static class UserDataPartHandlerProvider extends AbstractJCloudsConfigProviderImpl {
 
         private static final String SIGNATURE = "^#part-handler[\\r\\n]+";
@@ -80,14 +86,22 @@ public class UserDataPartHandler extends Config {
         }
 
         @Override
-        public Config newConfig() {
+        public UserDataPartHandler newConfig() {
             String id = getProviderId() + "." + System.currentTimeMillis();
-            return new Config(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
+            return new UserDataPartHandler(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override
-        public Config newConfig(final String id) {
-            return new Config(id, DEFAULT_NAME, "", DEFAULT_CONTENT, getProviderId());
+        public UserDataPartHandler newConfig(final String id) {
+            return new UserDataPartHandler(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
+        }
+
+        /**
+         * used for data migration only (config-file-provider prior 1.15)
+         */
+        @Override
+        public UserDataPartHandler convert(Config config) {
+            return new UserDataPartHandler(config.id, config.name, config.comment, config.content);
         }
     }
 }

@@ -16,6 +16,8 @@
 package jenkins.plugins.jclouds.config;
 
 import hudson.Extension;
+import jenkins.model.Jenkins;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -29,8 +31,13 @@ public class UserDataInclude extends Config {
         super(id, name, comment, content);
     }
 
+    @Override
+    public ConfigProvider getDescriptor() {
+        return Jenkins.getActiveInstance().getDescriptorByType(UserDataIncludeProvider.class);
+    }
+
     @Extension(ordinal = 70)
-    @ConfigSuitableFor(target=UserData.class)
+    @ConfigSuitableFor(target = UserData.class)
     public static class UserDataIncludeProvider extends AbstractJCloudsConfigProviderImpl {
 
         private static final String SIGNATURE = "^#include[\\r\\n]+";
@@ -67,14 +74,22 @@ public class UserDataInclude extends Config {
         }
 
         @Override
-        public Config newConfig() {
+        public UserDataInclude newConfig() {
             String id = getProviderId() + "." + System.currentTimeMillis();
-            return new Config(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
+            return new UserDataInclude(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override
-        public Config newConfig(final String id) {
-            return new Config(id, DEFAULT_NAME, "", DEFAULT_CONTENT, getProviderId());
+        public UserDataInclude newConfig(final String id) {
+            return new UserDataInclude(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
+        }
+
+        /**
+         * used for data migration only (config-file-provider prior 1.15)
+         */
+        @Override
+        public UserDataInclude convert(Config config) {
+            return new UserDataInclude(config.id, config.name, config.comment, config.content);
         }
     }
 }
