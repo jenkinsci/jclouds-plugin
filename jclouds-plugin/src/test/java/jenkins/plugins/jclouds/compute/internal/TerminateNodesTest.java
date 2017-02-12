@@ -126,6 +126,8 @@ public class TerminateNodesTest {
 
     @AfterClass
     public static void tearDown() throws Exception {
-        compute.getContext().close();
+        if (null != compute) {
+            compute.getContext().close();
+        }
     }
 }
