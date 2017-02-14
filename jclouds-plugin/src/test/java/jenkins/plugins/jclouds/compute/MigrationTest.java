@@ -16,6 +16,7 @@
 package jenkins.plugins.jclouds.compute;
 
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.junit.Rule;
 
@@ -30,6 +31,7 @@ import jenkins.model.Jenkins;
 import hudson.FilePath;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Scanner;
 
 public class MigrationTest {
@@ -43,7 +45,7 @@ public class MigrationTest {
             File target = new File(targetPath);
             File src = Jenkins.getInstance().root;
             target.mkdirs();
-            new FilePath(src).copyRecursiveTo("**/*",new FilePath(target));
+            new FilePath(src).copyRecursiveTo("**/*", new FilePath(target));
         }
     }
 
@@ -80,15 +82,17 @@ public class MigrationTest {
         saveMigrationResult("/tmp/upgradeFromTwoDotEightDotOneDashOne");
 
         File jhome = Jenkins.getInstance().root;
+
         File f = new File(jhome, "credentials.xml");
         assertTrue("File credentials.xml exists in JENKINS_HOME", f.exists());
         assertEquals("File size of credentials.xml", 7246, f.length());
-        f = new File(jhome, "jenkins.plugins.jclouds.config.UserDataScript.xml");
-        assertTrue("File jenkins.plugins.jclouds.config.UserDataScript.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 667, f.length());
-        f = new File(jhome, "jenkins.plugins.jclouds.config.UserDataYaml.xml");
-        assertTrue("File jenkins.plugins.jclouds.config.UserDataYaml.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataYaml.xml", 667, f.length());
+        f = new File(jhome, "org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml");
+        String globalConfigFileContent = FileUtils.readFileToString(f);
+        assertTrue("File org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml exists in JENKINS_HOME", f.exists());
+        assertTrue("jenkins.plugins.jclouds.config.UserDataYaml must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataYaml"));
+        assertTrue("jenkins.plugins.jclouds.config.UserDataScript must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataScript"));
+        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 843, f.length());
+
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
         assertEquals("File size of config.xml", 3720, f.length());
@@ -101,11 +105,14 @@ public class MigrationTest {
         saveMigrationResult("/tmp/upgradeFromTwoDotNine");
 
         File jhome = Jenkins.getInstance().root;
-        File f = new File(jhome, "jenkins.plugins.jclouds.config.UserDataScript.xml");
-        assertTrue("File jenkins.plugins.jclouds.config.UserDataScript.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 667, f.length());
-        f = new File(jhome, "jenkins.plugins.jclouds.config.UserDataYaml.xml");
-        assertTrue("File jenkins.plugins.jclouds.config.UserDataYaml.xml exists in JENKINS_HOME", f.exists());
+
+        File f = new File(jhome, "org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml");
+        String globalConfigFileContent = FileUtils.readFileToString(f);
+        assertTrue("File org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml exists in JENKINS_HOME", f.exists());
+        assertTrue("jenkins.plugins.jclouds.config.UserDataYaml must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataYaml"));
+        assertTrue("jenkins.plugins.jclouds.config.UserDataScript must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataScript"));
+        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 843, f.length());
+
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
         assertEquals("File size of config.xml", 3750, f.length());
@@ -118,16 +125,17 @@ public class MigrationTest {
         saveMigrationResult("/tmp/upgradeFromTwoDotTen");
 
         File jhome = Jenkins.getInstance().root;
-        File f = new File(jhome, "jenkins.plugins.jclouds.config.UserDataInclude.xml");
-        assertTrue("File jenkins.plugins.jclouds.config.UserDataInclude.xml exists in JENKINS_HOME", f.exists());
+
+        File f = new File(jhome, "org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml");
+        assertTrue("File org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml exists in JENKINS_HOME", f.exists());
+        String globalConfigFileContent = FileUtils.readFileToString(f);
+        System.out.println(globalConfigFileContent);
+        assertTrue("jenkins.plugins.jclouds.config.UserDataInclude must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataInclude"));
+        assertTrue("jenkins.plugins.jclouds.config.UserDataScript must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataScript"));
+        assertTrue("jenkins.plugins.jclouds.config.UserDataYaml must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataYaml"));
         // file size checks are reliable, because the generated uuids in there have a constant lenght
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataInclude.xml", 1785, f.length());
-        f = new File(jhome, "jenkins.plugins.jclouds.config.UserDataScript.xml");
-        assertTrue("File jenkins.plugins.jclouds.config.UserDataScript.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 678, f.length());
-        f = new File(jhome, "jenkins.plugins.jclouds.config.UserDataYaml.xml");
-        assertTrue("File jenkins.plugins.jclouds.config.UserDataYaml.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataYaml.xml", 1685, f.length());
+        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 2742, f.length());
+
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
         assertEquals("File size of config.xml", 17495, f.length());

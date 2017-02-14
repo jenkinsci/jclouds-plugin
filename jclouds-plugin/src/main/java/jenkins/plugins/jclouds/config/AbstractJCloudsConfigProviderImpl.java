@@ -29,4 +29,13 @@ public abstract class AbstractJCloudsConfigProviderImpl extends AbstractConfigPr
 
     public AbstractJCloudsConfigProviderImpl() {
     }
+
+    /*
+     * jclouds plugin currently does not support configuration files on folder scope
+     * - all configurations stored with config-file-proider are on global scope!
+     */
+    @Override
+    public boolean supportsFolder() {
+        return false;
+    }
 }
