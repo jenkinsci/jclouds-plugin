@@ -179,6 +179,14 @@ limitations under the License.
                   <exclude>org/jclouds/digitalocean2/compute/DigitalOcean2ComputeServiceAdapter.java</exclude>
                 </excludes>
               </filter>
+              <!-- Temporarily replace org.jclouds.openstack.nova.v2_0.options.CreateServerOptions by an improved
+                   variant which can handle gzipped userData -->
+              <filter>
+                <artifact>org.apache.jclouds.api:openstack-nova</artifact>
+                <excludes>
+                  <exclude>org/jclouds/openstack/nova/v2_0/options/CreateServerOptions*</exclude>
+                </excludes>
+              </filter>
             </filters>
           </configuration>
         </plugin>
