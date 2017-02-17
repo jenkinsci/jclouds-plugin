@@ -1,10 +1,10 @@
 pipeline {
     agent {
-      docker 'maven:3.2.5-jdk-8'
+      docker 'maven:3.2.5-jdk-7'
     }
 
     environment {
-      MAVEN_OPTS = "-Xmx512m"
+      MAVEN_OPTS = "-Xmx1024m"
     }
 
     stages {
