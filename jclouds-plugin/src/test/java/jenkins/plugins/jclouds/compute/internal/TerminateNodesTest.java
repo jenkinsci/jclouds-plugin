@@ -7,9 +7,9 @@ import org.junit.Rule;
 import org.junit.BeforeClass;
 import org.junit.AfterClass;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeTrue;
 
 import java.util.concurrent.ExecutionException;
-
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
@@ -38,6 +38,8 @@ public class TerminateNodesTest {
 
     @BeforeClass
     public static void setUp() {
+        Boolean heavy = Boolean.getBoolean("heavyLoadTests");
+        assumeTrue(heavy.booleanValue());
         try {
             compute = ContextBuilder.newBuilder("stub").buildView(ComputeServiceContext.class).getComputeService();
         } catch (NoClassDefFoundError e) {
