@@ -33,7 +33,7 @@ public class UserDataScript extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getActiveInstance().getDescriptorByType(UserDataScriptProvider.class);
+        return Jenkins.getInstance().getDescriptorByType(UserDataScriptProvider.class);
     }
 
     @Extension(ordinal = 70)
@@ -60,18 +60,6 @@ public class UserDataScript extends Config {
         @Override
         public String getDisplayName() {
             return "JClouds user data (shell script)";
-        }
-
-        @Override
-        public UserDataScript getConfigById(final String configId) {
-            final Config c = super.getConfigById(configId);
-            return new UserDataScript(c.id, c.name, c.comment, c.content);
-        }
-
-        @Override
-        public UserDataScript newConfig() {
-            String id = getProviderId() + "." + System.currentTimeMillis();
-            return new UserDataScript(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override

@@ -32,7 +32,7 @@ public class UserDataPartHandler extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getActiveInstance().getDescriptorByType(UserDataPartHandlerProvider.class);
+        return Jenkins.getInstance().getDescriptorByType(UserDataPartHandlerProvider.class);
     }
 
     @Extension(ordinal = 70)
@@ -77,18 +77,6 @@ public class UserDataPartHandler extends Config {
         @Override
         public String getDisplayName() {
             return "JClouds user data (part-handler)";
-        }
-
-        @Override
-        public UserDataPartHandler getConfigById(final String configId) {
-            final Config c = super.getConfigById(configId);
-            return new UserDataPartHandler(c.id, c.name, c.comment, c.content);
-        }
-
-        @Override
-        public UserDataPartHandler newConfig() {
-            String id = getProviderId() + "." + System.currentTimeMillis();
-            return new UserDataPartHandler(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override

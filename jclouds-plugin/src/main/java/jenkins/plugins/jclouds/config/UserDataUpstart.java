@@ -34,7 +34,7 @@ public class UserDataUpstart extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getActiveInstance().getDescriptorByType(UserDataUpstartProvider.class);
+        return Jenkins.getInstance().getDescriptorByType(UserDataUpstartProvider.class);
     }
 
     @Extension(ordinal = 70)
@@ -61,18 +61,6 @@ public class UserDataUpstart extends Config {
         @Override
         public String getDisplayName() {
             return "JClouds user data (upstart)";
-        }
-
-        @Override
-        public UserDataUpstart getConfigById(final String configId) {
-            final Config c = super.getConfigById(configId);
-            return new UserDataUpstart(c.id, c.name, c.comment, c.content);
-        }
-
-        @Override
-        public UserDataUpstart newConfig() {
-            String id = getProviderId() + "." + System.currentTimeMillis();
-            return new UserDataUpstart(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override

@@ -62,7 +62,7 @@ public class ConfigHelper {
     @NonNull
     public static String getConfig(@Nullable final String id) {
         if(id != null) {
-            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getActiveInstance(), id);
+            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getInstance(), id);
             if (null != cfg && null != cfg.content) {
                 return cfg.content;
             }
@@ -104,7 +104,7 @@ public class ConfigHelper {
     private static List<Config> getConfigs(@NonNull final List<String> configIds) {
         List<Config> ret = new ArrayList<>();
         for (final String id : configIds) {
-            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getActiveInstance(), id);
+            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getInstance(), id);
             if (null != cfg) {
                 ret.add(cfg);
             }

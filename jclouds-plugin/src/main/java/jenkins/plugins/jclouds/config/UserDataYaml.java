@@ -33,7 +33,7 @@ public class UserDataYaml extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getActiveInstance().getDescriptorByType(UserDataYamlProvider.class);
+        return Jenkins.getInstance().getDescriptorByType(UserDataYamlProvider.class);
     }
 
     @Extension(ordinal = 70)
@@ -60,18 +60,6 @@ public class UserDataYaml extends Config {
         @Override
         public String getDisplayName() {
             return "JClouds user data (yaml)";
-        }
-
-        @Override
-        public UserDataYaml getConfigById(final String configId) {
-            final Config c = super.getConfigById(configId);
-            return new UserDataYaml(c.id, c.name, c.comment, c.content);
-        }
-
-        @Override
-        public Config newConfig() {
-            String id = getProviderId() + "." + System.currentTimeMillis();
-            return new UserDataYaml(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override

@@ -34,7 +34,7 @@ public class UserDataBoothook extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getActiveInstance().getDescriptorByType(UserDataBoothookProvider.class);
+        return Jenkins.getInstance().getDescriptorByType(UserDataBoothookProvider.class);
     }
 
     @Extension(ordinal = 70)
@@ -61,18 +61,6 @@ public class UserDataBoothook extends Config {
         @Override
         public String getDisplayName() {
             return "JClouds user data (boot hook)";
-        }
-
-        @Override
-        public UserDataBoothook getConfigById(final String configId) {
-            final Config c = super.getConfigById(configId);
-            return new UserDataBoothook(c.id, c.name, c.comment, c.content);
-        }
-
-        @Override
-        public UserDataBoothook newConfig() {
-            String id = getProviderId() + "." + System.currentTimeMillis();
-            return new UserDataBoothook(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override

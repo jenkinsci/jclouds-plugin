@@ -33,7 +33,7 @@ public class UserDataIncludeOnce extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getActiveInstance().getDescriptorByType(UserDataIncludeOnceProvider.class);
+        return Jenkins.getInstance().getDescriptorByType(UserDataIncludeOnceProvider.class);
     }
 
     @Extension(ordinal = 70)
@@ -65,18 +65,6 @@ public class UserDataIncludeOnce extends Config {
         @Override
         public String getDisplayName() {
             return "JClouds user data (include once)";
-        }
-
-        @Override
-        public UserDataIncludeOnce getConfigById(final String configId) {
-            final Config c = super.getConfigById(configId);
-            return new UserDataIncludeOnce(c.id, c.name, c.comment, c.content);
-        }
-
-        @Override
-        public UserDataIncludeOnce newConfig() {
-            String id = getProviderId() + "." + System.currentTimeMillis();
-            return new UserDataIncludeOnce(id, DEFAULT_NAME, "", DEFAULT_CONTENT);
         }
 
         @Override
