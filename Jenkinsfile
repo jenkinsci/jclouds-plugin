@@ -1,6 +1,6 @@
 pipeline {
     agent {
-      docker 'maven:3.2.5-jdk-7'
+      docker 'maven:3.2.5-jdk-8'
     }
 
     environment {
