@@ -131,7 +131,7 @@ public class ConfigHelper {
                             }
                         }
                         msg.setContent(multipart);
-                        msg.writeTo(os);
+                        msg.writeTo(os, new String[]{"Message-ID", "MIME-Version"});
                     } catch (IOException | MessagingException e) {
                         LOGGER.log(Level.WARNING, "", e);
                     }
