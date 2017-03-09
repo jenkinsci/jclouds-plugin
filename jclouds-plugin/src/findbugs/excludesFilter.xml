@@ -18,7 +18,4 @@ limitations under the License.
   <Match>
     <Class name="~.*\.Messages"/>
   </Match>
-  <Match>
-    <Package name="org.jclouds.openstack.nova.v2_0.options"/>
-  </Match>
 </FindBugsFilter>
