@@ -196,6 +196,9 @@ limitations under the License.
         <f:entry title="${%Preferred Address}" field="preferredAddress">
           <f:textbox />
         </f:entry>
+        <f:entry title="${%Use JNLP}" field="useJnlp">
+          <f:checkbox />
+        </f:entry>
       </f:block>
     </f:advanced>
 

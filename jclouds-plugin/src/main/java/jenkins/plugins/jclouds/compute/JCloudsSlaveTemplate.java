@@ -176,6 +176,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     private final List<UserData> userDataEntries;
     private final String initScriptId;
     private final String preferredAddress;
+    private final boolean useJnlp;
 
     transient JCloudsCloud cloud;
     private transient Set<LabelAtom> labelSet;
@@ -200,6 +201,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return preferredAddress;
     }
 
+    public boolean getUseJnlp() {
+        return useJnlp;
+    }
+
     @DataBoundConstructor
     public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex,
             final String hardwareId, final double cores, final int ram, final String osFamily, final String osVersion,
@@ -211,7 +216,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             final String keyPairName, final boolean assignPublicIp, final String networks,
             final String securityGroups, final String credentialsId, final String adminCredentialsId,
             final String mode, final boolean useConfigDrive, final List<UserData> userDataEntries,
-            final String preferredAddress) {
+            final String preferredAddress, final boolean useJnlp) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -248,6 +253,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.useConfigDrive = useConfigDrive;
         this.userDataEntries = userDataEntries;
         this.preferredAddress = preferredAddress;
+        this.useJnlp = useJnlp;
         readResolve();
         this.userData = null; // Not used anymore, but retained for backward compatibility.
         this.vmPassword = null; // Not used anymore, but retained for backward compatibility.
@@ -341,7 +347,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         try {
             return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
                     Integer.toString(numExecutors), stopOnTerminate, overrideRetentionTime, getJvmOptions(), waitPhoneHome,
-                    waitPhoneHomeTimeout, credentialsId, mode, preferredAddress);
+                    waitPhoneHomeTimeout, credentialsId, mode, preferredAddress, useJnlp);
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }

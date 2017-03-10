@@ -95,7 +95,7 @@ public class MigrationTest {
 
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of config.xml", 3720, f.length());
+        assertEquals("File size of config.xml", 3755, f.length());
         checkTags(f);
     }
 
@@ -115,7 +115,7 @@ public class MigrationTest {
 
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of config.xml", 3750, f.length());
+        assertEquals("File size of config.xml", 3785, f.length());
         checkTags(f);
     }
 
@@ -138,7 +138,7 @@ public class MigrationTest {
 
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of config.xml", 17495, f.length());
+        assertEquals("File size of config.xml", 17705, f.length());
         checkTags(f);
     }
 }

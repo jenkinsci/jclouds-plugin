@@ -65,6 +65,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
     private final String credentialsId;
     private final Mode mode;
     private final String preferredAddress;
+    private final boolean useJnlp;
 
     private transient PhoneHomeMonitor phm;
 
@@ -73,7 +74,8 @@ public class JCloudsSlave extends AbstractCloudSlave {
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
             ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
             Integer overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome,
-            final int waitPhoneHomeTimeout, final String credentialsId, final String preferredAddress) throws Descriptor.FormException, IOException {
+            final int waitPhoneHomeTimeout, final String credentialsId, final String preferredAddress,
+            final boolean useJnlp) throws Descriptor.FormException, IOException {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
         this.cloudName = cloudName;
@@ -88,6 +90,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.credentialsId = credentialsId;
         this.mode = mode;
         this.preferredAddress = preferredAddress;
+        this.useJnlp = useJnlp;
         phm = new PhoneHomeMonitor(waitPhoneHome, waitPhoneHomeTimeout);
     }
 
@@ -115,6 +118,7 @@ public class JCloudsSlave extends AbstractCloudSlave {
      * @param credentialsId         - Id of the credentials in Jenkin's global credentials database.
      * @param mode                  - Jenkins usage mode for this node
      * @param preferredAddress      - The preferred Address expression to connect to
+     * @param useJnlp               - if {@code true}, the final ssh connection attempt will be skipped.
      * @throws IOException if an error occurs.
      * @throws Descriptor.FormException if the form does not validate.
      */
@@ -122,12 +126,14 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
             final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
             String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId,
-            final Mode mode, final String preferredAddress) throws IOException, Descriptor.FormException {
+            final Mode mode, final String preferredAddress, boolean useJnlp) throws IOException, Descriptor.FormException {
         this(cloudName, uniqueName(metadata, cloudName), description, fsRoot, numExecutors, mode, labelString,
-                new JCloudsLauncher(), new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
+                useJnlp ? new JCloudsJnlpLauncher() : new JCloudsLauncher(),
+                new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
                 stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
                 metadata.getCredentials().getOptionalPassword().orNull(), metadata.getCredentials().getOptionalPrivateKey().orNull(),
-                metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId, preferredAddress);
+                metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId,
+                preferredAddress, useJnlp);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
@@ -165,6 +171,10 @@ public class JCloudsSlave extends AbstractCloudSlave {
 
     public String getPreferredAddress() {
         return preferredAddress;
+    }
+
+    public boolean getUseJnlp() {
+        return useJnlp;
     }
 
     /**
