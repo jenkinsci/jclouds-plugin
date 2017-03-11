@@ -704,13 +704,81 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return candidates;
         }
 
+        private FormValidation deprecatedSshProvisioning() {
+            return FormValidation.warningWithMarkup(
+                    "Using SSH-based provisioning is deprecated and will be removed in a future version.<br/>" +
+                    "Please use cloud-init for provisioning a jenkins user");
+        }
+
         public FormValidation doCheckNumExecutors(@QueryParameter String value) {
             return FormValidation.validatePositiveInteger(value);
         }
 
-        public FormValidation doCheckCredentialsId(@QueryParameter String value) {
+        public FormValidation doCheckCredentialsId(@QueryParameter String value, @QueryParameter final String useJnlp) {
+            if (Boolean.valueOf(Util.fixEmptyAndTrim(useJnlp)).booleanValue()) {
+                return FormValidation.ok();
+            }
             return FormValidation.validateRequired(value);
         }
+
+        public FormValidation doCheckAllowSudo(@QueryParameter final String value) {
+            if (Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
+                return deprecatedSshProvisioning();
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckInstallPrivateKey(@QueryParameter final String value) {
+            if (Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
+                return deprecatedSshProvisioning();
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckPreExistingJenkinsUser(@QueryParameter final String value, @QueryParameter final String useJnlp) {
+            if (!Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
+                if (Boolean.valueOf(Util.fixEmptyAndTrim(useJnlp)).booleanValue()) {
+                    return FormValidation.error("Jenkins user provisioning relies on posix system, accessible via SSH.");
+                }
+                return deprecatedSshProvisioning();
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckUseJnlp(@QueryParameter final String value,
+                @QueryParameter final String preExistingJenkinsUser, @QueryParameter final String initScriptId) {
+            if (Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
+                if (null == Jenkins.getInstance().getTcpSlaveAgentListener() || -1 == Jenkins.getInstance().getSlaveAgentPort()) {
+                    return FormValidation.error("This feature cannot work, because the JNLP port is disabled in global security.");
+                }
+                final Set<String> aps = Jenkins.getInstance().getAgentProtocols();
+                if (!(aps.contains("JNLP-connect") || aps.contains("JNLP2-connect") || aps.contains("JNLP3-connect"))) {
+                    return FormValidation.error("This feature cannot work, because all JNLP protocols are disabled in global security.");
+                }
+                if (!Boolean.valueOf(Util.fixEmptyAndTrim(preExistingJenkinsUser)).booleanValue()) {
+                    return FormValidation.error("Jenkins user provisioning relies on posix system, accessible via SSH.");
+                }
+                if (!ConfigHelper.getConfig(initScriptId).isEmpty()) {
+                    return FormValidation.error("Init script functionality relies on a posix system, accessible via SSH.");
+                }
+            }
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckAdminCredentialsId(@QueryParameter final String value) {
+            if (isNullOrEmpty(value)) {
+                return FormValidation.ok();
+            }
+            return deprecatedSshProvisioning();
+        }
+
+        public FormValidation doCheckInitScriptId(@QueryParameter String value) {
+            if (isNullOrEmpty(value)) {
+                return FormValidation.ok();
+            }
+            return deprecatedSshProvisioning();
+        }
+
 
         public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String imageId, @QueryParameter String zones) {

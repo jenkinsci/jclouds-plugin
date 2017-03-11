@@ -115,13 +115,12 @@ limitations under the License.
         </f:entry>
       
         <f:entry title="${%Init Script}" help="${descriptor.getHelpFile('initScriptId')}">
-          <table width="100%">
-            <tr>
-              <td><f:select field="initScriptId" clazz="jclouds"/></td>
-              <td><input type="button" value="${%Show content}" class="jclouds-showcf"
-                  disabled="${empty(instance.initScriptId)?'true':null}"/></td>
-            </tr>
-          </table>
+          <div style="margin-right:200px;">
+            <div style="float:left;width:100%;"><f:select field="initScriptId" clazz="jclouds"/></div>
+            <div style="float:right;width:200px;margin-right:-200px;"><input type="button" value="${%Show content}" class="jclouds-showcf"
+                disabled="${empty(instance.initScriptId)?'true':null}"/></div>
+            <div style="clear:both;" />
+          </div>
         </f:entry>
 
         <f:entry title="${%User Data}" help="${descriptor.getHelpFile('userDataEntries')}">
