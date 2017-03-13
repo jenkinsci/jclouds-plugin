@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -51,6 +52,8 @@ import javax.mail.internet.MimeMultipart;
 
 import jenkins.plugins.jclouds.compute.UserData;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
+
+import shaded.com.google.common.base.Joiner;
 
 public class ConfigHelper {
 
@@ -112,6 +115,23 @@ public class ConfigHelper {
         return ret;
     }
 
+    /* cloudbase-init is buggy in recognizing mime-multipart
+     * messages if they do not start with "Content-Type:..."
+     * Therefore, we move the mandatory mime version header
+     * after the Content-Type header.
+     */
+    private static byte [] injectMimeVersion(@NonNull final byte [] msg) {
+        String [] lines = new String(msg, StandardCharsets.UTF_8).split("\n");
+        if (3 < lines.length && lines[0].contains("multipart")) {
+            String [] ret = new String[lines.length + 1];
+            System.arraycopy(lines, 0, ret, 0, 2);
+            System.arraycopy(lines, 2, ret, 3, lines.length - 2);
+            ret[2] = "MIME-Version: 1.0";
+            return Joiner.on("\n").join(Arrays.asList(ret)).getBytes(StandardCharsets.UTF_8);
+        }
+        return msg;
+    }
+
     @CheckForNull
     public static byte [] buildUserData(@NonNull final List<String> configIds, boolean gzip) throws IOException {
         List<Config> configs = getConfigs(configIds);
@@ -131,7 +151,11 @@ public class ConfigHelper {
                             }
                         }
                         msg.setContent(multipart);
-                        msg.writeTo(os, new String[]{"Message-ID", "MIME-Version"});
+                        // Yet another nested stream, as workaround for cloudbase-init
+                        try (final ByteArrayOutputStream tmpbaos = new ByteArrayOutputStream()) {
+                            msg.writeTo(tmpbaos, new String[]{"Message-ID", "MIME-Version"});
+                            os.write(injectMimeVersion(tmpbaos.toByteArray()));
+                        }
                     } catch (IOException | MessagingException e) {
                         LOGGER.log(Level.WARNING, "", e);
                     }
