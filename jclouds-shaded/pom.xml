@@ -111,7 +111,6 @@ limitations under the License.
       <version>${jclouds.version}</version>
       <type>test-jar</type>
     </dependency>
-  
   </dependencies>
   <build>
     <plugins>
