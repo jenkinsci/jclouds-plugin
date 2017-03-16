@@ -46,6 +46,16 @@ limitations under the License.
       <artifactId>jclouds-allcompute</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
+      <dependency>
+      <groupId>org.apache.jclouds.labs</groupId>
+      <artifactId>oneandone</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jclouds.labs</groupId>
+      <artifactId>profitbricks-rest</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.apache.jclouds</groupId>
       <artifactId>jclouds-allblobstore</artifactId>
