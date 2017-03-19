@@ -172,7 +172,7 @@ limitations under the License.
             <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
             <filters>
               <!-- Temporarily replace classes, fixed in https://github.com/jclouds/jclouds/pull/1076
-                   TODO: To be reverted when next jclouds version > 2.0.1 will be released -->
+                   TODO: To be reverted when next jclouds version > 2.0.1 will be released. -->
               <filter>
                 <artifact>org.apache.jclouds.provider:google-compute-engine</artifact>
                 <excludes>
