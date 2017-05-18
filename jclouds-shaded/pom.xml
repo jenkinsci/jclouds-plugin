@@ -57,6 +57,11 @@ limitations under the License.
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.jclouds.labs</groupId>
+      <artifactId>packet</artifactId>
+      <version>${jclouds.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.jclouds</groupId>
       <artifactId>jclouds-allblobstore</artifactId>
       <version>${jclouds.version}</version>
