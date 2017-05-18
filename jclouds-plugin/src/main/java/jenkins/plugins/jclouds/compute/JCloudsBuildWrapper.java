@@ -137,18 +137,16 @@ public class JCloudsBuildWrapper extends BuildWrapper {
                 MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
 
         final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
+        final JCloudsCloud waitCloud = waitPhoneHome(runningNodes, listener.getLogger());
+        if (null != waitCloud) {
+            waitCloud.phoneHomeWaitAll();
+        }
 
         return new Environment() {
-            private JCloudsCloud waitCloud = null;
-
             @Override
             public void buildEnvVars(Map<String, String> env) {
                 List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
                 env.put("JCLOUDS_IPS", Util.join(ips, ","));
-                waitCloud = waitPhoneHome(runningNodes, listener.getLogger());
-                if (null != waitCloud) {
-                    waitCloud.phoneHomeWaitAll();
-                }
             }
 
             @Override
