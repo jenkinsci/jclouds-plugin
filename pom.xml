@@ -170,19 +170,6 @@ limitations under the License.
               <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
             </transformers>
             <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-            <filters>
-              <!-- Temporarily replace classes, fixed in https://github.com/jclouds/jclouds/pull/1076
-                   TODO: To be reverted when next jclouds version > 2.0.1 will be released. -->
-              <filter>
-                <artifact>org.apache.jclouds.provider:google-compute-engine</artifact>
-                <excludes>
-                  <exclude>org/jclouds/googlecomputeengine/compute/GoogleComputeEngineServiceAdapter*</exclude>
-                  <exclude>org/jclouds/googlecomputeengine/compute/config/GoogleComputeEngineServiceContextModule*</exclude>
-                  <exclude>org/jclouds/googlecomputeengine/compute/functions/InstanceToNodeMetadata*</exclude>
-                  <exclude>org/jclouds/googlecomputeengine/compute/loaders/DiskURIToImage*</exclude>
-                </excludes>
-              </filter>
-            </filters>
           </configuration>
         </plugin>
         <plugin>
