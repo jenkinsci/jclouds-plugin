@@ -293,7 +293,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                 .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
-        private ImmutableSortedSet<String> getAllProviders() {
+        ImmutableSortedSet<String> getAllProviders() {
             // correct the classloader so that extensions can be found
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
