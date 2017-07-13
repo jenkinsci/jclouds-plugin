@@ -66,6 +66,8 @@ import org.jclouds.sshj.config.SshjSshClientModule;
 
 import static org.jclouds.reflect.Reflection2.typeToken;
 
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 
@@ -367,10 +369,12 @@ public class JCloudsCloud extends Cloud {
                 break; // maxed out
             }
 
-            plannedNodeList.add(new PlannedNode(template.name, Computer.threadPoolForRemoting.submit(new Callable<Node>() {
+            final ProvisioningActivity.Id provisioningId = new ProvisioningActivity.Id(this.name, template.name);
+
+            plannedNodeList.add(new TrackedPlannedNode(provisioningId, template.getNumExecutors(), Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                 public Node call() throws Exception {
                     // TODO: record the output somewhere
-                    JCloudsSlave jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout());
+                    JCloudsSlave jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout(), provisioningId);
                     Jenkins.getInstance().addNode(jcloudsSlave);
 
                     /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
@@ -381,7 +385,7 @@ public class JCloudsCloud extends Cloud {
                     ensureLaunched(jcloudsSlave);
                     return jcloudsSlave;
                 }
-            }), template.getNumExecutors()));
+            })));
             excessWorkload -= template.getNumExecutors();
         }
         return plannedNodeList;
@@ -436,7 +440,8 @@ public class JCloudsCloud extends Cloud {
     JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
         final StringWriter sw = new StringWriter();
         final StreamTaskListener listener = new StreamTaskListener(sw);
-        JCloudsSlave node = t.provisionSlave(listener);
+        final ProvisioningActivity.Id provisioningId = new ProvisioningActivity.Id(this.name, t.name);
+        JCloudsSlave node = t.provisionSlave(listener, provisioningId);
         Jenkins.getInstance().addNode(node);
         return node;
     }
