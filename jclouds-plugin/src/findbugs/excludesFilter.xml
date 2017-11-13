@@ -18,12 +18,4 @@ limitations under the License.
   <Match>
     <Class name="~.*\.Messages"/>
   </Match>
-  <Match>
-    <Or>
-      <Package name="org.jclouds.googlecomputeengine.compute"/>
-      <Package name="org.jclouds.googlecomputeengine.compute.config"/>
-      <Package name="org.jclouds.googlecomputeengine.compute.functions"/>
-      <Package name="org.jclouds.googlecomputeengine.compute.loaders"/>
-    </Or>
-  </Match>
 </FindBugsFilter>

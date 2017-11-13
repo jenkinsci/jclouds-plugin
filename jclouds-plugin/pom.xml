@@ -128,9 +128,6 @@ limitations under the License.
         <configuration>
           <failOnViolation>true</failOnViolation>
           <verbose>true</verbose>
-          <excludes>
-            <exclude>**/googlecomputeengine/compute/**/*</exclude>
-          </excludes>
         </configuration>
       </plugin>
 
