@@ -58,7 +58,6 @@ import org.jclouds.compute.config.ComputeServiceProperties;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.options.TemplateOptions;
-import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
@@ -97,6 +96,7 @@ import hudson.security.AccessControlled;
 
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
+import jenkins.plugins.jclouds.modules.JenkinsConfigurationModule;
 
 import hudson.util.XStream2;
 import com.thoughtworks.xstream.converters.UnmarshallingContext;
@@ -271,7 +271,7 @@ public class JCloudsCloud extends Cloud {
         public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
             return new ComputeLogger.Factory();
         }
-    }, new EnterpriseConfigurationModule());
+    }, new JenkinsConfigurationModule());
 
     private static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final Properties overrides) {
         // correct the classloader so that extensions can be found

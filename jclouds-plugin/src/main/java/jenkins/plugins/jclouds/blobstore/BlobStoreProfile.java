@@ -54,7 +54,6 @@ import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.blobstore.domain.Blob;
 import org.jclouds.domain.Location;
-import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 
@@ -72,6 +71,7 @@ import com.thoughtworks.xstream.converters.UnmarshallingContext;
 
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.LocationHelper;
+import jenkins.plugins.jclouds.modules.JenkinsConfigurationModule;
 
 /**
  * Model class for Blobstore profile. User can configure multiple profiles to upload artifacts to different providers.
@@ -164,7 +164,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
             return new BlobStoreLogger.Factory();
         }
-    }, new EnterpriseConfigurationModule());
+    }, new JenkinsConfigurationModule());
 
 
     private static BlobStoreContext ctx(final String provider, final String credId, final Properties overrides) {
