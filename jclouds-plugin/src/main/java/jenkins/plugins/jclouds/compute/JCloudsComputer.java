@@ -27,7 +27,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.annotation.CheckForNull;
+import javax.annotation.Nullable;
 
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 
@@ -41,17 +44,21 @@ import shaded.com.google.common.collect.ImmutableSet;
  *
  * @author Vijay Kiran
  */
-public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
+public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> implements TrackedItem {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsComputer.class.getName());
 
+    private final ProvisioningActivity.Id provisioningId;
+
     public JCloudsComputer(JCloudsSlave slave) {
         super(slave);
+        this.provisioningId = slave.getId();
     }
 
     public String getInstanceId() {
         return getName();
     }
+
 
     public int getRetentionTime() {
         final JCloudsSlave node = getNode();
@@ -170,5 +177,11 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> {
 
     public String getPrivateIpAddresses() {
         return MarkPreferredAddress(Joiner.on(" ").join(getIpAddresses(false)), "<b>", "</b>");
+    }
+
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        return provisioningId;
     }
 }

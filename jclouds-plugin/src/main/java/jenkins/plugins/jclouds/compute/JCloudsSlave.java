@@ -37,18 +37,25 @@ import java.util.logging.Logger;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.LoginCredentials;
+import org.jenkinsci.plugins.cloudstats.CloudStatistics;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.DataBoundConstructor;
+
+import javax.annotation.Nullable;
 
 /**
  * Jenkins Slave node - managed by JClouds.
  *
  * @author Vijay Kiran
  */
-public class JCloudsSlave extends AbstractCloudSlave {
+public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
 
     private static final long serialVersionUID = 42L;
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlave.class.getName());
+
+    private ProvisioningActivity.Id provisioningId;
     private transient NodeMetadata nodeMetaData;
     public final boolean stopOnTerminate;
     private final String cloudName;
@@ -137,6 +144,19 @@ public class JCloudsSlave extends AbstractCloudSlave {
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
+
+    public JCloudsSlave(ProvisioningActivity.Id provisioningId, final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
+
+                        final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
+                        String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId,
+                        final Mode mode, final String preferredAddress, boolean useJnlp) throws IOException, Descriptor.FormException {
+        this(cloudName, fsRoot, metadata, labelString,
+            description, numExecutors,  stopOnTerminate, overrideRetentionTime,
+            jvmOptions,  waitPhoneHome, waitPhoneHomeTimeout, credentialsId,
+        mode, preferredAddress,  useJnlp);
+        this.provisioningId = provisioningId;
+    }
+
 
     // JENKINS-19935 Instances on EC2 don't get random suffix
     final static String uniqueName(final NodeMetadata md, final String cloudName) {
@@ -285,6 +305,12 @@ public class JCloudsSlave extends AbstractCloudSlave {
         return new JCloudsComputer(this);
     }
 
+    @Nullable
+    @Override
+    public ProvisioningActivity.Id getId() {
+        return provisioningId;
+    }
+
     @Extension
     public static final class JCloudsSlaveDescriptor extends SlaveDescriptor {
 
@@ -320,6 +346,10 @@ public class JCloudsSlave extends AbstractCloudSlave {
             }
         } else {
             LOGGER.info("Slave " + getNodeName() + " is already not running.");
+        }
+        ProvisioningActivity activity = CloudStatistics.get().getActivityFor(this);
+        if (activity != null) {
+        activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
         }
     }
 

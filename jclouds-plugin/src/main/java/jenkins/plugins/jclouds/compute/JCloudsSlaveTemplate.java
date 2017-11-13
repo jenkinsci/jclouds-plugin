@@ -86,6 +86,7 @@ import org.jclouds.predicates.validators.DnsNameValidator;
 import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
+import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -341,11 +342,11 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return labelSet;
     }
 
-    public JCloudsSlave provisionSlave(TaskListener listener) throws IOException {
+    public JCloudsSlave provisionSlave(TaskListener listener, ProvisioningActivity.Id provisioningId) throws IOException {
         NodeMetadata nodeMetadata = get();
 
         try {
-            return new JCloudsSlave(getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
+            return new JCloudsSlave(provisioningId , getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
                     Integer.toString(numExecutors), stopOnTerminate, overrideRetentionTime, getJvmOptions(), waitPhoneHome,
                     waitPhoneHomeTimeout, credentialsId, mode, preferredAddress, useJnlp);
         } catch (Descriptor.FormException e) {
