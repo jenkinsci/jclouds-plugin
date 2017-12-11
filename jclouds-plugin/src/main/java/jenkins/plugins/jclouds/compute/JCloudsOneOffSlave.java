@@ -15,22 +15,23 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
+import hudson.FilePath;
 import hudson.model.AbstractProject;
-import hudson.model.Executor;
+import hudson.model.Run;
+import hudson.model.Computer;
+import hudson.model.TaskListener;
 import hudson.slaves.OfflineCause;
-import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
-
+import jenkins.tasks.SimpleBuildWrapper;
 import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class JCloudsOneOffSlave extends BuildWrapper {
+public class JCloudsOneOffSlave extends SimpleBuildWrapper {
     private static final Logger LOGGER = Logger.getLogger(JCloudsOneOffSlave.class.getName());
 
     @DataBoundConstructor
@@ -42,26 +43,8 @@ public class JCloudsOneOffSlave extends BuildWrapper {
     // possible, as this method is very hard to test due to static usage, etc.
     //
     @Override
-    @SuppressWarnings("rawtypes")
-    public Environment setUp(AbstractBuild build, Launcher launcher, final BuildListener listener) {
-        final Executor x = build.getExecutor();
-        if (null != x && JCloudsComputer.class.isInstance(x.getOwner())) {
-            final JCloudsComputer c = (JCloudsComputer) x.getOwner();
-            return new Environment() {
-                @Override
-                public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
-                    LOGGER.warning("Single-use slave " + c.getName() + " getting torn down.");
-                    c.setTemporarilyOffline(true, OfflineCause.create(Messages._OneOffCause()));
-                    // Fixes JENKINS-28403
-                    c.deleteSlave();
-                    return true;
-                }
-            };
-        } else {
-            return new Environment() {
-            };
-        }
-
+    public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
+        context.setDisposer(new JCloudsOneOffSlaveDisposer());
     }
 
     @Extension
@@ -77,5 +60,23 @@ public class JCloudsOneOffSlave extends BuildWrapper {
             return true;
         }
 
+    }
+
+    private static class JCloudsOneOffSlaveDisposer extends Disposer {
+        @Override
+        public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
+            Computer computer = workspace.toComputer();
+            if (computer == null) {
+                throw new IllegalStateException("Computer is null");
+            }
+            if (JCloudsComputer.class.isInstance(computer)) {
+                String msg = "Taking single-use slave " + computer.getName() + " offline.";
+                LOGGER.warning(msg);
+                listener.getLogger().println(msg);
+                computer.setTemporarilyOffline(true, OfflineCause.create(Messages._OneOffCause()));
+            } else {
+                listener.getLogger().println("Not a single-use slave, this is a " + computer.getClass());
+            }
+        }
     }
 }
