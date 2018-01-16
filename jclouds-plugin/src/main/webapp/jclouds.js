@@ -63,13 +63,13 @@ window.JClouds = window.JClouds || {
     },
     "showcf": function(evt) {
         var but = evt.target || evt.srcElement;
-        var fid = $(but).up('tr').down('select').getValue();
+        var fid = $(but).up('div').up('div').down('select').getValue();
         evt.stop();
         window.JClouds.showdlg(rootURL + '/configfiles/show?id=' + fid, window.JClouds.showcfpost);
     },
     "chgbutton": function(sel) {
         var dis = $(sel).getValue() == '';
-        var but = $(sel).up('tr').down('.yui-button').yb;
+        var but = $(sel).up('div').up('div').down('.yui-button').yb;
         but.set('disabled', dis, true);
     },
     "chsel": function(evt) {
