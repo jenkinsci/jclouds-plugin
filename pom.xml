@@ -170,6 +170,7 @@ limitations under the License.
               <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
             </transformers>
             <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+            <createSourcesJar>true</createSourcesJar>
           </configuration>
         </plugin>
         <plugin>
