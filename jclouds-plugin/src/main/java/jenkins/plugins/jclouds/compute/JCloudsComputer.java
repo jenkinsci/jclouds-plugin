@@ -36,8 +36,8 @@ import org.kohsuke.stapler.HttpResponse;
 
 import org.jclouds.compute.domain.NodeMetadata;
 
-import shaded.com.google.common.base.Joiner;
-import shaded.com.google.common.collect.ImmutableSet;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.

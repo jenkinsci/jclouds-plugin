@@ -24,11 +24,11 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.ImmutableSet;
-import shaded.com.google.common.collect.ImmutableSet.Builder;
-import shaded.com.google.common.collect.ImmutableSortedSet;
-import shaded.com.google.common.collect.Iterables;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
 import com.google.inject.Module;
 
 import hudson.Extension;
@@ -170,6 +170,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
     private static BlobStoreContext ctx(final String provider, final String credId, final Properties overrides) {
         // correct the classloader so that extensions can be found
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        CredentialsHelper.setProject(credId, overrides);
         return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
             .overrides(overrides).modules(MODULES).buildView(BlobStoreContext.class);
     }

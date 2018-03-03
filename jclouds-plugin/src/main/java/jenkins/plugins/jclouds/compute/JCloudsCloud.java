@@ -76,12 +76,12 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
-import shaded.com.google.common.base.Objects;
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.ImmutableSet;
-import shaded.com.google.common.collect.ImmutableSet.Builder;
-import shaded.com.google.common.collect.ImmutableSortedSet;
-import shaded.com.google.common.collect.Iterables;
+import com.google.common.base.Objects;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
@@ -319,6 +319,7 @@ public class JCloudsCloud extends Cloud {
     private static ComputeServiceContext ctx(final String provider, final String credId, final Properties overrides) {
         // correct the classloader so that extensions can be found
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        CredentialsHelper.setProject(credId, overrides);
         return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
             .overrides(overrides).modules(MODULES).buildView(ComputeServiceContext.class);
     }

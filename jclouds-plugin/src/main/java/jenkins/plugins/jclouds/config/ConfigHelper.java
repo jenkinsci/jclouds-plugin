@@ -53,7 +53,7 @@ import javax.mail.internet.MimeMultipart;
 import jenkins.plugins.jclouds.compute.UserData;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
 
-import shaded.com.google.common.base.Joiner;
+import com.google.common.base.Joiner;
 
 public class ConfigHelper {
 

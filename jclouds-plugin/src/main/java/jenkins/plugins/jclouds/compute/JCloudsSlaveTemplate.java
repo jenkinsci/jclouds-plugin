@@ -15,9 +15,9 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import static shaded.com.google.common.base.Throwables.propagate;
-import static shaded.com.google.common.collect.Iterables.getOnlyElement;
-import static shaded.com.google.common.collect.Lists.newArrayList;
+import static com.google.common.base.Throwables.propagate;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.google.common.collect.Lists.newArrayList;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 import java.io.IOException;
@@ -92,10 +92,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import au.com.bytecode.opencsv.CSVReader;
-import shaded.com.google.common.base.Optional;
-import shaded.com.google.common.base.Predicate;
-import shaded.com.google.common.base.Supplier;
-import shaded.com.google.common.collect.ImmutableMap;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatcher;

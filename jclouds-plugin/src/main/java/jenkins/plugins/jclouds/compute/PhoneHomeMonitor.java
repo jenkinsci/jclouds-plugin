@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import shaded.com.google.common.base.Joiner;
+import com.google.common.base.Joiner;
 
 /**
  * Phone home management.

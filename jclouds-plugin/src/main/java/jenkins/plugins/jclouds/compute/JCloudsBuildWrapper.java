@@ -45,15 +45,15 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.logging.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import shaded.com.google.common.base.Function;
-import shaded.com.google.common.base.Supplier;
-import shaded.com.google.common.cache.CacheBuilder;
-import shaded.com.google.common.cache.CacheLoader;
-import shaded.com.google.common.cache.LoadingCache;
-import shaded.com.google.common.collect.ImmutableList;
-import shaded.com.google.common.collect.Iterables;
-import shaded.com.google.common.collect.ImmutableList.Builder;
-import shaded.com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.base.Function;
+import com.google.common.base.Supplier;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public class JCloudsBuildWrapper extends BuildWrapper {
     private final List<InstancesToRun> instancesToRun;

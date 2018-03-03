@@ -19,11 +19,11 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import shaded.com.google.common.collect.ImmutableList;
-import shaded.com.google.common.util.concurrent.Futures;
-import shaded.com.google.common.util.concurrent.ListenableFuture;
-import shaded.com.google.common.util.concurrent.ListeningExecutorService;
-import shaded.com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
 import hudson.model.Computer;

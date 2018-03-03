@@ -53,7 +53,7 @@ limitations under the License.
     <test.jenkins.blobstore.build-version />
     <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
     <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
-    <jclouds.version>2.0.2</jclouds.version>
+    <jclouds.version>2.1.0</jclouds.version>
     <!-- Depend on latest Jenkins 2.x LTS
          See README of https://github.com/jenkinsci/plugin-pom/ -->
     <jenkins.version>2.19.3</jenkins.version>
@@ -139,38 +139,6 @@ limitations under the License.
               </manifestEntries>
             </archive>
             <maskClasses>com.google.common.</maskClasses>
-          </configuration>
-        </plugin>
-        <plugin>
-          <artifactId>maven-shade-plugin</artifactId>
-          <version>2.2</version>
-          <executions>
-            <execution>
-              <id>shade</id>
-              <phase>package</phase>
-              <goals>
-                <goal>shade</goal>
-              </goals>
-            </execution>
-          </executions>
-          <configuration>
-            <artifactSet>
-              <includes>
-                <include>org.apache.jclouds*:*</include>
-                <include>com.google.guava:*</include>
-              </includes>
-            </artifactSet>
-            <relocations>
-              <relocation>
-                <pattern>com.google.common</pattern>
-                <shadedPattern>shaded.com.google.common</shadedPattern>
-              </relocation>
-            </relocations>
-            <transformers>
-              <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
-            </transformers>
-            <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
-            <createSourcesJar>true</createSourcesJar>
           </configuration>
         </plugin>
         <plugin>

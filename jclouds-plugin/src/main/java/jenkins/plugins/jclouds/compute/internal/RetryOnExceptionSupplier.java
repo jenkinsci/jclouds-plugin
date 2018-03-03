@@ -20,7 +20,7 @@ import java.util.concurrent.Callable;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.logging.Logger;
 
-import shaded.com.google.common.base.Supplier;
+import com.google.common.base.Supplier;
 
 class RetryOnExceptionSupplier implements Callable<NodeMetadata> {
     private static final int MAX_ATTEMPTS = 5;

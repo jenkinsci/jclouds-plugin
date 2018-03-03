@@ -17,7 +17,7 @@ package jenkins.plugins.jclouds.compute.internal;
 
 import org.jclouds.compute.domain.NodeMetadata;
 
-import shaded.com.google.common.base.Supplier;
+import com.google.common.base.Supplier;
 
 public class NodePlan {
     private final String cloudName;

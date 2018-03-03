@@ -22,7 +22,7 @@ import hudson.cli.CLICommand;
 import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
 
-import shaded.com.google.common.base.Strings;
+import com.google.common.base.Strings;
 
 /**
  * Provisions a slave.
