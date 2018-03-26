@@ -450,8 +450,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             TemplateOptions options = template.getOptions();
 
             if (!isNullOrEmpty(networks)) {
-                LOGGER.info("Setting networks to " + networks);
-                options.networks(csvToArray(networks));
+                if (networks.startsWith("subnet-") && options instanceof AWSEC2TemplateOptions) {
+                    LOGGER.info("Setting AWS EC2 subnetId to " + networks);
+                    options.as(AWSEC2TemplateOptions.class).subnetId(networks);
+                } else {
+                    LOGGER.info("Setting networks to " + networks);
+                    options.networks(csvToArray(networks));
+                }
             }
 
             if (!isNullOrEmpty(securityGroups)) {
