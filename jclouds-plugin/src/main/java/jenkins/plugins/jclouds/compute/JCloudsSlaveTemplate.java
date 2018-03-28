@@ -510,7 +510,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 // Always use our own credentials and let creation fail
                 // if no keys are provided.
                 options.as(GoogleComputeEngineTemplateOptions.class).autoCreateKeyPair(false);
-                options.preemptible(isPreemptible);
+                options.as(GoogleComputeEngineTemplateOptions.class).preemptible(isPreemptible);
             }
 
             if (assignPublicIp) {
