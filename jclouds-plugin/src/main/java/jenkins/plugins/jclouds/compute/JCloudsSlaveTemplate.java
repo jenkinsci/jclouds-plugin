@@ -172,6 +172,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final String securityGroups;
     public final Mode mode;
     public final boolean useConfigDrive;
+    public final boolean isPreemptible;
     private final String credentialsId;
     private final String adminCredentialsId;
     private final List<UserData> userDataEntries;
@@ -216,7 +217,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout,
             final String keyPairName, final boolean assignPublicIp, final String networks,
             final String securityGroups, final String credentialsId, final String adminCredentialsId,
-            final String mode, final boolean useConfigDrive, final List<UserData> userDataEntries,
+            final String mode, final boolean useConfigDrive, final boolean isPreemptible, final List<UserData> userDataEntries,
             final String preferredAddress, final boolean useJnlp) {
 
         this.name = Util.fixEmptyAndTrim(name);
@@ -252,6 +253,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.adminCredentialsId = Util.fixEmptyAndTrim(adminCredentialsId);
         this.mode = Mode.valueOf(Util.fixNull(mode));
         this.useConfigDrive = useConfigDrive;
+        this.isPreemptible = isPreemptible;
         this.userDataEntries = userDataEntries;
         this.preferredAddress = preferredAddress;
         this.useJnlp = useJnlp;
@@ -508,6 +510,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 // Always use our own credentials and let creation fail
                 // if no keys are provided.
                 options.as(GoogleComputeEngineTemplateOptions.class).autoCreateKeyPair(false);
+                options.as(GoogleComputeEngineTemplateOptions.class).preemptible(isPreemptible);
             }
 
             if (assignPublicIp) {
