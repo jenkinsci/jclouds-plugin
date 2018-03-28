@@ -45,7 +45,7 @@ public class JCloudsSlaveTemplateTest {
         j.assertEqualBeans(beforeCloud, afterCloud,
                 "profile,providerName,endPointUrl,trustAll,groupPrefix");
         j.assertEqualBeans(beforeTemplate, afterTemplate,
-                "name,cores,ram,osFamily,osVersion,labelString,description,numExecutors,stopOnTerminate,mode,useConfigDrive,preemptible,preferredAddress,useJnlp");
+                "name,cores,ram,osFamily,osVersion,labelString,description,numExecutors,stopOnTerminate,mode,useConfigDrive,isPreemptible,preferredAddress,useJnlp");
     }
 
 }
