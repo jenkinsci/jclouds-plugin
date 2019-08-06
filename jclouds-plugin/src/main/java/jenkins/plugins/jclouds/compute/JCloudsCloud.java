@@ -75,6 +75,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.verb.POST;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
@@ -587,9 +588,12 @@ public class JCloudsCloud extends Cloud {
             return true;
         }
 
+        @POST
         public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones,
                 @QueryParameter boolean trustAll) throws IOException {
+
+            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             if (null == Util.fixEmptyAndTrim(cloudCredentialsId)) {
                 return FormValidation.error("Cloud credentials not specified.");
             }
