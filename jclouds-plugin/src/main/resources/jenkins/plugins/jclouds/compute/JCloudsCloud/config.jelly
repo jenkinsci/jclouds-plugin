@@ -34,8 +34,8 @@ limitations under the License.
   <f:entry title="${%Credentials}" field="cloudCredentialsId">
     <c:select/>
   </f:entry>
-  <f:entry title="${%Relax security}" field="trustAll">
-    <f:checkbox/>
+  <f:entry field="trustAll">
+    <f:checkbox title="${%Relax security}"/>
   </f:entry>
   <f:entry title="${%Cloud RSA key}" field="cloudGlobalKeyId">
     <c:select/>

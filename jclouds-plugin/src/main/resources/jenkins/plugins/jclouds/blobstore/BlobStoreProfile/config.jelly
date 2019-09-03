@@ -29,8 +29,8 @@ limitations under the License.
     <f:entry title="${%Credentials}" field="credentialsId">
       <c:select/>
     </f:entry>
-    <f:entry title="${%Relax security}" field="trustAll">
-      <f:checkbox/>
+    <f:entry field="trustAll">
+      <f:checkbox title="${%Relax security}"/>
     </f:entry>
     <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="providerName,credentialsId,endPointUrl,trustAll"/>
     <f:entry title="">
