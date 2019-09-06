@@ -39,8 +39,8 @@ limitations under the License.
     <f:number clazz="positive-number" min="1" step="1" default="1"/>
   </f:entry>
   
-  <f:entry title="${%Stop on Terminate}" field="suspendOrTerminate">
-    <f:checkbox />
+  <f:entry field="suspendOrTerminate">
+    <f:checkbox title="${%Stop on Terminate}"/>
   </f:entry>
   
   <f:entry>
