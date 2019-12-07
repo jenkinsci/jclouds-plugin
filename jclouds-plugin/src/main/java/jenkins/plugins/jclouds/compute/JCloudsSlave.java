@@ -62,7 +62,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     private String nodeId;
     private boolean pendingDelete;
     private boolean waitPhoneHome;
-    private final Integer overrideRetentionTime;
+    private Integer overrideRetentionTime;
     private final int waitPhoneHomeTimeout;
     private final String user;
     private final String password;
@@ -213,6 +213,10 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
             LOGGER.info("Using credentials from JClouds");
         }
         return credentials;
+    }
+
+    public void setOverrideRetentionTime(Integer value) {
+        overrideRetentionTime = value;
     }
 
     /**
