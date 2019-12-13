@@ -147,6 +147,9 @@ limitations under the License.
         <f:entry field="allowSudo">
           <f:checkbox title="${%Allow Sudo}"/>
         </f:entry>
+        <f:entry field="isPreemptible">
+          <f:checkbox title="${%Is preemptible}" />
+        </f:entry>
         <f:entry field="installPrivateKey">
           <f:checkbox title="${%Install Private Key}"/>
         </f:entry>
@@ -211,3 +214,4 @@ limitations under the License.
     <script type="text/javascript" src="${rootURL}/plugin/jclouds-jenkins/jclouds.js"/>
   </st:once>
 </j:jelly>
+
