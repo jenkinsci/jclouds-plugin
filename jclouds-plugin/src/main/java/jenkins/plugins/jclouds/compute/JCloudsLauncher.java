@@ -19,10 +19,12 @@ import hudson.model.TaskListener;
 import hudson.model.Descriptor;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
-import hudson.plugins.sshslaves.SSHLauncher;
 
 import java.io.IOException;
 import java.io.PrintStream;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -45,6 +47,31 @@ public class JCloudsLauncher extends ComputerLauncher {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsLauncher.class.getName());
 
+    // Invoke SSHLauncher using reflection so we can use both old and new API of SSHLauncher.
+    private static final void invokeSSHLauncher(final String address, final String credentialsId, final String jvmOptions,
+            SlaveComputer slave, TaskListener listener) throws IOException {
+        try {
+            Class<?> c = Class.forName("hudson.plugins.sshslaves.SSHLauncher");
+            try {
+                Constructor<?> con = c.getConstructor(String.class, int.class, String.class);
+                Method setJvmOptionsMethod = c.getMethod("setJvmOptions", String.class);
+                Method launchMethod = c.getMethod("launch", SlaveComputer.class, TaskListener.class);
+                Object instance = con.newInstance(address, 22, credentialsId);
+                setJvmOptionsMethod.invoke(instance, jvmOptions);
+                launchMethod.invoke(instance, slave, listener);
+            } catch (NoSuchMethodException|SecurityException x) {
+                Constructor<?> con = c.getConstructor(String.class, int.class, String.class, String.class, String.class, String.class,
+                        String.class, Integer.class, Integer.class, Integer.class);
+                Method launchMethod = c.getMethod("launch", SlaveComputer.class, TaskListener.class);
+                Object instance = con.newInstance(address, 22, credentialsId, jvmOptions, null, "", "", Integer.valueOf(0), null, null);
+                launchMethod.invoke(instance, slave, listener);
+            }
+        } catch (Throwable t) {
+            LOGGER.log(java.util.logging.Level.SEVERE, t.getMessage(), t);
+            throw new IOException(t);
+        }
+    }
+
     /**
      * Launch the Jenkins Slave on the SlaveComputer.
      *
@@ -62,15 +89,17 @@ public class JCloudsLauncher extends ComputerLauncher {
         if (null != slave) {
             final String address = getConnectionAddress(slave.getNodeMetaData(), logger, slave.getPreferredAddress());
             slave.waitForPhoneHome(logger);
+            LOGGER.info("launch resumed");
 
             if (InetAddress.getByName(address).isAnyLocalAddress()) {
+                LOGGER.severe("Invalid address 0.0.0.0, your host is most likely waiting for an ip address.");
                 logger.println("Invalid address 0.0.0.0, your host is most likely waiting for an ip address.");
                 throw new IOException("goto sleep");
             }
+            invokeSSHLauncher(address, slave.getCredentialsId(), slave.getJvmOptions(), computer, listener);
 
-            SSHLauncher launcher = new SSHLauncher(address, 22, slave.getCredentialsId(), slave.getJvmOptions(), null, "", "", Integer.valueOf(0), null, null);
-            launcher.launch(computer, listener);
         } else {
+            LOGGER.severe("Could not launch NULL slave.");
             throw new IOException("Could not launch NULL slave.");
         }
     }
