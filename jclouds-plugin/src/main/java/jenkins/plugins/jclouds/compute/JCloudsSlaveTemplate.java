@@ -452,8 +452,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             TemplateOptions options = template.getOptions();
 
             if (!isNullOrEmpty(networks)) {
-                LOGGER.info("Setting networks to " + networks);
-                options.networks(csvToArray(networks));
+                if (networks.startsWith("subnet-") && options instanceof AWSEC2TemplateOptions) {
+                    LOGGER.info("Setting AWS EC2 subnetId to " + networks);
+                    options.as(AWSEC2TemplateOptions.class).subnetId(networks);
+                } else {
+                    LOGGER.info("Setting networks to " + networks);
+                    options.networks(csvToArray(networks));
+                }
             }
 
             if (!isNullOrEmpty(securityGroups)) {
@@ -756,7 +761,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     return FormValidation.error("This feature cannot work, because the JNLP port is disabled in global security.");
                 }
                 final Set<String> aps = Jenkins.getInstance().getAgentProtocols();
-                if (!(aps.contains("JNLP-connect") || aps.contains("JNLP2-connect") || aps.contains("JNLP3-connect"))) {
+                if (!(aps.contains("JNLP-connect") || aps.contains("JNLP2-connect") || aps.contains("JNLP3-connect") || aps.contains("JNLP4-connect"))) {
                     return FormValidation.error("This feature cannot work, because all JNLP protocols are disabled in global security.");
                 }
                 if (!Boolean.valueOf(Util.fixEmptyAndTrim(preExistingJenkinsUser)).booleanValue()) {

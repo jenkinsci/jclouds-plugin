@@ -60,6 +60,7 @@ import org.jclouds.providers.Providers;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.verb.POST;
 
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
@@ -294,7 +295,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                 .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
-        private ImmutableSortedSet<String> getAllProviders() {
+        ImmutableSortedSet<String> getAllProviders() {
             // correct the classloader so that extensions can be found
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
@@ -317,11 +318,14 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return m;
         }
 
+        @POST
         public FormValidation doTestConnection(@QueryParameter("providerName") final String provider,
                @QueryParameter("credentialsId") final String credId,
                @QueryParameter("endPointUrl") final String url,
                @QueryParameter("trustAll") final boolean relaxed) throws IOException {
 
+
+            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
             if (null == Util.fixEmptyAndTrim(credId)) {
                 return FormValidation.error("BlobStore credentials not specified.");
             }

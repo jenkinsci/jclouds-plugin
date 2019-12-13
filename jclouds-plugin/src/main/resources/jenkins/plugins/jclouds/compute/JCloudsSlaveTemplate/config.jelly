@@ -140,19 +140,18 @@ limitations under the License.
             <c:select/>
         </f:entry>
 
-        <f:entry title="${%Use Pre-existing Jenkins User}"
-                 field="preExistingJenkinsUser">
-          <f:checkbox />
+        <f:entry field="preExistingJenkinsUser">
+          <f:checkbox title="${%Use Pre-existing Jenkins User}"/>
         </f:entry>
       
-        <f:entry title="${%Allow Sudo}" field="allowSudo">
-          <f:checkbox />
+        <f:entry field="allowSudo">
+          <f:checkbox title="${%Allow Sudo}"/>
         </f:entry>
-        <f:entry title="${%Is preemptible}" field="isPreemptible">
-          <f:checkbox />
+        <f:entry field="isPreemptible">
+          <f:checkbox title="${%Is preemptible}" />
         </f:entry>
-        <f:entry title="${%Install Private Key}" field="installPrivateKey">
-          <f:checkbox />
+        <f:entry field="installPrivateKey">
+          <f:checkbox title="${%Install Private Key}"/>
         </f:entry>
         <f:entry title="Remote FS Root" field="fsRoot">
           <f:textbox default="/jenkins" />
@@ -166,8 +165,8 @@ limitations under the License.
           <f:textbox />
         </f:entry>
       
-        <f:entry title="${%Stop on Terminate}" field="stopOnTerminate">
-          <f:checkbox />
+        <f:entry field="stopOnTerminate">
+          <f:checkbox title="${%Stop on Terminate}"/>
         </f:entry>
 
         <f:entry title="${%Networks}" field="networks">
@@ -178,8 +177,8 @@ limitations under the License.
           <f:textbox />
         </f:entry>
 
-        <f:entry title="${%Wait for slave to phone home}" field="waitPhoneHome">
-          <f:checkbox />
+        <f:entry field="waitPhoneHome">
+          <f:checkbox title="${%Wait for slave to phone home}"/>
         </f:entry>
 
         <f:entry title="${%Phone home timeout}" field="waitPhoneHomeTimeout">
@@ -189,17 +188,17 @@ limitations under the License.
         <f:entry title="${%Key Pair Name}" field="keyPairName">
           <f:textbox />
         </f:entry>
-        <f:entry title="${%Use config drive}" field="useConfigDrive">
-          <f:checkbox />
+        <f:entry field="useConfigDrive">
+          <f:checkbox title="${%Use config drive}"/>
         </f:entry>
-        <f:entry title="${%Assign Public IP}" field="assignPublicIp">
-          <f:checkbox default="true"/>
+        <f:entry field="assignPublicIp">
+          <f:checkbox title="${%Assign Public IP}" default="true"/>
         </f:entry>
         <f:entry title="${%Preferred Address}" field="preferredAddress">
           <f:textbox />
         </f:entry>
-        <f:entry title="${%Use JNLP}" field="useJnlp">
-          <f:checkbox />
+        <f:entry field="useJnlp">
+          <f:checkbox title="${%Use JNLP}"/>
         </f:entry>
       </f:block>
     </f:advanced>

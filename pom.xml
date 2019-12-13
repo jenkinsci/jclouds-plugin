@@ -24,7 +24,7 @@ limitations under the License.
 
   <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>jclouds-jenkins-parent</artifactId>
-  <version>2.15-SNAPSHOT</version>
+  <version>2.16-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Jenkins JClouds plugin parent POM</name>
   <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
@@ -164,13 +164,13 @@ limitations under the License.
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>
       <id>repo.jenkins-ci.org</id>
-      <url>http://repo.jenkins-ci.org/public/</url>
+      <url>https://repo.jenkins-ci.org/public/</url>
     </pluginRepository>
   </pluginRepositories>
 </project>
