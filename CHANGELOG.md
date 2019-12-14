@@ -1,10 +1,20 @@
 ## Changelog
 
+### Version 2.16 (upcoming release)
+
+-   Fixed subnet handling of aws-ec2 provider. Thanks to [Basil Peace](https://github.com/grv87). (Fixes [JENKINS-47301](https://issues.jenkins-ci.org/browse/JENKINS-47301))
+-   Added support for GCP preemptible instances. Thanks to [Mathieu Tortuyaux](https://github.com/tormath1) (Fixes [JENKINS-44601](https://issues.jenkins-ci.org/browse/JENKINS-44601))
+-   Added test case for cloud storage providers. Thanks to [Daniel Kutik](https://github.com/danielkutik)
+-   Convert JCloudsOneOffSlave to a SimpleBuildWrapper so that it may be used from Pipeline scripts. Thanks to [Carlos Tadeu Panato Junior](https://github.com/cpanato)
+-   Switch labels from entry to checkbox. Thanks to [Josh Soref](https://github.com/jsoref) (Fixes [JENKINS-55787](https://issues.jenkins-ci.org/browse/JENKINS-55787))
+-   Added jclouds-expire cli command
+-   Added support for new SSHLauncher API in ssh-slaves plugin > v1.29.4.
+
 ### Version 2.15 (released August 6, 2019)
 
 -   Fixed SECURITY-1482 / CVE-2019-10368 (CSRF) and CVE-2019-10369
     (permission check).
-    \[[Advisory](https://jenkins.io/security/advisory/2019-08-07/){.external-link}\]
+    \[[Advisory](https://jenkins.io/security/advisory/2019-08-07/)\]
 -   Suppress binary userData in logs
     ([JENKINS-41989](https://issues.jenkins-ci.org/browse/JENKINS-41989))
 -   Improve help for userData
@@ -14,10 +24,10 @@
 -   Added packet provider (Thanks to Ignasi Barrera)
 -   Added profitbricks provider (thanks to Ali Bazlamit)
 -   Fixed GUI problem
-    ([JENKINS-48986](https://issues.jenkins-ci.org/browse/JENKINS-48986){.external-link})
+    ([JENKINS-48986](https://issues.jenkins-ci.org/browse/JENKINS-48986))
     (thanks to Tomasz Wojtun)
 -   Upgrade to jclouds-2.1.0, (Fixes
-    [JENKINS-42005](https://issues.jenkins-ci.org/browse/JENKINS-42005){.external-link})
+    [JENKINS-42005](https://issues.jenkins-ci.org/browse/JENKINS-42005))
 -   Added support for OpenStack keystone-V3 authentication
 
 ### Version 2.14 (released February 14, 2017)
@@ -52,7 +62,7 @@
 -   Now shows IP address on node details page
     ([JENKINS-14398](https://issues.jenkins-ci.org/browse/JENKINS-14398))
 -   Now uses the
-    [config-file-provider-plugin](https://wiki.jenkins-ci.org/display/JENKINS/Config+File+Provider+Plugin){.external-link}
+    [config-file-provider-plugin](https://wiki.jenkins-ci.org/display/JENKINS/Config+File+Provider+Plugin)
     for initScripts and userData
 -   Allows for multiple cloud-config snippets in userData
 -   Merged OpenStack's assignFloatingIP setting into assignPublicIp
