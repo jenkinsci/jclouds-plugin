@@ -158,7 +158,7 @@ limitations under the License.
   <scm>
     <connection>scm:git:git://github.com/jenkinsci/jclouds-plugin.git</connection>
     <developerConnection>scm:git:git@github.com:jenkinsci/jclouds-plugin.git</developerConnection>
-    <url>http://github.com/jenkinsci/jclouds-plugin</url>
+    <url>https://github.com/jenkinsci/jclouds-plugin</url>
     <tag>HEAD</tag>
   </scm>
   <repositories>
