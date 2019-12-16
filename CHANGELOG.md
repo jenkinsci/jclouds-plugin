@@ -1,6 +1,6 @@
 ## Changelog
 
-### Version 2.16 (upcoming release)
+### Version 2.16 (released December 16, 2019)
 
 -   Fixed subnet handling of aws-ec2 provider. Thanks to [Basil Peace](https://github.com/grv87). (Fixes [JENKINS-47301](https://issues.jenkins-ci.org/browse/JENKINS-47301))
 -   Added support for GCP preemptible instances. Thanks to [Mathieu Tortuyaux](https://github.com/tormath1) (Fixes [JENKINS-44601](https://issues.jenkins-ci.org/browse/JENKINS-44601))
@@ -9,7 +9,7 @@
 -   Switch labels from entry to checkbox. Thanks to [Josh Soref](https://github.com/jsoref) (Fixes [JENKINS-55787](https://issues.jenkins-ci.org/browse/JENKINS-55787))
 -   Added jclouds-expire cli command
 -   Added support for new SSHLauncher API in ssh-slaves plugin > v1.29.4.
--   Upgraded to [jclouds-2.2.0](https://jclouds.apache.org/releasenotes/2.2.0/)
+-   Upgraded to [jclouds-2.2.0](https://jclouds.apache.org/releasenotes/2.2.0/) (Fixes [JENKINS-60499](https://issues.jenkins-ci.org/browse/JENKINS-60499))
 
 ### Version 2.15 (released August 6, 2019)
 
