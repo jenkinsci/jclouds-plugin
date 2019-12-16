@@ -1,5 +1,8 @@
 ## Changelog
 
+### Version 2.17 (released December 16, 2019)
+- Fixed doc migration from wiki to github README.md
+
 ### Version 2.16 (released December 16, 2019)
 
 -   Fixed subnet handling of aws-ec2 provider. Thanks to [Basil Peace](https://github.com/grv87). (Fixes [JENKINS-47301](https://issues.jenkins-ci.org/browse/JENKINS-47301))
