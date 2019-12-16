@@ -12,12 +12,6 @@ This plugin uses [JClouds](http://jclouds.org/) to
 provide slave launching on most of the currently usable Cloud
 infrastructures [supported](http://jclouds.apache.org/reference/providers/#compute-apis) by JClouds.
 
-Older versions (< v2.15) of this plugin may not be safe to use. Please review the
-following warnings before using an older version:
-
--   [CSRF vulnerability and missing permission check allowed capturing
-    credentials](https://jenkins.io/security/advisory/2019-08-07/#SECURITY-1482)
-
 ## Adding a new Cloud Provider
 
 -   Goto Jenkins Configuration page by clicking on Manage menu or
