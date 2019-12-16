@@ -28,7 +28,7 @@ limitations under the License.
   <packaging>hpi</packaging>
   <name>Jenkins JClouds plugin</name>
   <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/JClouds+Plugin</url>
+  <url>https://github.com/jenkinsci/jclouds-plugin</url>
   <licenses>
     <license>
       <name>Apache License 2.0</name>
