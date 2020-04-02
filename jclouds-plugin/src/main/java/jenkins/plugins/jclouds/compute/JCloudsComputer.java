@@ -85,7 +85,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
         if (null != node) {
             if (node.isPendingDelete()) {
                 // User attempts to delete an already delete-pending slave
-                LOGGER.info("Slave already pendig delete: " + getName());
+                LOGGER.info("Slave already pending delete: " + getName());
                 deleteSlave(true);
             } else {
                 node.setPendingDelete(true);
