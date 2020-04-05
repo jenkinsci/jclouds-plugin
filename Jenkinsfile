@@ -1,25 +1,8 @@
-pipeline {
-    agent {
-      docker 'maven:3.2.5-jdk-8'
-    }
+// Builds a module using https://github.com/jenkins-infra/pipeline-library
+// Requirements:
+//   - agents with label 'linux' and 'windows'
+//   - tools with label 'jdk8' and 'mvn'
+//   - latest Pipeline plugins, 'Timestamper' plugin
+//   - recommended to use this Jenkinsfile with 'Multibranch Pipeline' plugin
 
-    environment {
-      MAVEN_OPTS = "-Xmx1024m"
-    }
-
-    stages {
-        stage("Build") {
-            steps {
-              sh 'mvn -B -Dmaven.test.failure.ignore clean install'
-            }
-        }
-    }
-
-    post {
-        success {
-            archive '**/target/*.hpi'
-            junit '**/target/surefire-reports/*.xml'
-        }
-    }
-
-}
+buildPlugin(configurations: buildPlugin.recommendedConfigurations())
