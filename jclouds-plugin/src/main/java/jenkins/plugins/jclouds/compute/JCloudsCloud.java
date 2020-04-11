@@ -399,6 +399,9 @@ public class JCloudsCloud extends Cloud {
         Computer computer = jcloudsSlave.toComputer();
         long startMoment = System.currentTimeMillis();
         while (null != computer && computer.isOffline()) {
+            if (computer.getOfflineCauseReason().equals(Messages.OneOffCause())) {
+                break;
+            }
             try {
                 LOGGER.info(String.format("Slave [%s] not connected yet", jcloudsSlave.getDisplayName()));
                 computer.connect(false).get();
