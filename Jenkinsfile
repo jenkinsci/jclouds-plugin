@@ -1,1 +1,1 @@
-buildPlugin(platform: "linux", jdk: "8", jenkins: recentLTS, javaLevel: "8")
+buildPlugin(platform: "linux", jdk: "8", jenkins: "2.164.1", javaLevel: "8")
