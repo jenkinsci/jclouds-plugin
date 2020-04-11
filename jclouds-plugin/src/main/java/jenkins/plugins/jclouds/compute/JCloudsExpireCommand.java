@@ -19,6 +19,7 @@ import hudson.Extension;
 import hudson.cli.CLICommand;
 import hudson.model.Computer;
 import hudson.model.Node;
+import hudson.security.Permission;
 import jenkins.model.Jenkins;
 
 import org.kohsuke.args4j.Argument;
@@ -47,7 +48,9 @@ public class JCloudsExpireCommand extends CLICommand {
     protected int run() throws CmdLineException {
         Node n = Jenkins.getInstance().getNode(nodeName);
         CmdLineParser p = getCmdLineParser();
-        if (null == n) {
+        if (null != n) {
+            n.checkPermission(Permission.CONFIGURE);
+        } else {
             throw new CmdLineException(p, new MsgMapper(Messages.class, "_JClouds_NoSuchNodeExists"), nodeName);
         }
         Computer c = n.toComputer();

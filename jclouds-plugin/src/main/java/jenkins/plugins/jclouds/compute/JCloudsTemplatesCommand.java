@@ -19,6 +19,7 @@ import java.io.IOException;
 
 import hudson.Extension;
 import hudson.cli.CLICommand;
+import hudson.security.Permission;
 import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
 
@@ -46,12 +47,14 @@ public class JCloudsTemplatesCommand extends CLICommand {
         for (final Cloud cloud : Jenkins.getInstance().clouds) {
             if (cloud instanceof JCloudsCloud) {
                 final JCloudsCloud c = (JCloudsCloud)cloud;
-                if (c.profile.length() > maxProfileLen) {
-                    maxProfileLen = c.profile.length();
-                }
-                for (final JCloudsSlaveTemplate t : c.getTemplates()) {
-                    if (t.name.length() > maxTemplateLen) {
-                        maxTemplateLen = t.name.length();
+                if (c.hasPermission(Permission.READ)) {
+                    if (c.profile.length() > maxProfileLen) {
+                        maxProfileLen = c.profile.length();
+                    }
+                    for (final JCloudsSlaveTemplate t : c.getTemplates()) {
+                        if (t.name.length() > maxTemplateLen) {
+                            maxTemplateLen = t.name.length();
+                        }
                     }
                 }
             }
