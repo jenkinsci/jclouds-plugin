@@ -31,25 +31,72 @@ import jenkins.model.Jenkins;
 import hudson.FilePath;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.Scanner;
+import java.util.UUID;
+
+import org.w3c.dom.Document;
+import java.io.IOException;
+import org.xml.sax.SAXException;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathFactory;
 
 public class MigrationTest {
 
     private final static String SAVE_MIGRATION_PROPERTY = "jenkins.plugins.jclouds.test.saveMigrationResults";
+    private final static String XPATH1 = "/hudson/clouds/jenkins.plugins.jclouds.compute.JCloudsCloud";
+    private final static String XPATH2 = XPATH1 + "/templates/jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate";
+
 
     @Rule public JenkinsRule j = new JenkinsRule();
 
     private void saveMigrationResult(final String targetPath) throws Exception {
         if (Boolean.getBoolean(SAVE_MIGRATION_PROPERTY)) {
             File target = new File(targetPath);
-            File src = Jenkins.getInstance().root;
+            File src = Jenkins.get().root;
             target.mkdirs();
             new FilePath(src).copyRecursiveTo("**/*", new FilePath(target));
         }
     }
 
-    private void checkTags(final File f) throws Exception {
+    private boolean isUUID(final String s) {
+        try {
+            return null != UUID.fromString(s);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    private void checkExistingTags(final File cfg) throws Exception {
+        DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = builderFactory.newDocumentBuilder();
+        Document cfgdoc = builder.parse(new FileInputStream(cfg));
+        XPath xPath =  XPathFactory.newInstance().newXPath();
+        String tmp = xPath.compile(XPATH1 + "/cloudGlobalKeyId").evaluate(cfgdoc);
+        assertTrue("cloudGlobalKeyId value in config is a UUID", isUUID(tmp));
+        tmp = xPath.compile(XPATH1 + "/cloudCredentialsId").evaluate(cfgdoc);
+        assertTrue("cloudCredentialId value in config is a UUID", isUUID(tmp));
+        tmp = xPath.compile(XPATH2 + "/credentialsId").evaluate(cfgdoc);
+        assertTrue("credentialId value in config is a UUID", isUUID(tmp));
+        tmp = xPath.compile(XPATH2 + "/adminCredentialsId").evaluate(cfgdoc);
+        assertTrue("adminCredentialId value in config is a UUID", isUUID(tmp));
+        tmp = xPath.compile(XPATH2 + "/initScriptId").evaluate(cfgdoc);
+        assertTrue("initScriptId value in config is a UUID", isUUID(tmp));
+        tmp = xPath.compile(XPATH2 + "/userDataEntries/jenkins.plugins.jclouds.compute.UserData/fileId").evaluate(cfgdoc);
+        assertTrue("UserData fileId in config is a UUID", isUUID(tmp));
+        tmp = xPath.compile(XPATH2 + "/useConfigDrive").evaluate(cfgdoc);
+        assertEquals("useConfigDrive value in config", "false", tmp);
+        tmp = xPath.compile(XPATH2 + "/waitPhoneHome").evaluate(cfgdoc);
+        assertEquals("waitPhoneHome value in config", "false", tmp);
+        tmp = xPath.compile(XPATH2 + "/waitPhoneHomeTimeout").evaluate(cfgdoc);
+        assertEquals("waitPhoneHomeTimeout value in config", "0", tmp);
+    }
+
+    private void checkObsoleteTags(final File f) throws Exception {
         // Verify that the obsoleted tags are gone
         String content = new Scanner(f).useDelimiter("\\Z").next();
         assertFalse("Tag <identity> still in file", content.contains("<identity>"));
@@ -64,16 +111,6 @@ public class MigrationTest {
         assertFalse("Tag <preInstalledJava> still in file", content.contains("<preInstalledJava>"));
         assertFalse("Tag <assignFloatingIp> still in file", content.contains("<assignFloatingIp>"));
         assertFalse("Tag <isWindows> still in file", content.contains("<isWindows>"));
-        // Verify, that new tags are there
-        assertTrue("Tag <cloudCredentialsId> in file", content.contains("<cloudCredentialsId>"));
-        assertTrue("Tag <cloudGlobalKeyId> in file", content.contains("<cloudGlobalKeyId>"));
-        assertTrue("Tag <credentialsId> in file", content.contains("<credentialsId>"));
-        assertTrue("Tag <initScriptId> in file", content.contains("<initScriptId>"));
-        assertTrue("Tag <userDataEntries> in file", content.contains("<userDataEntries>"));
-        assertTrue("Tag <adminCredentialsId> in file", content.contains("<adminCredentialsId>"));
-        assertTrue("Tag <useConfigDrive> in file", content.contains("<useConfigDrive>"));
-        assertTrue("Tag <waitPhoneHome> in file", content.contains("<waitPhoneHome>"));
-        assertTrue("Tag <waitPhoneHomeTimeout> in file", content.contains("<waitPhoneHomeTimeout>"));
     }
 
     @Test
@@ -81,22 +118,22 @@ public class MigrationTest {
     public void upgradeFromTwoDotEightDotOneDashOne() throws Exception {
         saveMigrationResult("/tmp/upgradeFromTwoDotEightDotOneDashOne");
 
-        File jhome = Jenkins.getInstance().root;
+        File jhome = Jenkins.get().root;
 
         File f = new File(jhome, "credentials.xml");
         assertTrue("File credentials.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of credentials.xml", 7246, f.length());
+
         f = new File(jhome, "org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml");
-        String globalConfigFileContent = FileUtils.readFileToString(f);
         assertTrue("File org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml exists in JENKINS_HOME", f.exists());
+
+        String globalConfigFileContent = new Scanner(f).useDelimiter("\\Z").next();
         assertTrue("jenkins.plugins.jclouds.config.UserDataYaml must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataYaml"));
         assertTrue("jenkins.plugins.jclouds.config.UserDataScript must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataScript"));
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 843, f.length());
 
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of config.xml", 3802, f.length());
-        checkTags(f);
+        checkObsoleteTags(f);
+        checkExistingTags(f);
     }
 
     @Test
@@ -104,19 +141,19 @@ public class MigrationTest {
     public void upgradeFromTwoDotNine() throws Exception {
         saveMigrationResult("/tmp/upgradeFromTwoDotNine");
 
-        File jhome = Jenkins.getInstance().root;
+        File jhome = Jenkins.get().root;
 
         File f = new File(jhome, "org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml");
-        String globalConfigFileContent = FileUtils.readFileToString(f);
         assertTrue("File org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml exists in JENKINS_HOME", f.exists());
+
+        String globalConfigFileContent = new Scanner(f).useDelimiter("\\Z").next();
         assertTrue("jenkins.plugins.jclouds.config.UserDataYaml must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataYaml"));
         assertTrue("jenkins.plugins.jclouds.config.UserDataScript must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataScript"));
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 843, f.length());
 
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of config.xml", 3832, f.length());
-        checkTags(f);
+        checkObsoleteTags(f);
+        checkExistingTags(f);
     }
 
     @Test
@@ -124,21 +161,19 @@ public class MigrationTest {
     public void upgradeFromTwoDotTen() throws Exception {
         saveMigrationResult("/tmp/upgradeFromTwoDotTen");
 
-        File jhome = Jenkins.getInstance().root;
+        File jhome = Jenkins.get().root;
 
         File f = new File(jhome, "org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml");
         assertTrue("File org.jenkinsci.plugins.configfiles.GlobalConfigFiles.xml exists in JENKINS_HOME", f.exists());
-        String globalConfigFileContent = FileUtils.readFileToString(f);
-        System.out.println(globalConfigFileContent);
+
+        String globalConfigFileContent = new Scanner(f).useDelimiter("\\Z").next();
         assertTrue("jenkins.plugins.jclouds.config.UserDataInclude must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataInclude"));
         assertTrue("jenkins.plugins.jclouds.config.UserDataScript must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataScript"));
         assertTrue("jenkins.plugins.jclouds.config.UserDataYaml must be found in global config", globalConfigFileContent.contains("jenkins.plugins.jclouds.config.UserDataYaml"));
-        // file size checks are reliable, because the generated uuids in there have a constant lenght
-        assertEquals("File size of jenkins.plugins.jclouds.config.UserDataScript.xml", 2742, f.length());
 
         f = new File(jhome, "config.xml");
         assertTrue("File config.xml exists in JENKINS_HOME", f.exists());
-        assertEquals("File size of config.xml", 17987, f.length());
-        checkTags(f);
+        checkObsoleteTags(f);
+        checkExistingTags(f);
     }
 }

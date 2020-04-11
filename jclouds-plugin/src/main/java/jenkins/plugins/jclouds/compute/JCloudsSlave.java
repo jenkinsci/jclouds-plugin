@@ -271,7 +271,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
      * TODO: Remove, after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
      */
     private void updateXml() {
-        final File nodesDir = new File(Jenkins.getInstance().getRootDir(), "nodes");
+        final File nodesDir = new File(Jenkins.get().getRootDir(), "nodes");
         final File cfg = new File(new File(nodesDir, getNodeName()), "config.xml");
         if (cfg.exists()) {
             XmlFile xmlFile = new XmlFile(Jenkins.XSTREAM, cfg);

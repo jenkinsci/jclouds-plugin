@@ -293,7 +293,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return getCloud().getGlobalPrivateKey();
         }
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getInstance(), ACL.SYSTEM,
+                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.get(), ACL.SYSTEM,
                     Collections.<DomainRequirement>emptyList()),
                 CredentialsMatchers.withId(credentialsId));
         return CredentialsHelper.getPrivateKey(supk);
@@ -662,7 +662,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     @Override
     @SuppressWarnings("unchecked")
     public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
-        return Jenkins.getInstance().getDescriptor(getClass());
+        return Jenkins.get().getDescriptor(getClass());
     }
 
     @Extension
@@ -757,10 +757,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         public FormValidation doCheckUseJnlp(@QueryParameter final String value,
                 @QueryParameter final String preExistingJenkinsUser, @QueryParameter final String initScriptId) {
             if (Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
-                if (null == Jenkins.getInstance().getTcpSlaveAgentListener() || -1 == Jenkins.getInstance().getSlaveAgentPort()) {
+                if (null == Jenkins.get().getTcpSlaveAgentListener() || -1 == Jenkins.get().getSlaveAgentPort()) {
                     return FormValidation.error("This feature cannot work, because the JNLP port is disabled in global security.");
                 }
-                final Set<String> aps = Jenkins.getInstance().getAgentProtocols();
+                final Set<String> aps = Jenkins.get().getAgentProtocols();
                 if (!(aps.contains("JNLP-connect") || aps.contains("JNLP2-connect") || aps.contains("JNLP3-connect") || aps.contains("JNLP4-connect"))) {
                     return FormValidation.error("This feature cannot work, because all JNLP protocols are disabled in global security.");
                 }
@@ -973,7 +973,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
        }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel().includeMatchingAs(
@@ -983,7 +983,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
 
         public ListBoxModel doFillAdminCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel().includeMatchingAs(
@@ -1158,7 +1158,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     private StandardUsernameCredentials retrieveExistingCredentials(final String username, final String privkey) {
         return CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class,
-                    Jenkins.getInstance(), ACL.SYSTEM, SSHLauncher.SSH_SCHEME), CredentialsMatchers.allOf(
+                    Jenkins.get(), ACL.SYSTEM, SSHLauncher.SSH_SCHEME), CredentialsMatchers.allOf(
                     CredentialsMatchers.withUsername(username),
                     new CredentialsMatcher() {
                         public boolean matches(Credentials item) {

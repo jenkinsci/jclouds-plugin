@@ -49,7 +49,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
         public Persistent(final String name, final Multimap<String, String> toSuspend, final Multimap<String, String> toDestroy) {
             nodesToSuspend = toSuspend;
             nodesToDestroy = toDestroy;
-            f = new File(Jenkins.getInstance().getRootDir(), name + ".xml");
+            f = new File(Jenkins.get().getRootDir(), name + ".xml");
             XmlFile xf = new XmlFile(f);
             try {
                 xf.write(this);

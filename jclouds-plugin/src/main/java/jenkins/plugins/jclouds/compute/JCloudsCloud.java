@@ -68,7 +68,7 @@ import static org.jclouds.reflect.Reflection2.typeToken;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
@@ -77,7 +77,7 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.verb.POST;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
@@ -141,7 +141,7 @@ public class JCloudsCloud extends Cloud {
 
     static List<String> getCloudNames() {
         List<String> cloudNames = new ArrayList<String>();
-        for (Cloud c : Jenkins.getInstance().clouds) {
+        for (Cloud c : Jenkins.get().clouds) {
             if (JCloudsCloud.class.isInstance(c)) {
                 cloudNames.add(c.name);
             }
@@ -150,7 +150,7 @@ public class JCloudsCloud extends Cloud {
     }
 
     static JCloudsCloud getByName(String name) {
-        return (JCloudsCloud) Jenkins.getInstance().clouds.getByName(name);
+        return (JCloudsCloud) Jenkins.get().clouds.getByName(name);
     }
 
     public String getCloudCredentialsId() {
@@ -208,7 +208,7 @@ public class JCloudsCloud extends Cloud {
     private String getPrivateKeyFromCredential(final String id) {
         if (!Strings.isNullOrEmpty(id)) {
             SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.getInstance(), ACL.SYSTEM,
+                    CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.get(), ACL.SYSTEM,
                         Collections.<DomainRequirement>emptyList()), CredentialsMatchers.withId(id));
             return CredentialsHelper.getPrivateKey(supk);
         }
@@ -244,7 +244,7 @@ public class JCloudsCloud extends Cloud {
         this.retentionTime = retentionTime;
         this.scriptTimeout = scriptTimeout;
         this.startTimeout = startTimeout;
-        this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate> emptyList());
+        this.templates = MoreObjects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate> emptyList());
         this.zones = Util.fixEmptyAndTrim(zones);
         this.trustAll = trustAll;
         this.groupPrefix = groupPrefix;
@@ -364,7 +364,7 @@ public class JCloudsCloud extends Cloud {
         final JCloudsSlaveTemplate template = getTemplate(label);
         List<PlannedNode> plannedNodeList = new ArrayList<PlannedNode>();
 
-        while (excessWorkload > 0 && !Jenkins.getInstance().isQuietingDown() && !Jenkins.getInstance().isTerminating()) {
+        while (excessWorkload > 0 && !Jenkins.get().isQuietingDown() && !Jenkins.get().isTerminating()) {
 
             if ((getRunningNodesCount() + plannedNodeList.size()) >= instanceCap) {
                 LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
@@ -377,7 +377,7 @@ public class JCloudsCloud extends Cloud {
                 public Node call() throws Exception {
                     // TODO: record the output somewhere
                     JCloudsSlave jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout(), provisioningId);
-                    Jenkins.getInstance().addNode(jcloudsSlave);
+                    Jenkins.get().addNode(jcloudsSlave);
 
                     /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
                        without the connect operation, NodeProvisioner may decide that it still wants one more instance,
@@ -399,18 +399,21 @@ public class JCloudsCloud extends Cloud {
         Computer computer = jcloudsSlave.toComputer();
         long startMoment = System.currentTimeMillis();
         while (null != computer && computer.isOffline()) {
+            if (computer.getOfflineCauseReason().equals(Messages.oneOffCause())) {
+                break;
+            }
             try {
                 LOGGER.info(String.format("Slave [%s] not connected yet", jcloudsSlave.getDisplayName()));
                 computer.connect(false).get();
-                Thread.sleep(5000l);
             } catch (InterruptedException | ExecutionException e) {
                 LOGGER.warning(String.format("Error while launching slave: %s", e));
+                Thread.sleep(5000l);
             }
 
             if ((System.currentTimeMillis() - startMoment) > 1000l * launchTimeoutSec) {
                 String message = String.format("Failed to connect to slave within timeout (%d s).", launchTimeoutSec);
                 LOGGER.warning(message);
-                throw new ExecutionException(new Throwable(message));
+                throw new ExecutionException(message, new Throwable());
             }
         }
     }
@@ -444,7 +447,7 @@ public class JCloudsCloud extends Cloud {
         final StreamTaskListener listener = new StreamTaskListener(sw);
         final ProvisioningActivity.Id provisioningId = new ProvisioningActivity.Id(this.name, t.name);
         JCloudsSlave node = t.provisionSlave(listener, provisioningId);
-        Jenkins.getInstance().addNode(node);
+        Jenkins.get().addNode(node);
         return node;
     }
 
@@ -593,7 +596,7 @@ public class JCloudsCloud extends Cloud {
                 @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones,
                 @QueryParameter boolean trustAll) throws IOException {
 
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (null == Util.fixEmptyAndTrim(cloudCredentialsId)) {
                 return FormValidation.error("Cloud credentials not specified.");
             }
@@ -649,7 +652,7 @@ public class JCloudsCloud extends Cloud {
         public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter
                 String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context :
-                        Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+                        Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
@@ -659,7 +662,7 @@ public class JCloudsCloud extends Cloud {
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter
                 String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context :
-                        Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+                        Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
@@ -727,12 +730,12 @@ public class JCloudsCloud extends Cloud {
             if (needSave) {
                 needSave = false;
                 LOGGER.info(">>>>>> auto-saving migrated config data...");
-                Jenkins.getInstance().save();
+                Jenkins.get().save();
             }
         }
     }
 
-    @Restricted(DoNotUse.class)
+    @Restricted(NoExternalUse.class)
     public static class ConverterImpl extends XStream2.PassthruConverter<JCloudsCloud> {
 
         static final Logger LOGGER = Logger.getLogger(ConverterImpl.class.getName());

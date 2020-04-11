@@ -43,7 +43,8 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
     // possible, as this method is very hard to test due to static usage, etc.
     //
     @Override
-    public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
+    public void setUp(Context context, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, EnvVars initialEnvironment)
+        throws IOException, InterruptedException {
         context.setDisposer(new JCloudsOneOffSlaveDisposer());
     }
 
@@ -73,7 +74,11 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
                 String msg = "Taking single-use slave " + computer.getName() + " offline.";
                 LOGGER.warning(msg);
                 listener.getLogger().println(msg);
-                computer.setTemporarilyOffline(true, OfflineCause.create(Messages._OneOffCause()));
+                computer.setTemporarilyOffline(true, OfflineCause.create(Messages._oneOffCause()));
+                final JCloudsSlave s = ((JCloudsComputer)computer).getNode();
+                if (null != s) {
+                    s.setOverrideRetentionTime(Integer.valueOf(0));
+                }
             } else {
                 listener.getLogger().println("Not a single-use slave, this is a " + computer.getClass());
             }

@@ -43,7 +43,7 @@ public class JCloudsTemplatesCommand extends CLICommand {
     protected int run() throws IOException {
         int maxProfileLen = 0;
         int maxTemplateLen = 0;
-        for (final Cloud cloud : Jenkins.getInstance().clouds) {
+        for (final Cloud cloud : Jenkins.get().clouds) {
             if (cloud instanceof JCloudsCloud) {
                 final JCloudsCloud c = (JCloudsCloud)cloud;
                 if (c.profile.length() > maxProfileLen) {
@@ -68,7 +68,7 @@ public class JCloudsTemplatesCommand extends CLICommand {
             stdout.printf(fmt, PROFILE, NAME, "Description");
             stdout.println(Strings.padEnd("",  maxProfileLen + maxTemplateLen + 13, '='));
             final String indent = Strings.padEnd("\n",  maxProfileLen + maxTemplateLen + 3, ' ');
-            for (final Cloud cloud : Jenkins.getInstance().clouds) {
+            for (final Cloud cloud : Jenkins.get().clouds) {
                 if (cloud instanceof JCloudsCloud) {
                     final JCloudsCloud c = (JCloudsCloud)cloud;
                     for (final JCloudsSlaveTemplate t : c.getTemplates()) {

@@ -80,7 +80,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
      */
     @Override
     public HttpResponse doDoDelete() throws IOException {
-        disconnect(OfflineCause.create(Messages._DeletedCause()));
+        disconnect(OfflineCause.create(Messages._deletedCause()));
         final JCloudsSlave node = getNode();
         if (null != node) {
             if (node.isPendingDelete()) {
@@ -113,7 +113,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
                     ch.close();
                 }
                 slave.terminate();
-                Jenkins.getInstance().removeNode(slave);
+                Jenkins.get().removeNode(slave);
             }
         } else {
             LOGGER.info(String.format("Slave %s is not idle, postponing deletion", getName()));

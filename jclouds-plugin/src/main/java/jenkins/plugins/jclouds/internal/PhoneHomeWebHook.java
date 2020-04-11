@@ -76,7 +76,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
         Authentication old = SecurityContextHolder.getContext().getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
         try {
-            for (final Computer c : Jenkins.getInstance().getComputers()) {
+            for (final Computer c : Jenkins.get().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
                     if (null != slave) {
@@ -88,7 +88,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
                     }
                 }
             }
-            for (Cloud c : Jenkins.getInstance().clouds) {
+            for (Cloud c : Jenkins.get().clouds) {
                 if (JCloudsCloud.class.isInstance(c) && ((JCloudsCloud)c).phoneHomeNotify(hostName)) {
                     return;
                 }
@@ -103,7 +103,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
     private static final Logger LOGGER = Logger.getLogger(PhoneHomeWebHook.class.getName());
 
     public static PhoneHomeWebHook get() {
-        return Jenkins.getInstance().getExtensionList(RootAction.class).get(PhoneHomeWebHook.class);
+        return Jenkins.get().getExtensionList(RootAction.class).get(PhoneHomeWebHook.class);
     }
 
 }

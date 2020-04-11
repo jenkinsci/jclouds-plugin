@@ -9,44 +9,6 @@
   <numExecutors>0</numExecutors>
   <mode>EXCLUSIVE</mode>
   <useSecurity>true</useSecurity>
-  <authorizationStrategy class="hudson.security.ProjectMatrixAuthorizationStrategy">
-    <permission>hudson.model.Computer.Configure:felfert</permission>
-    <permission>hudson.model.Computer.Connect:felfert</permission>
-    <permission>hudson.model.Computer.Create:felfert</permission>
-    <permission>hudson.model.Computer.Delete:felfert</permission>
-    <permission>hudson.model.Computer.Disconnect:felfert</permission>
-    <permission>hudson.model.Hudson.Administer:felfert</permission>
-    <permission>hudson.model.Hudson.ConfigureUpdateCenter:felfert</permission>
-    <permission>hudson.model.Hudson.Read:anonymous</permission>
-    <permission>hudson.model.Hudson.Read:felfert</permission>
-    <permission>hudson.model.Hudson.Read:fritzgit</permission>
-    <permission>hudson.model.Hudson.Read:github</permission>
-    <permission>hudson.model.Hudson.Read:slavejar</permission>
-    <permission>hudson.model.Hudson.RunScripts:felfert</permission>
-    <permission>hudson.model.Hudson.UploadPlugins:felfert</permission>
-    <permission>hudson.model.Item.Build:felfert</permission>
-    <permission>hudson.model.Item.Build:fritzgit</permission>
-    <permission>hudson.model.Item.Build:github</permission>
-    <permission>hudson.model.Item.Cancel:felfert</permission>
-    <permission>hudson.model.Item.Cancel:fritzgit</permission>
-    <permission>hudson.model.Item.Cancel:github</permission>
-    <permission>hudson.model.Item.Configure:felfert</permission>
-    <permission>hudson.model.Item.Create:felfert</permission>
-    <permission>hudson.model.Item.Delete:felfert</permission>
-    <permission>hudson.model.Item.Read:felfert</permission>
-    <permission>hudson.model.Item.Read:fritzgit</permission>
-    <permission>hudson.model.Item.Read:github</permission>
-    <permission>hudson.model.Item.Workspace:felfert</permission>
-    <permission>hudson.model.Run.Delete:felfert</permission>
-    <permission>hudson.model.Run.Update:felfert</permission>
-    <permission>hudson.model.View.Configure:felfert</permission>
-    <permission>hudson.model.View.Create:felfert</permission>
-    <permission>hudson.model.View.Delete:felfert</permission>
-    <permission>hudson.model.View.Read:felfert</permission>
-    <permission>hudson.model.View.Read:fritzgit</permission>
-    <permission>hudson.model.View.Read:github</permission>
-    <permission>hudson.scm.SCM.Tag:felfert</permission>
-  </authorizationStrategy>
   <securityRealm class="hudson.security.HudsonPrivateSecurityRealm">
     <disableSignup>true</disableSignup>
     <enableCaptcha>false</enableCaptcha>
@@ -94,15 +56,15 @@ http://cloud-init.my.openstack.provider/cloud-init/phone-home-fritz.yaml
           <overrideRetentionTime>5</overrideRetentionTime>
           <spoolDelayMs>0</spoolDelayMs>
           <delayLockObject/>
-          <waitPhoneHome>true</waitPhoneHome>
-          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <waitPhoneHome>false</waitPhoneHome>
+          <waitPhoneHomeTimeout>0</waitPhoneHomeTimeout>
           <keyPairName></keyPairName>
           <assignPublicIp>false</assignPublicIp>
           <assignFloatingIp>true</assignFloatingIp>
           <networks>73cbec8a-f53d-41af-843b-1cd4a6afc025</networks>
           <securityGroups>default</securityGroups>
           <mode>NORMAL</mode>
-          <useConfigDrive>true</useConfigDrive>
+          <useConfigDrive>false</useConfigDrive>
           <credentialsId>2461e0e5-fb30-43d5-84bd-cae3c62823bd</credentialsId>
           <adminCredentialsId>e154479a-5c3b-48cf-bbf2-2f59f842ad51</adminCredentialsId>
         </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
@@ -128,42 +90,8 @@ http://cloud-init.my.openstack.provider/cloud-init/phone-home-fritz.yaml</userDa
           <overrideRetentionTime>240</overrideRetentionTime>
           <spoolDelayMs>0</spoolDelayMs>
           <delayLockObject/>
-          <waitPhoneHome>true</waitPhoneHome>
-          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
-          <keyPairName></keyPairName>
-          <assignPublicIp>false</assignPublicIp>
-          <assignFloatingIp>false</assignFloatingIp>
-          <networks>73cbec8a-f53d-41af-843b-1cd4a6afc025</networks>
-          <securityGroups>default</securityGroups>
-          <mode>NORMAL</mode>
-          <useConfigDrive>false</useConfigDrive>
-          <credentialsId>2461e0e5-fb30-43d5-84bd-cae3c62823bd</credentialsId>
-          <adminCredentialsId>e154479a-5c3b-48cf-bbf2-2f59f842ad51</adminCredentialsId>
-        </jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
-        <jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>
-          <name>bh-f23-64</name>
-          <imageNameRegex>^bh\.f23\.64\.tpl$</imageNameRegex>
-          <hardwareId>RegionOne/00b629cc-3263-4a16-b5c9-740400278483</hardwareId>
-          <cores>1.0</cores>
-          <ram>512</ram>
-          <osFamily></osFamily>
-          <labelString>linux fedora fc23 fc2364 amd64 x86_64 fedora64</labelString>
-          <description>Buildhost based on Fedora 24 64bit</description>
-          <osVersion></osVersion>
-          <initScript></initScript>
-          <userData>#include
-http://cloud-init.my.openstack.provider/cloud-init/phone-home-fritz.yaml</userData>
-          <numExecutors>4</numExecutors>
-          <stopOnTerminate>false</stopOnTerminate>
-          <preExistingJenkinsUser>true</preExistingJenkinsUser>
-          <fsRoot>/home/jenkins</fsRoot>
-          <allowSudo>false</allowSudo>
-          <installPrivateKey>false</installPrivateKey>
-          <overrideRetentionTime>240</overrideRetentionTime>
-          <spoolDelayMs>0</spoolDelayMs>
-          <delayLockObject/>
-          <waitPhoneHome>true</waitPhoneHome>
-          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <waitPhoneHome>false</waitPhoneHome>
+          <waitPhoneHomeTimeout>0</waitPhoneHomeTimeout>
           <keyPairName></keyPairName>
           <assignPublicIp>false</assignPublicIp>
           <assignFloatingIp>false</assignFloatingIp>
@@ -216,8 +144,8 @@ phone_home:
           <installPrivateKey>false</installPrivateKey>
           <spoolDelayMs>0</spoolDelayMs>
           <delayLockObject/>
-          <waitPhoneHome>true</waitPhoneHome>
-          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <waitPhoneHome>false</waitPhoneHome>
+          <waitPhoneHomeTimeout>0</waitPhoneHomeTimeout>
           <keyPairName>frankfurt</keyPairName>
           <assignPublicIp>false</assignPublicIp>
           <assignFloatingIp>false</assignFloatingIp>
@@ -265,7 +193,7 @@ phone_home:
           <spoolDelayMs>0</spoolDelayMs>
           <delayLockObject/>
           <waitPhoneHome>false</waitPhoneHome>
-          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <waitPhoneHomeTimeout>0</waitPhoneHomeTimeout>
           <keyPairName></keyPairName>
           <assignPublicIp>true</assignPublicIp>
           <assignFloatingIp>false</assignFloatingIp>
@@ -330,8 +258,8 @@ packages:
           <installPrivateKey>false</installPrivateKey>
           <spoolDelayMs>0</spoolDelayMs>
           <delayLockObject/>
-          <waitPhoneHome>true</waitPhoneHome>
-          <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+          <waitPhoneHome>false</waitPhoneHome>
+          <waitPhoneHomeTimeout>0</waitPhoneHomeTimeout>
           <keyPairName>mykeypair</keyPairName>
           <assignPublicIp>true</assignPublicIp>
           <assignFloatingIp>false</assignFloatingIp>

@@ -59,7 +59,7 @@ public final class CredentialsHelper {
     public static String storeCredentials(final StandardUsernameCredentials u) throws IOException {
         if (null != u) {
             try (final ACLContext ctx = ACL.as(ACL.SYSTEM)) {
-                final CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.getInstance()).iterator().next();
+                final CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.get()).iterator().next();
                 s.addCredentials(Domain.global(), u);
                 return u.getId();
             }

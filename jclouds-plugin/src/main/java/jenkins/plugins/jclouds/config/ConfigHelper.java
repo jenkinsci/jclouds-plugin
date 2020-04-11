@@ -65,7 +65,7 @@ public class ConfigHelper {
     @NonNull
     public static String getConfig(@Nullable final String id) {
         if(id != null) {
-            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getInstance(), id);
+            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.get(), id);
             if (null != cfg && null != cfg.content) {
                 return cfg.content;
             }
@@ -107,7 +107,7 @@ public class ConfigHelper {
     private static List<Config> getConfigs(@NonNull final List<String> configIds) {
         List<Config> ret = new ArrayList<>();
         for (final String id : configIds) {
-            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.getInstance(), id);
+            final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.get(), id);
             if (null != cfg) {
                 ret.add(cfg);
             }
@@ -142,6 +142,7 @@ public class ConfigHelper {
             try (final OutputStream os = gzip ? new GZIPOutputStream(baos) : baos) {
                 if (configs.size() > 1) {
                     try {
+                        Thread.currentThread().setContextClassLoader(Jenkins.class.getClassLoader());
                         final MimeMessage msg = new MimeMessage((Session)null);
                         final Multipart multipart = new MimeMultipart();
                         for (final Config cfg : configs) {

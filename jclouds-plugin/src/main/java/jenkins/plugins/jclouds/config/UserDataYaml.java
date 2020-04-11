@@ -33,7 +33,7 @@ public class UserDataYaml extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(UserDataYamlProvider.class);
+        return Jenkins.get().getDescriptorByType(UserDataYamlProvider.class);
     }
 
     @Extension(ordinal = 70)

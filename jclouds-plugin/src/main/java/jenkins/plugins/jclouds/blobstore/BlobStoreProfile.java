@@ -63,7 +63,7 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
 
 import org.kohsuke.accmod.Restricted;
-import org.kohsuke.accmod.restrictions.DoNotUse;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
@@ -288,7 +288,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.getInstance()).hasPermission(Computer.CONFIGURE)) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
@@ -325,7 +325,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                @QueryParameter("trustAll") final boolean relaxed) throws IOException {
 
 
-            Jenkins.getInstance().checkPermission(Jenkins.ADMINISTER);
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (null == Util.fixEmptyAndTrim(credId)) {
                 return FormValidation.error("BlobStore credentials not specified.");
             }
@@ -395,7 +395,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         }
     }
 
-    @Restricted(DoNotUse.class)
+    @Restricted(NoExternalUse.class)
     public static class ConverterImpl extends XStream2.PassthruConverter<BlobStoreProfile> {
         static final Logger LOGGER = Logger.getLogger(ConverterImpl.class.getName());
 
