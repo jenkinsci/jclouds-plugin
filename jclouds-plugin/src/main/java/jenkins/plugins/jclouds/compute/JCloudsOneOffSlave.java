@@ -74,6 +74,10 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
                 LOGGER.warning(msg);
                 listener.getLogger().println(msg);
                 computer.setTemporarilyOffline(true, OfflineCause.create(Messages._OneOffCause()));
+                final JCloudsSlave s = ((JCloudsComputer)computer).getNode();
+                if (null != s) {
+                    s.setOverrideRetentionTime(Integer.valueOf(0));
+                }
             } else {
                 listener.getLogger().println("Not a single-use slave, this is a " + computer.getClass());
             }
