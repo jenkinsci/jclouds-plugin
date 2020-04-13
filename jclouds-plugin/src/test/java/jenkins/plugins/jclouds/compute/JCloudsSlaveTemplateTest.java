@@ -27,7 +27,7 @@ public class JCloudsSlaveTemplateTest {
                 "security_group1,security_group2", null /* credentialsId */,
                 null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */,
                 false /* preemptible */, null /* configDataIds */, "192.168.1.0/24" /* preferredAddress */,
-                false /* useJnlp */ );
+                false /* useJnlp */, false /* jnlpProvisioning */ );
 
         final List<JCloudsSlaveTemplate> templates = new ArrayList<>();
         templates.add(beforeTemplate);

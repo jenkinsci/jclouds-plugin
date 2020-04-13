@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
@@ -82,8 +83,8 @@ public class ConfigHelper {
     }
 
     @CheckForNull
-    private static BodyPart buildBody(final Config cfg) {
-        DataSource source = new ConfigDataSource(cfg, true);
+    private static BodyPart buildBody(final Config cfg, @Nullable Map<String, String> replacements) {
+        DataSource source = new ConfigDataSource(cfg, true, replacements);
         if (null != source) {
             try {
                 BodyPart body = new MimeBodyPart();
@@ -133,7 +134,8 @@ public class ConfigHelper {
     }
 
     @CheckForNull
-    public static byte [] buildUserData(@NonNull final List<String> configIds, boolean gzip) throws IOException {
+    public static byte [] buildUserData(@NonNull final List<String> configIds,
+            @Nullable Map<String, String> replacements, boolean gzip) throws IOException {
         List<Config> configs = getConfigs(configIds);
         if (configs.isEmpty()) {
             return null;
@@ -145,7 +147,7 @@ public class ConfigHelper {
                         final MimeMessage msg = new MimeMessage((Session)null);
                         final Multipart multipart = new MimeMultipart();
                         for (final Config cfg : configs) {
-                            BodyPart body = buildBody(cfg);
+                            BodyPart body = buildBody(cfg, replacements);
                             if (null != body) {
                                 multipart.addBodyPart(body);
                             }

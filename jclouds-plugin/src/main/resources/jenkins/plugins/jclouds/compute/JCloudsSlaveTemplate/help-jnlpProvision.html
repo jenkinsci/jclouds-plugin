@@ -1,0 +1,24 @@
+<div>
+    If enabled, Jenkins supports provisioning of JNLP-based agents on virtual machines. There are two
+    mechanisms provided:
+    <ol>
+        <li>As soon as the name of a virtual machine is known after it's allocation, the metadata of
+            that machine gets augmented with 3 properties:
+            <ul>
+                <li><b>X-jar</b> provides the URL of the agent.jar.</li>
+                <li><b>X-url</b> provides the JNLP-URL for the virtual machine.</li>
+                <li><b>X-sec</b> provides the necessary secret for contacting jenkins</li>
+            </ul>
+            These properties then can be used by the virtual machine, to automate startup of a JNLP client.
+            Of course, these properties can be seen by anyone who has administative access to your cloud
+            environment. <b>You must decide for yourself if this poses a security risk.</b><br/><br/>
+            This feature is currently implemented for openstack-nova and google-compute-engine only.<br/><br/></li>
+        <li>For cloud providers that do not support custom metadata, a nonce string is generated which can be
+            inserted into userData or a startup script by placing <code>${JNLP_NONCE}</code> in the
+            associated content. Using that nonce, the virtual machine can issue a POST request to
+            <pre>http://your.jenkins.url/jclouds-jnlp-provision/<pre> using auth=<i>auth</i> and hostname=<i>hostname</i>
+            and retrieve the above 3 properties as a JSON response. The value of <i>auth</i> must be a base64-encoded
+            SHA256 hash of the concatenation of the nonce and the node name (hostname).<br/><br/>
+            This feature works with all providers that support supplying userData at instance creation.</li>
+    </ol>
+</div>

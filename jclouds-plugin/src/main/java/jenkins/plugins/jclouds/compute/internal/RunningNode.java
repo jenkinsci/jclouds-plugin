@@ -15,15 +15,13 @@
  */
 package jenkins.plugins.jclouds.compute.internal;
 
-import org.jclouds.compute.domain.NodeMetadata;
-
 public class RunningNode {
     private final String cloud;
     private final String template;
     private final boolean suspendOrTerminate;
-    private final NodeMetadata node;
+    private final JCloudsNodeMetadata node;
 
-    public RunningNode(String cloud, String template, boolean suspendOrTerminate, NodeMetadata node) {
+    public RunningNode(String cloud, String template, boolean suspendOrTerminate, JCloudsNodeMetadata node) {
         this.cloud = cloud;
         this.template = template;
         this.suspendOrTerminate = suspendOrTerminate;
@@ -42,7 +40,7 @@ public class RunningNode {
         return suspendOrTerminate;
     }
 
-    public NodeMetadata getNode() {
+    public JCloudsNodeMetadata getNode() {
         return node;
     }
 }

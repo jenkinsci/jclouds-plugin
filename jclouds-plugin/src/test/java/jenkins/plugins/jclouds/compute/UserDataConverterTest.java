@@ -116,7 +116,7 @@ public class UserDataConverterTest {
         idlist.add(ud.fileId);
         ud = UserData.createFromData("#cloud-config\nfoo 6\n", "test6.cfg");
         idlist.add(ud.fileId);
-        byte[] udata = ConfigHelper.buildUserData(idlist, false);
+        byte[] udata = ConfigHelper.buildUserData(idlist, null, false);
         String sudata = new String(udata);
 
         assertFalse("Result contains boothook signature", sudata.contains("#cloud-boothook\n"));

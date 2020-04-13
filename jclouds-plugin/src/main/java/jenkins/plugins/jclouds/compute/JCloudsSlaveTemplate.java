@@ -29,8 +29,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -119,6 +121,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.LocationHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
+import jenkins.plugins.jclouds.compute.internal.JCloudsNodeMetadata;
 import jenkins.plugins.jclouds.config.ConfigHelper;
 
 import edazdarevic.commons.net.CIDRUtils;
@@ -126,7 +129,7 @@ import edazdarevic.commons.net.CIDRUtils;
 /**
  * @author Vijay Kiran
  */
-public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<NodeMetadata> {
+public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<JCloudsNodeMetadata> {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
     private static final char SEPARATOR_CHAR = ',';
@@ -179,6 +182,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     private final String initScriptId;
     private final String preferredAddress;
     private final boolean useJnlp;
+    private final boolean jnlpProvision;
 
     transient JCloudsCloud cloud;
     private transient Set<LabelAtom> labelSet;
@@ -207,6 +211,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return useJnlp;
     }
 
+    public boolean getJnlpProvision() {
+        return jnlpProvision;
+    }
+
     @DataBoundConstructor
     public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex,
             final String hardwareId, final double cores, final int ram, final String osFamily, final String osVersion,
@@ -218,7 +226,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             final String keyPairName, final boolean assignPublicIp, final String networks,
             final String securityGroups, final String credentialsId, final String adminCredentialsId,
             final String mode, final boolean useConfigDrive, final boolean isPreemptible, final List<UserData> userDataEntries,
-            final String preferredAddress, final boolean useJnlp) {
+            final String preferredAddress, final boolean useJnlp, final boolean jnlpProvision) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -257,6 +265,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.userDataEntries = userDataEntries;
         this.preferredAddress = preferredAddress;
         this.useJnlp = useJnlp;
+        this.jnlpProvision = jnlpProvision;
         readResolve();
         this.userData = null; // Not used anymore, but retained for backward compatibility.
         this.vmPassword = null; // Not used anymore, but retained for backward compatibility.
@@ -344,13 +353,23 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return labelSet;
     }
 
+    private String generateNonce() {
+        Random r = new Random(java.lang.System.currentTimeMillis());
+        StringBuilder ret = new StringBuilder();
+        while (16 > ret.length()) {
+            char ch = (char)(97 + r.nextInt(26));
+            ret.append(ch);
+        }
+        return ret.toString();
+    }
+
     public JCloudsSlave provisionSlave(TaskListener listener, ProvisioningActivity.Id provisioningId) throws IOException {
-        NodeMetadata nodeMetadata = get();
+        JCloudsNodeMetadata nmd = get();
 
         try {
-            return new JCloudsSlave(provisioningId , getCloud().getDisplayName(), getFsRoot(), nodeMetadata, labelString, description,
+            return new JCloudsSlave(provisioningId , getCloud().getDisplayName(), getFsRoot(), nmd, labelString, description,
                     Integer.toString(numExecutors), stopOnTerminate, overrideRetentionTime, getJvmOptions(), waitPhoneHome,
-                    waitPhoneHomeTimeout, credentialsId, mode, preferredAddress, useJnlp);
+                    waitPhoneHomeTimeout, credentialsId, mode, preferredAddress, useJnlp, jnlpProvision, nmd.getNonce());
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }
@@ -364,19 +383,21 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return ret;
     }
 
-    private void setUserData(@NonNull final TemplateOptions options, @Nullable final byte[] udata) {
+    private void setUserData(@NonNull final TemplateOptions options, @Nullable final byte[] udata, boolean isZipped) {
         if (null != udata) {
             final String sudata = new String(udata, StandardCharsets.UTF_8);
+            final String logdata = isZipped ?
+                String.format("<%d bytes of zip data>", Integer.valueOf(udata.length)) : sudata;
             if (options instanceof GoogleComputeEngineTemplateOptions) {
-                LOGGER.finest("Setting userData to " + sudata);
+                LOGGER.finest("Setting userData to " + logdata);
                 options.userMetadata("user-data", sudata);
             } else if (options instanceof DigitalOcean2TemplateOptions) {
-                LOGGER.finest("Setting userData to " + sudata);
+                LOGGER.finest("Setting userData to " + logdata);
                 options.userMetadata("user_data", sudata);
             } else {
                 try {
                     Method userDataMethod = options.getClass().getMethod("userData", new byte[0].getClass());
-                    LOGGER.finest("Setting userData to " + sudata);
+                    LOGGER.finest("Setting userData to " + logdata);
                     userDataMethod.invoke(options, udata);
                 } catch (ReflectiveOperationException e) {
                     LOGGER.log(Level.WARNING,
@@ -386,10 +407,14 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
     }
 
+    /**
+     * This is where the actual provisioning (accessing the cloud provider) happens.
+     */
     @Override
-    public NodeMetadata get() {
+    public JCloudsNodeMetadata get() {
+        final String nonce = generateNonce();
         boolean brokenImageCacheHasThrown = false;
-        NodeMetadata nodeMetadata = null;
+        JCloudsNodeMetadata nmd = null;
 
         do {
             LOGGER.info("Provisioning new jclouds node");
@@ -483,7 +508,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                     options.as(AWSEC2TemplateOptions.class).keyPair(keyPairName);
                 } else if (options instanceof DigitalOcean2TemplateOptions) {
                     // DigitalOcean does it different:
-                    // The use key Ids (ints) and provide an api for listing them. So we have
+                    // They use key Ids (ints) and provide an api for listing them. So we have
                     // to find the named key in the list and use its numeric id.
                     try (DigitalOcean2Api do2api = getCloud().newApi(DigitalOcean2Api.class)) {
                         Optional<Key> key = do2api.keyApi().list().concat().firstMatch(
@@ -591,23 +616,35 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             }
 
             if (null != userDataEntries) {
+                Map<String, String> replacements = null;
+                if (jnlpProvision) {
+                    String rootUrl = Jenkins.getInstance().getRootUrl();
+                    if (null == rootUrl) {
+                        rootUrl = "";
+                    }
+                    replacements = new HashMap<>();
+                    replacements.put("JNLP_NONCE", nonce);
+                    replacements.put("JENKINS_ROOTURL", rootUrl);
+                }
                 try {
-                    byte[] udata = ConfigHelper.buildUserData(getUserDataIds(), false);
+                    boolean isZipped = false;
+                    byte[] udata = ConfigHelper.buildUserData(getUserDataIds(), replacements, false);
                     if (null != udata && getCloud().allowGzippedUserData()) {
-                        byte[] zipped = ConfigHelper.buildUserData(getUserDataIds(), true);
+                        byte[] zipped = ConfigHelper.buildUserData(getUserDataIds(), replacements, true);
                         if (null != zipped && zipped.length < udata.length) {
                             udata = zipped;
+                            isZipped = true;
                         }
                     }
-                    setUserData(options, udata);
+                    setUserData(options, udata, isZipped);
                 } catch (IOException x) {
                     LOGGER.log(Level.SEVERE, "Unable to build userData", x);
                 }
             }
 
             try {
-                nodeMetadata = getOnlyElement(getCloud().getCompute()
-                        .createNodesInGroup(getCloud().prependGroupPrefix(name), 1, template));
+                nmd = JCloudsNodeMetadata.fromNodeMetadata(getOnlyElement(getCloud().getCompute()
+                        .createNodesInGroup(getCloud().prependGroupPrefix(name), 1, template)), nonce);
                 brokenImageCacheHasThrown = false;
             } catch (RunNodesException e) {
                 boolean throwNow = true;
@@ -631,7 +668,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         } while (brokenImageCacheHasThrown);
 
         // Check if nodeMetadata is null and throw
-        return nodeMetadata;
+        return nmd;
     }
 
     private void destroyBadNodes(RunNodesException e) {
