@@ -40,6 +40,7 @@ public class JCloudsJnlpLauncher extends JNLPLauncher {
         PrintStream logger = listener.getLogger();
         final JCloudsSlave slave = (JCloudsSlave) computer.getNode();
         if (null != slave) {
+            slave.publishJnlpMetaData();
             try {
                 slave.waitForPhoneHome(logger);
             } catch (InterruptedException e) {

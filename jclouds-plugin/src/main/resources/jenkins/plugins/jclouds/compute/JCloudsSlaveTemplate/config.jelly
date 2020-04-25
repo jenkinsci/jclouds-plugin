@@ -200,6 +200,9 @@ limitations under the License.
         <f:entry field="useJnlp">
           <f:checkbox title="${%Use JNLP}"/>
         </f:entry>
+        <f:entry field="jnlpProvision">
+          <f:checkbox title="${%Enable JNLP provisioning support}"/>
+        </f:entry>
       </f:block>
     </f:advanced>
 

@@ -15,8 +15,6 @@
  */
 package jenkins.plugins.jclouds.compute.internal;
 
-import org.jclouds.compute.domain.NodeMetadata;
-
 import com.google.common.base.Supplier;
 
 public class NodePlan {
@@ -24,9 +22,9 @@ public class NodePlan {
     private final String templateName;
     private final int count;
     private final boolean suspendOrTerminate;
-    private final Supplier<NodeMetadata> nodeSupplier;
+    private final Supplier<JCloudsNodeMetadata> nodeSupplier;
 
-    public NodePlan(String cloud, String template, int count, boolean suspendOrTerminate, Supplier<NodeMetadata> nodeSupplier) {
+    public NodePlan(String cloud, String template, int count, boolean suspendOrTerminate, Supplier<JCloudsNodeMetadata> nodeSupplier) {
         this.cloudName = cloud;
         this.templateName = template;
         this.count = count;
@@ -50,7 +48,7 @@ public class NodePlan {
         return suspendOrTerminate;
     }
 
-    public Supplier<NodeMetadata> getNodeSupplier() {
+    public Supplier<JCloudsNodeMetadata> getNodeSupplier() {
         return nodeSupplier;
     }
 }

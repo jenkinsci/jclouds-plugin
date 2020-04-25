@@ -18,7 +18,6 @@ package jenkins.plugins.jclouds.compute.internal;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.logging.Logger;
 
 import com.google.common.base.Function;
@@ -42,7 +41,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
     public Iterable<RunningNode> apply(Iterable<NodePlan> nodePlans) {
         final ImmutableList.Builder<RunningNode> cloudTemplateNodeBuilder = ImmutableList.<RunningNode>builder();
 
-        final ImmutableList.Builder<ListenableFuture<NodeMetadata>> plannedInstancesBuilder = ImmutableList.<ListenableFuture<NodeMetadata>>builder();
+        final ImmutableList.Builder<ListenableFuture<JCloudsNodeMetadata>> plannedInstancesBuilder = ImmutableList.<ListenableFuture<JCloudsNodeMetadata>>builder();
 
         final AtomicInteger failedLaunches = new AtomicInteger();
 
@@ -51,10 +50,10 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
                 final int index = i;
                 logger.info("Queuing cloud instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(), nodePlan.getTemplateName());
 
-                ListenableFuture<NodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
+                ListenableFuture<JCloudsNodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
 
-                Futures.addCallback(provisionTemplate, new FutureCallback<NodeMetadata>() {
-                    public void onSuccess(NodeMetadata result) {
+                Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
+                    public void onSuccess(JCloudsNodeMetadata result) {
                         if (result != null) {
                             cloudTemplateNodeBuilder.add(new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.isSuspendOrTerminate(),
                                     result));
@@ -76,7 +75,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
         }
 
         // block until all complete
-        List<NodeMetadata> nodesActuallyLaunched = Futures.getUnchecked(Futures.successfulAsList(plannedInstancesBuilder.build()));
+        List<JCloudsNodeMetadata> nodesActuallyLaunched = Futures.getUnchecked(Futures.successfulAsList(plannedInstancesBuilder.build()));
 
         final ImmutableList<RunningNode> cloudTemplateNodes = cloudTemplateNodeBuilder.build();
 

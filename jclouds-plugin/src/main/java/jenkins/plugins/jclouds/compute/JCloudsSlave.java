@@ -24,16 +24,24 @@ import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.NodeProperty;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.RetentionStrategy;
+import hudson.slaves.SlaveComputer;
 
 import jenkins.model.Jenkins;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
+import net.sf.json.JSONObject;
+import org.apache.commons.codec.binary.Base64;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.LoginCredentials;
@@ -42,7 +50,9 @@ import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import javax.annotation.CheckForNull;
 import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Jenkins Slave node - managed by JClouds.
@@ -73,6 +83,8 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     private final Mode mode;
     private final String preferredAddress;
     private final boolean useJnlp;
+    private final boolean jnlpProvisioning;
+    private String jnlpProvisioningNonce;
 
     private transient PhoneHomeMonitor phm;
 
@@ -81,8 +93,10 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
             ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
             Integer overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome,
-            final int waitPhoneHomeTimeout, final String credentialsId, final String preferredAddress,
-            final boolean useJnlp) throws Descriptor.FormException, IOException {
+            final int waitPhoneHomeTimeout, final String credentialsId, final String preferredAddress, final boolean useJnlp, final boolean jnlpProvisioning,
+            final String jnlpProvisioningNonce)
+        throws Descriptor.FormException, IOException
+    {
         super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
         this.cloudName = cloudName;
@@ -98,6 +112,8 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         this.mode = mode;
         this.preferredAddress = preferredAddress;
         this.useJnlp = useJnlp;
+        this.jnlpProvisioning = jnlpProvisioning;
+        this.jnlpProvisioningNonce = jnlpProvisioningNonce;
         phm = new PhoneHomeMonitor(waitPhoneHome, waitPhoneHomeTimeout);
     }
 
@@ -126,37 +142,37 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
      * @param mode                  - Jenkins usage mode for this node
      * @param preferredAddress      - The preferred Address expression to connect to
      * @param useJnlp               - if {@code true}, the final ssh connection attempt will be skipped.
+     * @param jnlpProvisioning      - if {@code true}, enables JNLP provisioning.
+     * @param jnlpProvisioningNonce - nonce, used to authenticate provisioning requests via JnlpProvisionWebHook.
      * @throws IOException if an error occurs.
      * @throws Descriptor.FormException if the form does not validate.
      */
     public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
-
             final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
             String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId,
-            final Mode mode, final String preferredAddress, boolean useJnlp) throws IOException, Descriptor.FormException {
-        this(cloudName, uniqueName(metadata, cloudName), description, fsRoot, numExecutors, mode, labelString,
-                useJnlp ? new JCloudsJnlpLauncher() : new JCloudsLauncher(),
-                new JCloudsRetentionStrategy(), Collections.<NodeProperty<?>>emptyList(),
-                stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
+            final Mode mode, final String preferredAddress, boolean useJnlp, final boolean jnlpProvisioning, final String jnlpProvisioningNonce)
+            throws IOException, Descriptor.FormException
+        {
+            this(cloudName, uniqueName(metadata, cloudName), description, fsRoot, numExecutors, mode, labelString,
+                    useJnlp ? new JCloudsJnlpLauncher() : new JCloudsLauncher(), new JCloudsRetentionStrategy(),
+                    Collections.<NodeProperty<?>>emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
                 metadata.getCredentials().getOptionalPassword().orNull(), metadata.getCredentials().getOptionalPrivateKey().orNull(),
                 metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId,
-                preferredAddress, useJnlp);
+                preferredAddress, useJnlp, jnlpProvisioning, jnlpProvisioningNonce);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
 
     public JCloudsSlave(ProvisioningActivity.Id provisioningId, final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
-
-                        final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
-                        String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId,
-                        final Mode mode, final String preferredAddress, boolean useJnlp) throws IOException, Descriptor.FormException {
-        this(cloudName, fsRoot, metadata, labelString,
-            description, numExecutors,  stopOnTerminate, overrideRetentionTime,
-            jvmOptions,  waitPhoneHome, waitPhoneHomeTimeout, credentialsId,
-        mode, preferredAddress,  useJnlp);
+            final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
+            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId,
+            final Mode mode, final String preferredAddress, boolean useJnlp, final boolean jnlpProvisioning, final String jnlpProvisioningNonce)
+            throws IOException, Descriptor.FormException
+    {
+        this(cloudName, fsRoot, metadata, labelString, description, numExecutors,  stopOnTerminate, overrideRetentionTime,
+                jvmOptions,  waitPhoneHome, waitPhoneHomeTimeout, credentialsId, mode, preferredAddress,  useJnlp, jnlpProvisioning, jnlpProvisioningNonce);
         this.provisioningId = provisioningId;
     }
-
 
     // JENKINS-19935 Instances on EC2 don't get random suffix
     final static String uniqueName(final NodeMetadata md, final String cloudName) {
@@ -165,6 +181,66 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
             return md.getName() + "-" + md.getProviderId();
         }
         return md.getName();
+    }
+
+    @CheckForNull
+    private String calculateJnlpProvisioningHash() {
+        try {
+            final MessageDigest md = MessageDigest.getInstance("SHA-256");
+            final String src = jnlpProvisioningNonce + getNodeName();
+            return Base64.encodeBase64String(md.digest(src.getBytes(StandardCharsets.UTF_8)));
+        } catch (NoSuchAlgorithmException x) {
+            LOGGER.severe("Should not happen: SHA256 digest algorithm not available");
+            return null;
+        }
+    }
+
+    private void populateJnlpProperties(final Map data) {
+        String rootUrl = Jenkins.getInstance().getRootUrl();
+        if (null == rootUrl) {
+            rootUrl = "";
+        }
+        SlaveComputer computer = getComputer();
+        if (null != computer) {
+            data.put("X-url", rootUrl + computer.getUrl() + "slave-agent.jnlp");
+            data.put("X-jar", rootUrl + "jnlpJars/agent.jar");
+            data.put("X-sec", computer.getJnlpMac());
+            return;
+        }
+        LOGGER.severe("Should not happen: No associated SlaveComputer");
+    }
+
+    /**
+     * Handles JNLP provisioning request from slave.
+     *
+     * @param hash The authentication hash, provided in the client's request
+     * @return The parameters for establishing a Jnlp connection as JSON response.
+     *         An empty string, if the provided hash is incorrect.
+     */
+    public String handleJnlpProvisioning(@NonNull String hash) {
+        if (jnlpProvisioning) {
+            LOGGER.info("Handling JNLP provisioning request");
+            String expectedHash = calculateJnlpProvisioningHash();
+            if (null != expectedHash && expectedHash.equals(hash)) {
+                LOGGER.info("Responding to JNLP provisioning request");
+                JSONObject jo = new JSONObject();
+                populateJnlpProperties(jo);
+                return jo.toString();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Publishes JNLP metadata to the virtual machine.
+     */
+    public void publishJnlpMetaData() {
+        if (jnlpProvisioning) {
+            Map<String, String> data = new HashMap<>();
+            populateJnlpProperties(data);
+            MetaDataPublisher mdp = new MetaDataPublisher(JCloudsCloud.getByName(cloudName));
+            mdp.publish(this, data);
+        }
     }
 
     /**
@@ -193,8 +269,17 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         return preferredAddress;
     }
 
+    public boolean getJnlpProvisioning() {
+        return jnlpProvisioning;
+    }
+
+
     public boolean getUseJnlp() {
         return useJnlp;
+    }
+
+    public String getJnlpProvisioningNonce() {
+        return jnlpProvisioningNonce;
     }
 
     /**
@@ -292,6 +377,12 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         }
     }
 
+    public void setJnlpProvisioningNonce(String value) {
+        jnlpProvisioningNonce = value;
+        // TODO: Replace after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
+        updateXml();
+    }
+
     public String getCredentialsId() {
         return credentialsId;
     }
@@ -353,7 +444,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         }
         ProvisioningActivity activity = CloudStatistics.get().getActivityFor(this);
         if (activity != null) {
-        activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
+            activity.enterIfNotAlready(ProvisioningActivity.Phase.COMPLETED);
         }
     }
 

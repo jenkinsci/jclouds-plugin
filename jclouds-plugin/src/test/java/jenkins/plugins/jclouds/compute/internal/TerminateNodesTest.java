@@ -57,7 +57,7 @@ public class TerminateNodesTest {
             Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
 
                 public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", true, input);
+                    return new RunningNode("stub", "template", true, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
                 }
 
             });
@@ -88,7 +88,7 @@ public class TerminateNodesTest {
             Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
 
                 public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", false, input);
+                    return new RunningNode("stub", "template", false, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
                 }
 
             });
@@ -113,7 +113,7 @@ public class TerminateNodesTest {
             Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
 
                 public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", true, input);
+                    return new RunningNode("stub", "template", true, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
                 }
 
             });
@@ -121,7 +121,7 @@ public class TerminateNodesTest {
             Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(1), new Function<NodeMetadata, RunningNode>() {
 
                 public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", false, input);
+                    return new RunningNode("stub", "template", false, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
                 }
 
             });

@@ -277,6 +277,7 @@ public class JCloudsCloud extends Cloud {
     private static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final Properties overrides) {
         // correct the classloader so that extensions can be found
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
+        CredentialsHelper.setProject(credId, overrides);
         return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
             .overrides(overrides).modules(MODULES).buildApi(typeToken(apitype));
     }

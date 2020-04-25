@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.compute.internal.JCloudsNodeMetadata;
 import jenkins.plugins.jclouds.compute.internal.NodePlan;
 import jenkins.plugins.jclouds.compute.internal.ProvisionPlannedInstancesAndDestroyAllOnError;
 import jenkins.plugins.jclouds.compute.internal.RunningNode;
@@ -41,7 +42,6 @@ import jenkins.plugins.jclouds.compute.internal.TerminateNodes;
 import jenkins.plugins.jclouds.internal.BuildListenerLogger;
 
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.logging.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -120,7 +120,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
             public NodePlan apply(InstancesToRun instance) {
                 String cloudName = instance.cloudName;
                 String templateName = Util.replaceMacro(instance.getActualTemplateName(), build.getBuildVariableResolver());
-                Supplier<NodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
+                Supplier<JCloudsNodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
                 // take the hit here, as opposed to later
                 computeCache.getUnchecked(cloudName);
                 return new NodePlan(cloudName, templateName, instance.count, instance.suspendOrTerminate, nodeSupplier);

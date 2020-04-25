@@ -20,6 +20,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.activation.DataSource;
@@ -28,8 +29,12 @@ import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 
 import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
+import jenkins.plugins.jclouds.internal.ReplaceHelper;
 
 import org.jenkinsci.lib.configprovider.ConfigProvider;
+
+import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * A readonly DataSource, backed by a {@link Config}.
@@ -38,15 +43,20 @@ public class ConfigDataSource implements DataSource {
 
     private final Config cfg;
     private final boolean stripSignature;
+    private final Map<String, String>replaceMap;
 
     /**
      * Creates a new instance from the supplied config.
      * @param config The config to be used for supplying the content.
      * @param strip If {@code true}, then any leading signature will be stripped if possible.
+     * @param replacements If non-null, specifies mappings of VARIABLENAME to value which
+     *                     will be replaced in the content
      */
-    public ConfigDataSource(final Config config, final boolean strip) {
+    public ConfigDataSource(@NonNull final Config config, final boolean strip,
+            @Nullable final Map<String, String> replacements) {
         cfg = config;
         stripSignature = strip;
+        replaceMap = replacements;
     }
 
     /**
@@ -61,6 +71,7 @@ public class ConfigDataSource implements DataSource {
                 content = Pattern.compile(sig, Pattern.DOTALL).matcher(content).replaceFirst("");
             }
         }
+        content = new ReplaceHelper(replaceMap).replace(content);
         return new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
     }
 
