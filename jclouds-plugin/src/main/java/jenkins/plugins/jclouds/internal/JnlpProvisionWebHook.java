@@ -99,7 +99,7 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
                         final ByteArrayInputStream str =
                             new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
                         try {
-                            rsp.serveFile(req, str, 0, result.length(), "response.json");
+                            rsp.serveFile(req, str, 0, (long)(result.length()), "response.json");
                         } catch (Exception x) {
                             LOGGER.log(WARNING, "Could not send response:", x);
                         }
