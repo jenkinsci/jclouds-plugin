@@ -1,5 +1,11 @@
 ## Changelog
 
+### Version 2.18 (released April 25, 2020)
+- Fixed a security issue: jclouds-expire cli command did not check permissions.
+- Fixed race condition with OneOff slaves
+- Fixed cleanup of OneOff slaves ([JENKINS-61788](https://issues.jenkins-ci.org/browse/JENKINS-61788))
+- New feature: Provisioning of JNLP parameters (urls and credentials).
+
 ### Version 2.17 (released December 16, 2019)
 - Fixed doc migration from wiki to github README.md
 
