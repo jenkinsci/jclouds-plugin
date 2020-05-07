@@ -541,6 +541,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 // if no keys are provided.
                 options.as(GoogleComputeEngineTemplateOptions.class).autoCreateKeyPair(false);
                 options.as(GoogleComputeEngineTemplateOptions.class).preemptible(isPreemptible);
+                // On GCE, public IPs are default.
+                options.as(GoogleComputeEngineTemplateOptions.class).assignExternalIp(assignPublicIp);
             }
 
             if (assignPublicIp) {
