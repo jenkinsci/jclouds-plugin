@@ -1,5 +1,11 @@
 ## Changelog
 
+### Version 2.20 (released May 8, 2020)
+- Fixed enabling/disabling of public IP assignment on GCE ([JENKINS-62199](https://issues.jenkins-ci.org/browse/JENKINS-62199))
+
+### Version 2.19 (released May 8, 2020)
+- broken. Do not use
+
 ### Version 2.18 (released April 25, 2020)
 - Fixed a security issue: jclouds-expire cli command did not check permissions.
 - Fixed race condition with OneOff slaves
