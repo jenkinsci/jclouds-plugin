@@ -9,7 +9,7 @@ JClouds Plugin for Jenkins
 ## About this plugin
 
 This plugin uses [JClouds](http://jclouds.org/) to
-provide slave launching on most of the currently usable Cloud
+provide agent launching on most of the currently usable Cloud
 infrastructures [supported](http://jclouds.apache.org/reference/providers/#compute-apis) by JClouds.
 
 ## Adding a new Cloud Provider
@@ -21,11 +21,11 @@ infrastructures [supported](http://jclouds.apache.org/reference/providers/#compu
     have an option - \`Cloud (JClouds)\`
 -   Click on \`Cloud (JClouds)\`
 -   Fill in the configuration options
-    -   Profile : the name of the profile e.g, `aws-slave-profile`.
+    -   Profile : the name of the profile e.g, `aws-agent-profile`.
     -   Provider Name: Select from the supported providers.
     -   End Point URL: if your provider API needs an endpoint configuration, add it here, otherwise leave this empty.
     -   Max Number of Instances: The maximum number of instances to run from this cloud at one time.
-    -   Retention Time: How long, in minutes, to wait for a slave to
+    -   Retention Time: How long, in minutes, to wait for an agent to
 remain idle before disconnecting and terminating it. Defaults to `30`.
     -   Credentials: Depending on your provider, you either need a
 username/password pair or a username/privatekey pair. The first
@@ -45,12 +45,12 @@ is derived automatically from that.
 -   Add Cloud Instance Template by clicking on the Add button
 -   Fill in configuration options:
     -   Name : the name of the instance template e.g.
-        `aws-jenkins-slave`
-    -   Number of Executors: How many executors each slave created from
+        `aws-jenkins-agent`
+    -   Number of Executors: How many executors each agent created from
         this template should have.
     -   Description: notes/comments for your reference.
     -   Image ID: Use one of the following options:
-        -   Image ID to use for this slave template, such as EC2 AMIs.
+        -   Image ID to use for this agent template, such as EC2 AMIs.
 Note that EC2 AMIs must include the region as well, e.g., `us-east-1/ami-00000`.
 If unshure, you can enter a partial string and the hit the "Check Image Id" button. This
 searches for matching images and if there are ambiguties, a  message is shown like: "Did you mean
@@ -58,27 +58,27 @@ searches for matching images and if there are ambiguties, a  message is shown li
         -   OSFamily: Specify the OSFamily - leave empty for default for a cloud provider
         -   OS Version : Specify the OSVersion - leave empty for default for a cloud provider
     -   Hardware ID: Use one of the following options:
-        -   Hardware ID on provider for this slave template, such as `t1.micro` on AWS EC2.
+        -   Hardware ID on provider for this agent template, such as `t1.micro` on AWS EC2.
             **or**
         -   RAM : in MB
         -   No. of Cores: number of virtual processor cores.
-    -   Location ID: Location ID where this slave will be deployed. If none is selected jclouds will automatically choose an available one.
-    -   Labels: (space-separated) labels/tags that you can use to attach a build to this slave template.
-    -   Init Script: A shell script to be run when the slave is created.
+    -   Location ID: Location ID where this agent will be deployed. If none is selected jclouds will automatically choose an available one.
+    -   Labels: (space-separated) labels/tags that you can use to attach a build to this agent template.
+    -   Init Script: A shell script to be run when the agent is created.
         A rather crude method for provisioning. If supported by your
-        provider, you should prefer the use of User-Data and with cloud-init resp. cloudbase-init on Windows slaves.
-    -   Stop on Terminate: If true, suspend slaves rather than terminating them.
+        provider, you should prefer the use of User-Data and with cloud-init resp. cloudbase-init on Windows agents.
+    -   Stop on Terminate: If true, suspend agents rather than terminating them.
 -   Click Save to save the configuration changes.
 -   Goto Jenkins' home page, click on \`Build Executor Status\` link on
     the sidebar.
 -   Verify that you have a button with \`Provision via JClouds - (YOUR
-    PROFILE NAME) drop down with the slave template name you configured.
--   Click on the slave and see if your slave launched successfully
+    PROFILE NAME) drop down with the agent template name you configured.
+-   Click on the agent and see if your agent launched successfully
     (please wait until the operation completes).
 
-### Executing build on the slave
+### Executing build on the agent
 
--   To run your build on the newly configured slave computer, just
+-   To run your build on the newly configured agent, just
     enable the \`Restrict where this project can be run\` option in the
     build configuration page.
 -   Enter the label which you choose for the instance template in the
@@ -86,9 +86,9 @@ searches for matching images and if there are ambiguties, a  message is shown li
     for you.
 -   Click save to save the configuration options.
 -   Schedule the build to check whether the build is executed on the
-    selected slave template.
+    selected agent template.
 -   If your cloud provider is charging by the minute (GCE for example),
-    you can enable the checkbox "JClouds Single-use-slave" which
+    you can enable the checkbox "JClouds Single-use-agent" which
     destroys the provisioned  
     VM after the build job has finished (with a small delay of \~ 1min).
 
@@ -153,13 +153,13 @@ Then the resulting YAML on the cloud-init (server) side becomes:
 
 ## Using the phone-home feature
 
-When provisioning slaves, there might be too much work on a slave for it
+When provisioning agents, there might be too much work on an agent for it
 to get ready (listening on port 22) in time for jenkins.  
 Therefore, the plugin provides a webhook, which is designed to be
 invoked by a http POST request using
 [cloud-init](http://cloudinit.readthedocs.io/en/latest/topics/examples.html#call-a-url-when-finished)
-within the slave when everything is ready to use. When enabled, the
-usual slave connection setup is delayed until the http POST is received.
+within the agent when everything is ready to use. When enabled, the
+usual agent connection setup is delayed until the http POST is received.
 
 -   The corresponding cloud-init configuration looks like this:
 
@@ -168,7 +168,7 @@ usual slave connection setup is delayed until the http POST is received.
           url: http://your.jenkins.url/jclouds-phonehome/
           tries: 3
 
--   You can put this into the User data field in the slave template for
-example. In the advanced template configuration you now can check the Checkbox "Wait for slave to phone home" and
-specify a timeout value (in minutes). When provisioning a slave, jenkins now waits for the slave to
+-   You can put this into the User data field in the agent template for
+example. In the advanced template configuration you now can check the Checkbox "Wait for agent to phone home" and
+specify a timeout value (in minutes). When provisioning an agent, jenkins now waits for the agent to
 invoke the webhook before launching the ssh remote connection. 
