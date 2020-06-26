@@ -51,7 +51,7 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public String getDisplayName() {
-            return "JClouds Single-use slave";
+            return "JClouds Single-use agent";
         }
 
         @Override
@@ -70,7 +70,7 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
                 throw new IllegalStateException("Computer is null");
             }
             if (JCloudsComputer.class.isInstance(computer)) {
-                String msg = "Taking single-use slave " + computer.getName() + " offline.";
+                String msg = "Taking single-use agent " + computer.getName() + " offline.";
                 LOGGER.warning(msg);
                 listener.getLogger().println(msg);
                 computer.setTemporarilyOffline(true, OfflineCause.create(Messages._OneOffCause()));
@@ -79,7 +79,7 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
                     s.setOverrideRetentionTime(Integer.valueOf(0));
                 }
             } else {
-                listener.getLogger().println("Not a single-use slave, this is a " + computer.getClass());
+                listener.getLogger().println("Not a single-use agent, this is a " + computer.getClass());
             }
         }
     }
