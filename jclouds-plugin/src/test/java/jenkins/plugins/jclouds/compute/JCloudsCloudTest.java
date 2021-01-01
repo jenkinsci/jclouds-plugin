@@ -1,13 +1,11 @@
 package jenkins.plugins.jclouds.compute;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.util.Collections;
 import java.util.List;
 
 import com.gargoylesoftware.htmlunit.WebAssert;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlButton;
 import com.gargoylesoftware.htmlunit.html.HtmlForm;
 import com.gargoylesoftware.htmlunit.html.HtmlFormUtil;
@@ -38,7 +36,7 @@ public class JCloudsCloudTest {
                 600 * 1000, 600 * 1000, null, "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
         j.getInstance().clouds.add(cloud);
 
-        HtmlPage p = j.createWebClient().goTo("configure");
+        HtmlPage p = j.createWebClient().goTo("configureClouds");
         WebAssert.assertInputPresent(p, "_.profile");
         mySelectPresent(p, "_.providerName");
         WebAssert.assertInputPresent(p, "_.endPointUrl");

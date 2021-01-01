@@ -4,7 +4,7 @@ import java.io.IOException;
 
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 /**
  * @author Fritz Elfert
@@ -85,50 +85,30 @@ public class SSHPublicKeyExtractorTest {
 
     @Test
     public void testExtractInvalidPEM1() throws IOException {
-        boolean thrown = false;
-        try {
+        assertThrows(IOException.class, () -> {
             SSHPublicKeyExtractor.extract("", null);
-        } catch (IOException e) {
-            thrown = true;
-            assertEquals("Invalid PEM structure, '-----BEGIN...' missing", e.getMessage());
-        }
-        assertTrue(thrown);
+        });
     }
 
     @Test
     public void testExtractInvalidPEM2() throws IOException {
-        boolean thrown = false;
-        try {
+        assertThrows(IOException.class, () -> {
             SSHPublicKeyExtractor.extract("-----BEGIN RSA PRIVATE KEY-----", null);
-        } catch (IOException e) {
-            thrown = true;
-            assertEquals("Invalid PEM structure, -----END RSA PRIVATE KEY----- missing", e.getMessage());
-        }
-        assertTrue(thrown);
+        });
     }
 
     @Test
     public void testExtractInvalidPEM3() throws IOException {
-        boolean thrown = false;
-        try {
+        assertThrows(IOException.class, () -> {
             SSHPublicKeyExtractor.extract("-----BEGIN RSA PRIVATE KEY-----\nfoo\n-----END RSA PRIVATE KEY-----", null);
-        } catch (IOException e) {
-            thrown = true;
-            assertEquals("Invalid PEM structure, no data available", e.getMessage());
-        }
-        assertTrue(thrown);
+        });
     }
 
     @Test
     public void testExtractInvalidPEM4() throws IOException {
-        boolean thrown = false;
-        try {
+        assertThrows(IOException.class, () -> {
             SSHPublicKeyExtractor.extract("-----BEGIN RSA PRIVATE KEY-----\nVGhpcyBpcyBhIGpva2UhCg==\n-----END RSA PRIVATE KEY-----", null);
-        } catch (IOException e) {
-            thrown = true;
-            assertEquals("Expected DER Sequence, but found type 84", e.getMessage());
-        }
-        assertTrue(thrown);
+        });
     }
 
 }

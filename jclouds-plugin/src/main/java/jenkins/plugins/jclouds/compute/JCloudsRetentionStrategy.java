@@ -18,8 +18,8 @@ package jenkins.plugins.jclouds.compute;
 import hudson.model.Descriptor;
 import hudson.slaves.OfflineCause;
 import hudson.slaves.RetentionStrategy;
-import hudson.util.TimeUnit2;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
@@ -40,7 +40,7 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
         if (!c.isOffline()) {
             LOGGER.info("Setting " + c.getName() + " to be deleted.");
             try {
-                c.disconnect(OfflineCause.create(Messages._DeletedCause())).get();
+                c.disconnect(OfflineCause.create(Messages._deletedCause())).get();
             } catch (Exception e) {
                 LOGGER.info("Caught " + e.toString());
             }
@@ -66,8 +66,8 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                         if (retentionTime > -1) {
                             final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
                             LOGGER.fine("Node " + c.getName() + " retentionTime: " + retentionTime + " idle: "
-                                    + TimeUnit2.MILLISECONDS.toMinutes(idleMilliseconds) + "min");
-                            if (idleMilliseconds > TimeUnit2.MINUTES.toMillis(retentionTime)) {
+                                    + TimeUnit.MILLISECONDS.toMinutes(idleMilliseconds) + "min");
+                            if (idleMilliseconds > TimeUnit.MINUTES.toMillis(retentionTime)) {
                                 LOGGER.info("Retention time for " + c.getName() + " has expired.");
                                 node.setPendingDelete(true);
                                 fastTerminate(c);
