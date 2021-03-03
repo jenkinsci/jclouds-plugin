@@ -404,15 +404,15 @@ public class JCloudsCloud extends Cloud {
                 break;
             }
             try {
-                LOGGER.info(String.format("Slave [%s] not connected yet", jcloudsSlave.getDisplayName()));
+                LOGGER.info(String.format("Agent [%s] not connected yet", jcloudsSlave.getDisplayName()));
                 computer.connect(false).get();
                 Thread.sleep(5000l);
             } catch (InterruptedException | ExecutionException e) {
-                LOGGER.warning(String.format("Error while launching slave: %s", e));
+                LOGGER.warning(String.format("Error while launching agent: %s", e));
             }
 
             if ((System.currentTimeMillis() - startMoment) > 1000l * launchTimeoutSec) {
-                String message = String.format("Failed to connect to slave within timeout (%d s).", launchTimeoutSec);
+                String message = String.format("Failed to connect to agent within timeout (%d s).", launchTimeoutSec);
                 LOGGER.warning(message);
                 throw new ExecutionException(new Throwable(message));
             }
@@ -466,12 +466,12 @@ public class JCloudsCloud extends Cloud {
            Descriptor.FormException {
                checkPermission(PROVISION);
                if (name == null) {
-                   sendError("The slave template name query parameter is missing", req, rsp);
+                   sendError("The agent template name query parameter is missing", req, rsp);
                    return;
                }
                JCloudsSlaveTemplate t = getTemplate(name);
                if (t == null) {
-                   sendError("No such slave template with name : " + name, req, rsp);
+                   sendError("No such agent template with name : " + name, req, rsp);
                    return;
                }
 

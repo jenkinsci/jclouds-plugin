@@ -49,7 +49,7 @@ public class JCloudsProvisionCommand extends CLICommand {
     @Argument(required = true, metaVar = "TEMPLATE", index = 1, usage = "Name of template to use")
         public String tmpl;
 
-    @Option(required = false, name = "-f", aliases = "--format", usage = "Output format of provisioned slave properties")
+    @Option(required = false, name = "-f", aliases = "--format", usage = "Output format of provisioned agent properties")
         public OutputFormat format = OutputFormat.HUMAN;
 
     @Override

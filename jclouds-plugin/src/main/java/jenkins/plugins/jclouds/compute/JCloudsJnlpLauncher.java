@@ -44,10 +44,10 @@ public class JCloudsJnlpLauncher extends JNLPLauncher {
             try {
                 slave.waitForPhoneHome(logger);
             } catch (InterruptedException e) {
-                throw new IllegalStateException("Interrupted while waitin for phone home.", e.getCause());
+                throw new IllegalStateException("Interrupted while waiting for phone home.", e.getCause());
             }
         } else {
-            throw new IllegalArgumentException("Could not launch NULL slave.");
+            throw new IllegalArgumentException("Could not launch NULL agent.");
         }
     }
 
