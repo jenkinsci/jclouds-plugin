@@ -178,7 +178,7 @@ limitations under the License.
         </f:entry>
 
         <f:entry field="waitPhoneHome">
-          <f:checkbox title="${%Wait for slave to phone home}"/>
+          <f:checkbox title="${%Wait for agent to phone home}"/>
         </f:entry>
 
         <f:entry title="${%Phone home timeout}" field="waitPhoneHomeTimeout">

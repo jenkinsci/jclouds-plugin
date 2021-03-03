@@ -85,7 +85,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
         if (null != node) {
             if (node.isPendingDelete()) {
                 // User attempts to delete an already delete-pending slave
-                LOGGER.info("Slave already pending delete: " + getName());
+                LOGGER.info("Agent already pending delete: " + getName());
                 deleteSlave(true);
             } else {
                 node.setPendingDelete(true);
@@ -105,7 +105,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
      */
     public void deleteSlave() throws IOException, InterruptedException {
         if (isIdle()) { // Fixes JENKINS-27471
-            LOGGER.info("Deleting slave: " + getName());
+            LOGGER.info("Deleting agent: " + getName());
             JCloudsSlave slave = getNode();
             if (null != slave ) {
                 final VirtualChannel ch = slave.getChannel();
@@ -116,7 +116,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
                 Jenkins.getInstance().removeNode(slave);
             }
         } else {
-            LOGGER.info(String.format("Slave %s is not idle, postponing deletion", getName()));
+            LOGGER.info(String.format("Agent %s is not idle, postponing deletion", getName()));
             // Fixes JENKINS-28403
             final JCloudsSlave node = getNode();
             if (null != node && !node.isPendingDelete()) {
@@ -136,7 +136,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
             deleteSlave();
         } catch (Exception e) {
             if (logging) {
-                LOGGER.log(Level.WARNING, "Failed to delete slave", e);
+                LOGGER.log(Level.WARNING, "Failed to delete agent", e);
             }
         }
     }

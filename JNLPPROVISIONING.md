@@ -33,7 +33,7 @@ users:
 packages:
   - openjdk-8-jdk-headless
 write_files:
-  - path: /usr/local/sbin/start-jslave
+  - path: /usr/local/sbin/start-jnlpagent
     permissions: '0755'
     content: |
       #! /bin/sh
@@ -62,7 +62,7 @@ write_files:
       systemctl enable jenkinsagent.service
       systemctl start jenkinsagent.service
 runcmd:
-  - '/usr/local/sbin/start-jslave'
+  - '/usr/local/sbin/start-jnlpagent'
 ```
 
 ### Ubuntu on DigitalOcean
@@ -80,7 +80,7 @@ packages:
   - jq
   - openjdk-8-jdk-headless
 write_files:
-  - path: /usr/local/sbin/start-jslave
+  - path: /usr/local/sbin/start-jnlpagent
     permissions: '0755'
     content: |
       #! /bin/sh
@@ -112,7 +112,7 @@ write_files:
       systemctl enable jenkinsagent.service
       systemctl start jenkinsagent.service
 runcmd:
-  - '/usr/local/sbin/start-jslave'
+  - '/usr/local/sbin/start-jnlpagent'
 ```
 
 ### Windows on OpenStack
@@ -121,19 +121,19 @@ runcmd:
 
 - A User jenkins must exist or be provisioned.
 - Java has to be installed and in PATH
-- [WinSW](https://github.com/winsw/winsw/releases) has to be installed as `C:\Users\jenkins\jenkins-slave.exe`.
-- The following XML configuration template for WinSW has to be provided as `C:\Users\jenkins\jenkins-slave.xml.tmpl`. The service password has to be hardcoded. All other placeholders will be replaced by the powershell script:
+- [WinSW](https://github.com/winsw/winsw/releases) has to be installed as `C:\Users\jenkins\jenkins-agent.exe`.
+- The following XML configuration template for WinSW has to be provided as `C:\Users\jenkins\jenkins-agent.xml.tmpl`. The service password has to be hardcoded. All other placeholders will be replaced by the powershell script:
 ```xml
 <configuration>
     <id>jenkins</id>
-    <name>Jenkins slave agent</name>
+    <name>Jenkins JNLP agent</name>
     <description>This service runs an agent for Jenkins automation server.</description>
     <executable>java.exe</executable>
-    <arguments>-Xrs -Xmx256m -jar "%BASE%\slave.jar" -noCertificateCheck -jnlpUrl "_JNLPURL_" -secret "_SECRET_"</arguments>
+    <arguments>-Xrs -Xmx256m -jar "%BASE%\agent.jar" -noCertificateCheck -jnlpUrl "_JNLPURL_" -secret "_SECRET_"</arguments>
     <logmode>rotate</logmode>
     <startmode>automatic</startmode>
     <onfailure action="restart" delay="10 sec"/>
-    <download from="_JARURL_" to="%BASE%\slave.jar" />
+    <download from="_JARURL_" to="%BASE%\agent.jar" />
     <extensions>
         <!-- This is a sample configuration for the RunawayProcessKiller extension. -->
         <extension enabled="true" 
@@ -162,7 +162,7 @@ $ErrorActionPreference = 'Stop'
 try {
     $metaUrl = 'http://169.254.169.254/openstack/latest/meta_data.json'
     $meta = Invoke-WebRequest -UseBasicParsing -URI $metaURL | ConvertFrom-Json
-    $svpath = 'C:\Users\jenkins\jenkins-slave'
+    $svpath = 'C:\Users\jenkins\jenkins-agent'
     $xml = Get-Content "$($svpath).xml.tmpl"
     $cname = $env:COMPUTERNAME
     New-Item -type file -path "$($svpath).xml" -force | Out-Null

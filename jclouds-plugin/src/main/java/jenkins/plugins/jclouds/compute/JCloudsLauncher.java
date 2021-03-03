@@ -99,8 +99,8 @@ public class JCloudsLauncher extends ComputerLauncher {
             invokeSSHLauncher(address, slave.getCredentialsId(), slave.getJvmOptions(), computer, listener);
 
         } else {
-            LOGGER.severe("Could not launch NULL slave.");
-            throw new IOException("Could not launch NULL slave.");
+            LOGGER.severe("Could not launch NULL agent.");
+            throw new IOException("Could not launch NULL agent.");
         }
     }
 
