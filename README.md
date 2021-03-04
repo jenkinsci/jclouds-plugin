@@ -14,8 +14,8 @@ infrastructures [supported](http://jclouds.apache.org/reference/providers/#compu
 
 ## Adding a new Cloud Provider
 
--   Goto Jenkins Configuration page by clicking on Manage menu or
-    browsing to the URL <http://localhost:8080/configure>
+-   Goto Jenkins Configuration page by clicking on  Manage Jenkins→Manage Nodes and Clouds→Configure Clouds or
+    browsing to the URL <http://localhost:8080/configureClouds>
 -   Scroll down to Cloud Section
 -   Click on the \`Add a new cloud\` pop-up menu button which should
     have an option - \`Cloud (JClouds)\`
