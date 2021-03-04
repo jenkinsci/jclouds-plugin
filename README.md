@@ -10,11 +10,11 @@ JClouds Plugin for Jenkins
 
 This plugin uses [JClouds](http://jclouds.org/) to
 provide agent launching on most of the currently usable Cloud
-infrastructures [supported](http://jclouds.apache.org/reference/providers/#compute-apis) by JClouds.
+infrastructures [supported](http://jclouds.apache.org/reference/providers/#compute-providers) by JClouds.
 
 ## Adding a new Cloud Provider
 
--   Goto Jenkins Configuration page by clicking on  Manage Jenkins→Manage Nodes and Clouds→Configure Clouds or
+-   Goto Jenkins Configuration page by clicking on `Manage Jenkins`→`Manage Nodes and Clouds`→`Configure Clouds` or
     browsing to the URL <http://localhost:8080/configureClouds>
 -   Scroll down to Cloud Section
 -   Click on the \`Add a new cloud\` pop-up menu button which should
