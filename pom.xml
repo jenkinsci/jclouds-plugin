@@ -119,9 +119,11 @@ limitations under the License.
           <artifactId>maven-javadoc-plugin</artifactId>
           <configuration>
             <links>
-              <link>http://javadoc.jenkins.io</link>
-              <link>http://jclouds.apache.org/reference/javadoc/2.0.x</link>
-              <link>http://google.github.io/guice/api-docs/4.0/javadoc</link>
+              <link>https://javadoc.jenkins.io</link>
+              <link>https://jclouds.apache.org/reference/javadoc/2.0.x</link>
+              <link>https://google.github.io/guice/api-docs/4.0/javadoc</link>
+              <link>https://stapler.kohsuke.org/apidocs</link>
+              <link>https://javaee.github.io/javaee-spec/javadocs</link>
             </links>
           </configuration>
         </plugin>

@@ -20,4 +20,5 @@ package jenkins.plugins.jclouds.compute;
  */
 final class CloudInstanceDefaults {
     public static final int DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES = 30;
+    public static final int DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES = 0;
 }

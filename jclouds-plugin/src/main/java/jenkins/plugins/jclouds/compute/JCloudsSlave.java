@@ -321,6 +321,19 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     }
 
     /**
+     * Get the errorRetention time for this agents parent cloud.
+     * Sometimes parent cloud cannot be determined (returns Null as I see), in which case this method will
+     * return default value set in CloudInstanceDefaults.
+     *
+     * @return errorRetentionTime
+     * @see CloudInstanceDefaults#DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES
+     */
+    int getErrorRetentionTime() {
+        final JCloudsCloud cloud = JCloudsCloud.getByName(cloudName);
+        return cloud == null ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES : cloud.getErrorRetentionTime();
+    }
+
+    /**
      * Get the JClouds profile identifier for the Cloud associated with this slave.
      *
      * @return cloudName
@@ -396,7 +409,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
      */
     @Override
     public AbstractCloudComputer<JCloudsSlave> createComputer() {
-        LOGGER.info("Creating a new JClouds Slave");
+        LOGGER.info("Creating a new JClouds agent");
         return new JCloudsComputer(this);
     }
 
@@ -411,7 +424,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
 
         @Override
         public String getDisplayName() {
-            return "JClouds Slave";
+            return "JClouds agent";
         }
 
         /**
@@ -433,14 +446,14 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
         if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
             if (stopOnTerminate) {
-                LOGGER.info("Suspending slave : " + getNodeName());
+                LOGGER.info("Suspending node: " + getNodeName());
                 compute.suspendNode(nodeId);
             } else {
-                LOGGER.info("Terminating slave : " + getNodeName());
+                LOGGER.info("Terminating node: " + getNodeName());
                 compute.destroyNode(nodeId);
             }
         } else {
-            LOGGER.info("Slave " + getNodeName() + " is already not running.");
+            LOGGER.info("Node " + getNodeName() + " is already terminated.");
         }
         ProvisioningActivity activity = CloudStatistics.get().getActivityFor(this);
         if (activity != null) {
@@ -449,6 +462,11 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     }
 
     public void waitForPhoneHome(PrintStream logger) throws InterruptedException {
-        phm.waitForPhoneHome(getNodeName(), logger);
+        try {
+            phm.waitForPhoneHome(getNodeName(), logger);
+        } catch (InterruptedException e) {
+            setWaitPhoneHome(false);
+            throw e;
+        }
     }
 }

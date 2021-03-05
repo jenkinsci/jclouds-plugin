@@ -32,7 +32,8 @@ public class JCloudsCloudInsideJenkinsLiveTest {
 
         // TODO: this may need to vary per test
         cloud = new JCloudsCloud(fixture.getProvider() + "-profile", fixture.getProvider(), fixture.getCredentialsId(),
-                null, fixture.getEndpoint(), 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000,
+                null, fixture.getEndpoint(), 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
+                CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000,
                 null, "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
     }
 

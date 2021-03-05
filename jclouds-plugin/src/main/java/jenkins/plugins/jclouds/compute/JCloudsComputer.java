@@ -65,6 +65,11 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
         return null == node ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : node.getRetentionTime();
     }
 
+    int getErrorRetentionTime() {
+        final JCloudsSlave node = getNode();
+        return (null == node ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES : node.getErrorRetentionTime());
+    }
+
     @CheckForNull
     public String getCloudName() {
         final JCloudsSlave node = getNode();
