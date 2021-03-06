@@ -126,6 +126,7 @@ public class JCloudsCloud extends Cloud {
     public final String endPointUrl;
     public final String profile;
     private final int retentionTime;
+    private final int errorRetentionTime;
     public int instanceCap;
     public final List<JCloudsSlaveTemplate> templates;
     public final int scriptTimeout;
@@ -228,8 +229,8 @@ public class JCloudsCloud extends Cloud {
 
     @DataBoundConstructor
     public JCloudsCloud(final String profile, final String providerName, final String cloudCredentialsId, final String cloudGlobalKeyId,
-            final String endPointUrl, final int instanceCap, final int retentionTime, final int scriptTimeout, final int startTimeout,
-            final String zones, final String groupPrefix, final boolean trustAll, final List<JCloudsSlaveTemplate> templates) {
+            final String endPointUrl, final int instanceCap, final int retentionTime, final int errorRetentionTime, final int scriptTimeout,
+            final int startTimeout, final String zones, final String groupPrefix, final boolean trustAll, final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
         this.providerName = Util.fixEmptyAndTrim(providerName);
@@ -242,6 +243,7 @@ public class JCloudsCloud extends Cloud {
         this.endPointUrl = Util.fixEmptyAndTrim(endPointUrl);
         this.instanceCap = instanceCap;
         this.retentionTime = retentionTime;
+        this.errorRetentionTime = errorRetentionTime;
         this.scriptTimeout = scriptTimeout;
         this.startTimeout = startTimeout;
         this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate> emptyList());
@@ -265,6 +267,15 @@ public class JCloudsCloud extends Cloud {
      */
     public int getRetentionTime() {
         return retentionTime == 0 ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : retentionTime;
+    }
+
+    /**
+     * Get the error retention time in minutes or default value from CloudInstanceDefaults if it is zero.
+     * @return The retention time in minutes.
+     * @see CloudInstanceDefaults#DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
+     */
+    public int getErrorRetentionTime() {
+        return errorRetentionTime;
     }
 
     private static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new JDKLoggingModule() {
@@ -404,17 +415,21 @@ public class JCloudsCloud extends Cloud {
                 break;
             }
             try {
-                LOGGER.info(String.format("Agent [%s] not connected yet", jcloudsSlave.getDisplayName()));
+                LOGGER.info(String.format("Agent %s not connected yet", jcloudsSlave.getDisplayName()));
                 computer.connect(false).get();
                 Thread.sleep(5000l);
             } catch (InterruptedException | ExecutionException e) {
-                LOGGER.warning(String.format("Error while launching agent: %s", e));
+                String msg = e.getMessage();
+                if (null != msg && msg.contains("NULL agent")) {
+                    throw new ExecutionException(new Throwable(msg));
+                }
+                LOGGER.warning(String.format("Error while launching %s: %s", jcloudsSlave.getDisplayName(), e));
             }
 
             if ((System.currentTimeMillis() - startMoment) > 1000l * launchTimeoutSec) {
-                String message = String.format("Failed to connect to agent within timeout (%d s).", launchTimeoutSec);
-                LOGGER.warning(message);
-                throw new ExecutionException(new Throwable(message));
+                String msg = String.format("Failed to connect to %s within %d sec.", jcloudsSlave.getDisplayName(), launchTimeoutSec);
+                LOGGER.warning(msg);
+                throw new ExecutionException(new Throwable(msg));
             }
         }
     }
@@ -424,7 +439,7 @@ public class JCloudsCloud extends Cloud {
         return getTemplate(label) != null;
     }
 
-    public JCloudsSlaveTemplate getTemplate(String name) {
+    JCloudsSlaveTemplate getTemplate(String name) {
         for (JCloudsSlaveTemplate t : templates)
             if (t.name.equals(name))
                 return t;
@@ -436,13 +451,18 @@ public class JCloudsCloud extends Cloud {
      * @param label The label to be matched.
      * @return The slave template or {@code null} if the specified label did not match.
      */
-    public JCloudsSlaveTemplate getTemplate(Label label) {
+    JCloudsSlaveTemplate getTemplate(Label label) {
         for (JCloudsSlaveTemplate t : templates)
             if (label == null || label.matches(t.getLabelSet()))
                 return t;
         return null;
     }
 
+    /**
+     * Provisions a new node from supplied template.
+     *
+     * @param t The template to be used.
+     */
     JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
         final StringWriter sw = new StringWriter();
         final StreamTaskListener listener = new StreamTaskListener(sw);
@@ -453,11 +473,11 @@ public class JCloudsCloud extends Cloud {
     }
 
     /**
-     * Provisions a new node manually (by clicking a button in the computer list)
+     * Provisions a new node manually (by clicking a button in the computer list).
      *
-     * @param req  {@link StaplerRequest}
-     * @param rsp  {@link StaplerResponse}
-     * @param name Name of the template to provision
+     * @param req  {@link StaplerRequest}.
+     * @param rsp  {@link StaplerResponse}.
+     * @param name Name of the template to provision.
      * @throws ServletException if an error occurs.
      * @throws IOException if an error occurs.
      * @throws Descriptor.FormException if the form does not validate.

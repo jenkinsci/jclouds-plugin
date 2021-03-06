@@ -35,7 +35,8 @@ public class JCloudsCloudTest {
     public void testConfigurationUI() throws Exception {
         JCloudsCloud cloud = new JCloudsCloud("aws-profile", "aws-ec2", "",
                 "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                600 * 1000, 600 * 1000, null, "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
+                CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
+                "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
         j.getInstance().clouds.add(cloud);
 
         HtmlPage p = j.createWebClient().goTo("configure");
@@ -63,7 +64,8 @@ public class JCloudsCloudTest {
 
         JCloudsCloud original = new JCloudsCloud("aws-profile", "aws-ec2", "",
                 "", "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                600 * 1000, 600 * 1000, null, "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
+                 CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
+                 "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
 
         j.getInstance().clouds.add(original);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));

@@ -31,6 +31,9 @@ limitations under the License.
   <f:entry title="${%Retention Time}" field="retentionTime">
     <f:number clazz="number" min="-1" step="1" default="30"/>
   </f:entry>
+  <f:entry title="${%Error retention Time}" field="errorRetentionTime">
+    <f:number clazz="number" min="-1" step="1" default="0"/>
+  </f:entry>
   <f:entry title="${%Credentials}" field="cloudCredentialsId">
     <c:select/>
   </f:entry>

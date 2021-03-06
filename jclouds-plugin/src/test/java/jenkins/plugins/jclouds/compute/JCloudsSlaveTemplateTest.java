@@ -34,7 +34,7 @@ public class JCloudsSlaveTemplateTest {
 
         final JCloudsCloud beforeCloud = new JCloudsCloud("aws-profile",
                 "aws-ec2", "cloudCredentialsId", "cloudGlobalKeyId",
-                "http://localhost", 1, 30, 600 * 1000, 600 * 1000, null, "foobar", true, templates);
+                "http://localhost", 1, 30, 5, 600 * 1000, 600 * 1000, null, "foobar", true, templates);
 
         j.jenkins.clouds.add(beforeCloud);
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));
