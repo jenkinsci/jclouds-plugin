@@ -221,8 +221,8 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             final String locationId, final String labelString, final String description, final String initScriptId,
             final int numExecutors, final boolean stopOnTerminate, final String jvmOptions,
             final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo,
-            final boolean installPrivateKey, final Integer overrideRetentionTime, final int spoolDelayMs,
-            final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout,
+            final boolean installPrivateKey, final Integer overrideRetentionTime, final boolean hasOverrideRetentionTime,
+            final int spoolDelayMs, final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout,
             final String keyPairName, final boolean assignPublicIp, final String networks,
             final String securityGroups, final String credentialsId, final String adminCredentialsId,
             final String mode, final boolean useConfigDrive, final boolean isPreemptible, final List<UserData> userDataEntries,
@@ -248,7 +248,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         this.fsRoot = Util.fixEmptyAndTrim(fsRoot);
         this.allowSudo = allowSudo;
         this.installPrivateKey = installPrivateKey;
-        this.overrideRetentionTime = overrideRetentionTime;
+        this.overrideRetentionTime = hasOverrideRetentionTime ? overrideRetentionTime : null;
         this.spoolDelayMs = spoolDelayMs;
         this.assignFloatingIp = assignFloatingIp;
         this.waitPhoneHome = waitPhoneHome;
