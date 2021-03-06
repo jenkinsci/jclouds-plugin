@@ -64,11 +64,13 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                         OfflineCause oc = c.getOfflineCause();
                         if (null != oc && oc instanceof OfflineCause.LaunchFailed) {
                             final int errorRetentionTime = c.getErrorRetentionTime();
-                            final long failedMilliseconds = System.currentTimeMillis() - oc.getTimestamp();
-                            if (failedMilliseconds > TimeUnit2.MINUTES.toMillis(errorRetentionTime)) {
-                                LOGGER.info(String.format("Error retention time of %d min for %s has expired.", errorRetentionTime, c.getName()));
-                                node.setPendingDelete(true);
-                                fastTerminate(c);
+                            if (errorRetentionTime >= 0) {
+                                final long failedMilliseconds = System.currentTimeMillis() - oc.getTimestamp();
+                                if (failedMilliseconds > TimeUnit2.MINUTES.toMillis(errorRetentionTime)) {
+                                    LOGGER.info(String.format("Error retention time of %d min for %s has expired.", errorRetentionTime, c.getName()));
+                                    node.setPendingDelete(true);
+                                    fastTerminate(c);
+                                }
                             }
                         } else {
                             // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
