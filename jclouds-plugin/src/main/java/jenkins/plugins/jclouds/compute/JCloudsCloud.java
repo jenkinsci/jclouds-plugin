@@ -411,7 +411,7 @@ public class JCloudsCloud extends Cloud {
         Computer computer = jcloudsSlave.toComputer();
         long startMoment = System.currentTimeMillis();
         while (null != computer && computer.isOffline()) {
-            if (computer.getOfflineCauseReason().equals(Messages.OneOffCause())) {
+            if (computer.getOfflineCauseReason().equals(Messages.oneOffCause())) {
                 break;
             }
             try {

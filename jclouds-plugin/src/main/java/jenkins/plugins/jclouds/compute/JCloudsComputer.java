@@ -85,7 +85,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
      */
     @Override
     public HttpResponse doDoDelete() throws IOException {
-        disconnect(OfflineCause.create(Messages._DeletedCause()));
+        disconnect(OfflineCause.create(Messages._deletedCause()));
         final JCloudsSlave node = getNode();
         if (null != node) {
             if (node.isPendingDelete()) {

@@ -16,13 +16,16 @@
 package jenkins.plugins.jclouds.internal;
 
 import java.io.IOException;
+import java.security.KeyPair;
+import java.security.interfaces.DSAPrivateKey;
+import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import javax.xml.bind.DatatypeConverter;
 
 import com.trilead.ssh2.crypto.PEMDecoder;
-import com.trilead.ssh2.signature.DSAPrivateKey;
-import com.trilead.ssh2.signature.DSASHA1Verify;
-import com.trilead.ssh2.signature.RSAPrivateKey;
-import com.trilead.ssh2.signature.RSASHA1Verify;
+import com.trilead.ssh2.signature.DSAKeyAlgorithm;
+import com.trilead.ssh2.signature.RSAKeyAlgorithm;
 
 /**
  * Extracts a SSH public key from a SSH private key.
@@ -37,12 +40,12 @@ public final class SSHPublicKeyExtractor {
      * @throws IOException if pem could not be decoded properly.
      */
     public static String extract(final String pem, final String passPhrase) throws IOException {
-        final Object priv = PEMDecoder.decode(pem.toCharArray(), passPhrase);
-        if (priv instanceof RSAPrivateKey) {
-            return "ssh-rsa " + DatatypeConverter.printBase64Binary(RSASHA1Verify.encodeSSHRSAPublicKey(((RSAPrivateKey)priv).getPublicKey()));
+        final KeyPair priv = PEMDecoder.decodeKeyPair(pem.toCharArray(), passPhrase);
+        if (priv.getPrivate() instanceof RSAPrivateKey) {
+            return "ssh-rsa " + DatatypeConverter.printBase64Binary(new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) priv.getPublic()));
         }
-        if (priv instanceof DSAPrivateKey) {
-            return "ssh-dss " + DatatypeConverter.printBase64Binary(DSASHA1Verify.encodeSSHDSAPublicKey(((DSAPrivateKey)priv).getPublicKey()));
+        if (priv.getPrivate() instanceof DSAPrivateKey) {
+            return "ssh-dss " + DatatypeConverter.printBase64Binary(new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) priv.getPublic()));
         }
         throw new IOException("should never happen");
     }

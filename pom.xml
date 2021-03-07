@@ -19,10 +19,9 @@ limitations under the License.
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>2.17</version>
+    <version>4.15</version>
   </parent>
 
-  <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>jclouds-jenkins-parent</artifactId>
   <version>2.21-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -32,7 +31,7 @@ limitations under the License.
   <licenses>
     <license>
       <name>Apache License 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
 
@@ -56,11 +55,8 @@ limitations under the License.
     <jclouds.version>2.2.0</jclouds.version>
     <!-- Depend on latest Jenkins 2.x LTS
          See README of https://github.com/jenkinsci/plugin-pom/ -->
-    <jenkins.version>2.19.3</jenkins.version>
-    <hpi-plugin.version>1.120</hpi-plugin.version>
-    <jenkins-test-harness.version>2.13</jenkins-test-harness.version>
-    <stapler-plugin.version>1.17</stapler-plugin.version>
-    <java.level>7</java.level>
+    <jenkins.version>2.263.1</jenkins.version>
+    <java.level>8</java.level>
   </properties>
   <modules>
     <module>jclouds-shaded</module>
@@ -106,9 +102,16 @@ limitations under the License.
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.jenkins-ci.main</groupId>
-        <artifactId>jenkins-core</artifactId>
-        <version>${jenkins.version}</version>
+        <groupId>io.jenkins.tools.bom</groupId>
+        <artifactId>bom-2.263.x</artifactId>
+        <version>20</version>
+        <scope>import</scope>
+        <type>pom</type>
+      </dependency>
+      <dependency>
+        <groupId>net.i2p.crypto</groupId>
+        <artifactId>eddsa</artifactId>
+        <version>0.3.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

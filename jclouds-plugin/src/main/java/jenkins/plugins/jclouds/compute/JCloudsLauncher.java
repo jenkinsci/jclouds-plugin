@@ -17,14 +17,12 @@ package jenkins.plugins.jclouds.compute;
 
 import hudson.model.TaskListener;
 import hudson.model.Descriptor;
+import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
 
 import java.io.IOException;
 import java.io.PrintStream;
-
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -38,8 +36,8 @@ import org.jclouds.compute.domain.NodeMetadata;
 import edazdarevic.commons.net.CIDRUtils;
 
 /**
- * The launcher that launches the jenkins slave.jar on the Slave. Uses the SSHKeyPair configured in the cloud profile settings, and logs in to the server via
- * SSH, and starts the slave.jar.
+ * The launcher that launches the jenkins agent.jar on the Agent. Uses the SSHKeyPair configured in the cloud profile settings, and logs in to the server via
+ * SSH, and starts the agent.jar.
  *
  * @author Vijay Kiran
  */
@@ -47,25 +45,12 @@ public class JCloudsLauncher extends ComputerLauncher {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsLauncher.class.getName());
 
-    // Invoke SSHLauncher using reflection so we can use both old and new API of SSHLauncher.
-    private static final void invokeSSHLauncher(final String address, final String credentialsId, final String jvmOptions,
-            SlaveComputer slave, TaskListener listener) throws IOException {
+    private static void invokeSSHLauncher(final String address, final String credentialsId, final String jvmOptions,
+                                          SlaveComputer agent, TaskListener listener) throws IOException {
         try {
-            Class<?> c = Class.forName("hudson.plugins.sshslaves.SSHLauncher");
-            try {
-                Constructor<?> con = c.getConstructor(String.class, int.class, String.class);
-                Method setJvmOptionsMethod = c.getMethod("setJvmOptions", String.class);
-                Method launchMethod = c.getMethod("launch", SlaveComputer.class, TaskListener.class);
-                Object instance = con.newInstance(address, 22, credentialsId);
-                setJvmOptionsMethod.invoke(instance, jvmOptions);
-                launchMethod.invoke(instance, slave, listener);
-            } catch (NoSuchMethodException|SecurityException x) {
-                Constructor<?> con = c.getConstructor(String.class, int.class, String.class, String.class, String.class, String.class,
-                        String.class, Integer.class, Integer.class, Integer.class);
-                Method launchMethod = c.getMethod("launch", SlaveComputer.class, TaskListener.class);
-                Object instance = con.newInstance(address, 22, credentialsId, jvmOptions, null, "", "", Integer.valueOf(0), null, null);
-                launchMethod.invoke(instance, slave, listener);
-            }
+            SSHLauncher launcher = new SSHLauncher(address, 22, credentialsId);
+            launcher.setJvmOptions(jvmOptions);
+            launcher.launch(agent, listener);
         } catch (Throwable t) {
             LOGGER.log(java.util.logging.Level.SEVERE, t.getMessage(), t);
             throw new IOException(t);

@@ -196,7 +196,12 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
         String resultPath;
         String expandedPath = "";
         String relativeFilePath = "";
-        String fileFullPath = file.getParent().getRemote();
+        FilePath parent = file.getParent();
+        if (parent == null) {
+            throw new IllegalStateException("No parent directory to workspace, " +
+                    "normally occurs if the workspace is set to the root of the file system, don't do this...");
+        }
+        String fileFullPath = parent.getRemote();
         if (path != null && !path.equals("")) {
             expandedPath = Util.replaceMacro(path, envVars);
             if (expandedPath.endsWith("/")) {
