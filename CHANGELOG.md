@@ -2,7 +2,7 @@
 
 ### Version 2.21 (released Mar 7, 2021)
 - Fixed ([JENKINS-44613](https://issues.jenkins-ci.org/browse/JENKINS-44613))
-- Enhanced error handling: Cloud nodes that fail to connect are now deleted. The old behavior can be restored by setting errorRetetentionTime to -1
+- Enhanced error handling: Cloud nodes that fail to connect are now deleted. The old behavior can be restored by setting errorRetentionTime to -1
 
 ### Version 2.20 (released May 8, 2020)
 - Fixed enabling/disabling of public IP assignment on GCE ([JENKINS-62199](https://issues.jenkins-ci.org/browse/JENKINS-62199))
