@@ -18,15 +18,15 @@ import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.logging.Logger;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import shaded.com.google.common.base.Function;
+import shaded.com.google.common.base.Functions;
+import shaded.com.google.common.cache.CacheBuilder;
+import shaded.com.google.common.cache.CacheLoader;
+import shaded.com.google.common.cache.LoadingCache;
+import shaded.com.google.common.collect.ImmutableList;
+import shaded.com.google.common.collect.ImmutableMap;
+import shaded.com.google.common.collect.Iterables;
+import shaded.com.google.common.collect.Lists;
 
 import org.jvnet.hudson.test.JenkinsRule;
 

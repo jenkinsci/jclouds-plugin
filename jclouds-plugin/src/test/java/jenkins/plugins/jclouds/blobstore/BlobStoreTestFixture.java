@@ -9,11 +9,11 @@ import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.util.Maps2;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicates;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
+import shaded.com.google.common.base.Function;
+import shaded.com.google.common.base.Predicates;
+import shaded.com.google.common.base.Strings;
+import shaded.com.google.common.collect.Maps;
+import shaded.com.google.common.reflect.TypeToken;
 
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 

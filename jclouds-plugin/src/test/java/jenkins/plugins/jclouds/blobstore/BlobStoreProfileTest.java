@@ -1,6 +1,6 @@
 package jenkins.plugins.jclouds.blobstore;
 
-import com.google.common.collect.ImmutableSortedSet;
+import shaded.com.google.common.collect.ImmutableSortedSet;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -21,7 +21,6 @@ public class BlobStoreProfileTest {
         "aws-s3",
         "azureblob",
         "b2",
-        "filesystem",
         "google-cloud-storage",
         "openstack-swift",
         "rackspace-cloudfiles",

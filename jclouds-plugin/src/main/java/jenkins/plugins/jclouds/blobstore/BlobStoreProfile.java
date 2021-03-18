@@ -25,11 +25,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
-import com.google.inject.Module;
+import shaded.com.google.common.collect.ImmutableSet;
+import shaded.com.google.common.collect.ImmutableSet.Builder;
+import shaded.com.google.common.collect.ImmutableSortedSet;
+import shaded.com.google.common.collect.Iterables;
+import shaded.com.google.inject.Module;
 
 import hudson.Extension;
 import hudson.FilePath;
@@ -160,6 +160,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         return locationId;
     }
 
+    // static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new JDKLoggingModule() {
     static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new JDKLoggingModule() {
         @Override
         public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
@@ -173,7 +174,8 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
         CredentialsHelper.setProject(credId, overrides);
         return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
-            .overrides(overrides).modules(MODULES).buildView(BlobStoreContext.class);
+            .overrides(overrides).modules(MODULES)
+            .buildView(BlobStoreContext.class);
     }
 
     private static Properties buildJCloudsOverrides(final String url, final boolean relaxed) {

@@ -26,13 +26,13 @@ import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.logging.Logger;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap.Builder;
+import shaded.com.google.common.base.Function;
+import shaded.com.google.common.base.Predicate;
+import shaded.com.google.common.cache.LoadingCache;
+import shaded.com.google.common.collect.ImmutableMultimap;
+import shaded.com.google.common.collect.Multimap;
+import shaded.com.google.common.collect.ArrayListMultimap;
+import shaded.com.google.common.collect.ImmutableMultimap.Builder;
 
 public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
 
