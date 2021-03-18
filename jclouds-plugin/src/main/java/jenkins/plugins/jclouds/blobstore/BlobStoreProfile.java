@@ -160,7 +160,6 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         return locationId;
     }
 
-    // static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new JDKLoggingModule() {
     static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new JDKLoggingModule() {
         @Override
         public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
@@ -174,8 +173,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
         CredentialsHelper.setProject(credId, overrides);
         return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
-            .overrides(overrides).modules(MODULES)
-            .buildView(BlobStoreContext.class);
+            .overrides(overrides).modules(MODULES).buildView(BlobStoreContext.class);
     }
 
     private static Properties buildJCloudsOverrides(final String url, final boolean relaxed) {

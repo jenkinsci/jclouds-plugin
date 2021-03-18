@@ -15,8 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
-  <table width="100%" class="pane">
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:jc="/lib/jclouds">
+  <jc:blockWrapper>
     <f:entry title="${%Profile name}" field="profileName">
       <f:textbox/>
     </f:entry>
@@ -48,5 +48,5 @@ limitations under the License.
           with="providerName,credentialsId,endPointUrl,locationId"/>
       </f:block>
     </f:advanced>
-  </table>
+  </jc:blockWrapper>
 </j:jelly>

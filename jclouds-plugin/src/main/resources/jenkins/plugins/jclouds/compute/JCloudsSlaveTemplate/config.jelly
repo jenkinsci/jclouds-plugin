@@ -15,10 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
-  <table width="100%" class="pane">
-
-
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:jc="/lib/jclouds">
+  <jc:blockWrapper>
     <f:block>
       <b>${%General Configuration}</b>
       <f:entry title="${%Name}" field="name">
@@ -212,7 +210,7 @@ limitations under the License.
       </div>
     </f:entry>
     
-  </table>
+  </jc:blockWrapper>
   <st:once>
     <script type="text/javascript" src="${rootURL}/plugin/jclouds-jenkins/jclouds.js"/>
   </st:once>

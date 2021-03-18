@@ -19,12 +19,12 @@ limitations under the License.
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>jclouds-jenkins-parent</artifactId>
-    <version>2.21-SNAPSHOT</version>
+    <version>2.23-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
   <groupId>org.jenkins-ci.plugins</groupId>
   <artifactId>jclouds-jenkins</artifactId>
-  <version>2.21-SNAPSHOT</version>
+  <version>2.23-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>Jenkins JClouds plugin</name>
   <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
@@ -86,7 +86,7 @@ limitations under the License.
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>jclouds-shaded</artifactId>
-      <version>2.21-SNAPSHOT</version>
+      <version>2.23-SNAPSHOT</version>
       <exclusions>
         <!--
           Due to the following issues:
@@ -96,7 +96,7 @@ limitations under the License.
           the dependencies that are shaded are included as normal dependencies too, causing
           duplicate class issues.
           This exclusion makes sure projects including the shaded version don't get the original
-          dependencies as well. 
+          dependencies as well.
         -->
         <exclusion>
           <groupId>com.google.guava</groupId>
