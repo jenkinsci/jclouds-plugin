@@ -137,29 +137,30 @@ public class JCloudsBuildWrapper extends BuildWrapper {
                 MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
 
         final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
-        final JCloudsCloud waitCloud = waitPhoneHome(runningNodes, listener.getLogger());
-        if (null != waitCloud) {
-            waitCloud.phoneHomeWaitAll();
-        }
-
-        return new Environment() {
-            @Override
-            public void buildEnvVars(Map<String, String> env) {
-                List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
-                env.put("JCLOUDS_IPS", Util.join(ips, ","));
+        if (null != runningNodes) {
+            final JCloudsCloud waitCloud = waitPhoneHome(runningNodes, listener.getLogger());
+            if (null != waitCloud) {
+                waitCloud.phoneHomeWaitAll();
             }
-
-            @Override
-            public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
-                if (null != waitCloud) {
-                    waitCloud.phoneHomeAbort();
+            return new Environment() {
+                @Override
+                public void buildEnvVars(Map<String, String> env) {
+                    List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
+                    env.put("JCLOUDS_IPS", Util.join(ips, ","));
                 }
-                terminateNodes.apply(runningNodes);
-                return true;
-            }
 
-        };
+                @Override
+                public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
+                    if (null != waitCloud) {
+                        waitCloud.phoneHomeAbort();
+                    }
+                    terminateNodes.apply(runningNodes);
+                    return true;
+                }
 
+            };
+        }
+        return null;
     }
 
     private JCloudsCloud waitPhoneHome(final Iterable<RunningNode> runningNodes, PrintStream logger) {

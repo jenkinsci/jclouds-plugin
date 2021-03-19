@@ -92,22 +92,26 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
     }
 
     public Void apply(Iterable<RunningNode> runningNode) {
-        Builder<String, String> cloudNodesToSuspendBuilder = ImmutableMultimap.<String, String>builder();
-        Builder<String, String> cloudNodesToDestroyBuilder = ImmutableMultimap.<String, String>builder();
-        for (RunningNode cloudTemplateNode : runningNode) {
-            if (cloudTemplateNode.isSuspendOrTerminate()) {
-                cloudNodesToSuspendBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
-            } else {
-                cloudNodesToDestroyBuilder.put(cloudTemplateNode.getCloudName(), cloudTemplateNode.getNode().getId());
+        if (null != runningNode) {
+            Builder<String, String> cloudNodesToSuspendBuilder = ImmutableMultimap.<String, String>builder();
+            Builder<String, String> cloudNodesToDestroyBuilder = ImmutableMultimap.<String, String>builder();
+            for (RunningNode cloudTemplateNode : runningNode) {
+                String id = cloudTemplateNode.getNode().getId();
+                String name = cloudTemplateNode.getCloudName();
+                if (cloudTemplateNode.isSuspendOrTerminate()) {
+                    cloudNodesToSuspendBuilder.put(name, id);
+                } else {
+                    cloudNodesToDestroyBuilder.put(name, id);
+                }
             }
-        }
-        Multimap<String, String> toSuspend = cloudNodesToSuspendBuilder.build();
-        Multimap<String, String> toDestroy = cloudNodesToDestroyBuilder.build();
+            Multimap<String, String> toSuspend = cloudNodesToSuspendBuilder.build();
+            Multimap<String, String> toDestroy = cloudNodesToDestroyBuilder.build();
 
-        Persistent p = new Persistent(this.toString(), toSuspend, toDestroy);
-        suspendIfSupported(toSuspend);
-        destroy(toDestroy);
-        p.remove();
+            Persistent p = new Persistent(this.toString(), toSuspend, toDestroy);
+            suspendIfSupported(toSuspend);
+            destroy(toDestroy);
+            p.remove();
+        }
         return null;
     }
 
@@ -117,7 +121,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
             logger.info("Destroying nodes: " + nodesToDestroy);
             computeCache.getUnchecked(cloudToDestroy).destroyNodesMatching(new Predicate<NodeMetadata>() {
                 public boolean apply(NodeMetadata input) {
-                    return nodesToDestroy.contains(input.getId());
+                    return null != input && nodesToDestroy.contains(input.getId());
                 }
             });
         }
@@ -131,7 +135,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
                 computeCache.getUnchecked(cloudToSuspend).suspendNodesMatching(new Predicate<NodeMetadata>() {
 
                     public boolean apply(NodeMetadata input) {
-                        return nodesToSuspend.contains(input.getId());
+                        return null != input && nodesToSuspend.contains(input.getId());
                     }
 
                 });

@@ -515,7 +515,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                                 new Predicate<Key>() {
                                     @Override
                                     public boolean apply(final Key k) {
-                                        return keyPairName.equals(k.name());
+                                        return null != k && keyPairName.equals(k.name());
                                     }
                                 });
                         if (key.isPresent()) {

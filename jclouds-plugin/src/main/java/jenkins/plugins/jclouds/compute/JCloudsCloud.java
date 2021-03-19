@@ -61,7 +61,6 @@ import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
-import org.jclouds.providers.ProviderMetadata;
 import org.jclouds.sshj.config.SshjSshClientModule;
 
 import static org.jclouds.reflect.Reflection2.typeToken;

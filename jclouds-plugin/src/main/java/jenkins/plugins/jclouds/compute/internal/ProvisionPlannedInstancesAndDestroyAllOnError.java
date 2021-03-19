@@ -41,53 +41,57 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
     public Iterable<RunningNode> apply(Iterable<NodePlan> nodePlans) {
         final ImmutableList.Builder<RunningNode> cloudTemplateNodeBuilder = ImmutableList.<RunningNode>builder();
 
-        final ImmutableList.Builder<ListenableFuture<JCloudsNodeMetadata>> plannedInstancesBuilder = ImmutableList.<ListenableFuture<JCloudsNodeMetadata>>builder();
+        if (null != nodePlans) {
 
-        final AtomicInteger failedLaunches = new AtomicInteger();
+            final ImmutableList.Builder<ListenableFuture<JCloudsNodeMetadata>> plannedInstancesBuilder = ImmutableList.<ListenableFuture<JCloudsNodeMetadata>>builder();
 
-        for (final NodePlan nodePlan : nodePlans) {
-            for (int i = 0; i < nodePlan.getCount(); i++) {
-                final int index = i;
-                logger.info("Queuing cloud instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(), nodePlan.getTemplateName());
+            final AtomicInteger failedLaunches = new AtomicInteger();
 
-                ListenableFuture<JCloudsNodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
+            for (final NodePlan nodePlan : nodePlans) {
+                for (int i = 0; i < nodePlan.getCount(); i++) {
+                    final int index = i;
+                    logger.info("Queuing cloud instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(), nodePlan.getTemplateName());
 
-                Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
-                    public void onSuccess(JCloudsNodeMetadata result) {
-                        if (result != null) {
-                            cloudTemplateNodeBuilder.add(new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.isSuspendOrTerminate(),
-                                    result));
-                        } else {
-                            failedLaunches.incrementAndGet();
+                    ListenableFuture<JCloudsNodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
+
+                    Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
+                        public void onSuccess(JCloudsNodeMetadata result) {
+                            if (result != null) {
+                                cloudTemplateNodeBuilder.add(new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.isSuspendOrTerminate(),
+                                            result));
+                            } else {
+                                failedLaunches.incrementAndGet();
+                            }
                         }
-                    }
 
-                    public void onFailure(Throwable t) {
-                        failedLaunches.incrementAndGet();
-                        logger.warn(t, "Error while launching instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(),
-                                nodePlan.getTemplateName());
-                    }
-                });
+                        public void onFailure(Throwable t) {
+                            failedLaunches.incrementAndGet();
+                            logger.warn(t, "Error while launching instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(),
+                                    nodePlan.getTemplateName());
+                        }
+                    });
 
-                plannedInstancesBuilder.add(provisionTemplate);
+                    plannedInstancesBuilder.add(provisionTemplate);
 
+                }
             }
+
+            // block until all complete
+            List<JCloudsNodeMetadata> nodesActuallyLaunched = Futures.getUnchecked(Futures.successfulAsList(plannedInstancesBuilder.build()));
+
+            final ImmutableList<RunningNode> cloudTemplateNodes = cloudTemplateNodeBuilder.build();
+
+            assert cloudTemplateNodes.size() == nodesActuallyLaunched.size() : String.format(
+                    "expected nodes from callbacks to be the same count as those from the list of futures!%n" + "fromCallbacks:%s%nfromFutures%s%n",
+                    cloudTemplateNodes, nodesActuallyLaunched);
+
+            if (failedLaunches.get() > 0) {
+                terminateNodes.apply(cloudTemplateNodes);
+                throw new IllegalStateException("One or more instances failed to launch.");
+            }
+            return cloudTemplateNodes;
         }
-
-        // block until all complete
-        List<JCloudsNodeMetadata> nodesActuallyLaunched = Futures.getUnchecked(Futures.successfulAsList(plannedInstancesBuilder.build()));
-
-        final ImmutableList<RunningNode> cloudTemplateNodes = cloudTemplateNodeBuilder.build();
-
-        assert cloudTemplateNodes.size() == nodesActuallyLaunched.size() : String.format(
-                "expected nodes from callbacks to be the same count as those from the list of futures!%n" + "fromCallbacks:%s%nfromFutures%s%n",
-                cloudTemplateNodes, nodesActuallyLaunched);
-
-        if (failedLaunches.get() > 0) {
-            terminateNodes.apply(cloudTemplateNodes);
-            throw new IllegalStateException("One or more instances failed to launch.");
-        }
-        return cloudTemplateNodes;
+        return cloudTemplateNodeBuilder.build();
     }
 
 }

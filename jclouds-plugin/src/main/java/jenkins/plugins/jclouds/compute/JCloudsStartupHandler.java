@@ -76,7 +76,7 @@ public class JCloudsStartupHandler extends ItemListener {
                                     LOGGER.info("Suspending stale nodes in cloud " + cloud + ": " + nodes);
                                     cs.suspendNodesMatching(new Predicate<NodeMetadata>() {
                                         public boolean apply(final NodeMetadata input) {
-                                            return nodes.contains(input.getId());
+                                            return null != input && nodes.contains(input.getId());
                                         }
                                     });
                                 } catch (Exception e) {
@@ -97,7 +97,7 @@ public class JCloudsStartupHandler extends ItemListener {
                                     LOGGER.info("Destroying stale nodes in cloud " + cloud + ": " + nodes);
                                     cs.destroyNodesMatching(new Predicate<NodeMetadata>() {
                                         public boolean apply(final NodeMetadata input) {
-                                            return nodes.contains(input.getId());
+                                            return null != input && nodes.contains(input.getId());
                                         }
                                     });
                                 } catch (Exception e) {
