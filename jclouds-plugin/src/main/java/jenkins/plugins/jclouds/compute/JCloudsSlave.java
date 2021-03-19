@@ -80,7 +80,6 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     private final boolean authSudo;
     private final String jvmOptions;
     private final String credentialsId;
-    private final Mode mode;
     private final String preferredAddress;
     private final boolean useJnlp;
     private final boolean jnlpProvisioning;
@@ -98,7 +97,12 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         throws Descriptor.FormException, IOException
     {
         super(name, remoteFS, launcher);
-        // super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
+        setLabelString(labelString);
+        setNodeDescription(nodeDescription);
+        setNumExecutors(Integer.parseInt(numExecutors));
+        setMode(mode);
+        setRetentionStrategy(retentionStrategy);
+        setNodeProperties(nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
         this.cloudName = cloudName;
         this.overrideRetentionTime = overrideRetentionTime;
@@ -110,7 +114,6 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         this.waitPhoneHome = waitPhoneHome;
         this.waitPhoneHomeTimeout = waitPhoneHomeTimeout;
         this.credentialsId = credentialsId;
-        this.mode = mode;
         this.preferredAddress = preferredAddress;
         this.useJnlp = useJnlp;
         this.jnlpProvisioning = jnlpProvisioning;
@@ -196,19 +199,26 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         }
     }
 
-    private void populateJnlpProperties(final Map data) {
+    private Map <String, String> getJnlpProperties() {
+        Map<String, String> ret = new HashMap();
         String rootUrl = Jenkins.get().getRootUrl();
         if (null == rootUrl) {
             rootUrl = "";
         }
         SlaveComputer computer = getComputer();
         if (null != computer) {
-            data.put("X-url", rootUrl + computer.getUrl() + "slave-agent.jnlp");
-            data.put("X-jar", rootUrl + "jnlpJars/agent.jar");
-            data.put("X-sec", computer.getJnlpMac());
-            return;
+            ret.put("X-url", rootUrl + computer.getUrl() + "slave-agent.jnlp");
+            ret.put("X-jar", rootUrl + "jnlpJars/agent.jar");
+            ret.put("X-sec", computer.getJnlpMac());
         }
         LOGGER.severe("Should not happen: No associated SlaveComputer");
+        return ret;
+    }
+
+    private String ToJsonString(final Map <String, String> map) {
+        final JSONObject ret = new JSONObject();
+        ret.putAll(map);
+        return ret.toString();
     }
 
     /**
@@ -224,9 +234,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
             String expectedHash = calculateJnlpProvisioningHash();
             if (null != expectedHash && expectedHash.equals(hash)) {
                 LOGGER.info("Responding to JNLP provisioning request");
-                JSONObject jo = new JSONObject();
-                populateJnlpProperties(jo);
-                return jo.toString();
+                return ToJsonString(getJnlpProperties());
             }
         }
         return "";
@@ -237,10 +245,8 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
      */
     public void publishJnlpMetaData() {
         if (jnlpProvisioning) {
-            Map<String, String> data = new HashMap<>();
-            populateJnlpProperties(data);
             MetaDataPublisher mdp = new MetaDataPublisher(JCloudsCloud.getByName(cloudName));
-            mdp.publish(this, data);
+            mdp.publish(this, getJnlpProperties());
         }
     }
 
@@ -399,10 +405,6 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
 
     public String getCredentialsId() {
         return credentialsId;
-    }
-
-    public Mode getMode() {
-        return mode;
     }
 
     /**

@@ -15,7 +15,6 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import static shaded.com.google.common.base.Throwables.propagate;
 import static shaded.com.google.common.collect.Iterables.getOnlyElement;
 import static shaded.com.google.common.collect.Lists.newArrayList;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;

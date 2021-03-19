@@ -25,6 +25,7 @@ import hudson.model.Computer;
 import hudson.slaves.Cloud;
 import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
+import hudson.util.VariableResolver;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -119,7 +120,8 @@ public class JCloudsBuildWrapper extends BuildWrapper {
 
             public NodePlan apply(InstancesToRun instance) {
                 String cloudName = instance.cloudName;
-                String templateName = Util.replaceMacro(instance.getActualTemplateName(), build.getBuildVariableResolver());
+                VariableResolver<String> resolver = build.getBuildVariableResolver();
+                String templateName = Util.replaceMacro(instance.getActualTemplateName(), resolver);
                 Supplier<JCloudsNodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
                 // take the hit here, as opposed to later
                 computeCache.getUnchecked(cloudName);

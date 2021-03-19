@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import org.jvnet.localizer.Localizable;
+import jenkins.plugins.jclouds.compute.Messages;
 
 public class MsgMapper implements org.kohsuke.args4j.Localizable {
     private final String mname;
@@ -16,9 +17,9 @@ public class MsgMapper implements org.kohsuke.args4j.Localizable {
         n = 0;
     }
 
-    public MsgMapper(final Class clazz, final String msgId) {
+    public MsgMapper(final Class<Messages> clazz, final String msgId) {
         mname = msgId;
-        final Class ocl = Object.class;
+        final Class<Object> ocl = Object.class;
         Method tmpm = null;
         int nargs = 0;
         try {
