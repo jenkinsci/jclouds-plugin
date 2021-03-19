@@ -33,7 +33,7 @@ public class UserDataInclude extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(UserDataIncludeProvider.class);
+        return Jenkins.get().getDescriptorByType(UserDataIncludeProvider.class);
     }
 
     @Extension(ordinal = 70)

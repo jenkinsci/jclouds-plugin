@@ -46,7 +46,7 @@ public class JCloudsExpireCommand extends CLICommand {
 
     @Override
     protected int run() throws CmdLineException {
-        Node n = Jenkins.getInstance().getNode(nodeName);
+        Node n = Jenkins.get().getNode(nodeName);
         CmdLineParser p = getCmdLineParser();
         if (null != n) {
             n.checkPermission(Permission.CONFIGURE);

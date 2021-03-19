@@ -56,4 +56,7 @@ public class JCloudsJnlpLauncher extends JNLPLauncher {
         throw new UnsupportedOperationException();
     }
 
+    public JCloudsJnlpLauncher(boolean enableWorkDir) {
+        super(enableWorkDir);
+    }
 }

@@ -34,7 +34,7 @@ public class UserDataBoothook extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(UserDataBoothookProvider.class);
+        return Jenkins.get().getDescriptorByType(UserDataBoothookProvider.class);
     }
 
     @Extension(ordinal = 70)

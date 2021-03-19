@@ -117,7 +117,7 @@ public class JCloudsStartupHandler extends ItemListener {
 
     private List<Path> listStaleNodeLists() {
         List<Path> ret = new ArrayList<>();
-        Path jroot = Jenkins.getInstance().getRootDir().toPath();
+        Path jroot = Jenkins.get().getRootDir().toPath();
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(jroot, STALE_PATTERN)) {
             for (Path entry: ds) {
                 ret.add(entry);

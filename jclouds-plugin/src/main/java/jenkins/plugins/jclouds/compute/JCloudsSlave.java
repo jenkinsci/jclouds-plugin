@@ -97,7 +97,8 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
             final String jnlpProvisioningNonce)
         throws Descriptor.FormException, IOException
     {
-        super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
+        super(name, remoteFS, launcher);
+        // super(name, nodeDescription, remoteFS, numExecutors, mode, labelString, launcher, retentionStrategy, nodeProperties);
         this.stopOnTerminate = stopOnTerminate;
         this.cloudName = cloudName;
         this.overrideRetentionTime = overrideRetentionTime;
@@ -154,7 +155,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
             throws IOException, Descriptor.FormException
         {
             this(cloudName, uniqueName(metadata, cloudName), description, fsRoot, numExecutors, mode, labelString,
-                    useJnlp ? new JCloudsJnlpLauncher() : new JCloudsLauncher(), new JCloudsRetentionStrategy(),
+                    useJnlp ? new JCloudsJnlpLauncher(true) : new JCloudsLauncher(), new JCloudsRetentionStrategy(),
                     Collections.<NodeProperty<?>>emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
                 metadata.getCredentials().getOptionalPassword().orNull(), metadata.getCredentials().getOptionalPrivateKey().orNull(),
                 metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId,
@@ -196,7 +197,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     }
 
     private void populateJnlpProperties(final Map data) {
-        String rootUrl = Jenkins.getInstance().getRootUrl();
+        String rootUrl = Jenkins.get().getRootUrl();
         if (null == rootUrl) {
             rootUrl = "";
         }
@@ -369,7 +370,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
      * TODO: Remove, after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
      */
     private void updateXml() {
-        final File nodesDir = new File(Jenkins.getInstance().getRootDir(), "nodes");
+        final File nodesDir = new File(Jenkins.get().getRootDir(), "nodes");
         final File cfg = new File(new File(nodesDir, getNodeName()), "config.xml");
         if (cfg.exists()) {
             XmlFile xmlFile = new XmlFile(Jenkins.XSTREAM, cfg);

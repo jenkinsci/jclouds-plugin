@@ -68,7 +68,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
     }
 
     private boolean isBeyondInstanceCap(final String cloudName, int numOfNewInstances) {
-        final Jenkins.CloudList cl = Jenkins.getInstance().clouds;
+        final Jenkins.CloudList cl = Jenkins.get().clouds;
         final Cloud c = cl.getByName(cloudName);
         if (null != c && c instanceof JCloudsCloud) {
             JCloudsCloud jc = (JCloudsCloud)c;

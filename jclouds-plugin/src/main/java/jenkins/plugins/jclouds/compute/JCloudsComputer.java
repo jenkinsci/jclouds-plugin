@@ -118,7 +118,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
                     ch.close();
                 }
                 slave.terminate();
-                Jenkins.getInstance().removeNode(slave);
+                Jenkins.get().removeNode(slave);
             }
         } else {
             LOGGER.info(String.format("Agent %s is not idle, postponing deletion", getName()));

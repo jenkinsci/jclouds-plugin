@@ -34,7 +34,7 @@ public class UserDataUpstart extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(UserDataUpstartProvider.class);
+        return Jenkins.get().getDescriptorByType(UserDataUpstartProvider.class);
     }
 
     @Extension(ordinal = 70)

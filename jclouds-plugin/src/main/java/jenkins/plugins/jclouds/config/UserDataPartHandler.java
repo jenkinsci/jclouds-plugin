@@ -32,7 +32,7 @@ public class UserDataPartHandler extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(UserDataPartHandlerProvider.class);
+        return Jenkins.get().getDescriptorByType(UserDataPartHandlerProvider.class);
     }
 
     @Extension(ordinal = 70)

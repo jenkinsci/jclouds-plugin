@@ -87,7 +87,7 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
         Authentication old = SecurityContextHolder.getContext().getAuthentication();
         SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
         try {
-            for (final Computer c : Jenkins.getInstance().getComputers()) {
+            for (final Computer c : Jenkins.get().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
                     if (null != slave && slave.getNodeName().equals(hostName)) {
@@ -118,7 +118,7 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
     private static final Logger LOGGER = Logger.getLogger(JnlpProvisionWebHook.class.getName());
 
     public static JnlpProvisionWebHook get() {
-        return Jenkins.getInstance().getExtensionList(RootAction.class).get(JnlpProvisionWebHook.class);
+        return Jenkins.get().getExtensionList(RootAction.class).get(JnlpProvisionWebHook.class);
     }
 
 }

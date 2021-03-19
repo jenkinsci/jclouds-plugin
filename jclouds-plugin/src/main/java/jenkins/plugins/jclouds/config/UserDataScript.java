@@ -33,7 +33,7 @@ public class UserDataScript extends Config {
 
     @Override
     public ConfigProvider getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(UserDataScriptProvider.class);
+        return Jenkins.get().getDescriptorByType(UserDataScriptProvider.class);
     }
 
     @Extension(ordinal = 70)
