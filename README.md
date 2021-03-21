@@ -172,3 +172,8 @@ usual agent connection setup is delayed until the http POST is received.
 example. In the advanced template configuration you now can check the Checkbox "Wait for agent to phone home" and
 specify a timeout value (in minutes). When provisioning an agent, jenkins now waits for the agent to
 invoke the webhook before launching the ssh remote connection. 
+
+## Using JNLP
+
+Information about using JNLP instead of ssh (primarily for Windows-based agents, but works for Unix agents too)
+can be found [here](https://github.com/jenkinsci/jclouds-plugin/blob/master/JNLPPROVISIONING.md)
