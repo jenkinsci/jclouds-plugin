@@ -155,7 +155,7 @@ public class ConfigHelper {
                         msg.setContent(multipart);
                         // Yet another nested stream, as workaround for cloudbase-init
                         try (final ByteArrayOutputStream tmpbaos = new ByteArrayOutputStream()) {
-                            msg.writeTo(tmpbaos, new String[]{"Message-ID", "MIME-Version"});
+                            msg.writeTo(tmpbaos, new String[]{"Date", "Message-ID", "MIME-Version"});
                             os.write(injectMimeVersion(tmpbaos.toByteArray()));
                         }
                     } catch (IOException | MessagingException e) {
