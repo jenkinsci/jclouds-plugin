@@ -1,5 +1,12 @@
 ## Changelog
 
+### Version 2.23 (released Mar 22, 2021)
+- Java11 compatibility
+- Bump up jclouds to v2.3.0
+- Moved jclouds-shaded into separate external project
+- Added workaround for recent javax.mail versions
+- Fixed misc. deprecation warnings
+
 ### Version 2.22 (released Mar 17, 2021)
 - Replace table markup by div in jenkins >= 2.264 ([JENKINS-64537](https://issues.jenkins-ci.org/browse/JENKINS-64537))
 - Bump up jclouds to v2.2.1
