@@ -36,7 +36,6 @@ import org.kohsuke.stapler.HttpResponse;
 
 import org.jclouds.compute.domain.NodeMetadata;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 
 /**
@@ -177,11 +176,11 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
     }
 
     public String getPublicIpAddresses() {
-        return MarkPreferredAddress(Joiner.on(" ").join(getIpAddresses(true)), "<b>", "</b>");
+        return MarkPreferredAddress(String.join(" ", getIpAddresses(true)), "<b>", "</b>");
     }
 
     public String getPrivateIpAddresses() {
-        return MarkPreferredAddress(Joiner.on(" ").join(getIpAddresses(false)), "<b>", "</b>");
+        return MarkPreferredAddress(String.join(" ", getIpAddresses(false)), "<b>", "</b>");
     }
 
     @Nullable

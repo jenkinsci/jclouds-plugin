@@ -24,8 +24,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-import com.google.common.base.Joiner;
-
 /**
  * Phone home management.
  */
@@ -77,7 +75,7 @@ final class PhoneHomeMonitor {
     }
 
     private synchronized String getTargetString() {
-        return null == targets ? "" : Joiner.on(" and ").join(targets);
+        return null == targets ? "" : String.join(" and ", targets);
     }
 
     private void signalCondition() {
