@@ -69,7 +69,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
                             logger.warn(t, "Error while launching instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(),
                                     nodePlan.getTemplateName());
                         }
-                    });
+                    }, executor);
 
                     plannedInstancesBuilder.add(provisionTemplate);
 
