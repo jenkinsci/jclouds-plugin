@@ -24,7 +24,6 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import com.google.common.base.Strings;
 import shaded.com.google.common.collect.ImmutableSet;
 import shaded.com.google.common.collect.ImmutableSet.Builder;
 import shaded.com.google.common.collect.ImmutableSortedSet;
@@ -178,7 +177,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
 
     private static Properties buildJCloudsOverrides(final String url, final boolean relaxed) {
         Properties ret = new Properties();
-        if (!Strings.isNullOrEmpty(url)) {
+        if (null != url && !url.isEmpty()) {
             ret.setProperty(Constants.PROPERTY_ENDPOINT, url);
         }
         if (relaxed) {
@@ -404,7 +403,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
         }
 
         @Override protected void callback(BlobStoreProfile bsp, UnmarshallingContext context) {
-        if (Strings.isNullOrEmpty(bsp.getCredentialsId()) && !Strings.isNullOrEmpty(bsp.identity)) {
+        if ((null == bsp.getCredentialsId() || bsp.getCredentialsId().isEmpty()) && null != bsp.identity && !bsp.identity.isEmpty()) {
             final String description = "JClouds BlobStore " + bsp.profileName + " - auto-migrated";
             bsp.setCredentialsId(CredentialsHelper.convertCredentials(description, bsp.identity, Secret.fromString(bsp.credential)));
         }

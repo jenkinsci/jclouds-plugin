@@ -24,8 +24,6 @@ import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 
-import com.google.common.base.Strings;
-
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
@@ -75,7 +73,7 @@ public final class CredentialsHelper {
      * @return The StandardUsernameCredentials or null if not found.
      */
     public static StandardUsernameCredentials getCredentialsById(final String id) {
-        if (Strings.isNullOrEmpty(id)) {
+        if (null == id || id.isEmpty()) {
             return null;
         }
         return SSHLauncher.lookupSystemCredentials(id);

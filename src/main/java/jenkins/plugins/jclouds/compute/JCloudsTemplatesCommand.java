@@ -23,8 +23,6 @@ import hudson.security.Permission;
 import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
 
-import com.google.common.base.Strings;
-
 /**
  * Provisions a slave.
  *
@@ -69,8 +67,8 @@ public class JCloudsTemplatesCommand extends CLICommand {
             }
             final String fmt = "%-" + maxProfileLen + "s %-" + maxTemplateLen + "s %s%n";
             stdout.printf(fmt, PROFILE, NAME, "Description");
-            stdout.println(Strings.padEnd("",  maxProfileLen + maxTemplateLen + 13, '='));
-            final String indent = Strings.padEnd("\n",  maxProfileLen + maxTemplateLen + 3, ' ');
+            stdout.println(String.format("%-" + (maxProfileLen + maxTemplateLen + 13) + "s", " ").replaceAll(" ", "="));
+            final String indent = String.format("%-" + (maxProfileLen + maxTemplateLen + 3) + "s", "\n");
             for (final Cloud cloud : Jenkins.get().clouds) {
                 if (cloud instanceof JCloudsCloud) {
                     final JCloudsCloud c = (JCloudsCloud)cloud;

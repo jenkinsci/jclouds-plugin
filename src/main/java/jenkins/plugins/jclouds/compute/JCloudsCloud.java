@@ -77,7 +77,6 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.verb.POST;
 
-import com.google.common.base.Objects;
 import shaded.com.google.common.base.Strings;
 import shaded.com.google.common.collect.ImmutableSet;
 import shaded.com.google.common.collect.ImmutableSet.Builder;
@@ -246,7 +245,7 @@ public class JCloudsCloud extends Cloud {
         this.errorRetentionTime = errorRetentionTime;
         this.scriptTimeout = scriptTimeout;
         this.startTimeout = startTimeout;
-        this.templates = Objects.firstNonNull(templates, Collections.<JCloudsSlaveTemplate> emptyList());
+        this.templates = null != templates ? templates : Collections.<JCloudsSlaveTemplate> emptyList();
         this.zones = Util.fixEmptyAndTrim(zones);
         this.trustAll = trustAll;
         this.groupPrefix = groupPrefix;
