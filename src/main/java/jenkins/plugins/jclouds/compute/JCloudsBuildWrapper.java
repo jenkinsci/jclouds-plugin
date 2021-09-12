@@ -148,7 +148,7 @@ public class JCloudsBuildWrapper extends BuildWrapper {
                 @Override
                 public void buildEnvVars(Map<String, String> env) {
                     List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
-                    env.put("JCLOUDS_IPS", Util.join(ips, ","));
+                    env.put("JCLOUDS_IPS", String.join(",", ips));
                 }
 
                 @Override
