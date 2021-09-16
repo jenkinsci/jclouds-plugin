@@ -1,5 +1,12 @@
 ## Changelog
 
+<!--
+### Version 2.25 (future)
+- Stop using deprecated `Util#join` (thanks to Basil Crow)
+-->
+### Version 2.24 (released Aug 15, 2021)
+- Prepare for core guava update. Fixes ([JENKINS-66318](https://issues.jenkins-ci.org/browse/JENKINS-66318))
+
 ### Version 2.23 (released Mar 22, 2021)
 - Java11 compatibility
 - Bump up jclouds to v2.3.0
