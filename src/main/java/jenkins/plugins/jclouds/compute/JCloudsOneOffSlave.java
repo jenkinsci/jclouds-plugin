@@ -15,6 +15,7 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -26,6 +27,8 @@ import hudson.model.TaskListener;
 import hudson.slaves.OfflineCause;
 import hudson.tasks.BuildWrapperDescriptor;
 import jenkins.tasks.SimpleBuildWrapper;
+import org.jenkinsci.Symbol;
+
 import java.io.IOException;
 import java.util.logging.Logger;
 
@@ -47,7 +50,7 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
         context.setDisposer(new JCloudsOneOffSlaveDisposer());
     }
 
-    @Extension
+    @Extension @Symbol("jcloudsOneOffAgent")
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public String getDisplayName() {
