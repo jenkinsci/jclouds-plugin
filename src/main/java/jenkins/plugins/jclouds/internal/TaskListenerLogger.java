@@ -15,12 +15,12 @@
  */
 package jenkins.plugins.jclouds.internal;
 
-import hudson.model.BuildListener;
+import hudson.model.TaskListener;
 
-public class BuildListenerLogger implements org.jclouds.logging.Logger {
-    private final BuildListener listener;
+public class TaskListenerLogger implements org.jclouds.logging.Logger {
+    private final TaskListener listener;
 
-    public BuildListenerLogger(BuildListener listener) {
+    public TaskListenerLogger(TaskListener listener) {
         this.listener = listener;
     }
 

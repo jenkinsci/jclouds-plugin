@@ -48,10 +48,11 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
             final AtomicInteger failedLaunches = new AtomicInteger();
 
             for (final NodePlan nodePlan : nodePlans) {
+                String plural = nodePlan.getCount() > 1 ? "s" : "";
+                logger.info("Launching %d supplemental node%s from template %s in cloud %s", nodePlan.getCount(), plural,
+                    nodePlan.getTemplateName(), nodePlan.getCloudName());
                 for (int i = 0; i < nodePlan.getCount(); i++) {
                     final int index = i;
-                    logger.info("Queuing cloud instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(), nodePlan.getTemplateName());
-
                     ListenableFuture<JCloudsNodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
 
                     Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
@@ -66,8 +67,9 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
 
                         public void onFailure(Throwable t) {
                             failedLaunches.incrementAndGet();
-                            logger.warn(t, "Error while launching instance: #%d %d, %s %s", index, nodePlan.getCount(), nodePlan.getCloudName(),
-                                    nodePlan.getTemplateName());
+                            logger.warn(t, "Error launching supplemental node #%d of %d from template %s in cloud %s", index, nodePlan.getCount(), plural,
+
+                                nodePlan.getTemplateName(), nodePlan.getCloudName());
                         }
                     }, executor);
 
@@ -78,6 +80,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
 
             // block until all complete
             List<JCloudsNodeMetadata> nodesActuallyLaunched = Futures.getUnchecked(Futures.successfulAsList(plannedInstancesBuilder.build()));
+            logger.info("launched %d supplemental nodes", nodesActuallyLaunched.size());
 
             final ImmutableList<RunningNode> cloudTemplateNodes = cloudTemplateNodeBuilder.build();
 
@@ -87,7 +90,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
 
             if (failedLaunches.get() > 0) {
                 terminateNodes.apply(cloudTemplateNodes);
-                throw new IllegalStateException("One or more instances failed to launch.");
+                throw new IllegalStateException("One or more nodes failed to launch.");
             }
             return cloudTemplateNodes;
         }

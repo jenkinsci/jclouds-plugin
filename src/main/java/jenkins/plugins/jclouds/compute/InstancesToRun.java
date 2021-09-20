@@ -21,6 +21,7 @@ import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import org.jenkinsci.Symbol;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -58,7 +59,7 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
         }
     }
 
-    @Extension
+    @Extension @Symbol("instances")
     public static class DescriptorImpl extends Descriptor<InstancesToRun> {
 
         public String defaultCloudName() {

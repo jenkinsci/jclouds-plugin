@@ -54,7 +54,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
             try {
                 xf.write(this);
             } catch (IOException x) {
-                LOGGER.warning("Failed to persist");
+                LOGGER.warning(String.format("Failed to persist %s: %s", f.getAbsolutePath(), x.getMessage()));
             }
         }
 
@@ -66,13 +66,13 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
             } catch (IOException x) {
                 nodesToSuspend =  ArrayListMultimap.create();
                 nodesToDestroy =  ArrayListMultimap.create();
-                LOGGER.warning("Failed to unmarshal");
+                LOGGER.warning(String.format("Failed to unmarshal %s: %s", f.getAbsolutePath(), x.getMessage()));
             }
         }
 
         public void remove() {
             if (!f.delete()) {
-                LOGGER.warning("Could not delete " + f.getPath());
+                LOGGER.warning("Could not delete " + f.getAbsolutePath());
             }
         }
 
@@ -118,7 +118,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
     private void destroy(Multimap<String, String> cloudNodesToDestroy) {
         for (final String cloudToDestroy : cloudNodesToDestroy.keySet()) {
             final Collection<String> nodesToDestroy = cloudNodesToDestroy.get(cloudToDestroy);
-            logger.info("Destroying nodes: " + nodesToDestroy);
+            logger.info("Destroying supplemental nodes: " + nodesToDestroy);
             computeCache.getUnchecked(cloudToDestroy).destroyNodesMatching(new Predicate<NodeMetadata>() {
                 public boolean apply(NodeMetadata input) {
                     return null != input && nodesToDestroy.contains(input.getId());
@@ -131,7 +131,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
         for (String cloudToSuspend : cloudNodesToSuspend.keySet()) {
             final Collection<String> nodesToSuspend = cloudNodesToSuspend.get(cloudToSuspend);
             try {
-                logger.info("Suspending nodes: " + nodesToSuspend);
+                logger.info("Suspending supplemental nodes: " + nodesToSuspend);
                 computeCache.getUnchecked(cloudToSuspend).suspendNodesMatching(new Predicate<NodeMetadata>() {
 
                     public boolean apply(NodeMetadata input) {
@@ -140,7 +140,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
 
                 });
             } catch (UnsupportedOperationException e) {
-                logger.info("Suspending unsupported on cloud: " + cloudToSuspend + "; nodes: " + nodesToSuspend + ": " + e);
+                logger.info("Suspend unsupported on cloud: " + cloudToSuspend + "; affected nodes: " + nodesToSuspend + ": " + e);
             }
         }
     }

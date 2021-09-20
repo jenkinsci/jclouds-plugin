@@ -42,7 +42,7 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
     }
 
     //
-    // convert Jenkins staticy stuff into pojos; performing as little critical stuff here as
+    // convert Jenkins static stuff into pojos; performing as little critical stuff here as
     // possible, as this method is very hard to test due to static usage, etc.
     //
     @Override
@@ -66,6 +66,9 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper {
     }
 
     private static class JCloudsOneOffSlaveDisposer extends Disposer {
+
+        private static final long serialVersionUID = 1L;
+
         @Override
         public void tearDown(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
             Computer computer = workspace.toComputer();

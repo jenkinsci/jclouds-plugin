@@ -15,17 +15,14 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import hudson.EnvVars;
 import hudson.Extension;
-import hudson.Launcher;
-import hudson.Util;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
-import hudson.model.BuildListener;
 import hudson.model.Computer;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
-import hudson.tasks.BuildWrapper;
 import hudson.tasks.BuildWrapperDescriptor;
-import hudson.util.VariableResolver;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -33,14 +30,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildWrapper;
+import org.jenkinsci.Symbol;
+
 import jenkins.plugins.jclouds.compute.internal.JCloudsNodeMetadata;
 import jenkins.plugins.jclouds.compute.internal.NodePlan;
 import jenkins.plugins.jclouds.compute.internal.ProvisionPlannedInstancesAndDestroyAllOnError;
 import jenkins.plugins.jclouds.compute.internal.RunningNode;
 import jenkins.plugins.jclouds.compute.internal.TerminateNodes;
-import jenkins.plugins.jclouds.internal.BuildListenerLogger;
+import jenkins.plugins.jclouds.internal.TaskListenerLogger;
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.logging.Logger;
@@ -56,7 +59,7 @@ import com.google.common.collect.Iterables;
 import shaded.com.google.common.collect.ImmutableList.Builder;
 import com.google.common.util.concurrent.MoreExecutors;
 
-public class JCloudsBuildWrapper extends BuildWrapper {
+public class JCloudsBuildWrapper extends SimpleBuildWrapper {
     private final List<InstancesToRun> instancesToRun;
 
     @DataBoundConstructor
@@ -66,6 +69,76 @@ public class JCloudsBuildWrapper extends BuildWrapper {
 
     public List<InstancesToRun> getInstancesToRun() {
         return instancesToRun;
+    }
+
+    @Override
+    public boolean requiresWorkspace() {
+        return false;
+    }
+
+    //
+    // convert Jenkins static stuff into pojos; performing as little critical stuff here as
+    // possible, as this method is very hard to test due to static usage, etc.
+    //
+    @Override
+    public void setUp(Context context, Run<?,?> build, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
+
+        final String failedCloud = validateInstanceCaps();
+        if (null != failedCloud) {
+            listener.fatalError("Unable to launch supplemental nodes:");
+            throw new IOException(String.format("Instance cap for cloud %s reached.", failedCloud));
+        }
+
+        final LoadingCache<String, ComputeService> computeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, ComputeService>() {
+
+            @Override
+            public ComputeService load(String arg0) throws Exception {
+                return JCloudsCloud.getByName(arg0).getCompute();
+            }
+        });
+
+        // eagerly lookup node supplier so that errors occur before we attempt to provision things
+        Iterable<NodePlan> nodePlans = Iterables.transform(instancesToRun, new Function<InstancesToRun, NodePlan>() {
+
+            public NodePlan apply(InstancesToRun instance) {
+                String cloudName = instance.cloudName;
+                String templateName = initialEnvironment.expand(instance.getActualTemplateName());
+                Supplier<JCloudsNodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
+                // take the hit here, as opposed to later
+                computeCache.getUnchecked(cloudName);
+                return new NodePlan(cloudName, templateName, instance.count, instance.suspendOrTerminate, nodeSupplier);
+            }
+
+        });
+
+        // converting to a logger as it is an interface and easier to test
+        final Logger logger = new TaskListenerLogger(listener);
+
+        final TerminateNodes terminateNodes = new TerminateNodes(logger, computeCache);
+
+        ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
+                MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
+
+        final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
+        if (null != runningNodes) {
+            final Set<JCloudsCloud> waitClouds = waitPhoneHomeSetup(runningNodes, listener.getLogger());
+            if (!waitClouds.isEmpty()) {
+                for (JCloudsCloud waitCloud : waitClouds) {
+                    waitCloud.phoneHomeWaitAll();
+                }
+            }
+            List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
+            context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
+            context.setDisposer(new Disposer() {
+                @Override
+                public void tearDown(Run<?, ?> build, TaskListener listener) throws IOException, InterruptedException {
+                    for (JCloudsCloud waitCloud : waitClouds) {
+                        waitCloud.phoneHomeAbort();
+                    }
+                    terminateNodes.apply(runningNodes);
+                }
+            });
+        }
     }
 
     private boolean isBeyondInstanceCap(final String cloudName, int numOfNewInstances) {
@@ -95,109 +168,33 @@ public class JCloudsBuildWrapper extends BuildWrapper {
         return null;
     }
 
-    //
-    // convert Jenkins staticy stuff into pojos; performing as little critical stuff here as
-    // possible, as this method is very hard to test due to static usage, etc.
-    //
-    @Override
-    public Environment setUp(final AbstractBuild build, Launcher launcher, final BuildListener listener) throws IOException {
-        final String failedCloud = validateInstanceCaps();
-        if (null != failedCloud) {
-            listener.fatalError("Unable to launch supplemental JClouds instances:");
-            throw new IOException(String.format("Instance cap for cloud %s reached.", failedCloud));
-        }
-
-        final LoadingCache<String, ComputeService> computeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, ComputeService>() {
-
-            @Override
-            public ComputeService load(String arg0) throws Exception {
-                return JCloudsCloud.getByName(arg0).getCompute();
-            }
-        });
-
-        // eagerly lookup node supplier so that errors occur before we attempt to provision things
-        Iterable<NodePlan> nodePlans = Iterables.transform(instancesToRun, new Function<InstancesToRun, NodePlan>() {
-
-            public NodePlan apply(InstancesToRun instance) {
-                String cloudName = instance.cloudName;
-                VariableResolver<String> resolver = build.getBuildVariableResolver();
-                String templateName = Util.replaceMacro(instance.getActualTemplateName(), resolver);
-                Supplier<JCloudsNodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
-                // take the hit here, as opposed to later
-                computeCache.getUnchecked(cloudName);
-                return new NodePlan(cloudName, templateName, instance.count, instance.suspendOrTerminate, nodeSupplier);
-            }
-
-        });
-
-        // converting to a logger as it is an interface and easier to test
-        final Logger logger = new BuildListenerLogger(listener);
-
-        final TerminateNodes terminateNodes = new TerminateNodes(logger, computeCache);
-
-        ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
-                MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
-
-        final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
-        if (null != runningNodes) {
-            final JCloudsCloud waitCloud = waitPhoneHome(runningNodes, listener.getLogger());
-            if (null != waitCloud) {
-                waitCloud.phoneHomeWaitAll();
-            }
-            return new Environment() {
-                @Override
-                public void buildEnvVars(Map<String, String> env) {
-                    List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
-                    env.put("JCLOUDS_IPS", String.join(",", ips));
-                }
-
-                @Override
-                public boolean tearDown(AbstractBuild build, final BuildListener listener) throws IOException, InterruptedException {
-                    if (null != waitCloud) {
-                        waitCloud.phoneHomeAbort();
-                    }
-                    terminateNodes.apply(runningNodes);
-                    return true;
-                }
-
-            };
-        }
-        return null;
-    }
-
-    private JCloudsCloud waitPhoneHome(final Iterable<RunningNode> runningNodes, PrintStream logger) {
-        Integer wto = null;
-        JCloudsCloud ret = null;
-        Map<Integer, List<String>> waitMap = new HashMap<>();
+    private Set<JCloudsCloud> waitPhoneHomeSetup(final Iterable<RunningNode> runningNodes, PrintStream logger) {
+        ConcurrentMap<JCloudsCloud, ConcurrentMap<Integer, List<String>>> cloudWaitMap = new ConcurrentHashMap<>();
         for (RunningNode rn : runningNodes) {
             JCloudsCloud c = JCloudsCloud.getByName(rn.getCloudName());
             if (null != c) {
                 JCloudsSlaveTemplate t = c.getTemplate(rn.getTemplateName());
                 if (null != t && t.waitPhoneHome && t.waitPhoneHomeTimeout > 0) {
-                    if (null == wto || wto.intValue() != t.waitPhoneHomeTimeout) {
-                        wto = Integer.valueOf(t.waitPhoneHomeTimeout);
-                    }
-                    if (null == ret) {
-                       ret = c;
-                    }
-                    List<String> tmp = new ArrayList<>();
-                    tmp.add(rn.getNode().getName());
-                    List<String> hosts = waitMap.put(wto, tmp);
-                    if (null != hosts) {
-                        waitMap.get(wto).addAll(hosts);
-                    }
+                    ConcurrentMap<Integer, List<String>> waitMap = cloudWaitMap.getOrDefault(c, new ConcurrentHashMap<>());
+                    Integer wto = Integer.valueOf(t.waitPhoneHomeTimeout);
+                    List<String> hosts = waitMap.getOrDefault(wto, new ArrayList<>());
+                    hosts.add(rn.getNode().getName());
+                    waitMap.put(wto, hosts);
+                    cloudWaitMap.put(c, waitMap);
                 }
             }
         }
-        for (Map.Entry<Integer, List<String>> entry : waitMap.entrySet()) {
-            final PhoneHomeMonitor phm = new PhoneHomeMonitor(true, entry.getKey().intValue());
-            phm.waitForPhoneHome(entry.getValue(), logger);
-            ret.registerPhoneHomeMonitor(phm);
+        for (Map.Entry<JCloudsCloud, ConcurrentMap<Integer, List<String>>> cwMap : cloudWaitMap.entrySet()) {
+            for (Map.Entry<Integer, List<String>> entry : cwMap.getValue().entrySet()) {
+                final PhoneHomeMonitor phm = new PhoneHomeMonitor(true, entry.getKey().intValue());
+                phm.waitForPhoneHome(entry.getValue(), logger);
+                cwMap.getKey().registerPhoneHomeMonitor(phm);
+            }
         }
-        return ret;
+        return cloudWaitMap.keySet();
     }
 
-    public List<String> getInstanceIPs(Iterable<RunningNode> runningNodes, PrintStream logger) {
+    private List<String> getInstanceIPs(Iterable<RunningNode> runningNodes, PrintStream logger) {
         Builder<String> ips = ImmutableList.<String>builder();
 
         for (RunningNode rn : runningNodes) {
@@ -218,11 +215,11 @@ public class JCloudsBuildWrapper extends BuildWrapper {
         return ips.build();
     }
 
-    @Extension
+    @Extension @Symbol("withJclouds")
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public String getDisplayName() {
-            return "Create supplemental instances";
+            return "Create supplemental nodes";
         }
 
         @Override
