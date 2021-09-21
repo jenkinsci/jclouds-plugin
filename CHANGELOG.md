@@ -1,12 +1,10 @@
 ## Changelog
 
-<!--
-### Version 2.25 (future)
+### Version 2.25 (released Sep 21, 2021)
 - Stop using deprecated `Util#join` (thanks to Basil Crow)
 - Bump up jclouds version to 2.4.0. See [release notes](https://jclouds.apache.org/releasenotes/2.4.0/)
 - Make jcloudsOneOffAgent available in pipeline snippet generator
 - Make JCloudsBuildWrapper available as withJclouds in snippet generator
--->
 ### Version 2.24 (released Aug 15, 2021)
 - Prepare for core guava update. Fixes ([JENKINS-66318](https://issues.jenkins-ci.org/browse/JENKINS-66318))
 
