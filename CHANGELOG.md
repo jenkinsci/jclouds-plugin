@@ -1,6 +1,6 @@
 ## Changelog
 
-### Version 2.25 (released Sep 21, 2021)
+### Version 2.25 (released Sep 22, 2021)
 - Stop using deprecated `Util#join` (thanks to Basil Crow)
 - Bump up jclouds version to 2.4.0. See [release notes](https://jclouds.apache.org/releasenotes/2.4.0/)
 - Make jcloudsOneOffAgent available in pipeline snippet generator
