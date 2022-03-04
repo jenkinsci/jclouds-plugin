@@ -1,6 +1,6 @@
 package jenkins.plugins.jclouds.blobstore;
 
-import shaded.com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.ImmutableSortedSet;
 import org.junit.Test;
 
 import java.util.Arrays;

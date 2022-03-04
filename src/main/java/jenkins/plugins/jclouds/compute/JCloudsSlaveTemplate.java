@@ -15,8 +15,8 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import static shaded.com.google.common.collect.Iterables.getOnlyElement;
-import static shaded.com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Iterables.getOnlyElement;
+import static com.google.common.collect.Lists.newArrayList;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
 
 import java.io.IOException;
@@ -38,8 +38,8 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import org.apache.commons.codec.binary.Base64;
@@ -93,10 +93,10 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import au.com.bytecode.opencsv.CSVReader;
-import shaded.com.google.common.base.Optional;
-import shaded.com.google.common.base.Predicate;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
-import shaded.com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap;
 
 import com.cloudbees.plugins.credentials.Credentials;
 import com.cloudbees.plugins.credentials.CredentialsMatcher;
@@ -352,6 +352,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return labelSet;
     }
 
+    @SuppressFBWarnings("DMI_RANDOM_USED_ONLY_ONCE")
     private String generateNonce() {
         Random r = new Random(java.lang.System.currentTimeMillis());
         StringBuilder ret = new StringBuilder();

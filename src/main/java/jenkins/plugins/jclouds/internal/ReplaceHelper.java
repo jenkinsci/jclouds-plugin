@@ -18,7 +18,7 @@ package jenkins.plugins.jclouds.internal;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**

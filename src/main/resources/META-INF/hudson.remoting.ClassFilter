@@ -1,2 +1,2 @@
-shaded.com.google.common.collect.EmptyImmutableListMultimap
-shaded.com.google.common.collect.ImmutableListMultimap
+com.google.common.collect.EmptyImmutableListMultimap
+com.google.common.collect.ImmutableListMultimap

@@ -30,8 +30,8 @@ import java.nio.file.DirectoryStream;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
 
-import shaded.com.google.common.base.Predicate;
-import shaded.com.google.common.collect.Multimap;
+import com.google.common.base.Predicate;
+import com.google.common.collect.Multimap;
 
 import hudson.Extension;
 import hudson.model.listeners.ItemListener;
