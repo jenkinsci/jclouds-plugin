@@ -59,7 +59,7 @@ limitations under the License.
     <jclouds.version>2.4.0</jclouds.version>
     <!-- Depend on latest Jenkins 2.x LTS
          See README of https://github.com/jenkinsci/plugin-pom/ -->
-    <jenkins.version>2.332</jenkins.version>
+    <jenkins.version>2.332.1</jenkins.version>
     <java.level>8</java.level>
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
   </properties>
@@ -107,7 +107,7 @@ limitations under the License.
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-2.332.x</artifactId>
-        <version>1181.v04b_21d4b_0d6c</version>
+        <version>1195.v33041c1f1b_b_2</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
