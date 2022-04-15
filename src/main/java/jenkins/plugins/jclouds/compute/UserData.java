@@ -19,10 +19,11 @@ import java.lang.reflect.Field;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
@@ -79,6 +80,7 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
         return new UserData(c.id);
     }
 
+    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     private static Field getConfigField(String name) {
         Field field = findField(Config.class, name);
         field.setAccessible(true);

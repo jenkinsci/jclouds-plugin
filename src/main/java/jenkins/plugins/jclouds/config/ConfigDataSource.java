@@ -33,7 +33,7 @@ import jenkins.plugins.jclouds.internal.ReplaceHelper;
 
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**

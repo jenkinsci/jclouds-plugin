@@ -39,8 +39,8 @@ import java.util.zip.GZIPOutputStream;
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 
-import javax.annotation.CheckForNull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
 
 import javax.mail.BodyPart;

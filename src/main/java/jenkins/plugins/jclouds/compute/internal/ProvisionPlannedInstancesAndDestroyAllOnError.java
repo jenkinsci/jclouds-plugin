@@ -18,9 +18,10 @@ package jenkins.plugins.jclouds.compute.internal;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.jclouds.logging.Logger;
 
-import shaded.com.google.common.base.Function;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -38,6 +39,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
         this.terminateNodes = terminateNodes;
     }
 
+    @SuppressFBWarnings("NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE")
     public Iterable<RunningNode> apply(Iterable<NodePlan> nodePlans) {
         final ImmutableList.Builder<RunningNode> cloudTemplateNodeBuilder = ImmutableList.<RunningNode>builder();
 

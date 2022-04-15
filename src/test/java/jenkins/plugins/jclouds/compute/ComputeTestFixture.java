@@ -1,7 +1,5 @@
 package jenkins.plugins.jclouds.compute;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.Map;
 
 import org.jclouds.compute.ComputeService;
@@ -9,11 +7,11 @@ import org.jclouds.compute.internal.BaseComputeServiceContextLiveTest;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.jclouds.util.Maps2;
 
-import shaded.com.google.common.base.Function;
-import shaded.com.google.common.base.Predicates;
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.Maps;
-import shaded.com.google.inject.Module;
+import com.google.common.base.Function;
+import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+import com.google.inject.Module;
 
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 

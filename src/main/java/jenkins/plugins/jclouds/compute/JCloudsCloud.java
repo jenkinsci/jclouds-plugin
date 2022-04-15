@@ -15,7 +15,7 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.servlet.ServletException;
 import java.io.Closeable;
 import java.io.IOException;
@@ -31,7 +31,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
 
-import shaded.com.google.inject.Module;
+import com.google.inject.Module;
 import hudson.Extension;
 import hudson.Util;
 import hudson.init.Initializer;
@@ -77,11 +77,11 @@ import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.verb.POST;
 
-import shaded.com.google.common.base.Strings;
-import shaded.com.google.common.collect.ImmutableSet;
-import shaded.com.google.common.collect.ImmutableSet.Builder;
-import shaded.com.google.common.collect.ImmutableSortedSet;
-import shaded.com.google.common.collect.Iterables;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
 
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
@@ -587,7 +587,7 @@ public class JCloudsCloud extends Cloud {
          * Human readable name of this kind of configurable object.
          * @return The human readable name of this object. 
          */
-        @Nonnull
+        @NonNull
         @Override
         public String getDisplayName() {
             return "Cloud (JClouds)";

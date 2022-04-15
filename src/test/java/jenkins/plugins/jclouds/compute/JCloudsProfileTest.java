@@ -1,6 +1,6 @@
 package jenkins.plugins.jclouds.compute;
 
-import shaded.com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.ImmutableSortedSet;
 import org.junit.Test;
 
 import java.util.Arrays;

@@ -24,11 +24,11 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import shaded.com.google.common.collect.ImmutableSet;
-import shaded.com.google.common.collect.ImmutableSet.Builder;
-import shaded.com.google.common.collect.ImmutableSortedSet;
-import shaded.com.google.common.collect.Iterables;
-import shaded.com.google.inject.Module;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
+import com.google.inject.Module;
 
 import hudson.Extension;
 import hudson.FilePath;
