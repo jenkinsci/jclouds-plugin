@@ -1,5 +1,9 @@
 ## Changelog
 
+### Version 2.26 (not yet released)
+- Removed shaded guava and guice in jclouds, because jenkins has updated guava/guice versions now (thanks to Basil Crow)
+- Bump up jclouds version to 2.5.0. See [release notes](https://jclouds.apache.org/releasenotes/2.5.0/)
+- Removed jclouds labs providers oneandone and profitbricks-rest, because they were removed in jclouds 2.5.0
 ### Version 2.25 (released Sep 22, 2021)
 - Stop using deprecated `Util#join` (thanks to Basil Crow)
 - Bump up jclouds version to 2.4.0. See [release notes](https://jclouds.apache.org/releasenotes/2.4.0/)

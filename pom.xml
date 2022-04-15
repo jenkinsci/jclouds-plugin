@@ -56,7 +56,7 @@ limitations under the License.
     <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
     <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
 
-    <jclouds.version>2.4.0</jclouds.version>
+    <jclouds.version>2.5.0</jclouds.version>
     <!-- Depend on latest Jenkins 2.x LTS
          See README of https://github.com/jenkinsci/plugin-pom/ -->
     <jenkins.version>2.332.1</jenkins.version>
@@ -211,16 +211,6 @@ limitations under the License.
     <dependency>
       <groupId>org.apache.jclouds</groupId>
       <artifactId>jclouds-allcompute</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.jclouds.labs</groupId>
-      <artifactId>oneandone</artifactId>
-      <version>${jclouds.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.jclouds.labs</groupId>
-      <artifactId>profitbricks-rest</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>

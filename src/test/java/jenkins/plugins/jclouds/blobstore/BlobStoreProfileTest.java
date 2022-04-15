@@ -21,6 +21,7 @@ public class BlobStoreProfileTest {
         "aws-s3",
         "azureblob",
         "b2",
+        "glacier",
         "google-cloud-storage",
         "openstack-swift",
         "rackspace-cloudfiles",
