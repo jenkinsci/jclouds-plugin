@@ -20,9 +20,8 @@ import hudson.model.Computer;
 import hudson.model.RootAction;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
+import hudson.security.ACLContext;
 import jenkins.model.Jenkins;
-import org.acegisecurity.Authentication;
-import org.acegisecurity.context.SecurityContextHolder;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.interceptor.RequirePOST;
@@ -84,9 +83,7 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
         }
         LOGGER.info("Received POST from %s [%s] for %s".format(rHost, rAddr, hostName));
         // run in high privilege to see all the nodes anonymous users don't see.
-        Authentication old = SecurityContextHolder.getContext().getAuthentication();
-        SecurityContextHolder.getContext().setAuthentication(ACL.SYSTEM);
-        try {
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
             for (final Computer c : Jenkins.get().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
@@ -108,8 +105,6 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
                 }
             }
             LOGGER.warning("hostName not found " + hostName);
-        } finally {
-            SecurityContextHolder.getContext().setAuthentication(old);
         }
     }
 
