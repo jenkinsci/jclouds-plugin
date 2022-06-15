@@ -120,25 +120,23 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper {
                 MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
 
         final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
-        if (null != runningNodes) {
-            final Set<JCloudsCloud> waitClouds = waitPhoneHomeSetup(runningNodes, listener.getLogger());
-            if (!waitClouds.isEmpty()) {
-                for (JCloudsCloud waitCloud : waitClouds) {
-                    waitCloud.phoneHomeWaitAll();
-                }
-            }
-            List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
-            context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
-            context.setDisposer(new Disposer() {
-                @Override
-                public void tearDown(Run<?, ?> build, TaskListener listener) throws IOException, InterruptedException {
-                    for (JCloudsCloud waitCloud : waitClouds) {
-                        waitCloud.phoneHomeAbort();
-                    }
-                    terminateNodes.apply(runningNodes);
-                }
-            });
+        final Set<JCloudsCloud> waitClouds = waitPhoneHomeSetup(runningNodes, listener.getLogger());
+        if (!waitClouds.isEmpty()) {
+          for (JCloudsCloud waitCloud : waitClouds) {
+            waitCloud.phoneHomeWaitAll();
+          }
         }
+        List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
+        context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
+        context.setDisposer(new Disposer() {
+          @Override
+          public void tearDown(Run<?, ?> build, TaskListener listener) throws IOException, InterruptedException {
+            for (JCloudsCloud waitCloud : waitClouds) {
+              waitCloud.phoneHomeAbort();
+            }
+            terminateNodes.apply(runningNodes);
+          }
+        });
     }
 
     private boolean isBeyondInstanceCap(final String cloudName, int numOfNewInstances) {
