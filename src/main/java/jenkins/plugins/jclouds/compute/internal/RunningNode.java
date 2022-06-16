@@ -33,16 +33,16 @@ public class RunningNode implements Serializable {
 
     private final String cloud;
     private final String template;
-    private final boolean suspendOrTerminate;
+    private final boolean shouldSuspend;
     private String nodeId = null;
     private String nodeName = null;
     private String nodeInstanceAddress = null;
     private transient JCloudsNodeMetadata node;
 
-    public RunningNode(String cloud, String template, boolean suspendOrTerminate, JCloudsNodeMetadata node) {
+    public RunningNode(String cloud, String template, boolean shouldSuspend, JCloudsNodeMetadata node) {
         this.cloud = cloud;
         this.template = template;
-        this.suspendOrTerminate = suspendOrTerminate;
+        this.shouldSuspend = shouldSuspend;
         this.node = node;
         copyMetadata(null);
     }
@@ -99,7 +99,7 @@ public class RunningNode implements Serializable {
         return template;
     }
 
-    public boolean isSuspendOrTerminate() {
-        return suspendOrTerminate;
+    public boolean getShouldSuspend() {
+        return shouldSuspend;
     }
 }

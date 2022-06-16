@@ -110,7 +110,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
                 Supplier<JCloudsNodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
                 // take the hit here, as opposed to later
                 computeCache.getUnchecked(cloudName);
-                return new NodePlan(cloudName, templateName, instance.count, instance.suspendOrTerminate, nodeSupplier);
+                return new NodePlan(cloudName, templateName, instance.count, instance.shouldSuspend, nodeSupplier);
             }
 
         });

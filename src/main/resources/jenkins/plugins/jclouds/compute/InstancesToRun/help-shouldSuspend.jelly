@@ -16,5 +16,5 @@ limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
 <div>
-  If selected, when the build finishes, suspend the instances rather than terminate them.
+  If enabled, when the build finishes, suspend (pause) the instances rather than destroying them.
 </div>

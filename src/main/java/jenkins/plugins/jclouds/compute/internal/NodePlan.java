@@ -21,14 +21,14 @@ public class NodePlan {
     private final String cloudName;
     private final String templateName;
     private final int count;
-    private final boolean suspendOrTerminate;
+    private final boolean shouldSuspend;
     private final Supplier<JCloudsNodeMetadata> nodeSupplier;
 
-    public NodePlan(String cloud, String template, int count, boolean suspendOrTerminate, Supplier<JCloudsNodeMetadata> nodeSupplier) {
+    public NodePlan(String cloud, String template, int count, boolean shouldSuspend, Supplier<JCloudsNodeMetadata> nodeSupplier) {
         this.cloudName = cloud;
         this.templateName = template;
         this.count = count;
-        this.suspendOrTerminate = suspendOrTerminate;
+        this.shouldSuspend = shouldSuspend;
         this.nodeSupplier = nodeSupplier;
     }
 
@@ -44,8 +44,8 @@ public class NodePlan {
         return count;
     }
 
-    public boolean isSuspendOrTerminate() {
-        return suspendOrTerminate;
+    public boolean getShouldSuspend() {
+        return shouldSuspend;
     }
 
     public Supplier<JCloudsNodeMetadata> getNodeSupplier() {

@@ -91,14 +91,14 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
         this.computeCache = computeCache;
     }
 
-    public Void apply(Iterable<RunningNode> runningNode) {
-        if (null != runningNode) {
+    public Void apply(Iterable<RunningNode> runningNodes) {
+        if (null != runningNodes) {
             Builder<String, String> cloudNodesToSuspendBuilder = ImmutableMultimap.<String, String>builder();
             Builder<String, String> cloudNodesToDestroyBuilder = ImmutableMultimap.<String, String>builder();
-            for (RunningNode cloudTemplateNode : runningNode) {
-                String id = cloudTemplateNode.getNodeId();
-                String name = cloudTemplateNode.getCloudName();
-                if (cloudTemplateNode.isSuspendOrTerminate()) {
+            for (RunningNode node : runningNodes) {
+                String id = node.getNodeId();
+                String name = node.getCloudName();
+                if (node.getShouldSuspend()) {
                     cloudNodesToSuspendBuilder.put(name, id);
                 } else {
                     cloudNodesToDestroyBuilder.put(name, id);

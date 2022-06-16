@@ -60,7 +60,7 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
                     Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
                         public void onSuccess(JCloudsNodeMetadata result) {
                             if (result != null) {
-                                cloudTemplateNodeBuilder.add(new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.isSuspendOrTerminate(),
+                                cloudTemplateNodeBuilder.add(new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.getShouldSuspend(),
                                             result));
                             } else {
                                 failedLaunches.incrementAndGet();

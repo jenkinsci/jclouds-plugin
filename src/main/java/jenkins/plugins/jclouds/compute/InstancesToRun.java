@@ -36,15 +36,15 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
     public final String templateName;
     public final String manualTemplateName;
     public final int count;
-    public final boolean suspendOrTerminate;
+    public final boolean shouldSuspend;
 
     @DataBoundConstructor
-    public InstancesToRun(String cloudName, String templateName, String manualTemplateName, int count, boolean suspendOrTerminate) {
+    public InstancesToRun(String cloudName, String templateName, String manualTemplateName, int count, boolean shouldSuspend) {
         this.cloudName = Util.fixEmptyAndTrim(cloudName);
         this.templateName = Util.fixEmptyAndTrim(templateName);
         this.manualTemplateName = Util.fixEmptyAndTrim(manualTemplateName);
         this.count = count;
-        this.suspendOrTerminate = suspendOrTerminate;
+        this.shouldSuspend = shouldSuspend;
     }
 
     public String getActualTemplateName() {
