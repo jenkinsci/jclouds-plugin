@@ -15,6 +15,8 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import java.io.Serializable;
+
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
@@ -26,7 +28,9 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> {
+public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> implements Serializable {
+
+    private static final long serialVersionUID = -1;
 
     public final String cloudName;
     public final String templateName;

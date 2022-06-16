@@ -15,17 +15,80 @@
  */
 package jenkins.plugins.jclouds.compute.internal;
 
-public class RunningNode {
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintStream;
+import java.io.Serializable;
+
+import jenkins.model.Jenkins;
+
+import jenkins.plugins.jclouds.compute.JCloudsCloud;
+import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
+import jenkins.plugins.jclouds.compute.JCloudsLauncher;
+
+public class RunningNode implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final String cloud;
     private final String template;
     private final boolean suspendOrTerminate;
-    private final JCloudsNodeMetadata node;
+    private String nodeId = null;
+    private String nodeName = null;
+    private String nodeInstanceAddress = null;
+    private transient JCloudsNodeMetadata node;
 
     public RunningNode(String cloud, String template, boolean suspendOrTerminate, JCloudsNodeMetadata node) {
         this.cloud = cloud;
         this.template = template;
         this.suspendOrTerminate = suspendOrTerminate;
         this.node = node;
+        copyMetadata(null);
+    }
+
+    private void copyMetadata(PrintStream logger) {
+        if (null != node) {
+            nodeId = node.getId();
+            nodeName = node.getName();
+            String preferredAddress = null;
+            // JCloudsCloud c = JCloudsCloud.getByName(cloud);
+            JCloudsCloud c = (JCloudsCloud) Jenkins.get().clouds.getByName(cloud);
+            if (null != c) {
+                for (JCloudsSlaveTemplate t : c.getTemplates()) {
+                    if (t.name.equals(template)) {
+                        preferredAddress = t.getPreferredAddress();
+                        break;
+                    }
+                }
+            }
+            nodeInstanceAddress = JCloudsLauncher.getConnectionAddress(node, logger, preferredAddress);
+        }
+    }
+
+    private void writeObject(final ObjectOutputStream oos) throws IOException {
+        copyMetadata(null);
+        oos.defaultWriteObject();
+    }
+
+    private void readObject(final ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        this.node = null;
+    }
+
+    public String getNodeId() {
+        copyMetadata(null);
+        return nodeId;
+    }
+
+    public String getNodeName() {
+        copyMetadata(null );
+        return nodeName;
+    }
+
+    public String getNodeInstanceAddress(PrintStream logger) {
+        copyMetadata(logger);
+        return nodeInstanceAddress;
     }
 
     public String getCloudName() {
@@ -38,9 +101,5 @@ public class RunningNode {
 
     public boolean isSuspendOrTerminate() {
         return suspendOrTerminate;
-    }
-
-    public JCloudsNodeMetadata getNode() {
-        return node;
     }
 }

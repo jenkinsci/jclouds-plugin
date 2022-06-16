@@ -26,6 +26,7 @@ import hudson.tasks.BuildWrapperDescriptor;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +60,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.util.concurrent.MoreExecutors;
 
-public class JCloudsBuildWrapper extends SimpleBuildWrapper {
+public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final List<InstancesToRun> instancesToRun;
 
     @DataBoundConstructor
@@ -176,7 +180,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper {
                     ConcurrentMap<Integer, List<String>> waitMap = cloudWaitMap.getOrDefault(c, new ConcurrentHashMap<>());
                     Integer wto = Integer.valueOf(t.waitPhoneHomeTimeout);
                     List<String> hosts = waitMap.getOrDefault(wto, new ArrayList<>());
-                    hosts.add(rn.getNode().getName());
+                    hosts.add(rn.getNodeName());
                     waitMap.put(wto, hosts);
                     cloudWaitMap.put(c, waitMap);
                 }
@@ -196,15 +200,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper {
         Builder<String> ips = ImmutableList.<String>builder();
 
         for (RunningNode rn : runningNodes) {
-            String preferredAddress = null;
-            JCloudsCloud c = JCloudsCloud.getByName(rn.getCloudName());
-            if (null != c) {
-                JCloudsSlaveTemplate t = c.getTemplate(rn.getTemplateName());
-                if (null != t) {
-                    preferredAddress = t.getPreferredAddress();
-                }
-            }
-            String ip = JCloudsLauncher.getConnectionAddress(rn.getNode(), logger, preferredAddress);
+            String ip = rn.getNodeInstanceAddress(logger);
             if (null != ip) {
                 ips.add(ip);
             }

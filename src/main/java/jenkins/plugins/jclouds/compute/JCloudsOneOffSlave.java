@@ -30,11 +30,15 @@ import jenkins.tasks.SimpleBuildWrapper;
 import org.jenkinsci.Symbol;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
-public class JCloudsOneOffSlave extends SimpleBuildWrapper {
+public class JCloudsOneOffSlave extends SimpleBuildWrapper implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private static final Logger LOGGER = Logger.getLogger(JCloudsOneOffSlave.class.getName());
 
     @DataBoundConstructor
