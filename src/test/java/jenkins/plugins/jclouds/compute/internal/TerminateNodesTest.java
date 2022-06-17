@@ -22,9 +22,6 @@ import org.jclouds.compute.domain.NodeMetadata;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -75,10 +72,8 @@ public class TerminateNodesTest {
     }
 
     private TerminateNodes newTerminateNodes(ComputeService compute) {
-        LoadingCache<String, ComputeService> cache = CacheBuilder.newBuilder().build(
-                CacheLoader.<String, ComputeService>from(Functions.forMap(ImmutableMap.of("stub", compute))));
         TaskListenerLogger logger = new TaskListenerLogger(TaskListener.NULL);
-        return new TerminateNodes(logger, cache);
+        return new TerminateNodes(logger);
     }
 
     @Test

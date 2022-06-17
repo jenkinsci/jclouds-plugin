@@ -21,6 +21,7 @@ import java.io.Serializable;
 import java.util.Collection;
 
 import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.internal.TaskListenerLogger;
 import hudson.XmlFile;
 
@@ -30,7 +31,6 @@ import org.jclouds.compute.domain.NodeMetadata;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.ArrayListMultimap;
@@ -41,7 +41,6 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
     private static final long serialVersionUID = 1L;
 
     private final TaskListenerLogger logger;
-    private final LoadingCache<String, ComputeService> computeCache;
 
     public static class Persistent {
         private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(TerminateNodes.class.getName());
@@ -90,9 +89,12 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
     }
 
 
-    public TerminateNodes(TaskListenerLogger logger, LoadingCache<String, ComputeService> computeCache) {
+    public TerminateNodes(TaskListenerLogger logger) {
         this.logger = logger;
-        this.computeCache = computeCache;
+    }
+
+    private static ComputeService getCloudCompute(String cloud) {
+        return ((JCloudsCloud) Jenkins.get().clouds.getByName(cloud)).getCompute();
     }
 
     public Void apply(Iterable<RunningNode> runningNodes) {
@@ -123,7 +125,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
         for (final String cloudToDestroy : cloudNodesToDestroy.keySet()) {
             final Collection<String> nodesToDestroy = cloudNodesToDestroy.get(cloudToDestroy);
             logger.info("Destroying supplemental nodes: " + nodesToDestroy);
-            computeCache.getUnchecked(cloudToDestroy).destroyNodesMatching(new Predicate<NodeMetadata>() {
+            getCloudCompute(cloudToDestroy).destroyNodesMatching(new Predicate<NodeMetadata>() {
                 public boolean apply(NodeMetadata input) {
                     return null != input && nodesToDestroy.contains(input.getId());
                 }
@@ -136,7 +138,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
             final Collection<String> nodesToSuspend = cloudNodesToSuspend.get(cloudToSuspend);
             try {
                 logger.info("Suspending supplemental nodes: " + nodesToSuspend);
-                computeCache.getUnchecked(cloudToSuspend).suspendNodesMatching(new Predicate<NodeMetadata>() {
+                getCloudCompute(cloudToSuspend).suspendNodesMatching(new Predicate<NodeMetadata>() {
 
                     public boolean apply(NodeMetadata input) {
                         return null != input && nodesToSuspend.contains(input.getId());

@@ -46,14 +46,10 @@ import jenkins.plugins.jclouds.compute.internal.RunningNode;
 import jenkins.plugins.jclouds.compute.internal.TerminateNodes;
 import jenkins.plugins.jclouds.internal.TaskListenerLogger;
 
-import org.jclouds.compute.ComputeService;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ImmutableList.Builder;
@@ -92,14 +88,6 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
             throw new IOException(String.format("Instance cap for cloud %s reached.", failedCloud));
         }
 
-        final LoadingCache<String, ComputeService> computeCache = CacheBuilder.newBuilder().build(new CacheLoader<String, ComputeService>() {
-
-            @Override
-            public ComputeService load(String arg0) throws Exception {
-                return JCloudsCloud.getByName(arg0).getCompute();
-            }
-        });
-
         // eagerly lookup node supplier so that errors occur before we attempt to provision things
         Iterable<NodePlan> nodePlans = Iterables.transform(instancesToRun, new Function<InstancesToRun, NodePlan>() {
 
@@ -107,8 +95,6 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
                 String cloudName = instance.cloudName;
                 String templateName = initialEnvironment.expand(instance.getActualTemplateName());
                 Supplier<JCloudsNodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
-                // take the hit here, as opposed to later
-                computeCache.getUnchecked(cloudName);
                 return new NodePlan(cloudName, templateName, instance.count, instance.shouldSuspend, nodeSupplier);
             }
 
@@ -117,7 +103,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         // converting to a logger as it is an interface and easier to test
         final TaskListenerLogger logger = new TaskListenerLogger(listener);
 
-        final TerminateNodes terminateNodes = new TerminateNodes(logger, computeCache);
+        final TerminateNodes terminateNodes = new TerminateNodes(logger);
 
         ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
                 MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
