@@ -47,7 +47,6 @@ import jenkins.plugins.jclouds.compute.internal.TerminateNodes;
 import jenkins.plugins.jclouds.internal.TaskListenerLogger;
 
 import org.jclouds.compute.ComputeService;
-import org.jclouds.logging.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import com.google.common.base.Function;
@@ -116,7 +115,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         });
 
         // converting to a logger as it is an interface and easier to test
-        final Logger logger = new TaskListenerLogger(listener);
+        final TaskListenerLogger logger = new TaskListenerLogger(listener);
 
         final TerminateNodes terminateNodes = new TerminateNodes(logger, computeCache);
 

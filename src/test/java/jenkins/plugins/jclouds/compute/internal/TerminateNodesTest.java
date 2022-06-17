@@ -11,12 +11,14 @@ import static org.junit.Assume.assumeTrue;
 
 import java.util.concurrent.ExecutionException;
 
+import hudson.model.TaskListener;
+import jenkins.plugins.jclouds.internal.TaskListenerLogger;
+
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.logging.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
@@ -75,7 +77,8 @@ public class TerminateNodesTest {
     private TerminateNodes newTerminateNodes(ComputeService compute) {
         LoadingCache<String, ComputeService> cache = CacheBuilder.newBuilder().build(
                 CacheLoader.<String, ComputeService>from(Functions.forMap(ImmutableMap.of("stub", compute))));
-        return new TerminateNodes(Logger.NULL, cache);
+        TaskListenerLogger logger = new TaskListenerLogger(TaskListener.NULL);
+        return new TerminateNodes(logger, cache);
     }
 
     @Test

@@ -15,9 +15,13 @@
  */
 package jenkins.plugins.jclouds.internal;
 
+import java.io.Serializable;
 import hudson.model.TaskListener;
 
-public class TaskListenerLogger implements org.jclouds.logging.Logger {
+public class TaskListenerLogger implements org.jclouds.logging.Logger, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     private final TaskListener listener;
 
     public TaskListenerLogger(TaskListener listener) {

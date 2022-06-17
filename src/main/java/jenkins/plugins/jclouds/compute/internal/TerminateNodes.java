@@ -17,14 +17,16 @@ package jenkins.plugins.jclouds.compute.internal;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Collection;
 
 import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.internal.TaskListenerLogger;
 import hudson.XmlFile;
+
 
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.logging.Logger;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -34,9 +36,11 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap.Builder;
 
-public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
+public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Serializable {
 
-    private final Logger logger;
+    private static final long serialVersionUID = 1L;
+
+    private final TaskListenerLogger logger;
     private final LoadingCache<String, ComputeService> computeCache;
 
     public static class Persistent {
@@ -86,7 +90,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void> {
     }
 
 
-    public TerminateNodes(Logger logger, LoadingCache<String, ComputeService> computeCache) {
+    public TerminateNodes(TaskListenerLogger logger, LoadingCache<String, ComputeService> computeCache) {
         this.logger = logger;
         this.computeCache = computeCache;
     }
