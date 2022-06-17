@@ -29,6 +29,7 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -75,6 +76,29 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         return false;
     }
 
+    private static class JCloudsBuildWrapperDisposer extends Disposer {
+
+        private static final long serialVersionUID = 1L;
+
+        private final Iterable<RunningNode> runningNodes;
+        private final TerminateNodes terminateNodes;
+        private final Set<String> waitingClouds;
+
+        JCloudsBuildWrapperDisposer(Iterable<RunningNode> runningNodes, TerminateNodes terminateNodes, Set<String> waitingClouds) {
+            this.runningNodes = runningNodes;
+            this.waitingClouds = waitingClouds;
+            this.terminateNodes = terminateNodes;
+        }
+
+        @Override
+        public void tearDown(Run<?, ?> build, TaskListener listener) throws IOException, InterruptedException {
+            for (String cloud : waitingClouds) {
+                JCloudsCloud.getByName(cloud).phoneHomeAbort();
+            }
+            terminateNodes.apply(runningNodes);
+        }
+    }
+
     //
     // convert Jenkins static stuff into pojos; performing as little critical stuff here as
     // possible, as this method is very hard to test due to static usage, etc.
@@ -110,22 +134,16 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
         final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
         final Set<JCloudsCloud> waitClouds = waitPhoneHomeSetup(runningNodes, listener.getLogger());
+        final Set<String> cloudsToEventuallyAbortWaiting = new HashSet<>();
         if (!waitClouds.isEmpty()) {
-          for (JCloudsCloud waitCloud : waitClouds) {
-            waitCloud.phoneHomeWaitAll();
-          }
+            for (JCloudsCloud waitCloud : waitClouds) {
+                waitCloud.phoneHomeWaitAll();
+                cloudsToEventuallyAbortWaiting.add(waitCloud.getName());
+            }
         }
         List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
         context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
-        context.setDisposer(new Disposer() {
-          @Override
-          public void tearDown(Run<?, ?> build, TaskListener listener) throws IOException, InterruptedException {
-            for (JCloudsCloud waitCloud : waitClouds) {
-              waitCloud.phoneHomeAbort();
-            }
-            terminateNodes.apply(runningNodes);
-          }
-        });
+        context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToEventuallyAbortWaiting));
     }
 
     private boolean isBeyondInstanceCap(final String cloudName, int numOfNewInstances) {

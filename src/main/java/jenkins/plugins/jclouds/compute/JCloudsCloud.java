@@ -153,6 +153,10 @@ public class JCloudsCloud extends Cloud {
         return (JCloudsCloud) Jenkins.get().clouds.getByName(name);
     }
 
+    public String getName() {
+        return name;
+    }
+
     public String getCloudCredentialsId() {
         return cloudCredentialsId;
     }
