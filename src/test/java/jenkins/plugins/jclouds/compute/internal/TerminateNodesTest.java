@@ -11,9 +11,6 @@ import static org.junit.Assume.assumeTrue;
 
 import java.util.concurrent.ExecutionException;
 
-import hudson.model.TaskListener;
-import jenkins.plugins.jclouds.internal.TaskListenerLogger;
-
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
@@ -72,8 +69,7 @@ public class TerminateNodesTest {
     }
 
     private TerminateNodes newTerminateNodes(ComputeService compute) {
-        TaskListenerLogger logger = new TaskListenerLogger(TaskListener.NULL);
-        return new TerminateNodes(logger);
+        return new TerminateNodes();
     }
 
     @Test

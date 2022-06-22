@@ -19,10 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
-import jenkins.plugins.jclouds.internal.TaskListenerLogger;
 import hudson.XmlFile;
 
 
@@ -40,10 +40,10 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
 
     private static final long serialVersionUID = 1L;
 
-    private final TaskListenerLogger logger;
+    private static final Logger LOGGER = Logger.getLogger(TerminateNodes.class.getName());
 
     public static class Persistent {
-        private static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(TerminateNodes.class.getName());
+        private static final Logger LOGGER = Logger.getLogger(Persistent.class.getName());
 
         private final transient File f;
         private Multimap<String, String> nodesToSuspend;
@@ -89,8 +89,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
     }
 
 
-    public TerminateNodes(TaskListenerLogger logger) {
-        this.logger = logger;
+    public TerminateNodes() {
     }
 
     private static ComputeService getCloudCompute(String cloud) {
@@ -124,7 +123,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
     private void destroy(Multimap<String, String> cloudNodesToDestroy) {
         for (final String cloudToDestroy : cloudNodesToDestroy.keySet()) {
             final Collection<String> nodesToDestroy = cloudNodesToDestroy.get(cloudToDestroy);
-            logger.info("Destroying supplemental nodes: " + nodesToDestroy);
+            LOGGER.info("Destroying supplemental nodes: " + nodesToDestroy);
             getCloudCompute(cloudToDestroy).destroyNodesMatching(new Predicate<NodeMetadata>() {
                 public boolean apply(NodeMetadata input) {
                     return null != input && nodesToDestroy.contains(input.getId());
@@ -137,7 +136,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
         for (String cloudToSuspend : cloudNodesToSuspend.keySet()) {
             final Collection<String> nodesToSuspend = cloudNodesToSuspend.get(cloudToSuspend);
             try {
-                logger.info("Suspending supplemental nodes: " + nodesToSuspend);
+                LOGGER.info("Suspending supplemental nodes: " + nodesToSuspend);
                 getCloudCompute(cloudToSuspend).suspendNodesMatching(new Predicate<NodeMetadata>() {
 
                     public boolean apply(NodeMetadata input) {
@@ -146,7 +145,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
 
                 });
             } catch (UnsupportedOperationException e) {
-                logger.info("Suspend unsupported on cloud: " + cloudToSuspend + "; affected nodes: " + nodesToSuspend + ": " + e);
+                LOGGER.warning("Suspend unsupported on cloud: " + cloudToSuspend + "; affected nodes: " + nodesToSuspend + ": " + e);
             }
         }
     }

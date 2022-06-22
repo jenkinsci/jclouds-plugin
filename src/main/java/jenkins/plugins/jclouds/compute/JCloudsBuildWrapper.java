@@ -15,6 +15,7 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.model.AbstractProject;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildWrapper;
@@ -80,6 +82,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
         private static final long serialVersionUID = 1L;
 
+        private static final Logger LOGGER = Logger.getLogger(JCloudsBuildWrapperDisposer.class.getName());
+
         private final Iterable<RunningNode> runningNodes;
         private final TerminateNodes terminateNodes;
         private final Set<String> waitingClouds;
@@ -92,27 +96,42 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
         @Override
         public void tearDown(Run<?, ?> build, TaskListener listener) throws IOException, InterruptedException {
+            LOGGER.info("Terminating supplemental nodes");
+            listener.getLogger().println("Terminating supplemental nodes");
             for (String cloud : waitingClouds) {
-                JCloudsCloud.getByName(cloud).phoneHomeAbort();
+                for (RunningNode rn : runningNodes) {
+                    JCloudsCloud.getByName(cloud).phoneHomeNotify(rn.getHostName());
+                }
             }
             terminateNodes.apply(runningNodes);
+            JCloudsCloud.unregisterSupplementalCleanup(build);
         }
     }
 
     //
-    // convert Jenkins static stuff into pojos; performing as little critical stuff here as
-    // possible, as this method is very hard to test due to static usage, etc.
-    //
     @Override
     public void setUp(Context context, Run<?,?> build, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
 
+        // Validate user-supplied input
+        for (final InstancesToRun inst : instancesToRun) {
+            String cn = inst.cloudName;
+            Cloud c = Jenkins.get().clouds.getByName(cn);
+            if (null == c) {
+                throw new AbortException(String.format("A cloud named %s does not exist.", cn));
+            }
+            if (!JCloudsCloud.class.isInstance(c)) {
+                throw new AbortException(String.format("The cloud named %s is not controlled by jclouds.", cn));
+            }
+            String tpln = initialEnvironment.expand(inst.getActualTemplateName());
+            if (null == ((JCloudsCloud)c).getTemplate(tpln)) {
+                throw new AbortException(String.format("The cloud named %s does not provide a template named %s.", cn, tpln));
+            }
+        }
         final String failedCloud = validateInstanceCaps();
         if (null != failedCloud) {
-            listener.fatalError("Unable to launch supplemental nodes:");
-            throw new IOException(String.format("Instance cap for cloud %s reached.", failedCloud));
+            throw new AbortException(String.format("Instance cap for cloud %s reached.", failedCloud));
         }
 
-        // eagerly lookup node supplier so that errors occur before we attempt to provision things
         Iterable<NodePlan> nodePlans = Iterables.transform(instancesToRun, new Function<InstancesToRun, NodePlan>() {
 
             public NodePlan apply(InstancesToRun instance) {
@@ -124,26 +143,41 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
         });
 
-        // converting to a logger as it is an interface and easier to test
         final TaskListenerLogger logger = new TaskListenerLogger(listener);
-
-        final TerminateNodes terminateNodes = new TerminateNodes(logger);
+        final TerminateNodes terminateNodes = new TerminateNodes();
 
         ProvisionPlannedInstancesAndDestroyAllOnError provisioner = new ProvisionPlannedInstancesAndDestroyAllOnError(
                 MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting), logger, terminateNodes);
 
+        // Start supplemental nodes. This blocks until all nodes are started or an error occurs.
         final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
-        final Set<JCloudsCloud> waitClouds = waitPhoneHomeSetup(runningNodes, listener.getLogger());
-        final Set<String> cloudsToEventuallyAbortWaiting = new HashSet<>();
-        if (!waitClouds.isEmpty()) {
-            for (JCloudsCloud waitCloud : waitClouds) {
-                waitCloud.phoneHomeWaitAll();
-                cloudsToEventuallyAbortWaiting.add(waitCloud.getName());
+        // register nodes for termination if build gets aborted
+        JCloudsCloud.registerSupplementalCleanup(build, runningNodes);
+        final Set<String> cloudsToPossiblyAbortWaiting = new HashSet<>();
+
+        // Optionally, wait for phone-home, blocks until all nodes have reported back availability or timeout.
+        final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams = waitPhoneHomeSetup(runningNodes, listener.getLogger());
+        if (!waitParams.isEmpty()) {
+            for (Map.Entry<JCloudsCloud, List<PhoneHomeMonitor>> entry : waitParams.entrySet()) {
+                cloudsToPossiblyAbortWaiting.add(entry.getKey().getName());
+                try {
+                    for (PhoneHomeMonitor phm : entry.getValue()) {
+                        phm.join();
+                        entry.getKey().unregisterPhoneHomeMonitor(phm);
+                    }
+                } catch (InterruptedException x) {
+                    // abort all phone-home monitors that are still waiting
+                    for (PhoneHomeMonitor phm : entry.getValue()) {
+                        phm.ring();
+                    }
+                    throw x;
+                }
             }
         }
+
         List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
         context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
-        context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToEventuallyAbortWaiting));
+        context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToPossiblyAbortWaiting));
     }
 
     private boolean isBeyondInstanceCap(final String cloudName, int numOfNewInstances) {
@@ -173,7 +207,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         return null;
     }
 
-    private Set<JCloudsCloud> waitPhoneHomeSetup(final Iterable<RunningNode> runningNodes, PrintStream logger) {
+    private ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitPhoneHomeSetup(final Iterable<RunningNode> runningNodes, PrintStream logger) {
+        ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> ret = new ConcurrentHashMap<>();
         ConcurrentMap<JCloudsCloud, ConcurrentMap<Integer, List<String>>> cloudWaitMap = new ConcurrentHashMap<>();
         for (RunningNode rn : runningNodes) {
             JCloudsCloud c = JCloudsCloud.getByName(rn.getCloudName());
@@ -192,11 +227,14 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         for (Map.Entry<JCloudsCloud, ConcurrentMap<Integer, List<String>>> cwMap : cloudWaitMap.entrySet()) {
             for (Map.Entry<Integer, List<String>> entry : cwMap.getValue().entrySet()) {
                 final PhoneHomeMonitor phm = new PhoneHomeMonitor(true, entry.getKey().intValue());
-                phm.waitForPhoneHome(entry.getValue(), logger);
+                phm.waitForPhoneHomeMultiple(entry.getValue(), logger);
                 cwMap.getKey().registerPhoneHomeMonitor(phm);
+                List<PhoneHomeMonitor> phmList = ret.getOrDefault(cwMap.getKey(), new ArrayList<>());
+                phmList.add(phm);
+                ret.put(cwMap.getKey(), phmList);
             }
         }
-        return cloudWaitMap.keySet();
+        return ret;
     }
 
     private List<String> getInstanceIPs(Iterable<RunningNode> runningNodes, PrintStream logger) {

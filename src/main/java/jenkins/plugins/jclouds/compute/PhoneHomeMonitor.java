@@ -45,15 +45,11 @@ final class PhoneHomeMonitor {
         waitTimeout = timeout;
     }
 
-    void join() {
+    void join() throws InterruptedException {
         if (null != waitThread) {
-            try {
-                waitThread.join();
-            } catch (InterruptedException x) {
-                LOGGER.info(x.toString());
-            }
+            waitThread.join();
         }
-    }
+   }
 
     synchronized boolean ring(final String who) {
         boolean ret = targets.remove(who);
@@ -117,12 +113,12 @@ final class PhoneHomeMonitor {
         waitForPhoneHome(logger);
     }
 
-    void waitForPhoneHome(final List<String> who, final PrintStream logger) {
+    void waitForPhoneHomeMultiple(final List<String> who, final PrintStream logger) {
         if (null == who || who.isEmpty()) {
-            throw new IllegalArgumentException("who may not me null or empty");
+            throw new IllegalArgumentException("who may not be null or empty");
         }
         if (who.contains(null) || who.contains("")) {
-            throw new IllegalArgumentException("who may not may not contain empty targets");
+            throw new IllegalArgumentException("who may not contain empty targets");
         }
         setTargets(who);
         waitThread = new Thread() {

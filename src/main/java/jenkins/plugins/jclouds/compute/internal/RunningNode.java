@@ -20,6 +20,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.util.logging.Logger;
 
 import jenkins.model.Jenkins;
 
@@ -27,7 +28,11 @@ import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 import jenkins.plugins.jclouds.compute.JCloudsLauncher;
 
+import org.jclouds.compute.domain.NodeMetadata;
+
 public class RunningNode implements Serializable {
+
+    static final Logger LOGGER = Logger.getLogger(RunningNode.class.getName());
 
     private static final long serialVersionUID = 1L;
 
@@ -36,6 +41,7 @@ public class RunningNode implements Serializable {
     private final boolean shouldSuspend;
     private String nodeId = null;
     private String nodeName = null;
+    private String hostName = null;
     private String nodeInstanceAddress = null;
     private transient JCloudsNodeMetadata node;
 
@@ -51,8 +57,8 @@ public class RunningNode implements Serializable {
         if (null != node) {
             nodeId = node.getId();
             nodeName = node.getName();
+            hostName = node.getHostname();
             String preferredAddress = null;
-            // JCloudsCloud c = JCloudsCloud.getByName(cloud);
             JCloudsCloud c = (JCloudsCloud) Jenkins.get().clouds.getByName(cloud);
             if (null != c) {
                 for (JCloudsSlaveTemplate t : c.getTemplates()) {
@@ -62,7 +68,12 @@ public class RunningNode implements Serializable {
                     }
                 }
             }
-            nodeInstanceAddress = JCloudsLauncher.getConnectionAddress(node, logger, preferredAddress);
+            if (null != c) {
+                NodeMetadata md =  c.getCompute().getNodeMetadata(nodeId);
+                nodeInstanceAddress = JCloudsLauncher.getConnectionAddress(md, logger, preferredAddress);
+            } else {
+                LOGGER.severe("Should not happen: No cloud named \"%s\" found".format(cloud));
+            }
         }
     }
 
@@ -82,8 +93,13 @@ public class RunningNode implements Serializable {
     }
 
     public String getNodeName() {
-        copyMetadata(null );
+        copyMetadata(null);
         return nodeName;
+    }
+
+    public String getHostName() {
+        copyMetadata(null);
+        return hostName;
     }
 
     public String getNodeInstanceAddress(PrintStream logger) {

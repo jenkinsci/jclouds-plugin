@@ -15,6 +15,8 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import com.google.common.base.Predicate;
+
 import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.servlet.ServletException;
 import java.io.Closeable;
@@ -24,9 +26,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Logger;
@@ -40,6 +45,8 @@ import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.ItemGroup;
 import hudson.model.Label;
+import hudson.model.Result;
+import hudson.model.Run;
 import hudson.model.Node;
 import hudson.slaves.Cloud;
 import hudson.slaves.NodeProvisioner;
@@ -94,6 +101,7 @@ import hudson.security.ACL;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import hudson.security.AccessControlled;
 
+import jenkins.plugins.jclouds.compute.internal.RunningNode;
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 import jenkins.plugins.jclouds.modules.JenkinsConfigurationModule;
@@ -547,15 +555,6 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-    void phoneHomeAbort() {
-        if (null != phms) {
-            for (final PhoneHomeMonitor monitor : phms) {
-                monitor.interrupt();
-            }
-            phms.clear();
-        }
-    }
-
     public boolean phoneHomeNotify(final String name) {
         if (null != phms) {
             for (final PhoneHomeMonitor monitor : phms) {
@@ -565,15 +564,6 @@ public class JCloudsCloud extends Cloud {
             }
         }
         return false;
-    }
-
-    void phoneHomeWaitAll() {
-        if (null != phms) {
-            for (final PhoneHomeMonitor monitor : phms) {
-                monitor.join();
-            }
-            phms.clear();
-        }
     }
 
     private static final Set<String> CONFIRMED_GZIP_SUPPORTERS = ImmutableSet.<String>of("aws-ec2", "openstack-nova", "openstack-nova-ec2");
@@ -814,6 +804,66 @@ public class JCloudsCloud extends Cloud {
             } 
             return null;
         }
+    }
+
+    private static final ConcurrentMap<Run<?,?>, List<RunningNode>> supplementalsToCheck = new ConcurrentHashMap<>();
+
+    static void cleanupSupplementalNodes() {
+        for (Map.Entry<Run<?,?>, List<RunningNode>> entry : supplementalsToCheck.entrySet()) {
+            Result result = entry.getKey().getResult();
+            if (null != result && result == Result.ABORTED) {
+                LOGGER.info("job \"" + entry.getKey().getFullDisplayName() + "\"was aborted, cleaning up supplemental nodes");
+                for (RunningNode rn : entry.getValue()) {
+                    JCloudsCloud c = JCloudsCloud.getByName(rn.getCloudName());
+                    if (null != c) {
+                        if (rn.getShouldSuspend()) {
+                            try {
+                                LOGGER.info("Suspending supplemental node: " + rn.getNodeName());
+                                c.getCompute().suspendNodesMatching(new Predicate<NodeMetadata>() {
+                                    public boolean apply(NodeMetadata input) {
+                                        return null != input && input.getId().equals(rn.getNodeId());
+                                    }
+                                });
+                                continue;
+                            } catch (UnsupportedOperationException e) {
+                                LOGGER.warning("Suspend unsupported on cloud: " + c.name);
+                            }
+                        }
+                        LOGGER.info("Destroying supplemental node: " + rn.getNodeName());
+                        c.getCompute().destroyNodesMatching(new Predicate<NodeMetadata>() {
+                            public boolean apply(NodeMetadata input) {
+                                return null != input && input.getId().equals(rn.getNodeId());
+                            }
+                        });
+                    }
+                }
+                supplementalsToCheck.remove(entry.getKey());
+            }
+        }
+    }
+
+    /**
+     * Register supplemental nodes of a build for a periodical cleanup if the build has been aborted.
+     *
+     * @param build The build that lounched the nodes.
+     * @param nodes The supplemental nodes to be cleaned up
+     */
+    static synchronized void registerSupplementalCleanup(Run<?,?> build, Iterable<RunningNode> nodes) {
+        LOGGER.fine("Registering build \"" + build.getFullDisplayName() + "\" for cleanup");
+        List<RunningNode> newList = new ArrayList<>();
+        for (RunningNode rn : nodes) {
+            newList.add(rn);
+        }
+        if (!newList.isEmpty()) {
+            List<RunningNode> oldList = supplementalsToCheck.getOrDefault(build, new ArrayList<>());
+            oldList.addAll(newList);
+            supplementalsToCheck.put(build, oldList);
+        }
+    }
+
+    static void unregisterSupplementalCleanup(Run<?,?> build) {
+        LOGGER.fine("Unregistering build \"" + build.getFullDisplayName() + "\" from cleanup");
+        supplementalsToCheck.remove(build);
     }
 
 }

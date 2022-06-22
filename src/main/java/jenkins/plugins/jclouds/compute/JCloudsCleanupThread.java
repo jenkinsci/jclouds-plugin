@@ -100,5 +100,6 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
             }
 
         }
+        JCloudsCloud.cleanupSupplementalNodes();
     }
 }
