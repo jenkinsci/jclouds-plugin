@@ -21,7 +21,7 @@ import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import javax.xml.bind.DatatypeConverter;
+import java.util.Base64;
 
 import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.signature.DSAKeyAlgorithm;
@@ -42,10 +42,10 @@ public final class SSHPublicKeyExtractor {
     public static String extract(final String pem, final String passPhrase) throws IOException {
         final KeyPair priv = PEMDecoder.decodeKeyPair(pem.toCharArray(), passPhrase);
         if (priv.getPrivate() instanceof RSAPrivateKey) {
-            return "ssh-rsa " + DatatypeConverter.printBase64Binary(new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) priv.getPublic()));
+            return "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) priv.getPublic()));
         }
         if (priv.getPrivate() instanceof DSAPrivateKey) {
-            return "ssh-dss " + DatatypeConverter.printBase64Binary(new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) priv.getPublic()));
+            return "ssh-dss " + Base64.getEncoder().encodeToString(new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) priv.getPublic()));
         }
         throw new IOException("should never happen");
     }
