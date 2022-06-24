@@ -156,23 +156,27 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         final Set<String> cloudsToPossiblyAbortWaiting = new HashSet<>();
 
         // Optionally, wait for phone-home, blocks until all nodes have reported back availability or timeout.
-        final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams = waitPhoneHomeSetup(runningNodes, listener.getLogger());
-        if (!waitParams.isEmpty()) {
-            for (Map.Entry<JCloudsCloud, List<PhoneHomeMonitor>> entry : waitParams.entrySet()) {
-                cloudsToPossiblyAbortWaiting.add(entry.getKey().getName());
-                try {
-                    for (PhoneHomeMonitor phm : entry.getValue()) {
-                        phm.join();
-                        entry.getKey().unregisterPhoneHomeMonitor(phm);
+        try {
+            final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams = waitPhoneHomeSetup(runningNodes, listener.getLogger());
+            if (!waitParams.isEmpty()) {
+                for (Map.Entry<JCloudsCloud, List<PhoneHomeMonitor>> entry : waitParams.entrySet()) {
+                    cloudsToPossiblyAbortWaiting.add(entry.getKey().getName());
+                    try {
+                        for (PhoneHomeMonitor phm : entry.getValue()) {
+                          phm.join();
+                          entry.getKey().unregisterPhoneHomeMonitor(phm);
+                      }
+                    } catch (InterruptedException x) {
+                        // abort all phone-home monitors that are still waiting
+                        for (PhoneHomeMonitor phm : entry.getValue()) {
+                            phm.ring();
+                        }
+                        throw x;
                     }
-                } catch (InterruptedException x) {
-                    // abort all phone-home monitors that are still waiting
-                    for (PhoneHomeMonitor phm : entry.getValue()) {
-                        phm.ring();
-                    }
-                    throw x;
                 }
             }
+        } catch (InterruptedException x) {
+            throw new AbortException("Wait for phone-home aborted");
         }
 
         List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
