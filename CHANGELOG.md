@@ -1,5 +1,9 @@
 ## Changelog
 
+### Version 2.28 (released Jun 24, 2022)
+- Improved usability:
+  Print nice message instead of stacktrace if build was aborted while
+  waiting for supplemental nodes to phone home.
 ### Version 2.27 (released Jun 24, 2022)
 - Fixed several serialization problems with JCloudsBuildWrapper
 - JCloudsBuildWrapper did not wait for supplemental nodes
