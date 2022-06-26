@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.29 (released Jun 26, 2022)
+- Optimize operation: No need for cleanup, if zero supplemental nodes were launched.
 ### Version 2.28 (released Jun 24, 2022)
 - Improved usability:
   Print nice message instead of stacktrace if build was aborted while
