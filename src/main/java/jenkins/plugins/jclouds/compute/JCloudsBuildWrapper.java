@@ -151,37 +151,41 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
         // Start supplemental nodes. This blocks until all nodes are started or an error occurs.
         final Iterable<RunningNode> runningNodes = provisioner.apply(nodePlans);
-        // register nodes for termination if build gets aborted
-        JCloudsCloud.registerSupplementalCleanup(build, runningNodes);
-        final Set<String> cloudsToPossiblyAbortWaiting = new HashSet<>();
+        if (Iterables.size(runningNodes) > 0) {
+            // register nodes for termination if build gets aborted
+            JCloudsCloud.registerSupplementalCleanup(build, runningNodes);
+            final Set<String> cloudsToPossiblyAbortWaiting = new HashSet<>();
 
-        // Optionally, wait for phone-home, blocks until all nodes have reported back availability or timeout.
-        try {
-            final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams = waitPhoneHomeSetup(runningNodes, listener.getLogger());
-            if (!waitParams.isEmpty()) {
-                for (Map.Entry<JCloudsCloud, List<PhoneHomeMonitor>> entry : waitParams.entrySet()) {
-                    cloudsToPossiblyAbortWaiting.add(entry.getKey().getName());
-                    try {
-                        for (PhoneHomeMonitor phm : entry.getValue()) {
-                          phm.join();
-                          entry.getKey().unregisterPhoneHomeMonitor(phm);
-                      }
-                    } catch (InterruptedException x) {
-                        // abort all phone-home monitors that are still waiting
-                        for (PhoneHomeMonitor phm : entry.getValue()) {
-                            phm.ring();
+            // Optionally, wait for phone-home, blocks until all nodes have reported back availability or timeout.
+            try {
+                final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams = waitPhoneHomeSetup(runningNodes, listener.getLogger());
+                if (!waitParams.isEmpty()) {
+                    for (Map.Entry<JCloudsCloud, List<PhoneHomeMonitor>> entry : waitParams.entrySet()) {
+                        cloudsToPossiblyAbortWaiting.add(entry.getKey().getName());
+                        try {
+                            for (PhoneHomeMonitor phm : entry.getValue()) {
+                              phm.join();
+                              entry.getKey().unregisterPhoneHomeMonitor(phm);
+                          }
+                        } catch (InterruptedException x) {
+                            // abort all phone-home monitors that are still waiting
+                            for (PhoneHomeMonitor phm : entry.getValue()) {
+                                phm.ring();
+                            }
+                            throw x;
                         }
-                        throw x;
                     }
                 }
+            } catch (InterruptedException x) {
+                throw new AbortException("Wait for phone-home aborted");
             }
-        } catch (InterruptedException x) {
-            throw new AbortException("Wait for phone-home aborted");
-        }
 
-        List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
-        context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
-        context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToPossiblyAbortWaiting));
+            List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
+            context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
+            context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToPossiblyAbortWaiting));
+        } else {
+            context.env("JCLOUDS_IPS", " ");
+        }
     }
 
     private boolean isBeyondInstanceCap(final String cloudName, int numOfNewInstances) {

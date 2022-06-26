@@ -50,61 +50,65 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
             final AtomicInteger totalCount = new AtomicInteger();
 
             for (final NodePlan nodePlan : nodePlans) {
-                totalCount.addAndGet(nodePlan.getCount());
-                String plural = nodePlan.getCount() > 1 ? "s" : "";
-                LOGGER.info(String.format("Launching %d supplemental node%s from template %s in cloud %s", nodePlan.getCount(), plural,
-                    nodePlan.getTemplateName(), nodePlan.getCloudName()));
-                logger.info("Launching %d supplemental node%s from template %s in cloud %s", nodePlan.getCount(), plural,
-                    nodePlan.getTemplateName(), nodePlan.getCloudName());
-                for (int i = 0; i < nodePlan.getCount(); i++) {
-                    final int index = i;
-                    ListenableFuture<JCloudsNodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
+                if (nodePlan.getCount() > 0) {
+                    totalCount.addAndGet(nodePlan.getCount());
+                    String plural = nodePlan.getCount() > 1 ? "s" : "";
+                    LOGGER.info(String.format("Launching %d supplemental node%s from template %s in cloud %s", nodePlan.getCount(), plural,
+                        nodePlan.getTemplateName(), nodePlan.getCloudName()));
+                    logger.info("Launching %d supplemental node%s from template %s in cloud %s", nodePlan.getCount(), plural,
+                        nodePlan.getTemplateName(), nodePlan.getCloudName());
+                    for (int i = 0; i < nodePlan.getCount(); i++) {
+                        final int index = i;
+                        ListenableFuture<JCloudsNodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
 
-                    Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
-                        public void onSuccess(JCloudsNodeMetadata result) {
-                            if (result != null) {
-                                synchronized(nodeBuilder) {
-                                  RunningNode rn = new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.getShouldSuspend(), result);
-                                  nodeBuilder.add(rn);
-                                  successCount.incrementAndGet();
+                        Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
+                            public void onSuccess(JCloudsNodeMetadata result) {
+                                if (result != null) {
+                                    synchronized(nodeBuilder) {
+                                      RunningNode rn = new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.getShouldSuspend(), result);
+                                      nodeBuilder.add(rn);
+                                      successCount.incrementAndGet();
+                                    }
+                                } else {
+                                    failedCount.incrementAndGet();
                                 }
-                            } else {
-                                failedCount.incrementAndGet();
                             }
-                        }
 
-                        public void onFailure(Throwable t) {
-                            failedCount.incrementAndGet();
-                            LOGGER.log(java.util.logging.Level.WARNING,
-                                String.format("Error launching supplemental node #%d of %d from template %s in cloud %s", index, nodePlan.getCount(), plural,
-                                nodePlan.getTemplateName(), nodePlan.getCloudName()), t);
-                            logger.warn(t, "Error launching supplemental node #%d of %d from template %s in cloud %s", index, nodePlan.getCount(), plural,
-                                nodePlan.getTemplateName(), nodePlan.getCloudName());
-                        }
-                    }, executor);
+                            public void onFailure(Throwable t) {
+                                failedCount.incrementAndGet();
+                                LOGGER.log(java.util.logging.Level.WARNING,
+                                    String.format("Error launching supplemental node #%d of %d from template %s in cloud %s", index, nodePlan.getCount(), plural,
+                                    nodePlan.getTemplateName(), nodePlan.getCloudName()), t);
+                                logger.warn(t, "Error launching supplemental node #%d of %d from template %s in cloud %s", index, nodePlan.getCount(), plural,
+                                    nodePlan.getTemplateName(), nodePlan.getCloudName());
+                            }
+                        }, executor);
 
+                    }
                 }
             }
 
-            // REALLY block until all complete
-            while (successCount.get() + failedCount.get() < totalCount.get()) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    LOGGER.warning("Interrupt while waiting for node launch");
+            if (0 < totalCount.get()) {
+                // REALLY block until all complete
+                while (successCount.get() + failedCount.get() < totalCount.get()) {
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        LOGGER.warning("Interrupt while waiting for node launch");
+                    }
                 }
+
+                final ImmutableList<RunningNode> runningNodes = nodeBuilder.build();
+                if (failedCount.get() > 0) {
+                    terminateNodes.apply(runningNodes);
+                    throw new IllegalStateException("One or more nodes failed to launch.");
+                }
+
+                LOGGER.info(String.format("launched %d supplemental nodes", successCount.get()));
+                logger.info("launched %d supplemental nodes", successCount.get());
+
+                return runningNodes;
             }
-
-            final ImmutableList<RunningNode> runningNodes = nodeBuilder.build();
-            if (failedCount.get() > 0) {
-                terminateNodes.apply(runningNodes);
-                throw new IllegalStateException("One or more nodes failed to launch.");
-            }
-
-            LOGGER.info(String.format("launched %d supplemental nodes", successCount.get()));
-            logger.info("launched %d supplemental nodes", successCount.get());
-
-            return runningNodes;
         }
         return nodeBuilder.build();
     }
