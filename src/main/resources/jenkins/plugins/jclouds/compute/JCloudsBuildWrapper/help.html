@@ -1,12 +1,11 @@
 <div>
-    Supplemental nodes are JClouds instances that are temporarily provisioned for the lifetime of this job.
+    <p>Supplemental nodes are JClouds instances that are temporarily provisioned for the lifetime of this job.
     Apart from being provisioned and torn down by the JClouds plugin, these instances are <b>not</b> under any
     control of jenkins. In particular, they do not contribute build agents. They <i>are</i> however subject to
-    the instance cap limitation of the specified JClouds profile.
-    The IP addresses of the instances will be recorded in a comma-separated list, in the environment variable
-    "JCLOUDS_IPS".
-    How these instances are used is at the discretion of the build job.
-    <h3>Blocking behavior</h3>
+    the instance cap limitation of the specified JClouds profile. How these instances are used is at the discretion of the build job.
+    </p>
+    <p> </p>
+    <h4>Blocking behavior</h4>
     If a template with active phone home-flag is specified, the the build will be blocked until the instance(s) have
     invoked the phone-home webhook (or the phone-home timeout has been reached). Otherwise, the build will commence
     immediately after launching the instances.

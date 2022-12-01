@@ -63,14 +63,23 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
     private static final long serialVersionUID = 1L;
 
     private final List<InstancesToRun> instancesToRun;
+    private final String envVarName;
 
     @DataBoundConstructor
-    public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
+    public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun, String envVarName) {
         this.instancesToRun = instancesToRun;
+        this.envVarName = envVarName;
     }
 
     public List<InstancesToRun> getInstancesToRun() {
         return instancesToRun;
+    }
+
+    public String getEnvVarName() {
+        if (envVarName.isEmpty()) {
+            return "JCLOUDS_IPS";
+        }
+        return envVarName;
     }
 
     @Override
@@ -181,10 +190,10 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
             }
 
             List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
-            context.env("JCLOUDS_IPS", ips.size() > 0 ? String.join(",", ips) : " ");
+            context.env(getEnvVarName(), ips.size() > 0 ? String.join(",", ips) : " ");
             context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToPossiblyAbortWaiting));
         } else {
-            context.env("JCLOUDS_IPS", " ");
+            context.env(getEnvVarName(), " ");
         }
     }
 
