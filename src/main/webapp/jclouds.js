@@ -49,14 +49,28 @@ window.JClouds = window.JClouds || {
     },
     "showcfpost": function showcfpost() {
         var body = window.JClouds.body;
-        body.down('#page-head').remove();
+        var phead = body.down('#page-head') || body.down('#page-header');
+        if (phead) {
+            phead.remove();
+        }
+        var bcb = body.down('#breadcrumbBar');
+        if (bcb) {
+            bcb.remove();
+        }
         body.down('#side-panel').remove();
         body.down('footer').remove();
         Behaviour.applySubtree(body, false);
     },
     "mancfpost": function mancfpost() {
         var body = window.JClouds.body;
-        body.down('#page-head').remove();
+        var phead = body.down('#page-head') || body.down('#page-header');
+        if (phead) {
+            phead.remove();
+        }
+        var bcb = body.down('#breadcrumbBar');
+        if (bcb) {
+            bcb.remove();
+        }
         body.down('#side-panel').remove();
         body.down('footer').remove();
         Behaviour.applySubtree(body, false);
@@ -69,8 +83,10 @@ window.JClouds = window.JClouds || {
     },
     "chgbutton": function(sel) {
         var dis = $(sel).getValue() == '';
-        var but = $(sel).up('div').up('div').down('.yui-button').yb;
-        but.set('disabled', dis, true);
+        var but = $(sel).up('div').up('div').down('.yui-button') || $(sel).up('div').up('div').up('div').down('.yui-button');
+        if (but) {
+            but.yb.set('disabled', dis, true);
+        }
     },
     "chsel": function(evt) {
         var sel = evt.target || evt.srcElement;

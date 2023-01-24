@@ -124,7 +124,9 @@ limitations under the License.
         <f:entry title="${%User Data}" help="${descriptor.getHelpFile('userDataEntries')}">
           <j:choose>
             <j:when test="${udata}">
-              <input type="button" value="${%Manage config files...}" class="jclouds-managecf"/>
+              <f:block>
+                <input type="button" value="${%Manage config files...}" class="jclouds-managecf"/>
+              </f:block>
               <f:repeatableProperty field="userDataEntries"/>
             </j:when>
             <j:otherwise>
