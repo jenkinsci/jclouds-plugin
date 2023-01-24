@@ -24,6 +24,7 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.tasks.BuildWrapperDescriptor;
+import hudson.Util;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -50,6 +51,7 @@ import jenkins.plugins.jclouds.compute.internal.TerminateNodes;
 import jenkins.plugins.jclouds.internal.TaskListenerLogger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -62,24 +64,31 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
     private static final long serialVersionUID = 1L;
 
+    private static final String DEFAULT_ENVVARNAME = "JCLOUDS_IPS";
+
     private final List<InstancesToRun> instancesToRun;
-    private final String envVarName;
+    private String envVarName = null;
 
     @DataBoundConstructor
-    public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun, String envVarName) {
+    public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
         this.instancesToRun = instancesToRun;
-        this.envVarName = envVarName;
+    }
+
+    @DataBoundSetter
+    public void setEnvVarName(String value) {
+        envVarName = Util.fixNull(Util.fixEmptyAndTrim(value), DEFAULT_ENVVARNAME);
+    }
+
+    public String getEnvVarName() {
+        return envVarName;
+    }
+
+    private String getEnvVarNameWithDefault() {
+        return Util.fixNull(envVarName, DEFAULT_ENVVARNAME);
     }
 
     public List<InstancesToRun> getInstancesToRun() {
         return instancesToRun;
-    }
-
-    public String getEnvVarName() {
-        if (envVarName.isEmpty()) {
-            return "JCLOUDS_IPS";
-        }
-        return envVarName;
     }
 
     @Override
@@ -190,10 +199,10 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
             }
 
             List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
-            context.env(getEnvVarName(), ips.size() > 0 ? String.join(",", ips) : " ");
+            context.env(getEnvVarNameWithDefault(), ips.size() > 0 ? String.join(",", ips) : " ");
             context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToPossiblyAbortWaiting));
         } else {
-            context.env(getEnvVarName(), " ");
+            context.env(getEnvVarNameWithDefault(), " ");
         }
     }
 
