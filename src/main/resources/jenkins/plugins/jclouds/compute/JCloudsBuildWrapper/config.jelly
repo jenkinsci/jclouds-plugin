@@ -20,6 +20,9 @@ limitations under the License.
   <f:entry title="Environment variable of IPs" field="envVarName">
     <f:textbox />
   </f:entry>
+  <f:entry title="Variables to be published " field="publishMeta">
+    <f:textbox />
+  </f:entry>
   <f:entry field="instancesToRun">
     <f:repeatableProperty field="instancesToRun" minimum="1" />
   </f:entry>

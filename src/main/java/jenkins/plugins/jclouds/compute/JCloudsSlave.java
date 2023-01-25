@@ -246,7 +246,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     public void publishJnlpMetaData() {
         if (jnlpProvisioning) {
             MetaDataPublisher mdp = new MetaDataPublisher(JCloudsCloud.getByName(cloudName));
-            mdp.publish(this, getJnlpProperties());
+            mdp.publish(nodeId, "Publishing JNLP properties for ID " + nodeId, getJnlpProperties());
         }
     }
 

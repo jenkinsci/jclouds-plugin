@@ -59,13 +59,14 @@ public class MetaDataPublisher {
         return (null != loc) ? loc.getId() : "";
     }
 
-    public void publish(JCloudsSlave slave, Map<String,String> data) {
 
-        NodeMetadata nmd = slave.getNodeMetaData();
-        LOGGER.info("Setting JNLP properties for " + slave.getDisplayName());
+    public void publish(String nodeId, String msg, Map<String,String> data) {
+
+        NodeMetadata nmd = c.getCompute().getNodeMetadata(nodeId);
         final String providerName = c.providerName;
         try {
             if (providerName.equals("openstack-nova")) {
+                LOGGER.info(msg);
                 String region = getLocationPart(nmd, REGION);
                 String sid = nmd.getId().replaceFirst("^" + region + "/", "");
                 NovaApi napi = c.newApi(NovaApi.class);
@@ -75,6 +76,7 @@ public class MetaDataPublisher {
                 return;
             }
             if (providerName.equals("google-compute-engine")) {
+                LOGGER.info(msg);
                 String instance = nmd.getName();
                 String zone = getLocationPart(nmd, ZONE);
                 GoogleComputeEngineApi gce = c.newApi(GoogleComputeEngineApi.class);
