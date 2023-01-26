@@ -1,5 +1,14 @@
 ## Changelog
 
+### Version 2.30 (released Jan 26, 2023)
+- Improve JCloudsBuildWrapper:
+  - Add an optional parameter to specify an environment variable that receives the
+    IP-address(es) of supplemental nodes.
+  - Add an optional parameter to specify existing environment variables that get published
+    to the supplemental nodes as properties (OpenStack and GCE only).
+  - Add property `JCLOUDS_SUPPLEMENTAL_INDEX` to supplemental nodes in order to distinguish
+    multiple supplemental nodes.
+- Changes to upcoming styling of file upload in JCloudsUserWithKey (thanks to Tim Jacomb)
 ### Version 2.29 (released Jun 26, 2022)
 - Optimize operation: No need for cleanup, if zero supplemental nodes were launched.
 ### Version 2.28 (released Jun 24, 2022)
