@@ -843,6 +843,22 @@ public class JCloudsCloud extends Cloud {
     }
 
     /**
+     * Publish metadata for supplemental nodes.
+     *
+     * @param nodes The supplemental nodes to be modified.
+     */
+    static synchronized void publishMetadata(Iterable<RunningNode> nodes, Map<String,String> data) {
+        int idx = 0;
+        for (RunningNode rn : nodes) {
+            String nid = rn.getNodeId();
+            String msg = "Publishing metadata to supplemental node " + nid;
+            data.put("JCLOUDS_SUPPLEMENTAL_INDEX", String.valueOf(idx++));
+            MetaDataPublisher mdp = new MetaDataPublisher(JCloudsCloud.getByName(rn.getCloudName()));
+            mdp.publish(nid, msg, data);
+        }
+    }
+
+    /**
      * Register supplemental nodes of a build for a periodical cleanup if the build has been aborted.
      *
      * @param build The build that lounched the nodes.

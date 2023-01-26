@@ -68,6 +68,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
     private final List<InstancesToRun> instancesToRun;
     private String envVarName = null;
+    private String publishMeta = null;
 
     @DataBoundConstructor
     public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
@@ -81,6 +82,15 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
     public String getEnvVarName() {
         return envVarName;
+    }
+
+    @DataBoundSetter
+    public void setPublishMeta(String value) {
+        publishMeta = Util.fixEmptyAndTrim(value);
+    }
+
+    public String getPublishMeta() {
+        return publishMeta;
     }
 
     private String getEnvVarNameWithDefault() {
@@ -172,8 +182,17 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         if (Iterables.size(runningNodes) > 0) {
             // register nodes for termination if build gets aborted
             JCloudsCloud.registerSupplementalCleanup(build, runningNodes);
+            // publish env vars selected by publishMeta to supplemental nodes
+            Map<String, String> metaData = new HashMap();
+            for (String k : Util.fixNull(publishMeta).split(" +")) {
+                if (initialEnvironment.containsKey(k)) {
+                    String v = initialEnvironment.get(k);
+                    metaData.put(k, v);
+                }
+            }
+            // Each node gets also a JCLOUDS_SUPPLEMENTAL_INDEX published
+            JCloudsCloud.publishMetadata(runningNodes, metaData);
             final Set<String> cloudsToPossiblyAbortWaiting = new HashSet<>();
-
             // Optionally, wait for phone-home, blocks until all nodes have reported back availability or timeout.
             try {
                 final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams = waitPhoneHomeSetup(runningNodes, listener.getLogger());
