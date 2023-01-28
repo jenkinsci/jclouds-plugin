@@ -65,10 +65,12 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
     private static final long serialVersionUID = 1L;
 
     private static final String DEFAULT_ENVVARNAME = "JCLOUDS_IPS";
+    private static final String DEFAULT_INDEXNAME = "JCLOUDS_SUPPLEMENTAL_INDEX";
 
     private final List<InstancesToRun> instancesToRun;
     private String envVarName = null;
     private String publishMeta = null;
+    private String indexName = null;
 
     @DataBoundConstructor
     public JCloudsBuildWrapper(List<InstancesToRun> instancesToRun) {
@@ -93,8 +95,21 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         return publishMeta;
     }
 
+    @DataBoundSetter
+    public void setIndexName(String value) {
+        indexName = Util.fixNull(Util.fixEmptyAndTrim(value), DEFAULT_INDEXNAME);
+    }
+
+    public String getIndexName() {
+        return indexName;
+    }
+
     private String getEnvVarNameWithDefault() {
         return Util.fixNull(envVarName, DEFAULT_ENVVARNAME);
+    }
+
+    private String getIndexNameWithDefault() {
+        return Util.fixNull(indexName, DEFAULT_INDEXNAME);
     }
 
     public List<InstancesToRun> getInstancesToRun() {
@@ -191,7 +206,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
                 }
             }
             // Each node gets also a JCLOUDS_SUPPLEMENTAL_INDEX published
-            JCloudsCloud.publishMetadata(runningNodes, metaData);
+            JCloudsCloud.publishMetadata(runningNodes, metaData, getIndexNameWithDefault());
             final Set<String> cloudsToPossiblyAbortWaiting = new HashSet<>();
             // Optionally, wait for phone-home, blocks until all nodes have reported back availability or timeout.
             try {

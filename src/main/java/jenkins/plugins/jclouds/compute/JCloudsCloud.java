@@ -847,12 +847,14 @@ public class JCloudsCloud extends Cloud {
      *
      * @param nodes The supplemental nodes to be modified.
      */
-    static synchronized void publishMetadata(Iterable<RunningNode> nodes, Map<String,String> data) {
+    static synchronized void publishMetadata(Iterable<RunningNode> nodes, Map<String,String> data, String indexName) {
         int idx = 0;
         for (RunningNode rn : nodes) {
             String nid = rn.getNodeId();
             String msg = "Publishing metadata to supplemental node " + nid;
-            data.put("JCLOUDS_SUPPLEMENTAL_INDEX", String.valueOf(idx++));
+            if (!indexName.isEmpty()) {
+                data.put(indexName, String.valueOf(idx++));
+            }
             MetaDataPublisher mdp = new MetaDataPublisher(JCloudsCloud.getByName(rn.getCloudName()));
             mdp.publish(nid, msg, data);
         }
