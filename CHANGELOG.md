@@ -1,7 +1,8 @@
 ## Changelog
 
-### Version 2.31 (future)
+### Version 2.31 (released Jan 30, 2023)
 - Use `Cloud#getUrl` in /provision URL (thanks to Yaroslav Afenkin)
+- Add optional indexName parameter to JCloudsBuildWrapper
 ### Version 2.30 (released Jan 26, 2023)
 - Improve JCloudsBuildWrapper:
   - Add an optional parameter to specify an environment variable that receives the
