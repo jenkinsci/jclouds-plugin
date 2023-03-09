@@ -107,7 +107,7 @@ limitations under the License.
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-2.332.x</artifactId>
-        <version>1195.v33041c1f1b_b_2</version>
+        <version>1763.v092b_8980a_f5e</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -183,11 +183,11 @@ limitations under the License.
     </dependency>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
-      <artifactId>javax-activation-api</artifactId>
+      <artifactId>jakarta-activation-api</artifactId>
     </dependency>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
-      <artifactId>javax-mail-api</artifactId>
+      <artifactId>jakarta-mail-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.jclouds</groupId>
