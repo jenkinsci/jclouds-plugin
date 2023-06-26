@@ -19,7 +19,7 @@ limitations under the License.
   <parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>plugin</artifactId>
-    <version>4.37</version>
+    <version>4.68</version>
     <relativePath />
   </parent>
 
@@ -39,7 +39,6 @@ limitations under the License.
   <properties>
     <revision>2.32</revision>
     <changelist>-SNAPSHOT</changelist>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
     <test.jenkins.compute.endpoint />
     <test.jenkins.compute.api-version />
@@ -59,8 +58,7 @@ limitations under the License.
     <jclouds.version>2.5.0</jclouds.version>
     <!-- Depend on latest Jenkins 2.x LTS
          See README of https://github.com/jenkinsci/plugin-pom/ -->
-    <jenkins.version>2.332.1</jenkins.version>
-    <java.level>8</java.level>
+    <jenkins.version>2.361.4</jenkins.version>
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
   </properties>
 
@@ -106,8 +104,8 @@ limitations under the License.
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.332.x</artifactId>
-        <version>1763.v092b_8980a_f5e</version>
+        <artifactId>bom-2.361.x</artifactId>
+        <version>2102.v854b_fec19c92</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -115,7 +113,7 @@ limitations under the License.
   </dependencyManagement>
 
   <scm>
-    <connection>scm:git:git://github.com/${gitHubRepo}.git</connection>
+    <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
     <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
     <url>https://github.com/${gitHubRepo}</url>
     <tag>${scmTag}</tag>
@@ -169,7 +167,6 @@ limitations under the License.
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>config-file-provider</artifactId>
-      <version>3.7.1</version>
     </dependency>
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
@@ -407,23 +404,6 @@ limitations under the License.
                 </configuration>
               </execution>
             </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>java8build</id>
-      <activation>
-        <jdk>1.8</jdk>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-javadoc-plugin</artifactId>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
           </plugin>
         </plugins>
       </build>

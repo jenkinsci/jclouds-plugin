@@ -5,11 +5,11 @@ import static org.junit.Assert.assertNotNull;
 import java.util.Collections;
 import java.util.List;
 
-import com.gargoylesoftware.htmlunit.WebAssert;
-import com.gargoylesoftware.htmlunit.html.HtmlButton;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlFormUtil;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.htmlunit.WebAssert;
+import org.htmlunit.html.HtmlButton;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlFormUtil;
+import org.htmlunit.html.HtmlPage;
 import org.junit.Rule;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
@@ -53,7 +53,12 @@ public class JCloudsCloudTest {
         HtmlForm f = p.getFormByName("config");
         HtmlButton b = HtmlFormUtil.getButtonByCaption(f, "Test Connection");
         assertNotNull(b);
-        b = HtmlFormUtil.getButtonByCaption(f, "Delete cloud");
+        b = f.getElementsByTagName("button").stream()
+                .filter(HtmlButton.class::isInstance)
+                .map(HtmlButton.class::cast)
+                .filter(button -> button.getAttribute("title").equals("Delete cloud"))
+                .findFirst()
+                .orElseThrow();
         assertNotNull(b);
     }
 

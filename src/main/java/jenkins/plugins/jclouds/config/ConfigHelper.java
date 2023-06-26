@@ -42,6 +42,7 @@ import jakarta.activation.DataSource;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import jakarta.mail.BodyPart;
 import jakarta.mail.MessagingException;
@@ -175,6 +176,7 @@ public class ConfigHelper {
     }
 
     @NonNull
+    @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "TODO needs triage")
     public static ListBoxModel doFillFileItems(@Nullable final String currentValue) {
             ListBoxModel m = new ListBoxModel();
             m.add("- none -", "");
