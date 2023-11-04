@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:entry field="message" title="${%Message}">
+        <f:textbox/>
+    </f:entry>
+    <f:entry field="condition" title="${%Condition}" default="unstable">
+        <f:select/>
+    </f:entry>
+</j:jelly>
