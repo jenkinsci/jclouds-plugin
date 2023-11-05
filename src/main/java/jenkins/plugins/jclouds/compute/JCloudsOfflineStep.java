@@ -21,13 +21,14 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
 
+import hudson.console.ModelHyperlinkNote;
+
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.model.User;
 
 import hudson.slaves.OfflineCause;
 
@@ -102,17 +103,17 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
             return;
         }
         String nodename = env.get("NODE_NAME", "");
-        String msg = env.expand("Setting node ${NODE_NAME} offline");
         String err = env.expand("Unable to set node ${NODE_NAME} offline: ");
-        String causemsg = env.expand(String.format("In build %s: %s", run.getExternalizableId(), this.message));
+        String causemsg = String.format("In build %s: %s", run.getExternalizableId(), env.expand(this.message));
         if (!nodename.isEmpty()) {
             Node node = Jenkins.get().getNode(nodename);
             if (null != node) {
+                err = "Unable to set node " + ModelHyperlinkNote.encodeTo(node) + " offline: ";
                 Computer c = node.toComputer();
                 if (null != c) {
                     if (JCloudsComputer.class.isInstance(c)) {
-                        tl.getLogger().append("NOTICE: ").println(msg);
-                        OfflineCause oc = new OfflineCause.UserCause(User.getUnknown(), causemsg);
+                        tl.getLogger().append("NOTICE: ").println("Setting node " + ModelHyperlinkNote.encodeTo(node) + " offline");
+                        OfflineCause oc = new OfflineCause.UserCause(null, causemsg);
                         c.setTemporarilyOffline(true, oc);
                         return;
                     }
