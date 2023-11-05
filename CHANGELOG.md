@@ -1,6 +1,6 @@
 ## Changelog
 
-### Version 2.32 (not yet released)
+### Version 2.32 (released Nov 5, 2023)
 - Migrated to jacarta-mail (thanks to Basil Crow)
 - Refresh plugin for June 2023 (thanks to Basil Crow)
 - Added post build action for taking agent offline, if build is unsuccessful.
