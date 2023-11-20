@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.33 (released Nov 20, 2023)
+- Removed dependency on Prototype.js
 ### Version 2.32 (released Nov 5, 2023)
 - Migrated to jacarta-mail (thanks to Basil Crow)
 - Refresh plugin for June 2023 (thanks to Basil Crow)
