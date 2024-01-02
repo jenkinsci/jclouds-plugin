@@ -300,6 +300,8 @@ limitations under the License.
           <extensions>true</extensions>
           <configuration>
             <compatibleSinceVersion>2.9</compatibleSinceVersion>
+            <!-- Workaround for https://issues.jenkins.io/browse/JENKINS-72475 -->
+            <maskClasses>com.google.gson.</maskClasses>
           </configuration>
         </plugin>
 
