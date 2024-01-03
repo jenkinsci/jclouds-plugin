@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.34 (released Jan 3, 2024)
+- Added workaround for incompatibility of jclouds with newer GSON libs. Fixes ([JENKINS-72475](https://issues.jenkins.io/browse/JENKINS-72475))
 ### Version 2.33 (released Nov 20, 2023)
 - Removed dependency on Prototype.js
 ### Version 2.32 (released Nov 5, 2023)
