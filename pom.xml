@@ -58,7 +58,7 @@ limitations under the License.
     <jclouds.version>2.5.0</jclouds.version>
     <!-- Depend on latest Jenkins 2.x LTS
          See README of https://github.com/jenkinsci/plugin-pom/ -->
-    <jenkins.version>2.361.4</jenkins.version>
+    <jenkins.version>2.401.3</jenkins.version>
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
   </properties>
 
@@ -104,8 +104,8 @@ limitations under the License.
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.361.x</artifactId>
-        <version>2102.v854b_fec19c92</version>
+        <artifactId>bom-2.401.x</artifactId>
+        <version>2675.v1515e14da_7a_6</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -280,6 +280,24 @@ limitations under the License.
   <build>
     <finalName>${project.artifactId}</finalName>
     <plugins>
+    
+        <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>display-info</id>
+            <configuration>
+              <rules>
+                <requireUpperBoundDeps>
+                  <excludes combine.children="append">
+                    <exclude>com.google.code.gson:gson</exclude>
+                  </excludes>
+                </requireUpperBoundDeps>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
