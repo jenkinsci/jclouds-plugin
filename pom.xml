@@ -281,7 +281,7 @@ limitations under the License.
     <finalName>${project.artifactId}</finalName>
     <plugins>
     
-        <plugin>
+      <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>
         <executions>
           <execution>
@@ -299,38 +299,39 @@ limitations under the License.
         </executions>
       </plugin>
 
-        <plugin>
-          <artifactId>maven-javadoc-plugin</artifactId>
-          <configuration>
-            <links>
-              <link>https://javadoc.jenkins.io</link>
-              <link>https://jclouds.apache.org/reference/javadoc/2.0.x</link>
-              <link>https://google.github.io/guice/api-docs/4.0/javadoc</link>
-              <link>https://javadoc.jenkins.io/component/stapler</link>
-              <link>https://javaee.github.io/javaee-spec/javadocs</link>
-            </links>
-          </configuration>
-        </plugin>
+      <plugin>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <configuration>
+          <links>
+            <link>https://javadoc.jenkins.io</link>
+            <link>https://jclouds.apache.org/reference/javadoc/2.0.x</link>
+            <link>https://google.github.io/guice/api-docs/4.0/javadoc</link>
+            <link>https://javadoc.jenkins.io/component/stapler</link>
+            <link>https://javaee.github.io/javaee-spec/javadocs</link>
+          </links>
+        </configuration>
+      </plugin>
 
-        <plugin>
-          <groupId>org.jenkins-ci.tools</groupId>
-          <artifactId>maven-hpi-plugin</artifactId>
-          <extensions>true</extensions>
-          <configuration>
-            <compatibleSinceVersion>2.9</compatibleSinceVersion>
-            <!-- Workaround for https://issues.jenkins.io/browse/JENKINS-72475 -->
-            <maskClasses>com.google.gson.</maskClasses>
-          </configuration>
-        </plugin>
+      <plugin>
+        <groupId>org.jenkins-ci.tools</groupId>
+        <artifactId>maven-hpi-plugin</artifactId>
+        <extensions>true</extensions>
+        <configuration>
+          <compatibleSinceVersion>2.9</compatibleSinceVersion>
+          <!-- Workaround for https://issues.jenkins.io/browse/JENKINS-72475 -->
+          <maskClasses>com.google.gson.</maskClasses>
+        </configuration>
+      </plugin>
 
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-release-plugin</artifactId>
-          <configuration>
-            <autoVersionSubmodules>true</autoVersionSubmodules>
-            <tagNameFormat>jclouds-jenkins-@{project.version}</tagNameFormat>
-          </configuration>
-        </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <configuration>
+          <autoVersionSubmodules>true</autoVersionSubmodules>
+          <tagNameFormat>jclouds-jenkins-@{project.version}</tagNameFormat>
+        </configuration>
+      </plugin>
+
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -369,6 +370,7 @@ limitations under the License.
           <verbose>true</verbose>
         </configuration>
       </plugin>
+
     </plugins>
   </build>
 
