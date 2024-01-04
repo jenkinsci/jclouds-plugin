@@ -280,6 +280,24 @@ limitations under the License.
   <build>
     <finalName>${project.artifactId}</finalName>
     <plugins>
+    
+        <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>display-info</id>
+            <configuration>
+              <rules>
+                <requireUpperBoundDeps>
+                  <excludes combine.children="append">
+                    <exclude>com.google.code.gson:gson</exclude>
+                  </excludes>
+                </requireUpperBoundDeps>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
