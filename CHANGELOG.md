@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.35 (not yet released)
+- Updated jenkins base version and bom configuration (thanks to Aftab Alam)
 ### Version 2.34 (released Jan 3, 2024)
 - Added workaround for incompatibility of jclouds with newer GSON libs. Fixes ([JENKINS-72475](https://issues.jenkins.io/browse/JENKINS-72475))
 ### Version 2.33 (released Nov 20, 2023)
