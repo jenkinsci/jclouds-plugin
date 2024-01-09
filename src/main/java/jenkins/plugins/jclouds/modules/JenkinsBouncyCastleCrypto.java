@@ -7,7 +7,7 @@ import java.security.cert.CertificateException;
 
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
-import javax.inject.Singleton;
+import jakarta.inject.Singleton;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jclouds.crypto.Crypto;
