@@ -58,7 +58,7 @@ limitations under the License.
     <jclouds.version>2.5.0</jclouds.version>
     <!-- Depend on latest Jenkins 2.x LTS
          See README of https://github.com/jenkinsci/plugin-pom/ -->
-    <jenkins.version>2.401.3</jenkins.version>
+    <jenkins.version>2.440.1</jenkins.version>
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
   </properties>
 

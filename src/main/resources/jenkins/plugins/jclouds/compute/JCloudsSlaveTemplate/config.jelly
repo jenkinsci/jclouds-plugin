@@ -113,11 +113,13 @@ limitations under the License.
         </f:entry>
       
         <f:entry title="${%Init Script}" help="${descriptor.getHelpFile('initScriptId')}">
-          <div style="margin-right:200px;">
-            <div style="float:left;width:100%;"><f:select field="initScriptId" clazz="jclouds"/></div>
-            <div style="float:right;width:200px;margin-right:-200px;"><input type="button" value="${%Show content}" class="jclouds-showcf"
-                disabled="${empty(instance.initScriptId)?'true':null}"/></div>
-            <div style="clear:both;" />
+          <div style="display:block;">
+            <div style="display:inline-block;width:80%">
+              <f:select field="initScriptId" clazz="jclouds"/>
+            </div>
+            <div style="display:inline-block">
+              <button type="button" class="jenkins-button jclouds-showcf" style="margin-left:10px" disabled="${empty(instance.initScriptId)?'true':null}">${%Show content}</button>
+            </div>
           </div>
         </f:entry>
 
@@ -125,7 +127,7 @@ limitations under the License.
           <j:choose>
             <j:when test="${udata}">
               <f:block>
-                <input type="button" value="${%Manage config files...}" class="jclouds-managecf"/>
+                <button type="button" class="jenkins-button jclouds-managecf">${%Manage config files...}</button>
               </f:block>
               <f:repeatableProperty field="userDataEntries"/>
             </j:when>
@@ -141,7 +143,7 @@ limitations under the License.
         </f:entry>
 
         <f:entry field="preExistingJenkinsUser">
-          <f:checkbox title="${%Use Pre-existing Jenkins User}"/>
+          <f:checkbox title="${%Use Pre-existing Jenkins User}" default="checked"/>
         </f:entry>
       
         <f:entry field="allowSudo">
@@ -192,7 +194,7 @@ limitations under the License.
           <f:checkbox title="${%Use config drive}"/>
         </f:entry>
         <f:entry field="assignPublicIp">
-          <f:checkbox title="${%Assign Public IP}" default="true"/>
+          <f:checkbox title="${%Assign Public IP}" default="checked"/>
         </f:entry>
         <f:entry title="${%Preferred Address}" field="preferredAddress">
           <f:textbox />

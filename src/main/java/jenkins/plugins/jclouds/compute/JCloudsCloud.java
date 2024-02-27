@@ -119,15 +119,19 @@ public class JCloudsCloud extends Cloud {
     static final Logger LOGGER = Logger.getLogger(JCloudsCloud.class.getName());
 
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private final transient String identity;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private final transient Secret credential;
 
     public final String providerName;
 
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private final transient String privateKey;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private final transient String publicKey; // NOPMD - unused private member
 
     public final String endPointUrl;
@@ -671,7 +675,7 @@ public class JCloudsCloud extends Cloud {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
-                .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
+                .includeAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter
@@ -681,7 +685,7 @@ public class JCloudsCloud extends Cloud {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
-                .includeAs(ACL.SYSTEM, context, SSHUserPrivateKey.class).includeCurrentValue(currentValue);
+                .includeAs(ACL.SYSTEM2, context, SSHUserPrivateKey.class).includeCurrentValue(currentValue);
         }
 
         public FormValidation doCheckProfile(@QueryParameter String value) {

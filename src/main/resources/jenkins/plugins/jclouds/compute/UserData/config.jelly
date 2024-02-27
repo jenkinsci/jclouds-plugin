@@ -17,12 +17,11 @@ limitations under the License.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
   <div style="display:block;">
-    <div style="display:inline-block;" >
+    <div style="display:inline-block;width:80%" >
       <f:select field="fileId" clazz="jclouds" default=""/>
     </div>
     <div style="display:inline-block;" >
-      <input type="button" value="${%Show content}" class="jclouds-showcf"
-             disabled="${empty(instance.fileId)?'true':null}"/>
+      <button type="button" class="jenkins-button jclouds-showcf" style="margin-left:10px" disabled="${empty(instance.fileId)?'true':null}">${%Show content}</button>
     </div>
     <div style="display:inline-block;" >
       <f:repeatableDeleteButton/>

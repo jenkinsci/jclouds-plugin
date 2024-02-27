@@ -69,6 +69,11 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
         return (null == node ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES : node.getErrorRetentionTime());
     }
 
+    public boolean getIsPendingDelete() {
+        final JCloudsSlave node = getNode();
+        return null != node && node.isPendingDelete();
+    }
+
     @CheckForNull
     public String getCloudName() {
         final JCloudsSlave node = getNode();
@@ -77,14 +82,16 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
 
     /**
      * Deletes a jenkins slave node.
-     * The not is first marked pending delete and the actual deletion will
+     * The node is first marked pending delete and the actual deletion will
      * be performed at the next run of {@link JCloudsCleanupThread}.
      * If called again after already being marked, the deletion is
      * performed immediately.
      */
     @Override
     public HttpResponse doDoDelete() throws IOException {
-        disconnect(OfflineCause.create(Messages._deletedCause()));
+        recordTermination();
+        setTemporarilyOffline(true, OfflineCause.create(Messages._deletedCause()));
+
         final JCloudsSlave node = getNode();
         if (null != node) {
             if (node.isPendingDelete()) {

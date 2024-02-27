@@ -176,4 +176,4 @@ invoke the webhook before launching the ssh remote connection.
 ## Using JNLP
 
 Information about using JNLP instead of ssh (primarily for Windows-based agents, but works for Unix agents too)
-can be found [here](https://github.com/jenkinsci/jclouds-plugin/blob/master/JNLPPROVISIONING.md)
+can be found [here](JNLPPROVISIONING.md)
