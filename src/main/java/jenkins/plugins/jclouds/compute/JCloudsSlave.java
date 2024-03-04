@@ -16,9 +16,9 @@
 package jenkins.plugins.jclouds.compute;
 
 import hudson.Extension;
-import hudson.XmlFile;
 import hudson.model.TaskListener;
 import hudson.model.Descriptor;
+import hudson.model.Node;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
 import hudson.slaves.NodeProperty;
@@ -28,7 +28,6 @@ import hudson.slaves.SlaveComputer;
 
 import jenkins.model.Jenkins;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -158,7 +157,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
             throws IOException, Descriptor.FormException
         {
             this(cloudName, uniqueName(metadata, cloudName), description, fsRoot, numExecutors, mode, labelString,
-                    useJnlp ? new JCloudsJnlpLauncher(true) : new JCloudsLauncher(), new JCloudsRetentionStrategy(),
+                    useJnlp ? new JCloudsJnlpLauncher() : new JCloudsLauncher(), new JCloudsRetentionStrategy(),
                     Collections.<NodeProperty<?>>emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
                 metadata.getCredentials().getOptionalPassword().orNull(), metadata.getCredentials().getOptionalPrivateKey().orNull(),
                 metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId,
@@ -208,8 +207,11 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         SlaveComputer computer = getComputer();
         if (null != computer) {
             ret.put("X-url", rootUrl + computer.getUrl() + "slave-agent.jnlp");
+            ret.put("X-jenkinsurl", rootUrl);
             ret.put("X-jar", rootUrl + "jnlpJars/agent.jar");
             ret.put("X-sec", computer.getJnlpMac());
+            ret.put("X-agentname", computer.getName());
+            return ret;
         }
         LOGGER.severe("Should not happen: No associated SlaveComputer");
         return ret;
@@ -364,34 +366,20 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         return waitPhoneHome;
     }
 
-    /*
-     * This is extremely ugly!
-     * There should be a Jenkins#updateNode(Node) instead of just addNode() and removeNode().
-     * We MUST persist the value of the waitPhoneHome flag, because otherwise if jenkins is
-     * restarted after a node has successfully phoned home and that node is still running,
-     * jenkins would then repeat the whole thing, obviously timing out when the node does not
-     * phone home again.
-     * Another solution would be for jenkins to simply persist all nodes once before restarting.
-     *
-     * TODO: Remove, after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
-     */
-    private void updateXml() {
-        final File nodesDir = new File(Jenkins.get().getRootDir(), "nodes");
-        final File cfg = new File(new File(nodesDir, getNodeName()), "config.xml");
-        if (cfg.exists()) {
-            XmlFile xmlFile = new XmlFile(Jenkins.XSTREAM, cfg);
-            try {
-                xmlFile.write(this);
-            } catch (IOException e) {
-                LOGGER.warning(e.getMessage());
-            }
+    private void updateNode() {
+        Node n = Jenkins.get().getNode(getNodeName());
+        try {
+          if (!Jenkins.get().updateNode(n)) {
+            LOGGER.warning("Unable to update non-existing node " + getNodeName());
+          }
+        } catch (IOException e) {
+            LOGGER.warning(e.getMessage());
         }
     }
 
     public void setWaitPhoneHome(boolean value) {
         waitPhoneHome = value;
-        // TODO: Replace after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
-        updateXml();
+        updateNode();
         if (!waitPhoneHome) {
             phm.ring();
         }
@@ -399,8 +387,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
 
     public void setJnlpProvisioningNonce(String value) {
         jnlpProvisioningNonce = value;
-        // TODO: Replace after https://github.com/jenkinsci/jenkins/pull/1860 has been merged.
-        updateXml();
+        updateNode();
     }
 
     public String getCredentialsId() {

@@ -90,8 +90,10 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
     private final boolean trustAll;
 
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private final transient String identity;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private final transient String credential;
 
     @DataBoundConstructor
@@ -291,7 +293,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
-                .includeAs(ACL.SYSTEM, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
+                .includeAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
         ImmutableSortedSet<String> getAllProviders() {

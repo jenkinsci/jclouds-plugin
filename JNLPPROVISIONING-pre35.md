@@ -7,18 +7,15 @@ There are two variants:
 -   For cloud providers that support custom metadata to be set after instance creation, this metadata will be populated
 with three properties:
     -   **X-jar** provides the URL of the agent.jar
-    -   **X-url** provides the JNLP URL (deprecated in jenkins >= 2.440.1)
+    -   **X-url** provides the JNLP URL
     -   **X-sec** provides the secret
-    -   **X-jenkinsurl** provides the new URL, for usage with jenkins >= 2.440.1 (new in version 2.35)
-    -   **X-agentname** provides the agent name (new in version 2.35)
 
     This variant is currently supported by **openstack-nova** and **google-compute-engine** only.
-
 -   For other providers, there is another - slightly more complicated - method: Before creating a cloud instance, jenkins
     generates a nonce, which can be inserted into regular provisioning data by using the placeholder `${JNLP_NONCE}`. On the
     cloud VM, this nonce now can be used for authenticating a POST request to `https://your.jenkins.url/jclouds-jnlp-provision`.
     The auth parameter of that request must be the base64-encoded SHA256 hash of the concatenation of nonce and nodename.
-    The reply will be an JSON response, containing the properties mentioned above.
+    The reply will be an JSON response, containing the three properties mentioned above.
 
 ## Examples for provisioning JNLP parameters
 
@@ -34,7 +31,7 @@ users:
     gecos: Jenkins Agent
     shell: /bin/bash
 packages:
-  - openjdk-17-jdk-headless
+  - openjdk-8-jdk-headless
 write_files:
   - path: /usr/local/sbin/start-jnlpagent
     permissions: '0755'
@@ -45,8 +42,7 @@ write_files:
       chown jenkins /etc/jenkins.sec
       chmod 0640 /etc/jenkins.sec
       JARURL=$(curl  -sH "Metadata-Flavor: Google" "${BASEURL}/X-jar")
-      URL=$(curl -sH "Metadata-Flavor: Google" "${BASEURL}/X-jenkinsurl")
-      AGENTNAME=$(curl -sH "Metadata-Flavor: Google" "${BASEURL}/X-agentname")
+      JNLPURL=$(curl -sH "Metadata-Flavor: Google" "${BASEURL}/X-url")
       sudo -u jenkins curl -sL "${JARURL}" > /home/jenkins/agent.jar
       cat > /etc/systemd/system/jenkinsagent.service << EOF
       [Unit]
@@ -57,7 +53,7 @@ write_files:
       Type=simple
       User=jenkins
       WorkingDirectory=~
-      ExecStart=/usr/bin/java -jar agent.jar -url "${URL}" -name "${AGENTNAME}" -WebSocket -secret @/etc/jenkins.sec
+      ExecStart=/usr/bin/java -jar agent.jar -jnlpUrl "${JNLPURL}" -secret @/etc/jenkins.sec
       Restart=on-failure
       RestartSec=1min
       [Install]
@@ -96,8 +92,7 @@ write_files:
       chown jenkins /etc/jenkins.sec
       chmod 0640 /etc/jenkins.sec
       JARURL=$(echo "${JSON}" | jq -r '.["X-jar"]')
-      URL=$(echo "${JSON}" | jq -r '.["X-jenkinsurl"]')
-      AGENTNAME=$(echo "${JSON}" | jq -r '.["X-agentname"]')
+      JNLPURL=$(echo "${JSON}" | jq -r '.["X-url"]')
       sudo -u jenkins curl -sL "${JARURL}" > /home/jenkins/agent.jar
       cat > /etc/systemd/system/jenkinsagent.service << EOF
       [Unit]
@@ -108,7 +103,7 @@ write_files:
       Type=simple
       User=jenkins
       WorkingDirectory=~
-      ExecStart=/usr/bin/java -jar agent.jar -url "${URL}" -name "${AGENTNAME}" -WebSocket -secret @/etc/jenkins.sec
+      ExecStart=/usr/bin/java -jar agent.jar -jnlpUrl "${JNLPURL}" -secret @/etc/jenkins.sec
       Restart=on-failure
       RestartSec=1min
       [Install]
@@ -134,7 +129,7 @@ runcmd:
     <name>Jenkins JNLP agent</name>
     <description>This service runs an agent for Jenkins automation server.</description>
     <executable>java.exe</executable>
-    <arguments>-Xrs -Xmx256m -jar "%BASE%\agent.jar" -url "_URL_" -name "_AGENTNAME_" -WebSocket -secret "_SECRET_"</arguments>
+    <arguments>-Xrs -Xmx256m -jar "%BASE%\agent.jar" -noCertificateCheck -jnlpUrl "_JNLPURL_" -secret "_SECRET_"</arguments>
     <logmode>rotate</logmode>
     <startmode>automatic</startmode>
     <onfailure action="restart" delay="10 sec"/>
@@ -157,8 +152,6 @@ runcmd:
     </serviceaccount>
 </configuration>
 ```
-Note: The above XML is designed to be used with the new agent.jar, distributed with jenkins >= 2.440.1 for the old variant, look
-[here](JNLPPROVISIONING-pre35.md)
 
 The following powershell-script then can be used with [cloudbase-init](https://github.com/cloudbase/cloudbase-init) in a Windows VM running on **OpenStack** It
 should be saved in jenkins as custom config file **JClouds user data (shell script)** and then used in the advanced section of the
@@ -175,9 +168,8 @@ try {
     New-Item -type file -path "$($svpath).xml" -force | Out-Null
     Set-Content "$($svpath).xml" $($xml `
         -replace '_JARURL_', $meta.meta.'X-jar' `
-        -replace '_URL_', $meta.meta.'X-jenkinsurl' `
+        -replace '_JNLPURL_', $meta.meta.'X-url' `
         -replace '_SECRET_', $meta.meta.'X-sec' `
-        -replace '_AGENTNAME_', $meta.meta.'X-agentname' `
         -replace '_CNAME_', $cname)
     & "$($svpath).exe" 'install'
     $x = $lastexitcode

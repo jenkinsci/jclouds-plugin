@@ -37,12 +37,14 @@ public class JCloudsCloudTest {
                 "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
         j.getInstance().clouds.add(cloud);
 
-        HtmlPage p = j.createWebClient().goTo("configureClouds");
+        //HtmlPage p = j.createWebClient().goTo("configureClouds");
+        HtmlPage p = j.createWebClient().goTo("cloud/aws-profile/configure");
         WebAssert.assertInputPresent(p, "_.profile");
         mySelectPresent(p, "_.providerName");
         WebAssert.assertInputPresent(p, "_.endPointUrl");
         WebAssert.assertInputPresent(p, "_.instanceCap");
         WebAssert.assertInputPresent(p, "_.retentionTime");
+        WebAssert.assertInputPresent(p, "_.errorRetentionTime");
         mySelectPresent(p, "_.cloudCredentialsId");
         WebAssert.assertInputPresent(p, "_.trustAll");
         mySelectPresent(p, "_.cloudGlobalKeyId");
@@ -51,14 +53,10 @@ public class JCloudsCloudTest {
         WebAssert.assertInputPresent(p, "_.zones");
         WebAssert.assertInputPresent(p, "_.groupPrefix");
         HtmlForm f = p.getFormByName("config");
+        assertNotNull(f);
         HtmlButton b = HtmlFormUtil.getButtonByCaption(f, "Test Connection");
         assertNotNull(b);
-        b = f.getElementsByTagName("button").stream()
-                .filter(HtmlButton.class::isInstance)
-                .map(HtmlButton.class::cast)
-                .filter(button -> button.getAttribute("title").equals("Delete cloud"))
-                .findFirst()
-                .orElseThrow();
+        b = HtmlFormUtil.getButtonByCaption(f, "Add template");
         assertNotNull(b);
     }
 
@@ -74,10 +72,10 @@ public class JCloudsCloudTest {
         j.submit(j.createWebClient().goTo("configure").getFormByName("config"));
 
         j.assertEqualBeans(original, j.getInstance().clouds.getByName("aws-profile"),
-                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,groupPrefix");
+                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,errorRetentionTime,groupPrefix");
 
         j.assertEqualBeans(original, JCloudsCloud.getByName("aws-profile"),
-                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,groupPrefix");
+                "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,errorRetentionTime,groupPrefix");
     }
 
 }

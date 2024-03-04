@@ -145,18 +145,23 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final String osVersion;
     public final String locationId;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private transient String initScript;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private transient String userData;
     public final int numExecutors;
     public final boolean stopOnTerminate;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private transient String vmUser;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private transient String vmPassword;
     private final String jvmOptions;
     public final boolean preExistingJenkinsUser;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private transient String jenkinsUser;
     private final String fsRoot;
     public final boolean allowSudo;
@@ -165,6 +170,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final int spoolDelayMs;
     private final Object delayLockObject = new Object();
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
+    @Deprecated
     private transient Boolean assignFloatingIp;
     public final boolean waitPhoneHome;
     public final int waitPhoneHomeTimeout;
@@ -329,11 +335,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     }
 
     public String getJvmOptions() {
-        if (jvmOptions == null) {
-            return "";
-        } else {
-            return jvmOptions;
-        }
+        return Util.fixNull(jvmOptions);
     }
 
     public int getNumExecutors() {
@@ -488,8 +490,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
             if (!isNullOrEmpty(securityGroups)) {
                 LOGGER.info("Setting security groups to " + securityGroups);
-                String[] securityGroupsArray = csvToArray(securityGroups);
-                options.securityGroups(securityGroupsArray);
+                options.securityGroups(csvToArray(securityGroups));
             }
 
             if (useConfigDrive && options instanceof NovaTemplateOptions) {
@@ -762,25 +763,16 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.validatePositiveInteger(value);
         }
 
-        public FormValidation doCheckCredentialsId(@QueryParameter String value, @QueryParameter final String useJnlp) {
-            if (Boolean.valueOf(Util.fixEmptyAndTrim(useJnlp)).booleanValue()) {
-                return FormValidation.ok();
-            }
-            return FormValidation.validateRequired(value);
+        public FormValidation doCheckCredentialsId(@QueryParameter String value, @QueryParameter final boolean useJnlp) {
+            return useJnlp ?  FormValidation.ok() : FormValidation.validateRequired(value);
         }
 
-        public FormValidation doCheckAllowSudo(@QueryParameter final String value) {
-            if (Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
-                return deprecatedSshProvisioning();
-            }
-            return FormValidation.ok();
+        public FormValidation doCheckAllowSudo(@QueryParameter final boolean value) {
+            return value ? deprecatedSshProvisioning() : FormValidation.ok();
         }
 
-        public FormValidation doCheckInstallPrivateKey(@QueryParameter final String value) {
-            if (Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
-                return deprecatedSshProvisioning();
-            }
-            return FormValidation.ok();
+        public FormValidation doCheckInstallPrivateKey(@QueryParameter final boolean value) {
+            return value ? deprecatedSshProvisioning() : FormValidation.ok();
         }
 
         public FormValidation doCheckPreExistingJenkinsUser(@QueryParameter final String value, @QueryParameter final String useJnlp) {
@@ -793,9 +785,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckUseJnlp(@QueryParameter final String value,
-                @QueryParameter final String preExistingJenkinsUser, @QueryParameter final String initScriptId) {
-            if (Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
+        public FormValidation doCheckUseJnlp(@QueryParameter final boolean value,
+            @QueryParameter final boolean preExistingJenkinsUser, @QueryParameter final String initScriptId) {
+            if (value) {
                 if (null == Jenkins.get().getTcpSlaveAgentListener() || -1 == Jenkins.get().getSlaveAgentPort()) {
                     return FormValidation.error("This feature cannot work, because the JNLP port is disabled in global security.");
                 }
@@ -803,7 +795,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 if (!(aps.contains("JNLP-connect") || aps.contains("JNLP2-connect") || aps.contains("JNLP3-connect") || aps.contains("JNLP4-connect"))) {
                     return FormValidation.error("This feature cannot work, because all JNLP protocols are disabled in global security.");
                 }
-                if (!Boolean.valueOf(Util.fixEmptyAndTrim(preExistingJenkinsUser)).booleanValue()) {
+                if (!preExistingJenkinsUser) {
                     return FormValidation.error("Jenkins user provisioning relies on posix system, accessible via SSH.");
                 }
                 if (!ConfigHelper.getConfig(initScriptId).isEmpty()) {
@@ -827,6 +819,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return deprecatedSshProvisioning();
         }
 
+
+        public FormValidation doCheckFsRoot(@QueryParameter String value, @QueryParameter boolean preExistingJenkinsUser) {
+            if (preExistingJenkinsUser) {
+                return FormValidation.ok();
+            }
+            return FormValidation.validateRequired(value);
+        }
 
         public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
                 @QueryParameter String endPointUrl, @QueryParameter String imageId, @QueryParameter String zones) {
@@ -1016,7 +1015,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel().includeMatchingAs(
-                    ACL.SYSTEM, context, StandardUsernameCredentials.class,
+                    ACL.SYSTEM2, context, StandardUsernameCredentials.class,
                     Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
                     SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
         }
@@ -1026,7 +1025,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel().includeMatchingAs(
-                    ACL.SYSTEM, context, StandardUsernameCredentials.class,
+                    ACL.SYSTEM2, context, StandardUsernameCredentials.class,
                     Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
                     SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
         }

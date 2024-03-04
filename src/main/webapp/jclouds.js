@@ -48,32 +48,28 @@ window.JClouds = window.JClouds || {
             dlg.show();
         });
     },
+    "removeIfExists": function removeIfExists(body, selector) {
+        var el = body.querySelector(selector);
+        if (el) {
+            el.remove();
+        }
+    },
     "showcfpost": function showcfpost() {
         var body = window.JClouds.body;
-        var phead = body.querySelector('#page-head') || body.querySelector('#page-header');
-        if (phead) {
-            phead.remove();
-        }
-        var bcb = body.querySelector('#breadcrumbBar');
-        if (bcb) {
-            bcb.remove();
-        }
-        body.querySelector('#side-panel').remove();
-        body.querySelector('footer').remove();
+        window.JClouds.removeIfExists(body, '#page-head');
+        window.JClouds.removeIfExists(body, '#page-header');
+        window.JClouds.removeIfExists(body, '#breadcrumbBar');
+        window.JClouds.removeIfExists(body, '#side-panel');
+        window.JClouds.removeIfExists(body, 'footer');
         Behaviour.applySubtree(body, false);
     },
     "mancfpost": function mancfpost() {
         var body = window.JClouds.body;
-        var phead = body.querySelector('#page-head') || body.querySelector('#page-header');
-        if (phead) {
-            phead.remove();
-        }
-        var bcb = body.querySelector('#breadcrumbBar');
-        if (bcb) {
-            bcb.remove();
-        }
-        body.querySelector('#side-panel').remove();
-        body.querySelector('footer').remove();
+        window.JClouds.removeIfExists(body, '#page-head');
+        window.JClouds.removeIfExists(body, '#page-header');
+        window.JClouds.removeIfExists(body, '#breadcrumbBar');
+        window.JClouds.removeIfExists(body, '#side-panel');
+        window.JClouds.removeIfExists(body, 'footer');
         Behaviour.applySubtree(body, false);
     },
     "showcf": function(evt) {
@@ -84,9 +80,13 @@ window.JClouds = window.JClouds || {
     },
     "chgbutton": function(sel) {
         var dis = sel.value == '';
-        var but = sel.closest('div').parentElement.querySelector('.yui-button') || sel.closest('div').parentElement.parentElement.querySelector('.yui-button');
+        var but = sel.parentElement.parentElement.nextSibling.querySelector('.jclouds-showcf');
         if (but) {
-            but.yb.set('disabled', dis, true);
+            if (dis) {
+                but.setAttribute('disabled', "");
+            } else {
+                but.removeAttribute('disabled');
+            }
         }
     },
     "chsel": function(evt) {
@@ -99,30 +99,11 @@ window.JClouds = window.JClouds || {
         window.open(rootURL + '/configfiles', 'window', 'width=900,height=640,resizable,scrollbars');
     }
 };
-Behaviour.specify('INPUT.jclouds-showcf', 'jclouds', 99, function (e) {
-    // Jenkins' makeButton is complete crap when it comes to event handling
-    // inside a repeatable chunk.
-    // Therefore, we specify a null event handler here and let the
-    // SPAN... behavior install EXACTLY ONE click handler on the resulting
-    // YUI button. (An YUI button's outermost element is a SPAN.)
-    var b = makeButton(e, null);
-    // Attach the YUI button object to the DOM element, so we can retrieve
-    // it later (for disabling/enabling the button) from within our onchange
-    // event handler for the selects.
-    b.get("element").yb =  b;
-    e = null;
+Behaviour.specify('BUTTON.jclouds-showcf', 'jclouds', 99, function (e) {
+    e.onclick = window.JClouds.showcf;
 });
-Behaviour.specify('INPUT.jclouds-managecf', 'jclouds', 99, function (e) {
-    var b = makeButton(e, null);
-    e = null;
-}); 
-Behaviour.specify('SPAN.jclouds-showcf', 'jclouds', 100, function (e) {
-    e.removeEventListener('click', window.JClouds.showcf);
-    e.addEventListener('click', window.JClouds.showcf);
-});
-Behaviour.specify('SPAN.jclouds-managecf', 'jclouds', 100, function (e) {
-    e.removeEventListener('click', window.JClouds.managecf);
-    e.addEventListener('click', window.JClouds.managecf);
+Behaviour.specify('BUTTON.jclouds-managecf', 'jclouds', 99, function (e) {
+    e.onclick = window.JClouds.managecf;
 });
 Behaviour.specify('SELECT.jclouds', 'jclouds', 101, function (e) {
     e.removeEventListener('change', window.JClouds.chsel);

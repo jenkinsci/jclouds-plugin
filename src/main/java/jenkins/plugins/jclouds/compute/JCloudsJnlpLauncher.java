@@ -22,6 +22,10 @@ import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
 
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import jenkins.model.Jenkins;
 
 /**
  * The launcher used for JNLP slaves.
@@ -53,10 +57,30 @@ public class JCloudsJnlpLauncher extends JNLPLauncher {
 
     @Override
     public Descriptor<ComputerLauncher> getDescriptor() {
-        throw new UnsupportedOperationException();
+        return null;
     }
 
-    public JCloudsJnlpLauncher(boolean enableWorkDir) {
-        super(enableWorkDir);
+    public boolean getTcpSupported() {
+        return Jenkins.get().getTcpSlaveAgentListener() != null;
+    }
+
+    public boolean getInstanceIdentityInstalled() {
+        return Jenkins.get().getPluginManager().getPlugin("instance-identity") != null;
+    }
+
+    public boolean getWebSocketSupported() {
+        // HACK!! Work around @Restricted(Beta.class). Normally, we would write:
+        // return WebSockets.isSupported();
+        try {
+            Class<?> cl = Class.forName("jenkins.websocket.WebSockets");
+            Method m =  cl.getMethod("isSupported");
+            return (boolean) m.invoke(null);
+        } catch (ClassNotFoundException|NoSuchMethodException|InvocationTargetException|IllegalAccessException x) {
+            return false;
+        }
+    }
+
+    public JCloudsJnlpLauncher() {
+        super();
     }
 }
