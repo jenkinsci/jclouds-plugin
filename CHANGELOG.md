@@ -1,7 +1,10 @@
 ## Changelog
 
-### Version 2.35 (not yet released)
+### Version 2.35 (released Mar 5, 2024)
 - Updated jenkins base version and bom configuration (thanks to Aftab Alam)
+- Fixup compatibility with jenkins >= 2.440.1
+  - Support new agent.jar parameters when provisioning inbound (JNLP) agents
+  - Updated GUI to match recent GUI updates in jenkins core
 ### Version 2.34 (released Jan 3, 2024)
 - Added workaround for incompatibility of jclouds with newer GSON libs. Fixes ([JENKINS-72475](https://issues.jenkins.io/browse/JENKINS-72475))
 ### Version 2.33 (released Nov 20, 2023)
