@@ -24,7 +24,7 @@ limitations under the License.
   </parent>
 
   <artifactId>jclouds-jenkins</artifactId>
-  <version>2.35</version>
+  <version>${revision}${changelist}</version>
   <packaging>hpi</packaging>
   <name>Jenkins JClouds plugin</name>
   <description>Allows Jenkins to build using Cloud Servers via JClouds</description>
@@ -37,7 +37,7 @@ limitations under the License.
   </licenses>
 
   <properties>
-    <revision>2.35</revision>
+    <revision>2.36</revision>
     <changelist>-SNAPSHOT</changelist>
     <test.jenkins.compute.provider>FIXME_PROVIDER</test.jenkins.compute.provider>
     <test.jenkins.compute.endpoint />
@@ -116,7 +116,7 @@ limitations under the License.
     <connection>scm:git:https://github.com/${gitHubRepo}.git</connection>
     <developerConnection>scm:git:git@github.com:${gitHubRepo}.git</developerConnection>
     <url>https://github.com/${gitHubRepo}</url>
-    <tag>jclouds-jenkins-2.35</tag>
+    <tag>${scmTag}</tag>
   </scm>
 
   <repositories>
