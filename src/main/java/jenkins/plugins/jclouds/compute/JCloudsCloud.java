@@ -493,21 +493,21 @@ public class JCloudsCloud extends Cloud {
      *
      * @param req  {@link StaplerRequest}.
      * @param rsp  {@link StaplerResponse}.
-     * @param name Name of the template to provision.
+     * @param tplname Name of the template to provision.
      * @throws ServletException if an error occurs.
      * @throws IOException if an error occurs.
      * @throws Descriptor.FormException if the form does not validate.
      */
-    public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String name) throws ServletException, IOException,
+    public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String tplname) throws ServletException, IOException,
            Descriptor.FormException {
                checkPermission(PROVISION);
-               if (name == null) {
+               if (tplname == null) {
                    sendError("The agent template name query parameter is missing", req, rsp);
                    return;
                }
-               JCloudsSlaveTemplate t = getTemplate(name);
+               JCloudsSlaveTemplate t = getTemplate(tplname);
                if (t == null) {
-                   sendError("No such agent template with name : " + name, req, rsp);
+                   sendError("No such agent template with name : " + tplname, req, rsp);
                    return;
                }
 
@@ -515,7 +515,7 @@ public class JCloudsCloud extends Cloud {
                    JCloudsSlave node = doProvisionFromTemplate(t);
                    rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
                } else {
-                   sendError("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + name, req, rsp);
+                   sendError("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + tplname, req, rsp);
                }
     }
 

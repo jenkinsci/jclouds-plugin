@@ -16,30 +16,29 @@ limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler"
-         xmlns:f="/lib/form">
+         xmlns:l="/lib/layout" xmlns:dd="/lib/layout/dropdowns" xmlns:f="/lib/form">
     <j:if test="${it.hasPermission(it.PROVISION)}">
-
+        <j:set var="formId" value="${h.generateId()}"/>
         <tr>
-            <td/>
             <td colspan="${monitors.size()+2}">
-
-                <f:form action="${rootURL}/${it.url}/provision" method="post" name="provision">
-                    <input type="submit" class="jclouds-provision-button" value="${%Provision via JClouds} - ${it.name}"/>
-                    <select name="name">
-                        <j:forEach var="t" items="${it.templates}">
-                            <option value="${t.name}">${t.name}</option>
-                        </j:forEach>
-                    </select>
-                    <st:once>
-                        <script>
-                            Behaviour.register({
-                                ".jclouds-provision-button" : function (e) {
-                                    new YAHOO.widget.Button(e, { type: "menu", menu: e.nextSibling });
-                                }
-                            });
-                        </script>
-                    </st:once>
-                </f:form>
+              <l:overflowButton icon="symbol-add"
+                                text="${%Provision via Provision via JClouds} - ${it.name}"
+                                tooltip="${null}"
+                                clazz="jenkins-!-margin-top-2">
+                <j:forEach var="t" items="${it.templates}">
+                  <dd:custom>
+                    <button class="jenkins-dropdown__item"
+                             data-type="jclouds-provision"
+                             data-form="${formId}"
+                             data-url="${t.name}">${t.name}
+                    </button>
+                  </dd:custom>
+                </j:forEach>
+              </l:overflowButton>
+              <f:form action="${rootURL}/${it.url}/provision" method="post" name="provision" id="${formId}">
+                <input name="tplname" type="hidden"/>
+              </f:form>
+              <st:adjunct includes="jenkins.plugins.jclouds.compute.JCloudsCloud.provision"/>
             </td>
         </tr>
     </j:if>
