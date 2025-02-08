@@ -24,6 +24,7 @@ import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 
+import hudson.model.Descriptor.FormException;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
@@ -87,11 +88,11 @@ public final class CredentialsHelper {
      * @return The Id of the newly created  credential-plugin record.
      */
     public static String convertCredentials(final String description, final String identity, final Secret credential) {
-        StandardUsernameCredentials u = new UsernamePasswordCredentialsImpl(
-                CredentialsScope.SYSTEM, null, description, identity, Secret.toString(credential));
         try {
+            StandardUsernameCredentials u = new UsernamePasswordCredentialsImpl(
+                CredentialsScope.SYSTEM, null, description, identity, Secret.toString(credential));
             return CredentialsHelper.storeCredentials(u);
-        } catch (IOException e) {
+        } catch (IOException|FormException e) {
             LOGGER.warning(String.format("Error while migrating identity/credentials: %s", e.getMessage()));
         } 
         return null;
