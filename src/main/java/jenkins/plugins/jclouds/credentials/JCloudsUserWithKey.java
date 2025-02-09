@@ -64,7 +64,7 @@ public class JCloudsUserWithKey extends BasicSSHUserPrivateKey {
     private static String getJsonString(final String fileUploadEntry, final String fieldName) {
         if (null != fileUploadEntry) {
             try {
-                final FileItem fi = Stapler.getCurrentRequest().getFileItem(fileUploadEntry);
+                final FileItem fi = Stapler.getCurrentRequest2().getFileItem(fileUploadEntry);
                 if (null != fi) {
                     final String content = new String(fi.get(), StandardCharsets.UTF_8);
                     if (null != content && !content.isEmpty()) {

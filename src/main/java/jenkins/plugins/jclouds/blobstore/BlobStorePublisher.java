@@ -32,7 +32,7 @@ import hudson.util.CopyOnWriteList;
 import hudson.util.ListBoxModel;
 
 import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerRequest2;
 
 import org.jclouds.rest.AuthorizationException;
 
@@ -262,7 +262,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
         }
 
         @Override
-        public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
+        public boolean configure(StaplerRequest2 req, JSONObject formData) throws FormException {
             setProfiles(req.bindJSONToList(BlobStoreProfile.class, formData.get("profiles")));
             save();
             return true;
