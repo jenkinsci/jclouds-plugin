@@ -546,14 +546,13 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
                 options.as(GoogleComputeEngineTemplateOptions.class).assignExternalIp(assignPublicIp);
             }
 
-            if (assignPublicIp) {
-                if (options instanceof NovaTemplateOptions) {
-                    LOGGER.info("Setting autoAssignFloatingIp to true");
-                    options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
-                } else if (options instanceof CloudStackTemplateOptions) {
-                    LOGGER.info("Setting setupStaticNat to true");
-                    options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
-                }
+            if (assignPublicIp && options instanceof NovaTemplateOptions) {
+                LOGGER.info("Setting autoAssignFloatingIp to true");
+                options.as(NovaTemplateOptions.class).autoAssignFloatingIp(true);
+            }
+            if (options instanceof CloudStackTemplateOptions) {
+                LOGGER.info(String.format("Setting CloudStack setupStaticNat to %b", assignPublicIp));
+                options.as(CloudStackTemplateOptions.class).setupStaticNat(assignPublicIp);
             }
 
             if (null != adminCredentialsId) {
