@@ -498,6 +498,7 @@ public class JCloudsCloud extends Cloud {
      * @throws IOException if an error occurs.
      * @throws Descriptor.FormException if the form does not validate.
      */
+    @POST
     public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String tplname) throws ServletException, IOException,
            Descriptor.FormException {
                checkPermission(PROVISION);
