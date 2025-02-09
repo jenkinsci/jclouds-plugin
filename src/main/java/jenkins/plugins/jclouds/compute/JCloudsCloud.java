@@ -18,7 +18,7 @@ package jenkins.plugins.jclouds.compute;
 import com.google.common.base.Predicate;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -80,8 +80,8 @@ import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.verb.POST;
 
 import com.google.common.base.Strings;
@@ -491,15 +491,15 @@ public class JCloudsCloud extends Cloud {
     /**
      * Provisions a new node manually (by clicking a button in the computer list).
      *
-     * @param req  {@link StaplerRequest}.
-     * @param rsp  {@link StaplerResponse}.
+     * @param req  {@link StaplerRequest2}.
+     * @param rsp  {@link StaplerResponse2}.
      * @param tplname Name of the template to provision.
      * @throws ServletException if an error occurs.
      * @throws IOException if an error occurs.
      * @throws Descriptor.FormException if the form does not validate.
      */
     @POST
-    public void doProvision(StaplerRequest req, StaplerResponse rsp, @QueryParameter String tplname) throws ServletException, IOException,
+    public void doProvision(StaplerRequest2 req, StaplerResponse2 rsp, @QueryParameter String tplname) throws ServletException, IOException,
            Descriptor.FormException {
                checkPermission(PROVISION);
                if (tplname == null) {

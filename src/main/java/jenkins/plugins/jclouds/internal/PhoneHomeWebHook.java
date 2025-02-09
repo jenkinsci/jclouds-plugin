@@ -23,8 +23,8 @@ import hudson.security.ACL;
 import hudson.security.ACLContext;
 import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import org.jclouds.compute.domain.NodeMetadata;
@@ -64,7 +64,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
      * @param rsp The stapler response.
      */
     @RequirePOST
-    public void doIndex(StaplerRequest req, StaplerResponse rsp) {
+    public void doIndex(StaplerRequest2 req, StaplerResponse2 rsp) {
 
         String hostName = req.getParameter("hostname");
         if (null == hostName) {

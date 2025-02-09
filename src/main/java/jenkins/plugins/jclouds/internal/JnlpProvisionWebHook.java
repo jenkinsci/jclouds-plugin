@@ -22,8 +22,8 @@ import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
 import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import jenkins.plugins.jclouds.compute.JCloudsComputer;
@@ -34,9 +34,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 
 import static java.util.logging.Level.*;
-import static org.kohsuke.stapler.StaplerResponse.SC_UNAUTHORIZED;
-import static org.kohsuke.stapler.StaplerResponse.SC_BAD_REQUEST;
-import static org.kohsuke.stapler.StaplerResponse.SC_FORBIDDEN;
+import static org.kohsuke.stapler.StaplerResponse2.SC_UNAUTHORIZED;
+import static org.kohsuke.stapler.StaplerResponse2.SC_BAD_REQUEST;
+import static org.kohsuke.stapler.StaplerResponse2.SC_FORBIDDEN;
 
 /**
  * Receives phone home hook from slave.
@@ -65,7 +65,7 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
      * @param rsp The stapler response.
      */
     @RequirePOST
-    public void doIndex(StaplerRequest req, StaplerResponse rsp) {
+    public void doIndex(StaplerRequest2 req, StaplerResponse2 rsp) {
 
         final String rHost = req.getRemoteHost();
         final String rAddr = req.getRemoteAddr();
