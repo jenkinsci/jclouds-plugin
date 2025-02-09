@@ -1,5 +1,9 @@
 ## Changelog
 
+### Version 2.36 (released Feb 9, 2025)
+- Updated jenkins base version and bom configuration
+- Fixed build with java-21 by updating parent pom (Thanks to Mark Waite)
+- Removed dependency on YUI. Fixes ([JENKINS-73539](https://issues.jenkins.io/browse/JENKINS-73539))
 ### Version 2.35 (released Mar 5, 2024)
 - Updated jenkins base version and bom configuration (thanks to Aftab Alam)
 - Fixup compatibility with jenkins >= 2.440.1
