@@ -118,10 +118,14 @@ limitations under the License.
               <f:select field="initScriptId" clazz="jclouds"/>
             </div>
             <div style="display:inline-block">
-              <button type="button" class="jenkins-button jclouds-showcf" style="margin-left:10px" disabled="${empty(instance.initScriptId)?'true':null}">${%Show content}</button>
+              <button type="button" class="jenkins-button jclouds-showcf"
+                style="margin-left:10px"
+                data-dlgtitle="${%Details of JClouds Init Script}"
+                disabled="${empty(instance.initScriptId)?'true':null}">${%Show content}</button>
             </div>
           </div>
         </f:entry>
+        <st:adjunct includes="jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate.showcf"/>
 
         <f:entry title="${%User Data}" help="${descriptor.getHelpFile('userDataEntries')}">
           <j:choose>
@@ -130,6 +134,7 @@ limitations under the License.
                 <button type="button" class="jenkins-button jclouds-managecf">${%Manage config files...}</button>
               </f:block>
               <f:repeatableProperty field="userDataEntries"/>
+              <st:adjunct includes="jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate.managecf"/>
             </j:when>
             <j:otherwise>
               <div>Not supported with jclouds and this provider.<br/>If you believe this to be wrong,
