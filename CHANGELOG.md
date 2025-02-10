@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.37 (unreleased)
+- Migrated from EE 8 to EE 9 (thanks to Basil Crow)
 ### Version 2.36 (released Feb 9, 2025)
 - Updated jenkins base version and bom configuration
 - Fixed build with java-21 by updating parent pom (Thanks to Mark Waite)
