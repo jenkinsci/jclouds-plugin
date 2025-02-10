@@ -1,7 +1,8 @@
 ## Changelog
 
-### Version 2.37 (unreleased)
+### Version 2.37 (released Feb 10, 2025)
 - Migrated from EE 8 to EE 9 (thanks to Basil Crow)
+- Disable static NAT on CloudStack, if assignPublicIp is disabled. Fixes (([JENKINS-74928](https://issues.jenkins.io/browse/JENKINS-74928)
 ### Version 2.36 (released Feb 9, 2025)
 - Updated jenkins base version and bom configuration
 - Fixed build with java-21 by updating parent pom (Thanks to Mark Waite)
