@@ -134,6 +134,8 @@ public class JCloudsCloud extends Cloud {
     @Deprecated
     private final transient String publicKey; // NOPMD - unused private member
 
+    private transient int pendingNodes;
+
     public final String endPointUrl;
     public final String profile;
     private final int retentionTime;
@@ -266,6 +268,7 @@ public class JCloudsCloud extends Cloud {
         this.trustAll = trustAll;
         this.groupPrefix = groupPrefix;
         readResolve();
+        this.pendingNodes = 0;
     }
 
     protected Object readResolve() {
@@ -394,8 +397,9 @@ public class JCloudsCloud extends Cloud {
 
         while (excessWorkload > 0 && !Jenkins.get().isQuietingDown() && !Jenkins.get().isTerminating()) {
 
-            if ((getRunningNodesCount() + plannedNodeList.size()) >= instanceCap) {
-                LOGGER.info("Instance cap reached while adding capacity for label " + ((label != null) ? label.toString() : "null"));
+            if ((getRunningNodesCount() + plannedNodeList.size() + pendingNodes) >= instanceCap) {
+                LOGGER.info(String.format("Instance cap of %s reached while adding capacity for label %s",
+                                          getName(), (label != null) ? label.toString() : "null"));
                 break; // maxed out
             }
 
@@ -404,7 +408,13 @@ public class JCloudsCloud extends Cloud {
             plannedNodeList.add(new TrackedPlannedNode(provisioningId, template.getNumExecutors(), Computer.threadPoolForRemoting.submit(new Callable<Node>() {
                 public Node call() throws Exception {
                     // TODO: record the output somewhere
-                    JCloudsSlave jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout(), provisioningId);
+                    JCloudsSlave jcloudsSlave;
+                    pendingNodes++;
+                    try {
+                        jcloudsSlave = template.provisionSlave(StreamTaskListener.fromStdout(), provisioningId);
+                    } finally {
+                        pendingNodes--;
+                    }
                     Jenkins.get().addNode(jcloudsSlave);
 
                     /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
@@ -512,11 +522,16 @@ public class JCloudsCloud extends Cloud {
                    return;
                }
 
-               if (getRunningNodesCount() < instanceCap) {
-                   JCloudsSlave node = doProvisionFromTemplate(t);
-                   rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
+               if (getRunningNodesCount() + pendingNodes < instanceCap) {
+                   try {
+                      pendingNodes++;
+                      JCloudsSlave node = doProvisionFromTemplate(t);
+                      rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
+                   } finally {
+                      pendingNodes--;
+                   }
                } else {
-                   sendError("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + tplname, req, rsp);
+                   sendError(String.format("Instance cap of %s reached", getName()), req, rsp);
                }
     }
 
