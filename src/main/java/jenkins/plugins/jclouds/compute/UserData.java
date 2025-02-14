@@ -34,10 +34,12 @@ import static hudson.util.ReflectionUtils.*;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 
+import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.config.JCloudsConfig;
 import jenkins.plugins.jclouds.config.ConfigHelper;
 import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
@@ -75,7 +77,7 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
         setField(getConfigField("comment"), c, "auto-migrated");
         setField(getConfigField("content"), c, data);
 
-        // migrated data is stored on global scope
+        // migrated data is stored on global scopq
         GlobalConfigFiles.get().save(c);
         return new UserData(c.id);
     }
@@ -96,7 +98,9 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
         }
 
         @NonNull
+        @RequirePOST
         public ListBoxModel doFillFileIdItems(@QueryParameter @Nullable final String currentValue) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             return ConfigHelper.doFillFileItems(currentValue);
         }
     }

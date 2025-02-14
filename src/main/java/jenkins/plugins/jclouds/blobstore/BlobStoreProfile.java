@@ -59,6 +59,7 @@ import org.jclouds.providers.Providers;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
 
 import org.kohsuke.accmod.Restricted;
@@ -288,6 +289,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return FormValidation.ok();
         }
 
+        @POST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
@@ -311,7 +313,9 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return getAllProviders().first();
         }
 
+        @POST
         public ListBoxModel doFillProviderNameItems(@AncestorInPath ItemGroup context) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ListBoxModel m = new ListBoxModel();
             for (String supportedProvider : getAllProviders()) {
                 m.add(supportedProvider, supportedProvider);
@@ -319,7 +323,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return m;
         }
 
-        @POST
+        @RequirePOST
         public FormValidation doTestConnection(@QueryParameter("providerName") final String provider,
                @QueryParameter("credentialsId") final String credId,
                @QueryParameter("endPointUrl") final String url,
@@ -340,10 +344,12 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return res;
         }
 
+        @RequirePOST
         public ListBoxModel doFillLocationIdItems(@QueryParameter String providerName,
                 @QueryParameter String credentialsId,
                 @QueryParameter String endPointUrl) {
 
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ListBoxModel m = new ListBoxModel();
             m.add("None specified", "");
             if (null == Util.fixEmptyAndTrim(credentialsId)) {
@@ -361,11 +367,13 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return m;
         }
 
+        @RequirePOST
         public FormValidation doValidateLocationId(@QueryParameter("providerName") final String provider,
                 @QueryParameter("credentialsId") final String credId,
                 @QueryParameter("endPointUrl") final String url,
                 @QueryParameter("locationId") final String locId) {
 
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (null == Util.fixEmptyAndTrim(credId)) {
                 return FormValidation.error("No cloud credentials provided.");
             }

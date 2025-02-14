@@ -73,9 +73,9 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     private boolean waitPhoneHome;
     private Integer overrideRetentionTime;
     private final int waitPhoneHomeTimeout;
-    private final String user;
-    private final String password;
-    private final String privateKey;
+    private transient final String user;
+    private transient final String password;
+    private transient final String privateKey;
     private final boolean authSudo;
     private final String jvmOptions;
     private final String credentialsId;

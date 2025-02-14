@@ -17,16 +17,25 @@ package jenkins.plugins.jclouds.compute;
 
 import java.io.Serializable;
 
+import java.util.logging.Logger;
+import java.util.logging.Level;
+
 import hudson.Extension;
 import hudson.Util;
+import hudson.model.AbstractProject;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
+import hudson.security.Permission;
+import hudson.slaves.Cloud;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
 
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> implements Serializable {
 
@@ -65,7 +74,6 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
 
     @Extension @Symbol("instances")
     public static class DescriptorImpl extends Descriptor<InstancesToRun> {
-
         public String defaultCloudName() {
             for (String name : JCloudsCloud.getCloudNames()) {
                 JCloudsCloud c = JCloudsCloud.getByName(name);
@@ -76,7 +84,15 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
             return "";
         }
 
-        public ListBoxModel doFillCloudNameItems() {
+        @RequirePOST
+        public ListBoxModel doFillCloudNameItems(@AncestorInPath AbstractProject project) {
+            if (null == project) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                
+                project.checkPermission(Permission.CONFIGURE);
+            }
+            Jenkins.get().checkPermission(Cloud.PROVISION);
             ListBoxModel m = new ListBoxModel();
             for (String name : JCloudsCloud.getCloudNames()) {
                 JCloudsCloud c = JCloudsCloud.getByName(name);
@@ -87,7 +103,14 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
             return m;
         }
 
-        public ListBoxModel doFillTemplateNameItems(@QueryParameter("cloudName") String cname) {
+        @RequirePOST
+        public ListBoxModel doFillTemplateNameItems(@AncestorInPath AbstractProject project, @QueryParameter("cloudName") String cname) {
+            if (null == project) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                project.checkPermission(Permission.CONFIGURE);
+            }
+            Jenkins.get().checkPermission(Cloud.PROVISION);
             ListBoxModel m = new ListBoxModel();
             JCloudsCloud c = JCloudsCloud.getByName(cname);
             if (c != null) {

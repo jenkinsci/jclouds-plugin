@@ -17,6 +17,7 @@ package jenkins.plugins.jclouds.compute;
 
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.AbstractCloudComputer;
+import hudson.slaves.Cloud;
 import hudson.slaves.OfflineCause;
 import hudson.slaves.SlaveComputer;
 import jenkins.model.Jenkins;
@@ -33,6 +34,7 @@ import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import org.jclouds.compute.domain.NodeMetadata;
 
@@ -88,7 +90,9 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
      * performed immediately.
      */
     @Override
+    @RequirePOST
     public HttpResponse doDoDelete() throws IOException {
+        Jenkins.get().checkPermission(Cloud.PROVISION);
         recordTermination();
         setTemporarilyOffline(true, OfflineCause.create(Messages._deletedCause()));
 

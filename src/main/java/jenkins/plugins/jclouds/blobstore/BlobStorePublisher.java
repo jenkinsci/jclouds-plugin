@@ -24,6 +24,7 @@ import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
 import hudson.model.Describable;
 import hudson.model.Result;
+import hudson.security.Permission;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -31,8 +32,10 @@ import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.ListBoxModel;
 
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import org.jclouds.rest.AuthorizationException;
 
@@ -40,6 +43,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
+
+import jenkins.model.Jenkins;
 
 import net.sf.json.JSONObject;
 
@@ -292,7 +297,13 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
             return profiles != null && !profiles.isEmpty();
         }
 
-        public ListBoxModel doFillProfileNameItems() {
+        @RequirePOST
+        public ListBoxModel doFillProfileNameItems(@AncestorInPath AbstractProject project) {
+            if (null == project) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                project.checkPermission(Permission.CONFIGURE);
+            }
             ListBoxModel model = new ListBoxModel();
             for (BlobStoreProfile profile : getProfiles()) {
                 model.add(profile.getProfileName());
