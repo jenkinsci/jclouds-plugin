@@ -214,6 +214,19 @@ limitations under the License.
       <groupId>org.apache.jclouds</groupId>
       <artifactId>jclouds-allcompute</artifactId>
       <version>${jclouds.version}</version>
+      <exclusions>
+        <!-- exclude broken digitalocean2 ... -->
+        <exclusion>
+          <groupId>org.apache.jclouds.provider</groupId>
+          <artifactId>digitalocean2</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- ... and use our backported fix instead -->
+    <dependency>
+      <groupId>com.github.felfert</groupId>
+      <artifactId>digitalocean2-fixed</artifactId>
+      <version>2.5.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.jclouds</groupId>
