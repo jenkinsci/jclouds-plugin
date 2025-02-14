@@ -1,31 +1,27 @@
 package jenkins.plugins.jclouds.compute;
 
-import static org.junit.Assert.assertEquals;
-
-import org.jvnet.hudson.test.JenkinsRule;
 import hudson.util.FormValidation;
+import org.jclouds.ssh.SshKeys;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
 
-import org.jclouds.ssh.SshKeys;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.Rule;
-
-public class JCloudsCloudInsideJenkinsLiveTest {
-
-    @Rule public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class JCloudsCloudInsideJenkinsLiveTest {
 
     private ComputeTestFixture fixture;
     private JCloudsCloud cloud;
     private Map<String, String> generatedKeys;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         fixture = new ComputeTestFixture();
         fixture.setUp();
         generatedKeys = SshKeys.generate();
@@ -34,19 +30,19 @@ public class JCloudsCloudInsideJenkinsLiveTest {
         cloud = new JCloudsCloud(fixture.getProvider() + "-profile", fixture.getProvider(), fixture.getCredentialsId(),
                 null, fixture.getEndpoint(), 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
                 CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000,
-                null, "foobar", true, Collections.<JCloudsSlaveTemplate>emptyList());
+                null, "foobar", true, Collections.emptyList());
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (fixture != null)
+            fixture.tearDown();
     }
 
     @Test
-    public void testDoTestConnectionCorrectCredentialsEtc() throws IOException {
+    void testDoTestConnectionCorrectCredentialsEtc() throws IOException {
         FormValidation result = new JCloudsCloud.DescriptorImpl().doTestConnection(fixture.getProvider(), fixture.getCredentialsId(),
                 generatedKeys.get("private"), fixture.getEndpoint(), null, true);
         assertEquals("Connection succeeded!", result.getMessage());
-    }
-
-    @After
-    public void tearDown() {
-        if (fixture != null)
-            fixture.tearDown();
     }
 }

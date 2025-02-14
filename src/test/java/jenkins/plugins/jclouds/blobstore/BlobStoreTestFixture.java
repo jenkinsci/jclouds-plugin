@@ -1,32 +1,29 @@
 package jenkins.plugins.jclouds.blobstore;
 
-import java.util.Map;
-
-import org.jclouds.apis.BaseViewLiveTest;
-import org.jclouds.blobstore.BlobStore;
-import org.jclouds.blobstore.BlobStoreContext;
-import org.jclouds.util.Maps2;
-
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
-
-import jenkins.plugins.jclouds.internal.CredentialsHelper;
-
 import hudson.util.Secret;
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import org.jclouds.apis.BaseViewLiveTest;
+import org.jclouds.blobstore.BlobStore;
+import org.jclouds.blobstore.BlobStoreContext;
+import org.jclouds.util.Maps2;
 
-import org.junit.Assume;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @SuppressWarnings("unchecked")
 public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
-    public static String PROVIDER;
-    private static boolean SKIPIT = false;
+    private static final String PROVIDER;
+    private static final boolean SKIPIT;
 
     /**
      * base jclouds tests expect properties to arrive in a different naming convention, based on provider name.
-     *
+     * <p>
      * ex.
      *
      * <pre>
@@ -45,9 +42,9 @@ public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
     static {
         PROVIDER = System.getProperty("test.jenkins.blobstore.provider");
         SKIPIT = Strings.isNullOrEmpty(PROVIDER);
-        Map<String, String> filtered = Maps.filterKeys(Map.class.cast(System.getProperties()),
+        Map<String, String> filtered = Maps.filterKeys((Map) System.getProperties(),
                 Predicates.containsPattern("^test\\.jenkins\\.blobstore"));
-        Map<String, String> transformed = Maps2.transformKeys(filtered, new Function<String, String>() {
+        Map<String, String> transformed = Maps2.transformKeys(filtered, new Function<>() {
 
             public String apply(String arg0) {
                 return arg0.replaceAll("test.jenkins.blobstore", "test." + (SKIPIT ? "" : PROVIDER));
@@ -86,7 +83,7 @@ public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
     }
 
     public void setUp() {
-        Assume.assumeFalse(SKIPIT);
+        assumeFalse(SKIPIT);
         if (!SKIPIT) {
             super.setupContext();
         }
