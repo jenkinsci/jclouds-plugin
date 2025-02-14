@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.38 (released Feb 14, 2025)
+- Fixed NumberFormatException in digitalocean2 provider
 ### Version 2.37 (released Feb 10, 2025)
 - Migrated from EE 8 to EE 9 (thanks to Basil Crow)
 - Disable static NAT on CloudStack, if assignPublicIp is disabled. Fixes (([JENKINS-74928](https://issues.jenkins.io/browse/JENKINS-74928)
