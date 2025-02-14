@@ -82,6 +82,7 @@ import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
 
 import com.google.common.base.Strings;
@@ -658,7 +659,9 @@ public class JCloudsCloud extends Cloud {
             return getAllProviders().first();
         }
 
+        @RequirePOST
         public ListBoxModel doFillProviderNameItems() {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ListBoxModel m = new ListBoxModel();
             for (final String supportedProvider : getAllProviders()) {
                 // docker is not really usable with jclouds (yet?). Too many semantic differences.
@@ -669,6 +672,7 @@ public class JCloudsCloud extends Cloud {
             return m;
         }
 
+        @RequirePOST
         public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter
                 String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context :
@@ -679,6 +683,7 @@ public class JCloudsCloud extends Cloud {
                 .includeAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
         }
 
+        @RequirePOST
         public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter
                 String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context :
@@ -713,7 +718,9 @@ public class JCloudsCloud extends Cloud {
             return FormValidation.validatePositiveInteger(value);
         }
 
+        @RequirePOST
         public FormValidation doCheckRetentionTime(@QueryParameter String value) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             try {
                 if (Integer.parseInt(value) == -1)
                     return FormValidation.ok();
@@ -731,14 +738,18 @@ public class JCloudsCloud extends Cloud {
             return FormValidation.validatePositiveInteger(value);
         }
 
+        @RequirePOST
         public FormValidation doCheckEndPointUrl(@QueryParameter String value) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (!value.isEmpty() && !value.startsWith("http")) {
                 return FormValidation.error("The endpoint must be an URL");
             }
             return FormValidation.ok();
         }
 
+        @RequirePOST
         public FormValidation doCheckGroupPrefix(@QueryParameter String value) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (!value.matches("^[a-z0-9]*$")) {
                 return FormValidation.error("The group prefix may contain lowercase letters and numbers only.");
             }

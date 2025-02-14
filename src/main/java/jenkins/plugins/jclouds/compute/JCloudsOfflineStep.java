@@ -32,6 +32,8 @@ import hudson.model.TaskListener;
 
 import hudson.slaves.OfflineCause;
 
+import hudson.security.Permission;
+
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
@@ -47,8 +49,10 @@ import jenkins.tasks.SimpleBuildStep;
 
 import org.jenkinsci.Symbol;
 
+import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
 
@@ -149,19 +153,33 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
             return false;
         }
 
-        public FormValidation doCheckMessage(@QueryParameter String message) {
+        @RequirePOST
+        public FormValidation doCheckMessage(@AncestorInPath AbstractProject project, @QueryParameter String message) {
+            if (null == project) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                project.checkPermission(Permission.CONFIGURE);
+            }
+            Jenkins.get().checkPermission(Computer.DISCONNECT);
             if (Util.fixEmptyAndTrim(message) == null) {
                 return FormValidation.error("Message must be non-empty");
             }
             return FormValidation.ok();
         }
 
-        public ListBoxModel doFillConditionItems() {
-          ListBoxModel items = new ListBoxModel();
-          items.add(Result.UNSTABLE.toString(), Result.UNSTABLE.toString());
-          items.add(Result.FAILURE.toString(), Result.FAILURE.toString());
-          items.add(Result.ABORTED.toString(), Result.ABORTED.toString());
-          return items;
+        @RequirePOST
+        public ListBoxModel doFillConditionItems(@AncestorInPath AbstractProject project) {
+            if (null == project) {
+                Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            } else {
+                project.checkPermission(Permission.CONFIGURE);
+            }
+            Jenkins.get().checkPermission(Computer.DISCONNECT);
+            ListBoxModel items = new ListBoxModel();
+            items.add(Result.UNSTABLE.toString(), Result.UNSTABLE.toString());
+            items.add(Result.FAILURE.toString(), Result.FAILURE.toString());
+            items.add(Result.ABORTED.toString(), Result.ABORTED.toString());
+            return items;
         }
     }
 }
