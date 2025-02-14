@@ -1,21 +1,20 @@
 package jenkins.plugins.jclouds.compute;
 
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jvnet.hudson.test.JenkinsRule;
-import org.junit.Test;
-import org.junit.Rule;
 
 /**
  * @author Vijay Kiran
  */
-public class JCloudsSlaveTemplateTest {
-
-    @Rule public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class JCloudsSlaveTemplateTest {
 
     @Test
-    public void testConfigRoundtrip() throws Exception {
+    void testConfigRoundtrip(JenkinsRule j) throws Exception {
         final String name = "testSlave";
         final JCloudsSlaveTemplate beforeTemplate = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId",
                 1, 512, "osFamily", "osVersion", "locationId", "jclouds-slave-type1 jclouds-type2",
@@ -27,7 +26,7 @@ public class JCloudsSlaveTemplateTest {
                 "security_group1,security_group2", null /* credentialsId */,
                 null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */,
                 false /* preemptible */, null /* configDataIds */, "192.168.1.0/24" /* preferredAddress */,
-                false /* useJnlp */, false /* jnlpProvisioning */ );
+                false /* useJnlp */, false /* jnlpProvisioning */);
 
         final List<JCloudsSlaveTemplate> templates = new ArrayList<>();
         templates.add(beforeTemplate);

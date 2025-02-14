@@ -1,41 +1,32 @@
 package jenkins.plugins.jclouds.compute.internal;
 
-import java.util.List;
-
-import org.junit.Test;
-import org.junit.Rule;
-import org.junit.BeforeClass;
-import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
-
-import java.util.concurrent.ExecutionException;
-
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
-import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-import com.google.common.base.Function;
-import com.google.common.base.Functions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
+import java.util.List;
 
-import org.jvnet.hudson.test.JenkinsRule;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
-public class TerminateNodesTest {
-
-    @Rule public JenkinsRule j = new JenkinsRule();
+@WithJenkins
+class TerminateNodesTest {
 
     private static ComputeService compute;
 
-    @BeforeClass
-    public static void setUp() {
-        Boolean heavy = Boolean.getBoolean("heavyLoadTests");
-        assumeTrue(heavy.booleanValue());
+    @BeforeAll
+    static void setUp() {
+        boolean heavy = Boolean.getBoolean("heavyLoadTests");
+        assumeTrue(heavy);
         try {
             compute = ContextBuilder.newBuilder("stub").buildView(ComputeServiceContext.class).getComputeService();
         } catch (NoClassDefFoundError e) {
@@ -43,20 +34,20 @@ public class TerminateNodesTest {
         }
     }
 
-    @Test
-    public void testSuspendOnlySuspendsNodesInQuestion() throws InterruptedException, ExecutionException, RunNodesException {
+    @AfterAll
+    static void tearDown() {
+        if (null != compute) {
+            compute.getContext().close();
+        }
+    }
 
+    @Test
+    void testSuspendOnlySuspendsNodesInQuestion() throws Exception {
         if (null != compute) {
             List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("suspend", 10));
             List<List<NodeMetadata>> split = Lists.partition(nodes, 5);
 
-            Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
-
-                public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", true, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
-                }
-
-            });
+            Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), input -> new RunningNode("stub", "template", true, JCloudsNodeMetadata.fromNodeMetadata(input, "")));
 
             newTerminateNodes(compute).apply(runningNodesToSuspend);
 
@@ -65,75 +56,45 @@ public class TerminateNodesTest {
             for (NodeMetadata node : split.get(1))
                 assertEquals(NodeMetadata.Status.RUNNING, compute.getNodeMetadata(node.getId()).getStatus());
         }
-
-    }
-
-    private TerminateNodes newTerminateNodes(ComputeService compute) {
-        return new TerminateNodes();
     }
 
     @Test
-    public void testDestroyOnlyDestroysNodesInQuestion() throws InterruptedException, ExecutionException, RunNodesException {
-
+    void testDestroyOnlyDestroysNodesInQuestion() throws Exception {
         if (null != compute) {
             List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("destroy", 10));
             List<List<NodeMetadata>> split = Lists.partition(nodes, 5);
 
-            Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
-
-                public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", false, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
-                }
-
-            });
+            Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(0), input -> new RunningNode("stub", "template", false, JCloudsNodeMetadata.fromNodeMetadata(input, "")));
 
             newTerminateNodes(compute).apply(runningNodesToDestroy);
 
             for (NodeMetadata node : split.get(0))
-                assertEquals(null, compute.getNodeMetadata(node.getId()));
+                assertNull(compute.getNodeMetadata(node.getId()));
             for (NodeMetadata node : split.get(1))
                 assertEquals(NodeMetadata.Status.RUNNING, compute.getNodeMetadata(node.getId()).getStatus());
         }
-
     }
 
     @Test
-    public void testSuspendAndDestroy() throws InterruptedException, ExecutionException, RunNodesException {
-
+    void testSuspendAndDestroy() throws Exception {
         if (null != compute) {
             List<NodeMetadata> nodes = ImmutableList.copyOf(compute.createNodesInGroup("suspenddestroy", 10));
             List<List<NodeMetadata>> split = Lists.partition(nodes, 5);
 
-            Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), new Function<NodeMetadata, RunningNode>() {
+            Iterable<RunningNode> runningNodesToSuspend = Iterables.transform(split.get(0), input -> new RunningNode("stub", "template", true, JCloudsNodeMetadata.fromNodeMetadata(input, "")));
 
-                public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", true, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
-                }
-
-            });
-
-            Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(1), new Function<NodeMetadata, RunningNode>() {
-
-                public RunningNode apply(NodeMetadata input) {
-                    return new RunningNode("stub", "template", false, JCloudsNodeMetadata.fromNodeMetadata(input, ""));
-                }
-
-            });
+            Iterable<RunningNode> runningNodesToDestroy = Iterables.transform(split.get(1), input -> new RunningNode("stub", "template", false, JCloudsNodeMetadata.fromNodeMetadata(input, "")));
 
             newTerminateNodes(compute).apply(Iterables.concat(runningNodesToSuspend, runningNodesToDestroy));
 
             for (NodeMetadata node : split.get(0))
                 assertEquals(NodeMetadata.Status.SUSPENDED, compute.getNodeMetadata(node.getId()).getStatus());
             for (NodeMetadata node : split.get(1))
-                assertEquals(null, compute.getNodeMetadata(node.getId()));
+                assertNull(compute.getNodeMetadata(node.getId()));
         }
-
     }
 
-    @AfterClass
-    public static void tearDown() throws Exception {
-        if (null != compute) {
-            compute.getContext().close();
-        }
+    private static TerminateNodes newTerminateNodes(ComputeService compute) {
+        return new TerminateNodes();
     }
 }

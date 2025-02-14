@@ -15,63 +15,61 @@
  */
 package jenkins.plugins.jclouds.config;
 
-import java.io.IOException;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.lib.configprovider.model.ContentType;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.Test;
-import org.junit.Rule;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.jvnet.hudson.test.JenkinsRule;
-import org.jenkinsci.lib.configprovider.ConfigProvider;
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.lib.configprovider.model.ContentType;
-
-public class UserDataTest {
-
-    @Rule public JenkinsRule j = new JenkinsRule();
-
-    private void createConfig(final List<String> idlist, final ContentType contentType) {
-        for (ConfigProvider cp : ConfigProvider.all()) {
-            ContentType ct = ConfigHelper.getRealContentType(cp);
-            if (null != ct && contentType.equals(ct)) {
-                final String id = UUID.randomUUID().toString();
-                Config c = cp.newConfig(id);
-                cp.save(c);
-                idlist.add(id);
-                return;
-            }
-        }
-    }
+@WithJenkins
+class UserDataTest {
 
     @Test
-    public void testSingleConfig() throws IOException {
+    void testSingleConfig(JenkinsRule j) throws Exception {
         List<String> idlist = new ArrayList<>();
         createConfig(idlist, CloudInitContentType.CLOUDCONFIG);
-        assertEquals("Number of configs", 1, idlist.size());
+        assertEquals(1, idlist.size(), "Number of configs");
         byte[] udata = ConfigHelper.buildUserData(idlist, null, false);
         final String expected = "#cloud-config\n";
         assertEquals(expected, new String(udata));
     }
 
     @Test
-    public void testTwoConfigs() throws IOException {
+    void testTwoConfigs(JenkinsRule j) throws Exception {
         List<String> idlist = new ArrayList<>();
         createConfig(idlist, CloudInitContentType.CLOUDCONFIG);
         createConfig(idlist, CloudInitContentType.INCLUDE);
-        assertEquals("Number of configs", 2, idlist.size());
+        assertEquals(2, idlist.size(), "Number of configs");
         byte[] udata = ConfigHelper.buildUserData(idlist, null, false);
         String sudata = new String(udata);
-        assertTrue("Result contains multipart header", sudata.contains("Content-Type: multipart/mixed;"));
-        assertTrue("Result contains cloud-config part", sudata.contains(
-                    "Content-Type: text/cloud-config; charset=utf8; name=jclouds.yaml"));
-        assertTrue("Result contains merge header", sudata.contains(
-                    "Merge-Type: dict(allow_delete,recurse_array)+list(recurse_array,append)"));
-        assertTrue("Result contains include part", sudata.contains(
-                    "Content-Type: text/x-include-url; charset=utf8; name=jclouds.include"));
+        assertTrue(sudata.contains("Content-Type: multipart/mixed;"), "Result contains multipart header");
+        assertTrue(sudata.contains(
+                "Content-Type: text/cloud-config; charset=utf8; name=jclouds.yaml"), "Result contains cloud-config part");
+        assertTrue(sudata.contains(
+                "Merge-Type: dict(allow_delete,recurse_array)+list(recurse_array,append)"), "Result contains merge header");
+        assertTrue(sudata.contains(
+                "Content-Type: text/x-include-url; charset=utf8; name=jclouds.include"), "Result contains include part");
     }
 
+    private static void createConfig(final List<String> idlist, final ContentType contentType) {
+        for (ConfigProvider cp : ConfigProvider.all()) {
+            ContentType ct = ConfigHelper.getRealContentType(cp);
+            if (contentType.equals(ct)) {
+                final String id = UUID.randomUUID().toString();
+                Config c = cp.newConfig(id);
+                GlobalConfigFiles.get().save(c);
+                idlist.add(id);
+                return;
+            }
+        }
+    }
 }

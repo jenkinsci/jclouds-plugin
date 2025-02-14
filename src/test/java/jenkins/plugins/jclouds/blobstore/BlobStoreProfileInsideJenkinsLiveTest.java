@@ -1,20 +1,20 @@
 package jenkins.plugins.jclouds.blobstore;
 
-import org.jvnet.hudson.test.JenkinsRule;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class BlobStoreProfileInsideJenkinsLiveTest {
+@WithJenkins
+class BlobStoreProfileInsideJenkinsLiveTest {
 
-    @Rule public JenkinsRule j = new JenkinsRule();
+    private static final String CONTAINER_PREFIX = System.getProperty("user.name") + "-blobstore-profile";
 
     private BlobStoreTestFixture fixture;
     private BlobStoreProfile profile;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() {
         fixture = new BlobStoreTestFixture();
         fixture.setUp();
 
@@ -23,10 +23,15 @@ public class BlobStoreProfileInsideJenkinsLiveTest {
                 fixture.getCredentialsId(), fixture.getEndpoint(), null, true);
     }
 
-    public static final String CONTAINER_PREFIX = System.getProperty("user.name") + "-blobstore-profile";
+    @AfterEach
+    void tearDown() {
+        if (fixture != null) {
+            fixture.tearDown();
+        }
+    }
 
     @Test
-    public void testUpload() {
+    void testUpload() {
         String container = CONTAINER_PREFIX + "-upload";
         try {
             fixture.getBlobStore().createContainerInLocation(null, container);
@@ -38,10 +43,5 @@ public class BlobStoreProfileInsideJenkinsLiveTest {
         }
     }
 
-    @After
-    public void tearDown() {
-        if (fixture != null) {
-            fixture.tearDown();
-        }
-    }
+
 }

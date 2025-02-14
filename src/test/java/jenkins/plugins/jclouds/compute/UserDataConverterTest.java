@@ -15,26 +15,6 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
-import jenkins.model.Jenkins;
-import org.jenkinsci.plugins.configfiles.ConfigFiles;
-import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.junit.Test;
-import org.junit.Rule;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
-import org.jvnet.hudson.test.JenkinsRule;
-import org.jenkinsci.lib.configprovider.ConfigProvider;
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.lib.configprovider.model.ContentType;
-
 import jenkins.plugins.jclouds.config.ConfigHelper;
 import jenkins.plugins.jclouds.config.UserDataBoothook.UserDataBoothookProvider;
 import jenkins.plugins.jclouds.config.UserDataInclude.UserDataIncludeProvider;
@@ -42,67 +22,79 @@ import jenkins.plugins.jclouds.config.UserDataIncludeOnce.UserDataIncludeOncePro
 import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
 import jenkins.plugins.jclouds.config.UserDataUpstart.UserDataUpstartProvider;
 import jenkins.plugins.jclouds.config.UserDataYaml.UserDataYamlProvider;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
-public class UserDataConverterTest {
+import java.util.ArrayList;
+import java.util.List;
 
-    @Rule public JenkinsRule j = new JenkinsRule();
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@WithJenkins
+class UserDataConverterTest {
 
     @Test
-    public void testMigrationBoothook() {
+    void testMigrationBoothook(JenkinsRule j) {
         String data = "#cloud-boothook\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
         final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
-        assertTrue("Provider is an instance of UserDataBoothookProvider", p instanceof UserDataBoothookProvider);
+        assertInstanceOf(UserDataBoothookProvider.class, p, "Provider is an instance of UserDataBoothookProvider");
     }
 
     @Test
-    public void testMigrationInclude() {
+    void testMigrationInclude(JenkinsRule j) {
         String data = "#include\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
         final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
-        assertTrue("Provider is an instance of UserDataIncludeProvider", p instanceof UserDataIncludeProvider);
+        assertInstanceOf(UserDataIncludeProvider.class, p, "Provider is an instance of UserDataIncludeProvider");
     }
 
     @Test
-    public void testMigrationIncludeOnce() {
+    void testMigrationIncludeOnce(JenkinsRule j) {
         String data = "#include-once\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
         final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
-        assertTrue("Provider is an instance of UserDataIncludeOnceProvider", p instanceof UserDataIncludeOnceProvider);
+        assertInstanceOf(UserDataIncludeOnceProvider.class, p, "Provider is an instance of UserDataIncludeOnceProvider");
     }
 
     @Test
-    public void testMigrationScript() {
+    void testMigrationScript(JenkinsRule j) {
         String data = "#!/bin/sh\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
         final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
-        assertTrue("Provider is an instance of UserDataScriptProvider", p instanceof UserDataScriptProvider);
+        assertInstanceOf(UserDataScriptProvider.class, p, "Provider is an instance of UserDataScriptProvider");
     }
 
     @Test
-    public void testMigrationUpstart() {
+    void testMigrationUpstart(JenkinsRule j) {
         String data = "#upstart-job\nfoo bar baz";
         UserData ud = UserData.createFromData(data, "test1.cfg");
         final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
-        assertTrue("Provider is an instance of UserDataUpstartProvider", p instanceof UserDataUpstartProvider);
+        assertInstanceOf(UserDataUpstartProvider.class, p, "Provider is an instance of UserDataUpstartProvider");
     }
 
     @Test
-    public void testMigrationYaml() {
+    void testMigrationYaml(JenkinsRule j) {
         String data = "#cloud-config\napt_upgrade: true";
         UserData ud = UserData.createFromData(data, "test1.cfg");
         final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
-        assertTrue("Provider is an instance of UserDataYamlProvider", p instanceof UserDataYamlProvider);
+        assertInstanceOf(UserDataYamlProvider.class, p, "Provider is an instance of UserDataYamlProvider");
     }
 
     @Test
-    public void testBuildStrip() throws Exception {
+    void testBuildStrip(JenkinsRule j) throws Exception {
         List<String> idlist = new ArrayList<>();
         UserData ud = UserData.createFromData("#cloud-boothook\nfoo 1\n", "test1.cfg");
         idlist.add(ud.fileId);
@@ -119,18 +111,18 @@ public class UserDataConverterTest {
         byte[] udata = ConfigHelper.buildUserData(idlist, null, false);
         String sudata = new String(udata);
 
-        assertFalse("Result contains boothook signature", sudata.contains("#cloud-boothook\n"));
-        assertFalse("Result contains include signature", sudata.contains("#include\n"));
-        assertFalse("Result contains include-once signature", sudata.contains("#include-once\n"));
-        assertTrue("Result contains shellscript signature", sudata.contains("#!/bin/sh\n"));
-        assertFalse("Result contains upstart-job signature", sudata.contains("#upstart-job\n"));
-        assertFalse("Result contains cloud-config signature", sudata.contains("#cloud-config\n"));
+        assertFalse(sudata.contains("#cloud-boothook\n"), "Result contains boothook signature");
+        assertFalse(sudata.contains("#include\n"), "Result contains include signature");
+        assertFalse(sudata.contains("#include-once\n"), "Result contains include-once signature");
+        assertTrue(sudata.contains("#!/bin/sh\n"), "Result contains shellscript signature");
+        assertFalse(sudata.contains("#upstart-job\n"), "Result contains upstart-job signature");
+        assertFalse(sudata.contains("#cloud-config\n"), "Result contains cloud-config signature");
 
-        assertTrue("Result contains boothook content", sudata.contains("foo 1\n"));
-        assertTrue("Result contains include content", sudata.contains("foo 2\n"));
-        assertTrue("Result contains include-once content", sudata.contains("foo 3\n"));
-        assertTrue("Result contains shellscript content", sudata.contains("#!/bin/sh\nfoo 4\n"));
-        assertTrue("Result contains upstart-job content", sudata.contains("foo 5\n"));
-        assertTrue("Result contains cloud-config content", sudata.contains("foo 6\n"));
+        assertTrue(sudata.contains("foo 1\n"), "Result contains boothook content");
+        assertTrue(sudata.contains("foo 2\n"), "Result contains include content");
+        assertTrue(sudata.contains("foo 3\n"), "Result contains include-once content");
+        assertTrue(sudata.contains("#!/bin/sh\nfoo 4\n"), "Result contains shellscript content");
+        assertTrue(sudata.contains("foo 5\n"), "Result contains upstart-job content");
+        assertTrue(sudata.contains("foo 6\n"), "Result contains cloud-config content");
     }
 }
