@@ -17,9 +17,6 @@ package jenkins.plugins.jclouds.compute;
 
 import java.io.Serializable;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
-
 import hudson.Extension;
 import hudson.Util;
 import hudson.model.AbstractProject;
