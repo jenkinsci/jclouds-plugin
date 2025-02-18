@@ -62,50 +62,12 @@ limitations under the License.
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
   </properties>
 
-  <developers>
-    <developer>
-      <id>felfert</id>
-      <name>Fritz Elfert</name>
-      <email>fritz-github@fritz-elfert.de</email>
-      <url>http://fritz-elfert.de</url>
-      <timezone>+2</timezone>
-    </developer>
-    <developer>
-      <id>sdirector</id>
-      <name>Monty Taylor</name>
-      <email>mordred@inaugust.com</email>
-    </developer>
-    <developer>
-      <id>jclouds</id>
-      <name>Adrian Cole</name>
-      <email>adrian@jclouds.org</email>
-    </developer>
-    <developer>
-      <id>vijaykiran</id>
-      <name>Vijay Kiran</name>
-      <email>mail@vijaykiran.com</email>
-      <url>http://vijaykiran.com</url>
-    </developer>
-    <developer>
-      <id>abayer</id>
-      <name>Andrew Bayer</name>
-      <email>andrew.bayer@gmail.com</email>
-      <timezone>-8</timezone>
-    </developer>
-    <developer>
-      <id>mavlyutov</id>
-      <name>Marat Mavlyutov</name>
-      <email>m.mavlyutov@gmail.com</email>
-      <timezone>+3</timezone>
-    </developer>
-  </developers>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>4051.v78dce3ce8b_d6</version>
+        <version>4136.vca_c3202a_7fd1</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -141,7 +103,6 @@ limitations under the License.
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
       <artifactId>eddsa-api</artifactId>
-      <version>0.3.0-4.v84c6f0f4969e</version>
     </dependency>
     <dependency>
       <groupId>com.github.felfert</groupId>
@@ -176,7 +137,6 @@ limitations under the License.
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>cloud-stats</artifactId>
-      <version>0.27</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
