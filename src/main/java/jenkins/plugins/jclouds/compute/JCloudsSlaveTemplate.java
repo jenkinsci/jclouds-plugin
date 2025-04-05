@@ -355,7 +355,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return labelSet;
     }
 
-    @SuppressFBWarnings("DMI_RANDOM_USED_ONLY_ONCE")
     private String generateNonce() {
         Random r = new Random(System.currentTimeMillis());
         StringBuilder ret = new StringBuilder();
