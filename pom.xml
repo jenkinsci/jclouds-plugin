@@ -57,8 +57,8 @@ limitations under the License.
 
     <jclouds.version>2.5.0</jclouds.version>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-    <jenkins.baseline>2.479</jenkins.baseline>
-    <jenkins.version>${jenkins.baseline}.1</jenkins.version>
+    <jenkins.baseline>2.492</jenkins.baseline>
+    <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
   </properties>
 
@@ -105,7 +105,7 @@ limitations under the License.
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
         <artifactId>bom-${jenkins.baseline}.x</artifactId>
-        <version>4051.v78dce3ce8b_d6</version>
+        <version>4570.v1b_c718dd3b_1e</version>
         <scope>import</scope>
         <type>pom</type>
       </dependency>
@@ -141,7 +141,6 @@ limitations under the License.
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
       <artifactId>eddsa-api</artifactId>
-      <version>0.3.0-4.v84c6f0f4969e</version>
     </dependency>
     <dependency>
       <groupId>com.github.felfert</groupId>
@@ -176,7 +175,6 @@ limitations under the License.
     <dependency>
       <groupId>org.jenkins-ci.plugins</groupId>
       <artifactId>cloud-stats</artifactId>
-      <version>0.27</version>
     </dependency>
     <dependency>
       <groupId>com.google.code.gson</groupId>
