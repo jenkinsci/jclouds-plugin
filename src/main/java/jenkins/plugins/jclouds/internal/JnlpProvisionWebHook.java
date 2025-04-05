@@ -83,7 +83,7 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
         }
         LOGGER.info("Received POST from %s [%s] for %s".format(rHost, rAddr, hostName));
         // run in high privilege to see all the nodes anonymous users don't see.
-        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) { // NOPMD - unused local variable
             for (final Computer c : Jenkins.get().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();
@@ -96,7 +96,7 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
                         final ByteArrayInputStream str =
                             new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
                         try {
-                            rsp.serveFile(req, str, 0, (long)(result.length()), "response.json");
+                            rsp.serveFile(req, str, 0, (long)result.length(), "response.json");
                         } catch (Exception x) {
                             LOGGER.log(WARNING, "Could not send response:", x);
                         }

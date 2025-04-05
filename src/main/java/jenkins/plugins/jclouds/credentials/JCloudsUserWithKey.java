@@ -18,7 +18,6 @@ package jenkins.plugins.jclouds.credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey.DirectEntryPrivateKeySource;
 
 import hudson.Extension;
 import org.kohsuke.stapler.DataBoundConstructor;

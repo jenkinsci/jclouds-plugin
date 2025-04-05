@@ -33,7 +33,7 @@ public enum CloudInitContentType implements ContentType {
     private final String codeMirrorMode;
     private final String mimetype;
 
-    private CloudInitContentType(final String mode, final String mime) {
+    CloudInitContentType(final String mode, final String mime) {
         codeMirrorMode = mode;
         mimetype = mime;
     }

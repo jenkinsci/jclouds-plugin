@@ -41,7 +41,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 @Extension
 public class JCloudsProvisionCommand extends CLICommand {
 
-    enum OutputFormat { HUMAN, JSON, PROPERTIES };
+    enum OutputFormat { HUMAN, JSON, PROPERTIES }
 
     @Argument(required = true, metaVar = "PROFILE", index = 0, usage = "Name of jclouds profile to use")
         public String profile;

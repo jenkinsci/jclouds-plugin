@@ -68,7 +68,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
 
     int getErrorRetentionTime() {
         final JCloudsSlave node = getNode();
-        return (null == node ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES : node.getErrorRetentionTime());
+        return null == node ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES : node.getErrorRetentionTime();
     }
 
     public boolean getIsPendingDelete() {

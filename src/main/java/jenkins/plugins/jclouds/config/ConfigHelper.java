@@ -141,8 +141,8 @@ public class ConfigHelper {
         if (configs.isEmpty()) {
             return null;
         }
-        try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            try (final OutputStream os = gzip ? new GZIPOutputStream(baos) : baos) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            try (OutputStream os = gzip ? new GZIPOutputStream(baos) : baos) {
                 if (configs.size() > 1) {
                     try {
                         final MimeMessage msg = new MimeMessage((Session)null);
@@ -155,7 +155,7 @@ public class ConfigHelper {
                         }
                         msg.setContent(multipart);
                         // Yet another nested stream, as workaround for cloudbase-init
-                        try (final ByteArrayOutputStream tmpbaos = new ByteArrayOutputStream()) {
+                        try (ByteArrayOutputStream tmpbaos = new ByteArrayOutputStream()) {
                             msg.writeTo(tmpbaos, new String[]{"Date", "Message-ID", "MIME-Version"});
                             os.write(injectMimeVersion(tmpbaos.toByteArray()));
                         }

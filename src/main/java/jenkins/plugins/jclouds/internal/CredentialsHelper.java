@@ -57,7 +57,7 @@ public final class CredentialsHelper {
      */
     public static String storeCredentials(final StandardUsernameCredentials u) throws IOException {
         if (null != u) {
-            try (final ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
+            try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) { // NOPMD - unused local variable
                 final CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.get()).iterator().next();
                 s.addCredentials(Domain.global(), u);
                 return u.getId();
@@ -91,7 +91,7 @@ public final class CredentialsHelper {
         try {
             StandardUsernameCredentials u = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, description, identity, Secret.toString(credential));
-            return CredentialsHelper.storeCredentials(u);
+            return storeCredentials(u);
         } catch (IOException|FormException e) {
             LOGGER.warning(String.format("Error while migrating identity/credentials: %s", e.getMessage()));
         } 

@@ -35,8 +35,6 @@ import jenkins.plugins.jclouds.compute.JCloudsSlave;
 
 import java.util.logging.Logger;
 
-import static java.util.logging.Level.*;
-
 /**
  * Receives phone home hook from slave.
  *
@@ -72,7 +70,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
         }
         LOGGER.info("Received POST from " + hostName);
         // run in high privilege to see all the nodes anonymous users don't see.
-        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) { // NOPMD - unused local variable
             for (final Computer c : Jenkins.get().getComputers()) {
                 if (JCloudsComputer.class.isInstance(c)) {
                     final JCloudsSlave slave = ((JCloudsComputer) c).getNode();

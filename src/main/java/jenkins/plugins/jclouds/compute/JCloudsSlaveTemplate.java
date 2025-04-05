@@ -357,7 +357,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     @SuppressFBWarnings("DMI_RANDOM_USED_ONLY_ONCE")
     private String generateNonce() {
-        Random r = new Random(java.lang.System.currentTimeMillis());
+        Random r = new Random(System.currentTimeMillis());
         StringBuilder ret = new StringBuilder();
         while (16 > ret.length()) {
             char ch = (char)(97 + r.nextInt(26));
@@ -1300,7 +1300,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return Base64.decodeBase64(builder.toString());
     }
 
-    private static final boolean isNullOrEmpty(final String value) {
+    private static boolean isNullOrEmpty(final String value) {
         return null == Util.fixEmptyAndTrim(value);
     }
 }

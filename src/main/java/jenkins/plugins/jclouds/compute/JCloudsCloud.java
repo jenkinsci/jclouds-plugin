@@ -830,7 +830,7 @@ public class JCloudsCloud extends Cloud {
             if (null != result && result == Result.ABORTED) {
                 LOGGER.info("job \"" + entry.getKey().getFullDisplayName() + "\"was aborted, cleaning up supplemental nodes");
                 for (RunningNode rn : entry.getValue()) {
-                    JCloudsCloud c = JCloudsCloud.getByName(rn.getCloudName());
+                    JCloudsCloud c = getByName(rn.getCloudName());
                     if (null != c) {
                         if (rn.getShouldSuspend()) {
                             try {
@@ -871,7 +871,7 @@ public class JCloudsCloud extends Cloud {
             if (!indexName.isEmpty()) {
                 data.put(indexName, String.valueOf(idx++));
             }
-            MetaDataPublisher mdp = new MetaDataPublisher(JCloudsCloud.getByName(rn.getCloudName()));
+            MetaDataPublisher mdp = new MetaDataPublisher(getByName(rn.getCloudName()));
             mdp.publish(nid, msg, data);
         }
     }
