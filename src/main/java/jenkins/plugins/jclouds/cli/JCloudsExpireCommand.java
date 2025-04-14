@@ -13,21 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jenkins.plugins.jclouds.compute;
+package jenkins.plugins.jclouds.cli;
 
 import hudson.Extension;
 import hudson.cli.CLICommand;
 import hudson.model.Computer;
 import hudson.model.Node;
-import hudson.security.Permission;
 import jenkins.model.Jenkins;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
+import jenkins.plugins.jclouds.compute.JCloudsComputer;
+import jenkins.plugins.jclouds.compute.JCloudsSlave;
+
 /**
- * Expires a running slave.
+ * Expires a running JClouds node.
  *
  * @author Fritz Elfert
  */
@@ -47,7 +49,7 @@ public class JCloudsExpireCommand extends CLICommand {
         Node n = Jenkins.get().getNode(nodeName);
         CmdLineParser p = getCmdLineParser();
         if (null != n) {
-            n.checkPermission(Permission.CONFIGURE);
+            Jenkins.get().checkPermission(Computer.CONFIGURE);
         } else {
             throw new CmdLineException(p, CliMessages.NO_SUCH_NODE_EXISTS, nodeName);
         }
