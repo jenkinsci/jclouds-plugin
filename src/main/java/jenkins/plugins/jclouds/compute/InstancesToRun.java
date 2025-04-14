@@ -86,7 +86,7 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
             if (null == project) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             } else {
-                
+
                 project.checkPermission(Permission.CONFIGURE);
             }
             Jenkins.get().checkPermission(Cloud.PROVISION);

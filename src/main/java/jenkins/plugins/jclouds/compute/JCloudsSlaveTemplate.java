@@ -18,7 +18,6 @@ package jenkins.plugins.jclouds.compute;
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Field;
@@ -37,18 +36,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import org.apache.commons.codec.binary.Base64;
-
 import hudson.Extension;
 import hudson.RelativePath;
 import hudson.Util;
+import hudson.model.AbstractDescribableImpl;
 import hudson.model.AutoCompletionCandidates;
-import hudson.model.Describable;
 import hudson.model.Computer;
 import hudson.model.Descriptor;
 import hudson.model.Label;
@@ -129,7 +125,7 @@ import edazdarevic.commons.net.CIDRUtils;
 /**
  * @author Vijay Kiran
  */
-public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, Supplier<JCloudsNodeMetadata> {
+public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTemplate> implements Supplier<JCloudsNodeMetadata> {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
     private static final char SEPARATOR_CHAR = ',';
@@ -169,7 +165,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     public final boolean installPrivateKey;
     public final Integer overrideRetentionTime;
     public final int spoolDelayMs;
-    private final Object delayLockObject = new Object();
+    private transient Object delayLockObject = new Object();
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
     @Deprecated
     private transient Boolean assignFloatingIp;
@@ -190,7 +186,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     private final boolean useJnlp;
     private final boolean jnlpProvision;
 
-    transient JCloudsCloud cloud;
+    private transient JCloudsCloud cloud;
     private transient Set<LabelAtom> labelSet;
 
     public String getCredentialsId() {
@@ -282,6 +278,10 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return cloud;
     }
 
+    public void setCloud(JCloudsCloud c) {
+        cloud = c;
+    }
+
     /**
      * Initializes data structure that we don't persist.
      * @return The initialized object.
@@ -308,7 +308,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return getCloud().getGlobalPrivateKey();
         }
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class, Jenkins.get(), ACL.SYSTEM2),
+                CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class, null, null),
                 CredentialsMatchers.withId(credentialsId));
         if (null == supk) {
             LOGGER.warning(String.format("Credentials with id %s not found", credentialsId));
@@ -380,10 +380,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         }
     }
 
-    private List<String> getUserDataIds() {
+    public List<String> getUserDataIds() {
         List<String> ret = new ArrayList<>();
-        for (UserData ud : userDataEntries) {
-            ret.add(ud.fileId);
+        if (null != userDataEntries) {
+            for (UserData ud : userDataEntries) {
+                ret.add(ud.fileId);
+            }
         }
         return ret;
     }
@@ -699,12 +701,6 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     public boolean hasOverrideRetentionTime() {
         return null != overrideRetentionTime;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public Descriptor<JCloudsSlaveTemplate> getDescriptor() {
-        return Jenkins.get().getDescriptor(getClass());
     }
 
     @Extension
@@ -1236,7 +1232,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
 
     private StandardUsernameCredentials retrieveExistingCredentials(final String username, final String privkey) {
         return CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class,
-                    Jenkins.get(), ACL.SYSTEM2, Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME)),
+                    null, null, Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME)),
                     CredentialsMatchers.allOf(CredentialsMatchers.withUsername(username), new CredentialsMatcher() {
                         public boolean matches(Credentials item) {
                             for (String key : SSHUserPrivateKey.class.cast(item).getPrivateKeys()) {
@@ -1301,7 +1297,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         return Base64.decodeBase64(builder.toString());
     }
 
-    private static boolean isNullOrEmpty(final String value) {
+    static boolean isNullOrEmpty(final String value) {
         return null == Util.fixEmptyAndTrim(value);
     }
 }

@@ -1,0 +1,17 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<jenkins.plugins.jclouds.compute.JCloudsCloud plugin="jclouds-jenkins@2.40-SNAPSHOT">
+  <name>graustack</name>
+  <providerName>openstack-nova</providerName>
+  <endPointUrl>http://osctl1.graudatastorage.intern:5000/v3/</endPointUrl>
+  <profile>graustack</profile>
+  <retentionTime>30</retentionTime>
+  <errorRetentionTime>0</errorRetentionTime>
+  <instanceCap>3</instanceCap>
+  <templates/>
+  <scriptTimeout>600000</scriptTimeout>
+  <startTimeout>600000</startTimeout>
+  <cloudGlobalKeyId sha256="_HASH1_">_ID1_</cloudGlobalKeyId>
+  <cloudCredentialsId sha256="_HASH2_">_ID2_</cloudCredentialsId>
+  <groupPrefix></groupPrefix>
+  <trustAll>false</trustAll>
+</jenkins.plugins.jclouds.compute.JCloudsCloud>

@@ -15,6 +15,7 @@
  */
 package jenkins.plugins.jclouds.config;
 
+import java.util.UUID;
 import hudson.Extension;
 import jenkins.model.Jenkins;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
@@ -30,6 +31,16 @@ public class UserDataBoothook extends Config {
     @DataBoundConstructor
     public UserDataBoothook(final String id, final String name, final String comment, final String content) {
         super(id, name, comment, content);
+    }
+
+    public UserDataBoothook dup() {
+        UserDataBoothook ret = new UserDataBoothook(UUID.randomUUID().toString(),
+                name, comment, content);
+        String pid = getProviderId();
+        if (null != pid) {
+            ret.setProviderId(pid);
+        }
+        return ret;
     }
 
     @Override
