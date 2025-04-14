@@ -1,6 +1,7 @@
 ## Changelog
 
-### Version 2.39 (unreleased)
+### Version 2.39 (Apr 14, 2025)
+- Fixed ([JENKINS-63731](https://issues.jenkins.io/browse/JENKINS-63731))
 - Enabled dependabot (thanks to Bruno Verachten)
 - Added github CODEOWNERS (thanks to Bruno Verachten)
 - Migrate from EE 8 to EE 9 in Jelly view (thanks to Basil Crow)
