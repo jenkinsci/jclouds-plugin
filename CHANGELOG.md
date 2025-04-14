@@ -1,5 +1,9 @@
 ## Changelog
 
+### Version 2.39 (unreleased)
+- Enabled dependabot (thanks to Bruno Verachten)
+- Added github CODEOWNERS (thanks to Bruno Verachten)
+- Migrate from EE 8 to EE 9 in Jelly view (thanks to Basil Crow)
 ### Version 2.38 (released Feb 14, 2025)
 - Fixed NumberFormatException in digitalocean2 provider
 ### Version 2.37 (released Feb 10, 2025)
