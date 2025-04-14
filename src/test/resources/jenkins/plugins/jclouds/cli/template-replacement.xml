@@ -1,0 +1,38 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate plugin="jclouds-jenkins@2.40-SNAPSHOT">
+  <name>sxts-316</name>
+  <imageNameRegex>^sxts.316.ub2204.tpl$</imageNameRegex>
+  <hardwareId>RegionOne/78972bdb-80ee-4663-a6ed-1594aae62e7e</hardwareId>
+  <cores>1.0</cores>
+  <ram>512</ram>
+  <osFamily></osFamily>
+  <labelString>sxts-3.16</labelString>
+  <description>XTS 3.16 server (SSL variant) based on Ubuntu Server 22.04 LTS x86_64</description>
+  <osVersion></osVersion>
+  <numExecutors>1</numExecutors>
+  <stopOnTerminate>false</stopOnTerminate>
+  <preExistingJenkinsUser>true</preExistingJenkinsUser>
+  <fsRoot>/home/jenkins</fsRoot>
+  <allowSudo>false</allowSudo>
+  <installPrivateKey>false</installPrivateKey>
+  <spoolDelayMs>0</spoolDelayMs>
+  <waitPhoneHome>true</waitPhoneHome>
+  <waitPhoneHomeTimeout>15</waitPhoneHomeTimeout>
+  <keyPairName></keyPairName>
+  <assignPublicIp>false</assignPublicIp>
+  <networks>fcb205d0-77cc-4766-9fa5-df829ab61427</networks>
+  <securityGroups>default,ALLGRAU</securityGroups>
+  <mode>NORMAL</mode>
+  <useConfigDrive>false</useConfigDrive>
+  <isPreemptible>false</isPreemptible>
+  <credentialsId sha256="7f0bf099c8d2139c431d6c7f3f39fdeaf38e1346c1301cdf6df4e78e8b5c0d8d">bd5f7094-d7c8-4bdf-8cd7-cce2e96c4bfb</credentialsId>
+  <userDataEntries>
+    <jenkins.plugins.jclouds.compute.UserData>
+      <fileId sha256="cf3739314afdff84436f56f30996256880a8fec7fbf8829634c6f11cbe1bd773">14ddac16-775e-4240-a3fe-b240b721a5d6</fileId>
+    </jenkins.plugins.jclouds.compute.UserData>
+  </userDataEntries>
+  <initScriptId></initScriptId>
+  <preferredAddress></preferredAddress>
+  <useJnlp>false</useJnlp>
+  <jnlpProvision>false</jnlpProvision>
+</jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate>

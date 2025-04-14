@@ -40,6 +40,8 @@ import org.jclouds.compute.domain.NodeMetadata;
 
 import com.google.common.collect.ImmutableSet;
 
+import jenkins.plugins.jclouds.cli.Messages;
+
 /**
  * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.
  *
@@ -94,7 +96,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
     public HttpResponse doDoDelete() throws IOException {
         Jenkins.get().checkPermission(Cloud.PROVISION);
         recordTermination();
-        setTemporaryOfflineCause(OfflineCause.create(Messages._deletedCause()));
+        setTemporaryOfflineCause(OfflineCause.create(Messages._DELETED_CAUSE()));
 
         final JCloudsSlave node = getNode();
         if (null != node) {

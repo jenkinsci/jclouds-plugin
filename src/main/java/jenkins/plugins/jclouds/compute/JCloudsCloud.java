@@ -101,6 +101,7 @@ import hudson.security.ACL;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import hudson.security.AccessControlled;
 
+import jenkins.plugins.jclouds.cli.CliMessages;
 import jenkins.plugins.jclouds.compute.internal.RunningNode;
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
@@ -141,7 +142,7 @@ public class JCloudsCloud extends Cloud {
     private final int retentionTime;
     private final int errorRetentionTime;
     public int instanceCap;
-    public final List<JCloudsSlaveTemplate> templates;
+    public final CopyOnWriteArrayList<JCloudsSlaveTemplate> templates;
     public final int scriptTimeout;
     public final int startTimeout;
     private transient ComputeService compute;
@@ -226,7 +227,7 @@ public class JCloudsCloud extends Cloud {
     private String getPrivateKeyFromCredential(final String id) {
         if (!Strings.isNullOrEmpty(id)) {
             SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                    CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class, Jenkins.get(), ACL.SYSTEM2),
+                    CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class, null, null),
                     CredentialsMatchers.withId(id));
             if (null != supk) {
                 return CredentialsHelper.getPrivateKey(supk);
@@ -265,7 +266,7 @@ public class JCloudsCloud extends Cloud {
         this.errorRetentionTime = errorRetentionTime;
         this.scriptTimeout = scriptTimeout;
         this.startTimeout = startTimeout;
-        this.templates = null != templates ? templates : Collections.<JCloudsSlaveTemplate> emptyList();
+        this.templates = null != templates ? new CopyOnWriteArrayList<>(templates) : new CopyOnWriteArrayList<>();
         this.zones = Util.fixEmptyAndTrim(zones);
         this.trustAll = trustAll;
         this.groupPrefix = groupPrefix;
@@ -275,9 +276,19 @@ public class JCloudsCloud extends Cloud {
 
     protected Object readResolve() {
         for (JCloudsSlaveTemplate template : templates) {
-            template.cloud = this;
+            template.setCloud(this);
         }
         return this;
+    }
+
+    public void addTemplate(JCloudsSlaveTemplate tpl) {
+        tpl.setCloud(this);
+        templates.add(tpl);
+    }
+
+    public void replaceTemplate(JCloudsSlaveTemplate from, JCloudsSlaveTemplate to) {
+        to.setCloud(this);
+        templates.replaceAll(t -> t.equals(from) ? to : t);
     }
 
     /**
@@ -439,7 +450,7 @@ public class JCloudsCloud extends Cloud {
         Computer computer = jcloudsSlave.toComputer();
         long startMoment = System.currentTimeMillis();
         while (null != computer && computer.isOffline()) {
-            if (computer.getOfflineCauseReason().equals(Messages.oneOffCause())) {
+            if (computer.getOfflineCauseReason().equals(CliMessages.ONE_OFF_CAUSE.getText())) {
                 break;
             }
             try {
@@ -467,7 +478,7 @@ public class JCloudsCloud extends Cloud {
         return getTemplate(state.getLabel()) != null;
     }
 
-    JCloudsSlaveTemplate getTemplate(String name) {
+    public JCloudsSlaveTemplate getTemplate(String name) {
         for (JCloudsSlaveTemplate t : templates)
             if (t.name.equals(name))
                 return t;
@@ -491,7 +502,7 @@ public class JCloudsCloud extends Cloud {
      *
      * @param t The template to be used.
      */
-    JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
+    public JCloudsSlave doProvisionFromTemplate(final JCloudsSlaveTemplate t) throws IOException {
         final StringWriter sw = new StringWriter();
         final StreamTaskListener listener = new StreamTaskListener(sw);
         final ProvisioningActivity.Id provisioningId = new ProvisioningActivity.Id(this.name, t.name);
@@ -541,7 +552,7 @@ public class JCloudsCloud extends Cloud {
      * Determine how many nodes are currently running for this cloud.
      * @return number of running nodes.
      */
-    int getRunningNodesCount() {
+    public int getRunningNodesCount() {
         int nodeCount = 0;
 
         for (ComputeMetadata cm : getCompute().listNodes()) {
@@ -601,7 +612,7 @@ public class JCloudsCloud extends Cloud {
 
         /**
          * Human readable name of this kind of configurable object.
-         * @return The human readable name of this object. 
+         * @return The human readable name of this object.
          */
         @NonNull
         @Override
@@ -833,7 +844,7 @@ public class JCloudsCloud extends Cloud {
                 return CredentialsHelper.storeCredentials(u);
             } catch (IOException e) {
                 LOGGER.warning(String.format("Error while migrating privateKey: %s", e.getMessage()));
-            } 
+            }
             return null;
         }
     }

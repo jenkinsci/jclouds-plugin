@@ -27,9 +27,12 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import java.nio.charset.StandardCharsets;
-
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -211,4 +214,40 @@ public class ConfigHelper {
         return m;
     }
 
+    public static Map<String, String> getUserDataHashes(List<String> configIds) throws NoSuchAlgorithmException {
+        return getUserDataHashesFromConfigs(getConfigs(configIds));
+    }
+
+    public static Map<String, String> getUserDataHashesFromConfigs(List<Config> cfgs) throws NoSuchAlgorithmException {
+        HexFormat hex = HexFormat.of();
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        Map<String, String> ret = new HashMap<>();
+        for (Config cfg : cfgs) {
+            DataSource ds = new ConfigDataSource(cfg, false, Map.of());
+            String content = null == cfg.content ? "" : cfg.content;
+            md.update(ds.getContentType().getBytes(StandardCharsets.UTF_8));
+            md.update(cfg.name.getBytes(StandardCharsets.UTF_8));
+            md.update(cfg.comment.getBytes(StandardCharsets.UTF_8));
+            String hash = hex.formatHex(md.digest(content.getBytes(StandardCharsets.UTF_8)));
+            ret.put(cfg.id, hash);
+        }
+        return ret;
+    }
+
+    public static List<Config> getJCloudsConfigs() {
+        List<Config> cfgs = new ArrayList<>();
+        for (ConfigProvider p : ConfigProvider.all()) {
+            ConfigSuitableFor a = p.getClass().getAnnotation(ConfigSuitableFor.class);
+            if (null != a && a.target() == UserData.class) {
+                for (Config cfg : ConfigFiles.getConfigsInContext(Jenkins.get(), p.getClass())) {
+                    cfgs.add(cfg);
+                }
+            }
+        }
+        return cfgs;
+    }
+
+    public static String exportXml() {
+        return Jenkins.XSTREAM.toXML(getJCloudsConfigs());
+    }
 }

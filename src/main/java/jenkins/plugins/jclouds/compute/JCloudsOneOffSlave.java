@@ -35,6 +35,8 @@ import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import jenkins.plugins.jclouds.cli.Messages;
+
 public class JCloudsOneOffSlave extends SimpleBuildWrapper implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -83,7 +85,7 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper implements Serializab
                 String msg = "Taking single-use agent " + computer.getName() + " offline.";
                 LOGGER.warning(msg);
                 listener.getLogger().println(msg);
-                computer.setTemporaryOfflineCause(OfflineCause.create(Messages._oneOffCause()));
+                computer.setTemporaryOfflineCause(OfflineCause.create(Messages._ONE_OFF_CAUSE()));
                 final JCloudsSlave s = ((JCloudsComputer)computer).getNode();
                 if (null != s) {
                     s.setOverrideRetentionTime(Integer.valueOf(0));

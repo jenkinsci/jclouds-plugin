@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package jenkins.plugins.jclouds.compute;
+package jenkins.plugins.jclouds.cli;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import hudson.Extension;
 import hudson.cli.CLICommand;
-import hudson.util.EditDistance;
 import hudson.slaves.Cloud;
 import jenkins.model.Jenkins;
 
@@ -32,6 +29,10 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.Option;
 
 import org.jclouds.compute.domain.NodeMetadata;
+
+import jenkins.plugins.jclouds.compute.JCloudsCloud;
+import jenkins.plugins.jclouds.compute.JCloudsSlave;
+import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 
 /**
  * Provisions a slave.
@@ -43,13 +44,13 @@ public class JCloudsProvisionCommand extends CLICommand {
 
     enum OutputFormat { HUMAN, JSON, PROPERTIES }
 
-    @Argument(required = true, metaVar = "PROFILE", index = 0, usage = "Name of jclouds profile to use")
-        public String profile;
+    @Argument(required = false, metaVar = "PROFILE", index = 1, usage = "Name of jclouds profile to use. Mandatory, if the TEMPLATE is ambiguous.")
+        public String profile = null;
 
-    @Argument(required = true, metaVar = "TEMPLATE", index = 1, usage = "Name of template to use")
+    @Argument(required = true, metaVar = "TEMPLATE", index = 0, usage = "Name of template to use.")
         public String tmpl;
 
-    @Option(required = false, name = "-f", aliases = "--format", usage = "Output format of provisioned agent properties")
+    @Option(required = false, name = "-f", aliases = "--format", usage = "Output format of provisioned agent properties.")
         public OutputFormat format = OutputFormat.HUMAN;
 
     @Override
@@ -57,37 +58,15 @@ public class JCloudsProvisionCommand extends CLICommand {
         return Messages.ProvisionCommand_shortDescription();
     }
 
-    private JCloudsCloud resolveCloud() throws CmdLineException {
-        final Jenkins.CloudList cl = Jenkins.get().clouds;
-        final Cloud c = cl.getByName(profile);
-        if (null != c && c instanceof JCloudsCloud) {
-            return (JCloudsCloud)c;
-        }
-        final List<String> names = new ArrayList<>();
-        for (final Cloud cloud : Jenkins.get().clouds) {
-            if (cloud instanceof JCloudsCloud) {
-                String n = ((JCloudsCloud)cloud).profile;
-                if (n.length() > 0) {
-                    names.add(n);
-                }
-            }
-        }
-        throw new CmdLineException(null, CliMessages.NO_SUCH_PROFILE_EXISTS, profile, EditDistance.findNearest(profile, names));
-    }
-
     @Override
     protected int run() throws IOException, CmdLineException {
         Jenkins.get().checkPermission(Jenkins.READ);
-        final JCloudsCloud c = resolveCloud();
-        c.checkPermission(Cloud.PROVISION);
-        final JCloudsSlaveTemplate tpl = c.getTemplate(tmpl);
-        if (null == tpl) {
-            final List<String> names = new ArrayList<>();
-            for (final JCloudsSlaveTemplate t : c.getTemplates()) {
-                names.add(t.name);
-            }
-            throw new CmdLineException(null, CliMessages.NO_SUCH_TEMPLATE_EXISTS, tmpl, EditDistance.findNearest(tmpl, names));
+        JCloudsCloud c = CliHelper.resolveCloud(profile, true);
+        final JCloudsSlaveTemplate tpl = CliHelper.resolveTemplate(c, tmpl);
+        if (null == c) {
+            c = tpl.getCloud();
         }
+        c.checkPermission(Cloud.PROVISION);
         if (c.getRunningNodesCount() < c.instanceCap) {
             final JCloudsSlave s = c.doProvisionFromTemplate(tpl);
             final NodeMetadata nmd = s.getNodeMetaData();

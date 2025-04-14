@@ -89,7 +89,7 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
     public BuildStepMonitor getRequiredMonitorService() {
         return BuildStepMonitor.NONE;
     }
-  
+
     @Override
     public boolean requiresWorkspace() {
         return false;
