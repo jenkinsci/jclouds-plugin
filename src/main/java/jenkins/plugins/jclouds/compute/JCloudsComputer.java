@@ -94,7 +94,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
     public HttpResponse doDoDelete() throws IOException {
         Jenkins.get().checkPermission(Cloud.PROVISION);
         recordTermination();
-        setTemporarilyOffline(true, OfflineCause.create(Messages._deletedCause()));
+        setTemporaryOfflineCause(OfflineCause.create(Messages._deletedCause()));
 
         final JCloudsSlave node = getNode();
         if (null != node) {

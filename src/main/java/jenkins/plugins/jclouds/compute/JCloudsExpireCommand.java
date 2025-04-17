@@ -26,8 +26,6 @@ import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
-import jenkins.plugins.jclouds.internal.MsgMapper;
-
 /**
  * Expires a running slave.
  *
@@ -51,7 +49,7 @@ public class JCloudsExpireCommand extends CLICommand {
         if (null != n) {
             n.checkPermission(Permission.CONFIGURE);
         } else {
-            throw new CmdLineException(p, new MsgMapper(Messages.class, "_JClouds_NoSuchNodeExists"), nodeName);
+            throw new CmdLineException(p, CliMessages.NO_SUCH_NODE_EXISTS, nodeName);
         }
         Computer c = n.toComputer();
         if (JCloudsComputer.class.isInstance(c)) {
@@ -59,10 +57,10 @@ public class JCloudsExpireCommand extends CLICommand {
             if (null != s) {
                 s.setOverrideRetentionTime(Integer.valueOf(0));
             } else {
-                throw new CmdLineException(p, new MsgMapper(Messages.class, "_JClouds_NotFromJClouds"), nodeName);
+                throw new CmdLineException(p, CliMessages.NODE_NOT_FROM_JCLOUDS, nodeName);
             }
         } else {
-            throw new CmdLineException(p, new MsgMapper(Messages.class, "_JClouds_NotFromJClouds"), nodeName);
+            throw new CmdLineException(p, CliMessages.NODE_NOT_FROM_JCLOUDS, nodeName);
         }
         return 0;
     }

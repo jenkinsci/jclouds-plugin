@@ -42,7 +42,6 @@ import jakarta.activation.DataSource;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import jakarta.mail.BodyPart;
 import jakarta.mail.MessagingException;
@@ -175,26 +174,41 @@ public class ConfigHelper {
         }
     }
 
-    @NonNull
-    @SuppressFBWarnings(value = "SBSC_USE_STRINGBUFFER_CONCATENATION", justification = "TODO needs triage")
-    public static ListBoxModel doFillFileItems(@Nullable final String currentValue) {
-            ListBoxModel m = new ListBoxModel();
-            m.add("- none -", "");
-            for (ConfigProvider p : ConfigProvider.all()) {
-                ConfigSuitableFor a = p.getClass().getAnnotation(ConfigSuitableFor.class);
-                if (null != a && a.target() == UserData.class) {
-                    for (Config cfg : p.getAllConfigs()) {
-                        String label = p.getDisplayName() + " " + cfg.name;
-                        if (cfg.comment != null && !cfg.comment.isEmpty()) {
-                            label += String.format(" [%s]", cfg.comment);
-                        }
-                        m.add(label, cfg.id);
-                        if (cfg.id.equals(currentValue)) {
-                            m.get(m.size() - 1).selected = true;
-                        }
-                    }
+    private static void appendItemsOfProvider(@NonNull ConfigProvider p, @NonNull ListBoxModel m,
+            @Nullable String currentValue) {
+        StringBuffer sb = new StringBuffer();
+        ConfigSuitableFor a = p.getClass().getAnnotation(ConfigSuitableFor.class);
+        if (null != a && a.target() == UserData.class) {
+            for (Config cfg : ConfigFiles.getConfigsInContext(Jenkins.get(), p.getClass())) {
+                sb.setLength(0);
+                sb.append(p.getDisplayName()).append(" ").append(cfg.name);
+                if (cfg.comment != null && !cfg.comment.isEmpty()) {
+                    sb.append(" [").append(cfg.comment).append("]");
                 }
-            }
-            return m;
+                m.add(sb.toString(), cfg.id);
+                if (cfg.id.equals(currentValue)) {
+                    m.get(m.size() - 1).selected = true;
+                 }
+             }
+         }
+    }
+
+    @NonNull
+    public static ListBoxModel doFillFileItems(@Nullable final String currentValue) {
+        ListBoxModel m = new ListBoxModel();
+        m.add("- none -", "");
+        for (ConfigProvider p : ConfigProvider.all()) {
+            appendItemsOfProvider(p, m, currentValue);
         }
+        return m;
+    }
+
+    @NonNull
+    public static ListBoxModel doFillInitScriptItems(@Nullable final String currentValue) {
+        ListBoxModel m = new ListBoxModel();
+        m.add("- none -", "");
+        appendItemsOfProvider(new UserDataScript("-","","","").getProvider(), m, currentValue);
+        return m;
+    }
+
 }

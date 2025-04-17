@@ -308,9 +308,12 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
             return getCloud().getGlobalPrivateKey();
         }
         SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
-                CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class, Jenkins.get(), ACL.SYSTEM,
-                    Collections.<DomainRequirement>emptyList()),
+                CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class, Jenkins.get(), ACL.SYSTEM2),
                 CredentialsMatchers.withId(credentialsId));
+        if (null == supk) {
+            LOGGER.warning(String.format("Credentials with id %s not found", credentialsId));
+            return "---id not found---";
+        }
         return CredentialsHelper.getPrivateKey(supk);
     }
 
@@ -1065,7 +1068,7 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
         @RequirePOST
         public ListBoxModel doFillInitScriptIdItems(@QueryParameter @Nullable final String currentValue) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
-            return ConfigHelper.doFillFileItems(currentValue);
+            return ConfigHelper.doFillInitScriptItems(currentValue);
         }
 
         @RequirePOST
@@ -1232,10 +1235,9 @@ public class JCloudsSlaveTemplate implements Describable<JCloudsSlaveTemplate>, 
     }
 
     private StandardUsernameCredentials retrieveExistingCredentials(final String username, final String privkey) {
-        return CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentials(SSHUserPrivateKey.class,
-                    Jenkins.get(), ACL.SYSTEM, SSHLauncher.SSH_SCHEME), CredentialsMatchers.allOf(
-                    CredentialsMatchers.withUsername(username),
-                    new CredentialsMatcher() {
+        return CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class,
+                    Jenkins.get(), ACL.SYSTEM2, Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME)),
+                    CredentialsMatchers.allOf(CredentialsMatchers.withUsername(username), new CredentialsMatcher() {
                         public boolean matches(Credentials item) {
                             for (String key : SSHUserPrivateKey.class.cast(item).getPrivateKeys()) {
                                 if (pemKeyEquals(key, privkey)) {

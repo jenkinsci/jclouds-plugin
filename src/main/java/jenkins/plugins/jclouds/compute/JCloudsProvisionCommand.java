@@ -72,7 +72,7 @@ public class JCloudsProvisionCommand extends CLICommand {
                 }
             }
         }
-        throw new CmdLineException(null, Messages.JClouds_NoSuchProfileExists(profile, EditDistance.findNearest(profile, names)));
+        throw new CmdLineException(null, CliMessages.NO_SUCH_PROFILE_EXISTS, profile, EditDistance.findNearest(profile, names));
     }
 
     @Override
@@ -86,7 +86,7 @@ public class JCloudsProvisionCommand extends CLICommand {
             for (final JCloudsSlaveTemplate t : c.getTemplates()) {
                 names.add(t.name);
             }
-            throw new CmdLineException(null, Messages.JClouds_NoSuchTemplateExists(tmpl, EditDistance.findNearest(tmpl, names)));
+            throw new CmdLineException(null, CliMessages.NO_SUCH_TEMPLATE_EXISTS, tmpl, EditDistance.findNearest(tmpl, names));
         }
         if (c.getRunningNodesCount() < c.instanceCap) {
             final JCloudsSlave s = c.doProvisionFromTemplate(tpl);
@@ -112,7 +112,7 @@ public class JCloudsProvisionCommand extends CLICommand {
                     break;
             }
         } else {
-            throw new CmdLineException("Instance cap for this cloud is now reached for cloud profile: " + profile + " for template type " + tmpl);
+            throw new CmdLineException(null, CliMessages.INSTANCE_CAP_REACHED, profile, tmpl);
         }
         return 0;
     }

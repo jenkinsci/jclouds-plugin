@@ -25,7 +25,7 @@ import org.kohsuke.stapler.Stapler;
 
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import com.google.gson.JsonParser;
 import com.google.gson.JsonObject;
@@ -63,11 +63,11 @@ public class JCloudsUserWithKey extends BasicSSHUserPrivateKey {
     private static String getJsonString(final String fileUploadEntry, final String fieldName) {
         if (null != fileUploadEntry) {
             try {
-                final FileItem fi = Stapler.getCurrentRequest2().getFileItem(fileUploadEntry);
+                final FileItem fi = Stapler.getCurrentRequest2().getFileItem2(fileUploadEntry);
                 if (null != fi) {
                     final String content = new String(fi.get(), StandardCharsets.UTF_8);
                     if (null != content && !content.isEmpty()) {
-                        final JsonObject jo = new JsonParser().parse(content).getAsJsonObject();
+                        final JsonObject jo = JsonParser.parseString(content).getAsJsonObject();
                         final String value = jo.get(fieldName).getAsString();
                         return value;
                     }

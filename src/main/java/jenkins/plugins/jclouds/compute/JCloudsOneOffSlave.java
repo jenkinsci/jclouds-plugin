@@ -83,7 +83,7 @@ public class JCloudsOneOffSlave extends SimpleBuildWrapper implements Serializab
                 String msg = "Taking single-use agent " + computer.getName() + " offline.";
                 LOGGER.warning(msg);
                 listener.getLogger().println(msg);
-                computer.setTemporarilyOffline(true, OfflineCause.create(Messages._oneOffCause()));
+                computer.setTemporaryOfflineCause(OfflineCause.create(Messages._oneOffCause()));
                 final JCloudsSlave s = ((JCloudsComputer)computer).getNode();
                 if (null != s) {
                     s.setOverrideRetentionTime(Integer.valueOf(0));

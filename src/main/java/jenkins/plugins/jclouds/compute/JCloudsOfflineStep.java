@@ -118,7 +118,7 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
                     if (JCloudsComputer.class.isInstance(c)) {
                         tl.getLogger().append("NOTICE: ").println("Setting node " + ModelHyperlinkNote.encodeTo(node) + " offline");
                         OfflineCause oc = new OfflineCause.UserCause(null, causemsg);
-                        c.setTemporarilyOffline(true, oc);
+                        c.setTemporaryOfflineCause(oc);
                         return;
                     }
                     tl.getLogger().append("WARNING: ").println(err + "Not a jclouds instance");
