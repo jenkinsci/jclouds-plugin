@@ -64,7 +64,9 @@ public class OpenstackKeystoneV3 extends UsernamePasswordCredentialsImpl impleme
     }
 
     /**
-     * {@inheritDoc}
+     * Descriptor to use for subclasses of {@link OpenstackKeystoneV3}.
+     * <p>{@code <st:include page="id-and-description" class="${descriptor.clazz}"/>} in {@code credentials.jelly} to
+     * pick up standard controls for {@link #getId} and {@link #getDescription}.
      */
     @Extension
     public static class DescriptorImpl extends BaseStandardCredentialsDescriptor {
