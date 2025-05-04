@@ -76,6 +76,33 @@ class SSHPublicKeyExtractorTest {
             + "ntPGVE4WLGgrSjM+M06LIhNL/E3wu50YRBDvOdN/xusxDjOdAWyZh2qY/Z9CbVix7lwT"
             + "Qus1oEumEMQ==";
 
+    private static final String ECDSA_PEM = """
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
+            1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQQL0Pqfy/oa5tr7GUl8WjHoWNnWozMV
+            f/Mlnh7Cdx7d2opVMjkbecfMAXokgTOXsspbT1a+NNqqub94ulCRRWnXAAAAsPCm5Zbwpu
+            WWAAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAvQ+p/L+hrm2vsZ
+            SXxaMehY2dajMxV/8yWeHsJ3Ht3ailUyORt5x8wBeiSBM5eyyltPVr402qq5v3i6UJFFad
+            cAAAAhANgjmx/XKEMgxtBlRZw/O5LT3Cj5WJ8COxu0wPGACxhZAAAAFmZlbGZlcnRAZnJp
+            dHouZmUudGhpbmsB
+            -----END OPENSSH PRIVATE KEY-----""";
+
+    private static final String ECDSA_EXPECTED = "ecdsa-sha2-nistp256 AAAAE2VjZHNhL"
+            + "XNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAvQ+p/L+hrm2vsZSXxaMehY2dajM"
+            + "xV/8yWeHsJ3Ht3ailUyORt5x8wBeiSBM5eyyltPVr402qq5v3i6UJFFadc=";
+
+    private static final String ED25519_PEM = """
+            -----BEGIN OPENSSH PRIVATE KEY-----
+            b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
+            QyNTUxOQAAACBIfalPqPWFPLQNy37Jdc7lIVSu9stxBqDGEyZQe1xc7wAAAKAUZQXDFGUF
+            wwAAAAtzc2gtZWQyNTUxOQAAACBIfalPqPWFPLQNy37Jdc7lIVSu9stxBqDGEyZQe1xc7w
+            AAAEAx4va7Qrfm+Uqf70k/Mjx6KGM95jyJNGGBv84cWRBaJ0h9qU+o9YU8tA3Lfsl1zuUh
+            VK72y3EGoMYTJlB7XFzvAAAAFmZlbGZlcnRAZnJpdHouZmUudGhpbmsBAgMEBQYH
+            -----END OPENSSH PRIVATE KEY-----""";
+
+    private static final String ED25519_EXPECTED =
+            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEh9qU+o9YU8tA3Lfsl1zuUhVK72y3EGoMYTJlB7XFzv";
+
     @Test
     void testExtractRSA() throws Exception {
         String pub = SSHPublicKeyExtractor.extract(RSA_PEM, null);
@@ -86,6 +113,18 @@ class SSHPublicKeyExtractorTest {
     void testExtractDSA() throws Exception {
         String pub = SSHPublicKeyExtractor.extract(DSA_PEM, null);
         assertEquals(DSA_EXPECTED, pub);
+    }
+
+    @Test
+    void testExtractECDSA() throws Exception {
+        String pub = SSHPublicKeyExtractor.extract(ECDSA_PEM, null);
+        assertEquals(ECDSA_EXPECTED, pub);
+    }
+
+    @Test
+    void testExtractEDD25519() throws Exception {
+        String pub = SSHPublicKeyExtractor.extract(ED25519_PEM, null);
+        assertEquals(ED25519_EXPECTED, pub);
     }
 
     @Test
