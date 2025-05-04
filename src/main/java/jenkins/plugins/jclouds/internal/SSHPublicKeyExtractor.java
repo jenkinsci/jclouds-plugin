@@ -17,15 +17,24 @@ package jenkins.plugins.jclouds.internal;
 
 import java.io.IOException;
 import java.security.KeyPair;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.interfaces.DSAPrivateKey;
 import java.security.interfaces.DSAPublicKey;
+import java.security.interfaces.ECPrivateKey;
+import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 
+import net.i2p.crypto.eddsa.EdDSAPrivateKey;
+
 import com.trilead.ssh2.crypto.PEMDecoder;
 import com.trilead.ssh2.signature.DSAKeyAlgorithm;
+import com.trilead.ssh2.signature.ECDSAKeyAlgorithm.ECDSASha2Nistp256;
 import com.trilead.ssh2.signature.RSAKeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithmManager;
 
 /**
  * Extracts a SSH public key from a SSH private key.
@@ -40,13 +49,24 @@ public final class SSHPublicKeyExtractor {
      * @throws IOException if pem could not be decoded properly.
      */
     public static String extract(final String pem, final String passPhrase) throws IOException {
-        final KeyPair priv = PEMDecoder.decodeKeyPair(pem.toCharArray(), passPhrase);
-        if (priv.getPrivate() instanceof RSAPrivateKey) {
-            return "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) priv.getPublic()));
+        final KeyPair kp = PEMDecoder.decodeKeyPair(pem.toCharArray(), passPhrase);
+        if (kp.getPrivate() instanceof RSAPrivateKey) {
+            return "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) kp.getPublic()));
         }
-        if (priv.getPrivate() instanceof DSAPrivateKey) {
-            return "ssh-dss " + Base64.getEncoder().encodeToString(new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) priv.getPublic()));
+        if (kp.getPrivate() instanceof DSAPrivateKey) {
+            return "ssh-dss " + Base64.getEncoder().encodeToString(new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) kp.getPublic()));
         }
-        throw new IOException("should never happen");
+        if (kp.getPrivate() instanceof ECPrivateKey) {
+            return "ecdsa-sha2-nistp256 " + Base64.getEncoder().encodeToString(
+                    new ECDSASha2Nistp256().encodePublicKey((ECPublicKey) kp.getPublic()));
+        }
+        if (kp.getPrivate() instanceof EdDSAPrivateKey) {
+            for (KeyAlgorithm<PublicKey, PrivateKey> ka : KeyAlgorithmManager.getSupportedAlgorithms()) {
+                if (ka.getKeyFormat().equals("ssh-ed25519")) {
+                    return "ssh-ed25519 " + Base64.getEncoder().encodeToString(ka.encodePublicKey(kp.getPublic()));
+                }
+            }
+        }
+        throw new IOException("unsupported key format: " + kp.getPrivate().toString());
     }
 }
