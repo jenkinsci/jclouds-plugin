@@ -206,7 +206,9 @@ class CryptoHelperTest {
 
     @Test
     void testEncryptDecrypt(JenkinsRule r) throws Exception {
-        String plain = new String(getClass().getResourceAsStream("loremipsum.txt").readAllBytes(),
+        // Line-Endings in .txt files on Windows apparently are changed to CR+LF by git checkout
+        // and consequently mess with the byte count of the file. => rename test file to .bin
+        String plain = new String(getClass().getResourceAsStream("loremipsum.bin").readAllBytes(),
                 StandardCharsets.UTF_8);
         assertNotNull(plain);
         assertEquals(4820, plain.length(), "Testfile size");
