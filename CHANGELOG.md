@@ -1,5 +1,8 @@
 ## Changelog
 
+### Version 2.40 (May 17, 2025)
+- Major rework of CLI. Documentation [here](CLI.md)
+- Added support for ecdsa-sha2-nistp256 and ssh-ed25519 key types when provisioning ssh-keys on agent nodes
 ### Version 2.39 (Apr 14, 2025)
 - Fixed ([JENKINS-63731](https://issues.jenkins.io/browse/JENKINS-63731))
 - Enabled dependabot (thanks to Bruno Verachten)
