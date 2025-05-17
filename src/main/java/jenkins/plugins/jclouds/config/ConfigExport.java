@@ -66,9 +66,7 @@ public class ConfigExport {
     }
 
     /**
-     * Exports all out userData.
-     *
-     * @param credentialId The id of a ssh-rsa credential can be used to encrypt output.
+     * Exports all our userData.
      */
     @NonNull
     public String exportXml() {
