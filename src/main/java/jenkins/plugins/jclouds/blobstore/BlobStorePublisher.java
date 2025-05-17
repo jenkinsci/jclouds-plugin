@@ -272,7 +272,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
             save();
             return true;
         }
-       
+
         /**
          * Set profiles.
          * This method allows managing profiles from within a groovy script like this:
@@ -283,7 +283,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
          * </pre>
          *
          * @param newProfiles A list of BlobStoreProfile.
-         */ 
+         */
         public void setProfiles(List<BlobStoreProfile> newProfiles) {
             profiles.replaceBy(newProfiles);
         }

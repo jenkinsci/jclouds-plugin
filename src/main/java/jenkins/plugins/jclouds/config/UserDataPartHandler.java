@@ -15,6 +15,7 @@
  */
 package jenkins.plugins.jclouds.config;
 
+import java.util.UUID;
 import hudson.Extension;
 import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.UserData;
@@ -28,6 +29,16 @@ public class UserDataPartHandler extends Config {
     @DataBoundConstructor
     public UserDataPartHandler(final String id, final String name, final String comment, final String content) {
         super(id, name, comment, content);
+    }
+
+    public UserDataPartHandler dup() {
+        UserDataPartHandler ret = new UserDataPartHandler(UUID.randomUUID().toString(),
+                name, comment, content);
+        String pid = getProviderId();
+        if (null != pid) {
+            ret.setProviderId(pid);
+        }
+        return ret;
     }
 
     @Override

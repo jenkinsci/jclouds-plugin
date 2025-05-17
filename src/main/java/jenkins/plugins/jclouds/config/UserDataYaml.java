@@ -15,6 +15,7 @@
  */
 package jenkins.plugins.jclouds.config;
 
+import java.util.UUID;
 import hudson.Extension;
 import jenkins.model.Jenkins;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
@@ -29,6 +30,16 @@ public class UserDataYaml extends Config {
     @DataBoundConstructor
     public UserDataYaml(final String id, final String name, final String comment, final String content) {
         super(id, name, comment, content);
+    }
+
+    public UserDataYaml dup() {
+        UserDataYaml ret = new UserDataYaml(UUID.randomUUID().toString(),
+                name, comment, content);
+        String pid = getProviderId();
+        if (null != pid) {
+            ret.setProviderId(pid);
+        }
+        return ret;
     }
 
     @Override

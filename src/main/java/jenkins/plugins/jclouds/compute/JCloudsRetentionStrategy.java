@@ -25,6 +25,8 @@ import java.util.logging.Logger;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 
+import jenkins.plugins.jclouds.cli.Messages;
+
 /**
  * @author Vijay Kiran
  */
@@ -40,7 +42,7 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
         if (!c.isOffline()) {
             LOGGER.info("Setting " + c.getName() + " to be deleted.");
             try {
-                c.disconnect(OfflineCause.create(Messages._deletedCause())).get();
+                c.disconnect(OfflineCause.create(Messages._DELETED_CAUSE())).get();
             } catch (Exception e) {
                 LOGGER.info("Caught " + e.toString());
             }

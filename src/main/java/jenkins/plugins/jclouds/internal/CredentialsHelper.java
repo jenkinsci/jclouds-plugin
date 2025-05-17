@@ -18,11 +18,14 @@ package jenkins.plugins.jclouds.internal;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
 import com.cloudbees.plugins.credentials.domains.Domain;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
+
+import com.trilead.ssh2.crypto.PEMDecoder;
 
 import hudson.model.Descriptor.FormException;
 import hudson.plugins.sshslaves.SSHLauncher;
@@ -33,6 +36,11 @@ import hudson.util.Secret;
 import jenkins.model.Jenkins;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -94,7 +102,7 @@ public final class CredentialsHelper {
             return storeCredentials(u);
         } catch (IOException|FormException e) {
             LOGGER.warning(String.format("Error while migrating identity/credentials: %s", e.getMessage()));
-        } 
+        }
         return null;
     }
 
@@ -146,6 +154,66 @@ public final class CredentialsHelper {
         throw new RuntimeException("Could not retrieve credentials");
     }
 
+    /**
+     * Calculates a SHA-256 hash of the credential with the specified Id.
+     *
+     * This hash will be used for comparing credentials.
+     *
+     * @param id The Id of the credentials object.
+     * @return String containig a hex representation of the calculated hash.
+     *
+     * <p>The following credential types are supported:</p>
+     *
+     *  <ul>
+     *    <li><b>SSHUserPrivateKey</b>: The hash will be calculated from
+     *    <ul>
+     *      <li>The passphrase
+     *      <li>The username
+     *      <li>The private key content
+     *    </ul>
+     *    <li><b>StandardUsernamePasswordCredentials</b>: The hash will be calculated from
+     *    <ul>
+     *      <li>The username
+     *      <li>The password
+     *    </ul>
+     *    <li><b>OpenstackKeystoneV3</b>: The hash will be calculated from
+     *    <ul>
+     *      <li>The domain
+     *      <li>The project
+     *      <li>The username
+     *      <li>The password
+     *    </ul>
+     *  </ul>
+     *
+     */
+
+    public static String getCredentialsHash(final String id) throws NoSuchAlgorithmException {
+        StandardUsernameCredentials u = getCredentialsById(id);
+        if (null != u) {
+            HexFormat hex = HexFormat.of();
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+            if (u instanceof OpenstackKeystoneV3) {
+                OpenstackKeystoneV3 ok3 = (OpenstackKeystoneV3)u;
+                md.update(ok3.getDomain().getBytes(StandardCharsets.UTF_8));
+                md.update(ok3.getProject().getBytes(StandardCharsets.UTF_8));
+                md.update(ok3.getUsername().getBytes(StandardCharsets.UTF_8));
+                return hex.formatHex(md.digest(getPasswordOrEmpty(ok3.getPassword()).getBytes(StandardCharsets.UTF_8)));
+            } else if (u instanceof StandardUsernamePasswordCredentials) {
+                StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
+                md.update(up.getUsername().getBytes(StandardCharsets.UTF_8));
+                return hex.formatHex(md.digest(getPasswordOrEmpty(up.getPassword()).getBytes(StandardCharsets.UTF_8)));
+            } else if (u instanceof SSHUserPrivateKey) {
+                SSHUserPrivateKey up = (SSHUserPrivateKey)u;
+                md.update(getPasswordOrEmpty(up.getPassphrase()).getBytes(StandardCharsets.UTF_8));
+                md.update(up.getUsername().getBytes(StandardCharsets.UTF_8));
+                return hex.formatHex(md.digest(String.join("", up.getPrivateKeys()).getBytes(StandardCharsets.UTF_8)));
+            }
+            throw new RuntimeException("invalid credentials type");
+        }
+        throw new RuntimeException("Could not retrieve credentials with id " + id);
+    }
+
     public static String getPrivateKey(final SSHUserPrivateKey supk) {
         if (null == supk) {
             return "";
@@ -158,6 +226,25 @@ public final class CredentialsHelper {
         // We explicitely DO want a possible null, because in jclouds
         // this means: No password set (vs. an empty password).
         return null == s ? null : s.getPlainText();
+    }
+
+    private static String getPasswordOrEmpty(final Secret s) {
+        return null == s ? "" : s.getPlainText();
+    }
+
+    public static KeyPair getKeyPairFromCredential(final String id) throws IOException {
+        if (null != id && !id.isEmpty()) {
+            SSHUserPrivateKey supk = CredentialsMatchers.firstOrNull(
+                    CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class, null, null),
+                    CredentialsMatchers.withId(id));
+            if (null == supk) {
+                throw new IOException("Credential " + id + " is not available");
+            }
+            String pem = getPrivateKey(supk);
+            String passPhrase = getPassword(supk.getPassphrase());
+            return PEMDecoder.decodeKeyPair(pem.toCharArray(), passPhrase);
+        }
+        return null;
     }
 }
 
