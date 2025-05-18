@@ -55,8 +55,8 @@ class TemplatesCommandTest {
     @Test
     void testTemplatesPermission(JenkinsRule j) throws Exception {
         setUp(j);
-        createTestCloudWithTemplate(j, "foo");
-        createTestCloudWithTemplate(j, "bar");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "bar");
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-templates")
             .asUser(NOREADER).invoke();
         assertThat(res, failedWith(6));
@@ -64,40 +64,13 @@ class TemplatesCommandTest {
 
     @Test
     void testTemplatesPermission2(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
-        createTestCloudWithTemplate(j, "bar");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "bar");
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-templates")
             .invoke();
         assertThat(res, succeeded());
-        assertThat(res.stdout(), containsString("foo     FooTemplate linux ub2204 single Description"));
-        assertThat(res.stdout(), containsString("bar     FooTemplate linux ub2204 single Description"));
+        assertThat(res.stdout(), containsString("foo     FooTemplate jclouds-slave-type1 jclouds-type2 Description"));
+        assertThat(res.stdout(), containsString("bar     FooTemplate jclouds-slave-type1 jclouds-type2 Description"));
     }
 
-    private void createTestCloudWithTemplate(JenkinsRule j, String name) throws Exception {
-
-        StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
-                CredentialsScope.SYSTEM, null, "WhateverDescription", "CredUser", "secretPassword");
-        String cid = CredentialsHelper.storeCredentials(suc);
-
-        final JCloudsSlaveTemplate tpl = new JCloudsSlaveTemplate("FooTemplate", "imageId", null, "hardwareId",
-                1, 512, "osFamily", "osVersion", "locationId", "linux ub2204 single" /* labelsString */,
-                "Description", null /* initScripId */, 1 /* numExecutors */, false /* stopOnTerminate */,
-                "jvmOptions", false /* preExistingJenkinsUser */, null /* fsRoot */, false /* allowSudo */,
-                false /* installPrivateKey */, 5 /* overrideRetentionTime */, true /* hasOverrideRetentionTime */,
-                0 /* spoolDelayMs */, true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
-                null /* keyPairName */, true /* assignPublicIp */, "network1_id,network2_id",
-                "security_group1,security_group2", cid /* credentialsId */,
-                null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */,
-                false /* preemptible */, null /* configDataIds */, "192.168.1.0/24" /* preferredAddress */,
-                false /* useJnlp */, false /* jnlpProvisioning */);
-
-        List<JCloudsSlaveTemplate> templates = new ArrayList<>();
-        templates.add(tpl);
-
-        JCloudsCloud cloud = new JCloudsCloud(name, "aws-ec2", cid, cid,
-                "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
-                "foobar", true, templates);
-        j.jenkins.clouds.add(cloud);
-    }
 }

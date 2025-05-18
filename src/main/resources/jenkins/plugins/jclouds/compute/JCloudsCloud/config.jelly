@@ -16,6 +16,9 @@ limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:st="jelly:stapler">
+  <f:invisibleEntry>
+    <f:readOnlyTextbox name="initialName" value="${it.profile}"/>
+  </f:invisibleEntry>
   <f:entry title="${%Profile}" field="profile">
     <f:textbox/>
   </f:entry>
@@ -57,13 +60,11 @@ limitations under the License.
       <f:textbox/>
     </f:entry>
   </f:advanced>
-  <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
+  <f:validateButton clazz="ignore-dirty" title="${%Test Connection}" progress="${%Testing...}" method="testConnection"
     with="providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,zones,trustAll"/>
-  <f:block>
-    <b>${%Templates}</b>
-    <j:set var="udata" value="${descriptor.isUserDataSupported(instance.providerName,instance.cloudCredentialsId,instance.endPointUrl,instance.zones,instance.trustAll)}"/>
-    <f:repeatable field="templates" header="${%Template}" add="${%Add template}">
-      <st:include page="config.jelly" class="${descriptor.clazz}"/>
-    </f:repeatable>
-  </f:block>
+  <j:if test="${it.cloudCredentialsId != null}">
+    <div class="alert alert-info">
+      <a href="templates">${%Agent templates have moved}</a>.
+    </div>
+  </j:if>
 </j:jelly>

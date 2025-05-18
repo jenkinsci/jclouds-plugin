@@ -92,7 +92,7 @@ class TemplateCommandTest {
 
     @Test
     void testCopyFooTemplate(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-copy-template").invokeWithArgs("FooTemplate", "bar");
         assertThat(res, succeededSilently());
@@ -121,7 +121,7 @@ class TemplateCommandTest {
 
     @Test
     void testGetTemplate(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-template").invokeWithArgs("FooTemplate");
         assertThat(res, succeeded());
@@ -132,8 +132,8 @@ class TemplateCommandTest {
 
     @Test
     void testGetTemplateAmbiguous(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
-        createTestCloudWithTemplate(j, "bar");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "bar");
 
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-template").invokeWithArgs("FooTemplate");
         assertThat(res, failedWith(2));
@@ -143,8 +143,8 @@ class TemplateCommandTest {
 
     @Test
     void testGetTemplateFromProfile(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
-        createTestCloudWithTemplate(j, "bar");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "bar");
 
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-template")
                 .invokeWithArgs("FooTemplate", "bar");
@@ -156,7 +156,7 @@ class TemplateCommandTest {
 
     @Test
     void testGetTemplateReplacing(JenkinsRule j) throws Exception {
-        String id = createTestCloudWithTemplate(j, "foo");
+        String id = TestHelper.createTestCloudWithTemplate(j, "foo");
         String id2 = UUID.randomUUID().toString();
         String xml =
             String.format("<replacements><replacement from=\"%s\" to=\"%s\"/></replacements>", id, id2);
@@ -200,8 +200,8 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplateTwoClouds(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
-        createTestCloudWithTemplate(j, "bar");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "bar");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -220,7 +220,7 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplateNoUserData(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -239,7 +239,7 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplateHashMismatch(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -266,7 +266,7 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplateNoHash(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -290,7 +290,7 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplateNoHashVerbose(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -318,7 +318,7 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplate(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -348,7 +348,7 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplateVerbose(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -376,8 +376,8 @@ class TemplateCommandTest {
 
     @Test
     void testCreateTemplateVerboseTwoClouds(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
-        createTestCloudWithTemplate(j, "bar");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "bar");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -426,7 +426,7 @@ class TemplateCommandTest {
     @Test
     void testUpdateTemplatePermission(JenkinsRule j) throws Exception {
         setUp(j);
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         InputStream stdin = new ByteArrayInputStream("".getBytes(StandardCharsets.UTF_8));
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-update-template")
             .asUser(READER).invokeWithArgs("FooTemplate");
@@ -436,7 +436,7 @@ class TemplateCommandTest {
 
     @Test
     void testUpdateTemplateNoUserData(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -455,7 +455,7 @@ class TemplateCommandTest {
 
     @Test
     void testUpdateTemplate(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -476,13 +476,13 @@ class TemplateCommandTest {
                 .withStdin(stdin).invokeWithArgs("FooTemplate");
         assertThat(res, succeededSilently());
 
-        assertTrue(findTemplate(j, "foo", "sxts-316"), "Renamed template exists");
+        assertTrue(TestHelper.findTemplate(j, "foo", "sxts-316"), "Renamed template exists");
     }
 
     @Test
     void testUpdateTemplateRenameExists(JenkinsRule j) throws Exception {
-        String cid = createTestCloudWithTemplate(j, "foo");
-        addTemplateToCloud(j, "foo", "sxts-316", cid);
+        String cid = TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.addTemplateToCloud(j, "foo", "sxts-316", cid);
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -507,7 +507,7 @@ class TemplateCommandTest {
 
     @Test
     void testUpdateTemplateVerbose(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
         String cid1 = CredentialsHelper.storeCredentials(suc);
@@ -532,53 +532,8 @@ class TemplateCommandTest {
         assertThat(res.stdout(), containsString(
               String.format("Validated fileId %s of template sxts-316", id2)));
 
-        assertTrue(findTemplate(j, "foo", "sxts-316"), "Renamed template exists");
-        assertFalse(findTemplate(j, "foo", "FooTemplate"), "Original template name is gone");
-    }
-
-    private boolean findTemplate(JenkinsRule j, String cloud, String name) {
-        JCloudsCloud c = (JCloudsCloud)j.jenkins.clouds.getByName(cloud);
-        if (null == c) {
-            return false;
-        }
-        if (null == c.getTemplate(name)) {
-            return false;
-        }
-        return true;
-    }
-
-    private void addTemplateToCloud(JenkinsRule j, String cloud, String name, String cid) {
-        JCloudsCloud c = (JCloudsCloud)j.jenkins.clouds.getByName(cloud);
-        if (null != c) {
-            final JCloudsSlaveTemplate tpl = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId",
-                1, 512, "osFamily", "osVersion", "locationId", "jclouds-slave-type1 jclouds-type2",
-                "Description", null /* initScripId */, 1 /* numExecutors */, false /* stopOnTerminate */,
-                "jvmOptions", false /* preExistingJenkinsUser */, null /* fsRoot */, false /* allowSudo */,
-                false /* installPrivateKey */, 5 /* overrideRetentionTime */, true /* hasOverrideRetentionTime */,
-                0 /* spoolDelayMs */, true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
-                null /* keyPairName */, true /* assignPublicIp */, "network1_id,network2_id",
-                "security_group1,security_group2", cid /* credentialsId */,
-                null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */,
-                false /* preemptible */, null /* configDataIds */, "192.168.1.0/24" /* preferredAddress */,
-                false /* useJnlp */, false /* jnlpProvisioning */);
-            c.addTemplate(tpl);
-        }
-    }
-
-    private String createTestCloudWithTemplate(JenkinsRule j, String name) throws Exception {
-
-        StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
-                CredentialsScope.SYSTEM, null, "WhateverDescription", "CredUser", "secretPassword");
-        String cid = CredentialsHelper.storeCredentials(suc);
-
-        List<JCloudsSlaveTemplate> templates = new ArrayList<>();
-        JCloudsCloud cloud = new JCloudsCloud(name, "aws-ec2", cid, cid,
-                "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
-                "foobar", true, templates);
-        j.jenkins.clouds.add(cloud);
-        addTemplateToCloud(j, name, "FooTemplate", cid);
-        return cid;
+        assertTrue(TestHelper.findTemplate(j, "foo", "sxts-316"), "Renamed template exists");
+        assertFalse(TestHelper.findTemplate(j, "foo", "FooTemplate"), "Original template name is gone");
     }
 
 }

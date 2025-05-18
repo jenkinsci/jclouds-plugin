@@ -52,7 +52,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
 
@@ -153,7 +153,7 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
             return false;
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckMessage(@AncestorInPath AbstractProject project, @QueryParameter String message) {
             if (null == project) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
@@ -167,7 +167,7 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
-        @RequirePOST
+        @POST
         public ListBoxModel doFillConditionItems(@AncestorInPath AbstractProject project) {
             if (null == project) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);

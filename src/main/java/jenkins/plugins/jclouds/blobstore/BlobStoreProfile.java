@@ -59,7 +59,6 @@ import org.jclouds.providers.Providers;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.interceptor.RequirePOST;
 import org.kohsuke.stapler.verb.POST;
 
 import org.kohsuke.accmod.Restricted;
@@ -323,7 +322,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return m;
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doTestConnection(@QueryParameter("providerName") final String provider,
                @QueryParameter("credentialsId") final String credId,
                @QueryParameter("endPointUrl") final String url,
@@ -344,7 +343,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return res;
         }
 
-        @RequirePOST
+        @POST
         public ListBoxModel doFillLocationIdItems(@QueryParameter String providerName,
                 @QueryParameter String credentialsId,
                 @QueryParameter String endPointUrl) {
@@ -367,7 +366,7 @@ public class BlobStoreProfile  extends AbstractDescribableImpl<BlobStoreProfile>
             return m;
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doValidateLocationId(@QueryParameter("providerName") final String provider,
                 @QueryParameter("credentialsId") final String credId,
                 @QueryParameter("endPointUrl") final String url,

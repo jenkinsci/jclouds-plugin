@@ -32,7 +32,7 @@ import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun> implements Serializable {
 
@@ -81,7 +81,7 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
             return "";
         }
 
-        @RequirePOST
+        @POST
         public ListBoxModel doFillCloudNameItems(@AncestorInPath AbstractProject project) {
             if (null == project) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
@@ -100,7 +100,7 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
             return m;
         }
 
-        @RequirePOST
+        @POST
         public ListBoxModel doFillTemplateNameItems(@AncestorInPath AbstractProject project, @QueryParameter("cloudName") String cname) {
             if (null == project) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);

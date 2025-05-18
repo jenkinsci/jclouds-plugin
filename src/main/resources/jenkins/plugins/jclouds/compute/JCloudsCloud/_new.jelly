@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+  <l:layout permission="${app.SYSTEM_READ}" title="${%New agent template}">
+    <j:set var="readOnlyMode" value="${!app.hasPermission(app.ADMINISTER)}"/>
+    <l:breadcrumb title="${%New agent template}"/>
+    <st:include page="sidepanel.jelly" it="${it}"/>
+    <l:main-panel>
+      <h1>${%New agent template}</h1>
+      <f:form method="post" action="doCreate" name="config" class="jenkins-form">
+        <!-- main body of the configuration -->
+
+        <j:set var="descriptor" value="${it.templateDescriptor}"/>
+        <st:include class="${descriptor.clazz}" page="config.jelly"/>
+        <l:isAdmin>
+          <f:bottomButtonBar>
+            <f:submit value="${%Create}"/>
+          </f:bottomButtonBar>
+        </l:isAdmin>
+      </f:form>
+      <l:isAdmin>
+        <st:adjunct includes="lib.form.confirm"/>
+      </l:isAdmin>
+    </l:main-panel>
+  </l:layout>
+
+</j:jelly>

@@ -1,0 +1,102 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <l:layout title="${it.name} - ${%Agent templates}" type="one-column">
+    <l:breadcrumb title="${%Templates}"/>
+
+    <l:isAdmin>
+      <l:header>
+        <script src="${resURL}/jsbundles/pages/cloud-set.js" type="text/javascript" />
+        <link rel="stylesheet" href="${resURL}/jsbundles/pages/cloud-set.css" type="text/css" />
+      </l:header>
+    </l:isAdmin>
+
+    <l:main-panel>
+      <j:choose>
+        <j:when test="${not empty it.templates}">
+          <l:app-bar title="${it.name} - ${%Agent templates}">
+            <l:isAdmin>
+              <a name="newTemplate" class="jenkins-button jenkins-button--primary" href="new">
+                <l:icon src="symbol-add"/>
+                ${%New template}
+              </a>
+            </l:isAdmin>
+          </l:app-bar>
+
+          <p class="description">${%During node provisioning, templates are tried in the order they appear in this table.}</p>
+          <f:form method="post" name="config" action="reorder">
+            <t:setIconSize/>
+            <table id="templates" class="jenkins-table ${iconSize == '16x16' ? 'jenkins-table--small' : iconSize == '24x24' ? 'jenkins-table--medium' : ''}">
+              <thead>
+                <tr>
+                  <th tooltip="${%Drag and drop cells to reorder}">${%Order}</th>
+                  <th>${%Name}</th>
+                  <th>${%Description}</th>
+                  <th class="jenkins-table__cell--tight"/>
+                </tr>
+              </thead>
+              <tbody class="with-drag-drop">
+                <j:forEach var="tpl" items="${it.templates}">
+                  <tr class="repeated-chunk" id="tpl_${tpl.name}">
+                    <td data="symbol-details" class="jenkins-table__cell--tight jenkins-table__icon">
+                      <div class="jenkins-table__cell__button-wrapper dd-handle">
+                        <l:icon src="symbol-details"/>
+                      </div>
+                    </td>
+                    <td>
+                      <input type="hidden" name="name" value="${tpl.name}" />
+                      <a href="${it.getCloudUrl(request2,app,cloud)}template/${tpl.name}" class="jenkins-table__button">${tpl.name}</a>
+                    </td>
+                    <td>
+                      ${tpl.getShortDescription()}
+                    </td>
+                    <td class="jenkins-table__cell--tight">
+                      <div class="jenkins-table__cell__button-wrapper">
+                        <a href="${it.getCloudUrl(request2,app,cloud)}template/${tpl.name}" class="jenkins-table__button">
+                          <l:icon src="symbol-settings"/>
+                        </a>
+                      </div>
+                    </td>
+                    <td class="jenkins-table__cell--tight">
+                      <div class="jenkins-table__cell__button-wrapper">
+                        <l:confirmationLink class="jenkins-table__button jenkins-!-destructive-color"
+                          href="${it.getCloudUrl(request2,app,cloud)}template/${tpl.name}/doDelete"
+                          message="${%delete.template(tpl.name)}"
+                          destructive="true"
+                          post="true">
+                        <l:icon src="symbol-trash"/></l:confirmationLink>
+                      </div>
+                    </td>
+                  </tr>
+                </j:forEach>
+              </tbody>
+            </table>
+            <t:iconSize/>
+            <l:isAdmin>
+              <f:bottomButtonBar>
+                <f:submit id="saveButton" value="${%Save order}" clazz="jenkins-hidden" />
+              </f:bottomButtonBar>
+            </l:isAdmin>
+          </f:form>
+          <st:adjunct includes="lib.form.confirm" />
+        </j:when>
+        <j:otherwise>
+          <l:app-bar title="${it.name} - ${%Agent templates}"/>
+          <div >
+            <section>
+              <div>
+                <div class="jenkins-!-padding-bottom-3">No agent template added yet.</div>
+                <div>
+                  <a name="newTemplate" class="jenkins-button jenkins-button--primary" href="new">
+                    <l:icon src="symbol-add"/>
+                    ${%Add an agent template}
+                  </a>
+                </div>
+              </div>
+            </section>
+          </div>
+        </j:otherwise>
+      </j:choose>
+    </l:main-panel>
+  </l:layout>
+</j:jelly>

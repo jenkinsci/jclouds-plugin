@@ -148,6 +148,7 @@ class CryptoHelperTest {
             rWUodTFbcImnAAAAFmZlbGZlcnRAZnJpdHouZmUudGhpbmsBAgME
             -----END OPENSSH PRIVATE KEY-----
             """;
+
     private static final String ECDSA_PEM = """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
@@ -157,7 +158,8 @@ class CryptoHelperTest {
             SXxaMehY2dajMxV/8yWeHsJ3Ht3ailUyORt5x8wBeiSBM5eyyltPVr402qq5v3i6UJFFad
             cAAAAhANgjmx/XKEMgxtBlRZw/O5LT3Cj5WJ8COxu0wPGACxhZAAAAFmZlbGZlcnRAZnJp
             dHouZmUudGhpbmsB
-            -----END OPENSSH PRIVATE KEY-----""";
+            -----END OPENSSH PRIVATE KEY-----
+            """;
 
     @Test
     void testNullCredential() throws Exception {

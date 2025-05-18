@@ -16,8 +16,8 @@
 package jenkins.plugins.jclouds.compute;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Field;
@@ -34,14 +34,12 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 import hudson.Extension;
-import hudson.RelativePath;
 import hudson.Util;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.AutoCompletionCandidates;
@@ -55,6 +53,7 @@ import hudson.model.labels.LabelAtom;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
 import hudson.security.AccessControlled;
+import hudson.util.FormApply;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 
@@ -63,9 +62,7 @@ import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
-import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
-import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.Image;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
@@ -75,7 +72,6 @@ import org.jclouds.compute.options.TemplateOptions;
 import org.jclouds.digitalocean2.compute.options.DigitalOcean2TemplateOptions;
 import org.jclouds.digitalocean2.domain.Key;
 import org.jclouds.digitalocean2.DigitalOcean2Api;
-import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
 import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions;
@@ -84,10 +80,13 @@ import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
+import org.kohsuke.stapler.HttpRedirect;
+import org.kohsuke.stapler.HttpResponse;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 import au.com.bytecode.opencsv.CSVReader;
 import com.google.common.base.Optional;
@@ -115,7 +114,6 @@ import com.trilead.ssh2.Connection;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
-import jenkins.plugins.jclouds.internal.LocationHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 import jenkins.plugins.jclouds.compute.internal.JCloudsNodeMetadata;
 import jenkins.plugins.jclouds.config.ConfigHelper;
@@ -209,12 +207,20 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         return preferredAddress;
     }
 
+    public String getShortDescription() {
+        return description.replaceFirst("(?s)[\r\n].*", " ...");
+    }
+
     public boolean getUseJnlp() {
         return useJnlp;
     }
 
     public boolean getJnlpProvision() {
         return jnlpProvision;
+    }
+
+    public @NonNull String getUrl() {
+        return "template/" + Util.rawEncode(name) + "/";
     }
 
     @DataBoundConstructor
@@ -703,6 +709,45 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         return null != overrideRetentionTime;
     }
 
+    /**
+     * Deletes the template.
+     */
+    @POST
+    public HttpResponse doDoDelete(@AncestorInPath JCloudsCloud c) throws IOException {
+        Jenkins j = Jenkins.get();
+        j.checkPermission(Jenkins.ADMINISTER);
+        if (null == c) {
+            throw new IllegalStateException("Cloud could not be found");
+        }
+        c.removeTemplate(this);
+        j.save();
+        // Back to templates list.
+        return new HttpRedirect("../../templates");
+    }
+
+    @POST
+    public HttpResponse doConfigSubmit(StaplerRequest2 req, @AncestorInPath JCloudsCloud c)
+            throws IOException, ServletException, Descriptor.FormException {
+        Jenkins j = Jenkins.get();
+        j.checkPermission(Jenkins.ADMINISTER);
+        if (null == c) {
+            throw new IllegalStateException("Cloud could not be found");
+        }
+        JCloudsSlaveTemplate tpl = reconfigure(req, req.getSubmittedForm());
+        if (isNullOrEmpty(tpl.name)) {
+            throw new Descriptor.FormException("Template name is mandatory", "name");
+        }
+        c.replaceTemplate(this, tpl);
+        j.save();
+        // Back to templates list.
+        return FormApply.success("../../templates");
+    }
+
+    private JCloudsSlaveTemplate reconfigure(@NonNull final StaplerRequest2 req, JSONObject form)
+            throws Descriptor.FormException {
+        return null == form ? null : getDescriptor().newInstance(req, form);
+    }
+
     @Extension
     public static final class DescriptorImpl extends Descriptor<JCloudsSlaveTemplate> {
 
@@ -710,7 +755,13 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             return "JCloudsSlaveTemplate";
         }
 
-        @RequirePOST
+        public boolean isUserDataSupported(String cloudName) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            return null != c && c.isUserDataSupported();
+        }
+
+        @POST
         public FormValidation doCheckPreferredAddress(@QueryParameter String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             try {
@@ -723,7 +774,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             }
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckName(@QueryParameter String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             try {
@@ -735,14 +786,39 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         public FormValidation doCheckCores(@QueryParameter String value) {
-            return FormValidation.validateRequired(value);
+            FormValidation ret = FormValidation.validateRequired(value);
+            if (ret == FormValidation.ok()) {
+                try {
+                    int ival = Integer.parseInt(value);
+                    if (ival < 0) {
+                        return FormValidation.error("Value must not be negative");
+                    }
+                    return ret;
+                } catch (NumberFormatException x) {
+                    List<String> sval = Arrays.asList(value.split("\\.", -1));
+                    if (sval.size() != 2) {
+                        return FormValidation.error("Not a number");
+                    }
+                    for (String s : sval) {
+                        try {
+                            int ival = Integer.parseInt(s);
+                            if (ival < 0) {
+                                return FormValidation.error("Value must not be negative");
+                            }
+                        } catch (NumberFormatException x2) {
+                            return FormValidation.error("Not a number");
+                        }
+                    }
+                }
+            }
+            return ret;
         }
 
         public FormValidation doCheckRam(@QueryParameter String value) {
-            return FormValidation.validateRequired(value);
+            return FormValidation.validateNonNegativeInteger(value);
         }
 
-        @RequirePOST
+        @POST
         public AutoCompletionCandidates doAutoCompleteOsFamily(@QueryParameter final String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             OsFamily[] osFamilies = OsFamily.values();
@@ -762,29 +838,29 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                     "Please use cloud-init for provisioning a jenkins user");
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckNumExecutors(@QueryParameter String value) {
-            return FormValidation.validatePositiveInteger(value);
+            return FormValidation.validateNonNegativeInteger(value);
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckCredentialsId(@QueryParameter String value, @QueryParameter final boolean useJnlp) {
             return useJnlp ?  FormValidation.ok() : FormValidation.validateRequired(value);
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckAllowSudo(@QueryParameter final boolean value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             return value ? deprecatedSshProvisioning() : FormValidation.ok();
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckInstallPrivateKey(@QueryParameter final boolean value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             return value ? deprecatedSshProvisioning() : FormValidation.ok();
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckPreExistingJenkinsUser(@QueryParameter final String value, @QueryParameter final String useJnlp) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (!Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
@@ -796,7 +872,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             return FormValidation.ok();
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckUseJnlp(@QueryParameter final boolean value,
             @QueryParameter final boolean preExistingJenkinsUser, @QueryParameter final String initScriptId) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
@@ -818,16 +894,22 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             return FormValidation.ok();
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckAdminCredentialsId(@QueryParameter final String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (isNullOrEmpty(value)) {
                 return FormValidation.ok();
             }
+            StandardUsernameCredentials suc = CredentialsHelper.getCredentialsById(value);
+            if (null == suc) {
+                return FormValidation.error("Credentials with id %s not found", value);
+            } else if (!CredentialsHelper.isRSACredential(value)) {
+                return FormValidation.error("Not an RSA SSH key credential");
+            }
             return deprecatedSshProvisioning();
         }
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckInitScriptId(@QueryParameter String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (isNullOrEmpty(value)) {
@@ -837,7 +919,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
 
-        @RequirePOST
+        @POST
         public FormValidation doCheckFsRoot(@QueryParameter String value, @QueryParameter boolean preExistingJenkinsUser) {
             if (preExistingJenkinsUser) {
                 return FormValidation.ok();
@@ -845,115 +927,48 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             return FormValidation.validateRequired(value);
         }
 
-        @RequirePOST
-        public FormValidation doValidateImageId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
-                @QueryParameter String endPointUrl, @QueryParameter String imageId, @QueryParameter String zones) {
-
+        @POST
+        public FormValidation doValidateImageId(@QueryParameter String cloudName, @QueryParameter String imageId) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
-            final FormValidation res = validateComputeContextParameters(providerName, cloudCredentialsId);
-            if (null != res) {
-                return res;
+            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            if (null == c) {
+                return FormValidation.error("Unable to find parent cloud");
             }
-            if (isNullOrEmpty(imageId)) {
-                return FormValidation.error("Image Id shouldn't be empty");
-            }
-
-            // Remove empty text/whitespace from the fields.
-            imageId = Util.fixEmptyAndTrim(imageId);
-
-            try {
-                final Set<? extends Image> images = listImages(providerName, cloudCredentialsId, endPointUrl, zones);
-                if (images != null) {
-                    for (final Image image : images) {
-                        if (!image.getId().equals(imageId)) {
-                            if (image.getId().contains(imageId)) {
-                                return FormValidation.warning("Sorry cannot find the image id, " + "Did you mean: " + image.getId() + "?\n" + image);
-                            }
-                        } else {
-                            return FormValidation.ok("Image Id is valid.");
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                return FormValidation.error("Unable to check the image id, " + "please check if the credentials you provided are correct.", ex);
-            }
-            return FormValidation.error("Invalid Image Id, please check the value and try again.");
+            return c.validateImageId(imageId);
         }
 
-        @RequirePOST
-        public FormValidation doValidateImageNameRegex(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
-                @QueryParameter String endPointUrl, @QueryParameter String imageNameRegex, @QueryParameter String zones) {
-
+        @POST
+        public FormValidation doValidateImageNameRegex(@QueryParameter("cloudName") String cloudName, @QueryParameter String imageNameRegex) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
-            final FormValidation res = validateComputeContextParameters(providerName, cloudCredentialsId);
-            if (null != res) {
-                return res;
+            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            if (null == c) {
+                return FormValidation.error("Unable to find parent cloud");
             }
-            // Remove empty text/whitespace from the fields.
-            imageNameRegex = Util.fixEmptyAndTrim(imageNameRegex);
-            if (isNullOrEmpty(imageNameRegex)) {
-                return FormValidation.error("Image Name Regex should not be empty.");
-            }
-
-            try {
-                int matchcount = 0;
-                Pattern p = Pattern.compile(imageNameRegex);
-                try {
-                    final Set<? extends Image> images = listImages(providerName, cloudCredentialsId, endPointUrl, zones);
-                    if (images != null) {
-                        for (final Image image : images) {
-                            if (p.matcher(image.getName()).matches()) {
-                                matchcount++;
-                            }
-                        }
-                    } else {
-                        return FormValidation.ok("No images available to check against.");
-                    }
-                } catch (Exception ex) {
-                    return FormValidation.error("Unable to check the image name regex, please check if the credentials you provided are correct.", ex);
-                }
-                if (1 == matchcount) {
-                    return FormValidation.ok("Image name regex matches exactly one image.");
-                }
-                if (1 < matchcount) {
-                    return FormValidation.error("Ambiguous image name regex matches multiple images, please check the value and try again.");
-                }
-            } catch (PatternSyntaxException ex) {
-                return FormValidation.error("Invalid image name regex syntax.");
-            }
-            return FormValidation.error("Image name regex does not match any image, please check the value and try again.");
+            return c.validateImageNameRegex(imageNameRegex);
         }
 
-        private ComputeServiceContext getCtx(final String provider, final String credId, final String url, final String zones) {
-            return JCloudsCloud.ctx(Util.fixEmptyAndTrim(provider), credId, Util.fixEmptyAndTrim(url),
-                    Util.fixEmptyAndTrim(zones));
+        @POST
+        public FormValidation doValidateHardwareId(@QueryParameter String cloudName, @QueryParameter String hardwareId) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            if (null == c) {
+                return FormValidation.error("Unable to find parent cloud");
+            }
+            return c.validateHardwareId(hardwareId);
         }
 
-        private FormValidation validateComputeContextParameters(final String provider, final String credId) {
-            if (isNullOrEmpty(credId)) {
-                return FormValidation.error("No cloud credentials specified.");
+        @POST
+        public FormValidation doValidateLocationId(@QueryParameter String cloudName, @QueryParameter String locationId) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
+            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            if (null == c) {
+                return FormValidation.error("Unable to find parent cloud");
             }
-            if (isNullOrEmpty(provider)) {
-                return FormValidation.error("Provider Name shouldn't be empty");
-            }
-            return null;
+            return c.validateLocationId(locationId);
         }
 
-        private Set<? extends Image> listImages(final String provider, final String credId, final String url, final String zones) {
-            try (ComputeServiceContext ctx = getCtx(provider, credId, url, zones)) {
-                return ctx.getComputeService().listImages();
-            }
-        }
-
-        private boolean prepareListBoxModel(final String provider, final String credId, final ListBoxModel m) {
-            if (isNullOrEmpty(credId)) {
-                LOGGER.warning("cloudCredentialsId is null or empty");
-                return true;
-            }
-            if (isNullOrEmpty(provider)) {
-                LOGGER.warning("providerName is null or empty");
-                return true;
-            }
+        private boolean prepareListBoxModel(final ListBoxModel m) {
             m.add("None specified", "");
             if (Boolean.getBoolean("underSurefireTest")) {
                 // Don't attempt to fetch during HW-Ids GUI testing
@@ -962,83 +977,31 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             return false;
         }
 
-        @RequirePOST
-        public ListBoxModel doFillHardwareIdItems(
-                @RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String cloudCredentialsId,
-                @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
-
+        @POST
+        public ListBoxModel doFillHardwareIdItems(@QueryParameter("cloudName") String cloudName) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ListBoxModel m = new ListBoxModel();
-            if (prepareListBoxModel(providerName, cloudCredentialsId, m)) {
+            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            if (null == c || prepareListBoxModel(m)) {
                 return m;
             }
-            try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
-                ArrayList<Hardware> hws = newArrayList(ctx.getComputeService().listHardwareProfiles());
-                Collections.sort(hws);
-                for (Hardware hardware : hws) {
-                    m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()), hardware.getId());
-                }
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-            }
+            c.fillHardwareIdItems(m);
             return m;
         }
 
-        @RequirePOST
-        public FormValidation doValidateHardwareId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
-                @QueryParameter String endPointUrl, @QueryParameter String hardwareId, @QueryParameter String zones) {
-
-            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
-            if (isNullOrEmpty(cloudCredentialsId)) {
-                return FormValidation.error("No cloud credentials provided.");
-            }
-            if (isNullOrEmpty(providerName)) {
-                return FormValidation.error("Provider Name should not be empty");
-            }
-            hardwareId = Util.fixEmptyAndTrim(hardwareId);
-            if (null == hardwareId) {
-                return FormValidation.error("Hardware Id should not be empty");
-            }
-
-            FormValidation result = FormValidation.error("Invalid Hardware Id, please check the value and try again.");
-            try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
-                Set<? extends Hardware> hardwareProfiles = ctx.getComputeService().listHardwareProfiles();
-                for (Hardware hardware : hardwareProfiles) {
-                    if (!hardware.getId().equals(hardwareId)) {
-                        if (hardware.getId().contains(hardwareId)) {
-                            return FormValidation.warning("Sorry cannot find the hardware id, " + "Did you mean: " + hardware.getId() + "?\n" + hardware);
-                        }
-                    } else {
-                        return FormValidation.ok("Hardware Id is valid.");
-                    }
-                }
-
-            } catch (Exception ex) {
-                result = FormValidation.error("Unable to check the hardware id, " + "please check if the credentials you provided are correct.", ex);
-            }
-            return result;
-        }
-
-        @RequirePOST
-        public ListBoxModel doFillLocationIdItems(
-                @RelativePath("..") @QueryParameter String providerName, @RelativePath("..") @QueryParameter String cloudCredentialsId,
-                @RelativePath("..") @QueryParameter String endPointUrl, @RelativePath("..") @QueryParameter String zones) {
-
+        @POST
+        public ListBoxModel doFillLocationIdItems(@QueryParameter("cloudName") String cloudName) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             ListBoxModel m = new ListBoxModel();
-            if (prepareListBoxModel(providerName, cloudCredentialsId, m)) {
+            JCloudsCloud c = JCloudsCloud.getByName(cloudName);
+            if (null == c || prepareListBoxModel(m)) {
                 return m;
             }
-            try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
-                LocationHelper.fillLocations(m, ctx.getComputeService().listAssignableLocations());
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, ex.getMessage(), ex);
-            }
-
+            c.fillLocationIdItems(m);
             return m;
        }
 
-        @RequirePOST
+        @POST
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
@@ -1049,7 +1012,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                     SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
         }
 
-        @RequirePOST
+        @POST
         public ListBoxModel doFillAdminCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
             if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
@@ -1061,50 +1024,13 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         @NonNull
-        @RequirePOST
+        @POST
         public ListBoxModel doFillInitScriptIdItems(@QueryParameter @Nullable final String currentValue) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             return ConfigHelper.doFillInitScriptItems(currentValue);
         }
 
-        @RequirePOST
-        public FormValidation doValidateLocationId(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
-                @QueryParameter String endPointUrl, @QueryParameter String locationId, @QueryParameter String zones) {
-
-            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
-            if (isNullOrEmpty(cloudCredentialsId)) {
-                return FormValidation.error("No cloud credentials provided.");
-            }
-            if (isNullOrEmpty(providerName)) {
-                return FormValidation.error("Provider Name shouldn't be empty");
-            }
-
-            if (isNullOrEmpty(locationId)) {
-                return FormValidation.ok("No location configured. jclouds automatically will choose one.");
-            }
-
-            // Remove empty text/whitespace from the fields.
-            locationId = Util.fixEmptyAndTrim(locationId);
-
-            FormValidation result = FormValidation.error("Invalid Location Id, please check the value and try again.");
-            try (ComputeServiceContext ctx = getCtx(providerName, cloudCredentialsId, endPointUrl, zones)) {
-                Set<? extends Location> locations = ctx.getComputeService().listAssignableLocations();
-                for (Location location : locations) {
-                    if (!location.getId().equals(locationId)) {
-                        if (location.getId().contains(locationId)) {
-                            return FormValidation.warning("Sorry cannot find the location id, " + "Did you mean: " + location.getId() + "?\n" + location);
-                        }
-                    } else {
-                        return FormValidation.ok("Location Id is valid.");
-                    }
-                }
-            } catch (Exception ex) {
-                result = FormValidation.error("Unable to check the location id, " + "please check if the credentials you provided are correct.", ex);
-            }
-            return result;
-        }
-
-        @RequirePOST
+        @POST
         public FormValidation doCheckOverrideRetentionTime(@QueryParameter String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (isNullOrEmpty(value)) {

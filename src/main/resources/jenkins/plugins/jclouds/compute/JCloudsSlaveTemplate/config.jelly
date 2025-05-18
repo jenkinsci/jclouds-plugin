@@ -6,7 +6,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,212 +16,202 @@ limitations under the License.
 -->
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:f="/lib/form" xmlns:c="/lib/credentials" xmlns:jc="/lib/jclouds">
-  <jc:blockWrapper>
-    <f:block>
-      <b>${%General Configuration}</b>
-      <f:entry title="${%Name}" field="name">
-        <f:textbox/>
-      </f:entry>
-      <f:entry title="${%Description}" field="description">
-        <f:textarea/>
-      </f:entry>
-      <f:entry title="${%Labels}" field="labelString">
-        <f:textbox/>
-      </f:entry>
-      <f:slave-mode name="mode" node="${instance}"/>
-      <f:entry title="${%Number of Executors}" field="numExecutors">
-        <f:number clazz="positive-number" min="1" step="1" default="2"/>
-      </f:entry>
-    </f:block>
-    
-    <f:block>
-      <b>${%Hardware Options}</b>
-      <f:radioBlock inline="true" name="jclouds.useHardwareId" value="true"
-                    title="${%Specify Hardware Id}" checked="${instance.hardwareId != ''}">
-        <f:entry title="${%Hardware Id}" field="hardwareId">
-          <f:select />
-        </f:entry>
-        <f:validateButton title="${%Check Hardware Id}" progress="${%Checking...}" method="validateHardwareId"
-                            with="providerName,cloudCredentialsId,endPointUrl,hardwareId"/>
-      </f:radioBlock>
-      
-      <f:radioBlock inline="true" name="jclouds.useHardwareId" value="false"
-                    title="${%Specify RAM and Cores}" checked="${instance.hardwareId == ''}">
-        <f:entry title="${%Min. RAM (MB)}" field="ram">
-          <f:number clazz="positive-number" min="1" step="1" default="512"/>
-        </f:entry>
-        
-        <f:entry title="${%Min. No.of Cores}" field="cores">
-          <f:number clazz="positive-number" min="1.0" step="1.0" default="1.0"/>
-        </f:entry>
-      </f:radioBlock>
-    </f:block>
 
-    <f:block>
-      <b>${%Image/OS Options}</b>
-      <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="imageId"
-                    title="${%Specify Image ID}" checked="${(instance.imageId != null) &amp;&amp; !instance.imageId.isEmpty()}">
-        <f:entry title="Image Id" field="imageId">
-          <f:textbox />
-        </f:entry>
-        
-        <f:validateButton title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
-                          with="providerName,cloudCredentialsId,endPointUrl,imageId"/>
-      </f:radioBlock>
+  <j:set var="udata" value="${descriptor.isUserDataSupported(it.cloud.name)}"/>
+  <f:invisibleEntry>
+    <f:readOnlyTextbox name="cloudName" value="${it.cloud.name}"/>
+  </f:invisibleEntry>
 
-      <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="imageNameRegex"
-                    title="${%Specify Image Name Regex}" checked="${((instance.imageId == null) || instance.imageId.isEmpty()) &amp;&amp; (instance.imageNameRegex != null) &amp;&amp; !instance.imageNameRegex.isEmpty()}">
-        <f:entry title="${%Image Name Regex}" field="imageNameRegex">
-            <f:textbox />
-        </f:entry>
-
-        <f:validateButton title="${%Check Image Name Regex}" progress="${%Checking...}" method="validateImageNameRegex"
-                          with="providerName,cloudCredentialsId,endPointUrl,imageNameRegex"/>
-      </f:radioBlock>
-
-      <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="osFamilyAndVersion"
-                    title="${%Specify OS Family and Version}" checked="${((instance.imageId == null) || instance.imageId.isEmpty()) &amp;&amp; ((instance.imageNameRegex == null) || instance.imageNameRegex.isEmpty())}">
-        <f:entry title="${%OS Family}" field="osFamily">
-          <f:textbox/>
-        </f:entry>
-        
-        <f:entry title="${%OS Version}" field="osVersion">
-          <f:textbox/>
-        </f:entry>
-      </f:radioBlock>
-    </f:block>
-
-    <f:advanced>
-      <f:block>
-        <b>${%Location Options}</b>
-        <f:entry title="${%Location Id}" field="locationId">
-          <f:select />
-        </f:entry>
-        <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
-          with="providerName,cloudCredentialsId,endPointUrl,locationId"/>
-      </f:block>
-      <f:block>
-        <b>${%Misc. Options}</b>
-        <f:optionalBlock name="hasOverrideRetentionTime" title="${%Override Retention Time}" checked="${instance.hasOverrideRetentionTime()}" inline="true">
-          <f:entry title="${%Retention Time}" field="overrideRetentionTime">
-            <f:number clazz="number" min="-1" step="1"/>
-          </f:entry>
-        </f:optionalBlock>
-      
-        <f:entry title="${%Delay before spooling up (ms)}" field="spoolDelayMs">
-          <f:number clazz="number" min="0" step="1" default="0"/>
-        </f:entry>
-      
-        <f:entry title="${%Init Script}" help="${descriptor.getHelpFile('initScriptId')}">
-          <div style="display:block;">
-            <div style="display:inline-block;width:80%">
-              <f:select field="initScriptId" clazz="jclouds"/>
-            </div>
-            <div style="display:inline-block">
-              <button type="button" class="jenkins-button jclouds-showcf"
-                style="margin-left:10px"
-                data-dlgtitle="${%Details of JClouds Init Script}"
-                disabled="${empty(instance.initScriptId)?'true':null}">${%Show content}</button>
-            </div>
-          </div>
-        </f:entry>
-        <st:adjunct includes="jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate.showcf"/>
-
-        <f:entry title="${%User Data}" help="${descriptor.getHelpFile('userDataEntries')}">
-          <j:choose>
-            <j:when test="${udata}">
-              <f:block>
-                <button type="button" class="jenkins-button jclouds-managecf">${%Manage config files...}</button>
-              </f:block>
-              <f:repeatableProperty field="userDataEntries"/>
-              <st:adjunct includes="jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate.managecf"/>
-            </j:when>
-            <j:otherwise>
-              <div>Not supported with jclouds and this provider.<br/>If you believe this to be wrong,
-                <a href="https://wiki.jenkins-ci.org/display/JENKINS/How+to+report+an+issue">file an issue</a>!</div>
-            </j:otherwise>
-          </j:choose>
-        </f:entry>
-
-        <f:entry title="${%Jenkins Credentials}" field="credentialsId">
-            <c:select/>
-        </f:entry>
-
-        <f:entry field="preExistingJenkinsUser">
-          <f:checkbox title="${%Use Pre-existing Jenkins User}" default="checked"/>
-        </f:entry>
-      
-        <f:entry field="allowSudo">
-          <f:checkbox title="${%Allow Sudo}"/>
-        </f:entry>
-        <f:entry field="isPreemptible">
-          <f:checkbox title="${%Is preemptible}" />
-        </f:entry>
-        <f:entry field="installPrivateKey">
-          <f:checkbox title="${%Install Private Key}"/>
-        </f:entry>
-        <f:entry title="Remote FS Root" field="fsRoot">
-          <f:textbox default="/jenkins" />
-        </f:entry>
-      
-        <f:entry title="${%Admin credentials}" field="adminCredentialsId">
-            <c:select/>
-        </f:entry>
-      
-        <f:entry title="${%Custom JVM Options}" field="jvmOptions">
-          <f:textbox />
-        </f:entry>
-      
-        <f:entry field="stopOnTerminate">
-          <f:checkbox title="${%Stop on Terminate}"/>
-        </f:entry>
-
-        <f:entry title="${%Networks}" field="networks">
-          <f:textbox />
-        </f:entry>
-
-        <f:entry title="${%Security Groups}" field="securityGroups">
-          <f:textbox />
-        </f:entry>
-
-        <f:entry field="waitPhoneHome">
-          <f:checkbox title="${%Wait for agent to phone home}"/>
-        </f:entry>
-
-        <f:entry title="${%Phone home timeout}" field="waitPhoneHomeTimeout">
-          <f:number clazz="number" min="0" step="1" default="15"/>
-        </f:entry>
-
-        <f:entry title="${%Key Pair Name}" field="keyPairName">
-          <f:textbox />
-        </f:entry>
-        <f:entry field="useConfigDrive">
-          <f:checkbox title="${%Use config drive}"/>
-        </f:entry>
-        <f:entry field="assignPublicIp">
-          <f:checkbox title="${%Assign Public IP}" default="checked"/>
-        </f:entry>
-        <f:entry title="${%Preferred Address}" field="preferredAddress">
-          <f:textbox />
-        </f:entry>
-        <f:entry field="useJnlp">
-          <f:checkbox title="${%Use JNLP}"/>
-        </f:entry>
-        <f:entry field="jnlpProvision">
-          <f:checkbox title="${%Enable JNLP provisioning support}"/>
-        </f:entry>
-      </f:block>
-    </f:advanced>
-
-    <f:entry>
-      <div align="right">
-        <f:repeatableDeleteButton value="${%Delete template}" />
-      </div>
+  <f:section title="${%General Configuration}">
+    <f:entry title="${%Name}" field="name">
+      <f:textbox/>
     </f:entry>
-    
-  </jc:blockWrapper>
+    <f:entry title="${%Description}" field="description">
+      <f:textarea/>
+    </f:entry>
+    <f:entry title="${%Labels}" field="labelString">
+      <f:textbox/>
+    </f:entry>
+    <f:slave-mode name="mode" node="${instance}"/>
+    <f:entry title="${%Number of Executors}" field="numExecutors">
+      <f:number clazz="positive-number" min="1" step="1" default="2"/>
+    </f:entry>
+  </f:section>
+
+  <f:section title="${%Hardware Options}">
+    <f:radioBlock inline="true" name="jclouds.useHardwareId" value="true"
+      title="${%Specify Hardware Id}" checked="${instance.hardwareId != ''}">
+    <f:entry title="${%Hardware Id}" field="hardwareId">
+      <f:select />
+    </f:entry>
+    <f:validateButton clazz="ignore-dirty" title="${%Check Hardware Id}" progress="${%Checking...}" method="validateHardwareId"
+      with="cloudName,hardwareId"/>
+  </f:radioBlock>
+
+  <f:radioBlock inline="true" name="jclouds.useHardwareId" value="false"
+    title="${%Specify RAM and Cores}" checked="${instance.hardwareId == ''}">
+  <f:entry title="${%Min. RAM (MB)}" field="ram">
+    <f:number clazz="positive-number" min="1" step="1" default="512"/>
+  </f:entry>
+
+  <f:entry title="${%Min. No.of Cores}" field="cores">
+    <f:textbox default="1.0"/>
+  </f:entry>
+</f:radioBlock>
+    </f:section>
+
+    <f:section title="${%Image/OS Options}">
+      <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="imageId"
+        title="${%Specify Image ID}" checked="${(instance.imageId != null) &amp;&amp; !instance.imageId.isEmpty()}">
+      <f:entry title="Image Id" field="imageId">
+        <f:textbox />
+      </f:entry>
+
+      <f:validateButton clazz="ignore-dirty" title="${%Check Image Id}" progress="${%Checking...}" method="validateImageId"
+        with="cloudName,imageId"/>
+    </f:radioBlock>
+
+    <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="imageNameRegex"
+      title="${%Specify Image Name Regex}" checked="${((instance.imageId == null) || instance.imageId.isEmpty()) &amp;&amp; (instance.imageNameRegex != null) &amp;&amp; !instance.imageNameRegex.isEmpty()}">
+    <f:entry title="${%Image Name Regex}" field="imageNameRegex">
+      <f:textbox />
+    </f:entry>
+
+    <f:validateButton clazz="ignore-dirty" title="${%Check Image Name Regex}" progress="${%Checking...}" method="validateImageNameRegex"
+      with="cloudName,imageNameRegex"/>
+  </f:radioBlock>
+
+  <f:radioBlock inline="true" name="jclouds.imageSelectionOption" value="osFamilyAndVersion"
+    title="${%Specify OS Family and Version}" checked="${((instance.imageId == null) || instance.imageId.isEmpty()) &amp;&amp; ((instance.imageNameRegex == null) || instance.imageNameRegex.isEmpty())}">
+  <f:entry title="${%OS Family}" field="osFamily">
+    <f:textbox/>
+  </f:entry>
+
+  <f:entry title="${%OS Version}" field="osVersion">
+    <f:textbox/>
+  </f:entry>
+</f:radioBlock>
+    </f:section>
+
+    <f:section title="${%Location Options}">
+      <f:entry title="${%Location Id}" field="locationId">
+        <f:select />
+      </f:entry>
+      <f:validateButton clazz="ignore-dirty" title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
+        with="cloudName,locationId"/>
+    </f:section>
+    <f:section title="${%Misc. Options}">
+      <f:optionalBlock name="hasOverrideRetentionTime" title="${%Override Retention Time}" checked="${instance.hasOverrideRetentionTime()}" inline="true">
+        <f:entry title="${%Retention Time}" field="overrideRetentionTime">
+          <f:number clazz="number" min="-1" step="1"/>
+        </f:entry>
+      </f:optionalBlock>
+
+      <f:entry title="${%Delay before spooling up (ms)}" field="spoolDelayMs">
+        <f:number clazz="number" min="0" step="1" default="0"/>
+      </f:entry>
+
+      <f:entry title="${%Init Script}" help="${descriptor.getHelpFile('initScriptId')}">
+        <div style="display:block;">
+          <div style="display:inline-block;width:80%">
+            <f:select field="initScriptId" clazz="jclouds"/>
+          </div>
+          <div style="display:inline-block">
+            <button type="button" class="jenkins-button ignore-dirty jclouds-showcf"
+              style="margin-left:10px"
+              data-dlgtitle="${%Details of JClouds Init Script}"
+              disabled="${empty(instance.initScriptId)?'true':null}">${%Show content}</button>
+          </div>
+        </div>
+      </f:entry>
+      <st:adjunct includes="jenkins.plugins.jclouds.showcf"/>
+
+      <f:entry title="${%User Data}" help="${descriptor.getHelpFile('userDataEntries')}">
+        <j:choose>
+          <j:when test="${udata}">
+            <f:block>
+              <button type="button" class="jenkins-button ignore-dirty jclouds-managecf">${%Manage config files...}</button>
+            </f:block>
+            <f:repeatableProperty field="userDataEntries"/>
+            <st:adjunct includes="jenkins.plugins.jclouds.managecf"/>
+          </j:when>
+          <j:otherwise>
+            <div>Not supported with jclouds and this provider.<br/>If you believe this to be wrong,
+            <a href="https://wiki.jenkins-ci.org/display/JENKINS/How+to+report+an+issue">file an issue</a>!</div>
+        </j:otherwise>
+      </j:choose>
+    </f:entry>
+
+    <f:entry title="${%Jenkins Credentials}" field="credentialsId">
+      <c:select/>
+    </f:entry>
+
+    <f:entry field="preExistingJenkinsUser">
+      <f:checkbox title="${%Use Pre-existing Jenkins User}" default="checked"/>
+    </f:entry>
+
+    <f:entry field="allowSudo">
+      <f:checkbox title="${%Allow Sudo}"/>
+    </f:entry>
+    <f:entry field="isPreemptible">
+      <f:checkbox title="${%Is preemptible}" />
+    </f:entry>
+    <f:entry field="installPrivateKey">
+      <f:checkbox title="${%Install Private Key}"/>
+    </f:entry>
+    <f:entry title="Remote FS Root" field="fsRoot">
+      <f:textbox default="/jenkins" />
+    </f:entry>
+
+    <f:entry title="${%Admin credentials}" field="adminCredentialsId">
+      <c:select/>
+    </f:entry>
+
+    <f:entry title="${%Custom JVM Options}" field="jvmOptions">
+      <f:textbox />
+    </f:entry>
+
+    <f:entry field="stopOnTerminate">
+      <f:checkbox title="${%Stop on Terminate}"/>
+    </f:entry>
+
+    <f:entry title="${%Networks}" field="networks">
+      <f:textbox />
+    </f:entry>
+
+    <f:entry title="${%Security Groups}" field="securityGroups">
+      <f:textbox />
+    </f:entry>
+
+    <f:entry field="waitPhoneHome">
+      <f:checkbox title="${%Wait for agent to phone home}"/>
+    </f:entry>
+
+    <f:entry title="${%Phone home timeout}" field="waitPhoneHomeTimeout">
+      <f:number clazz="number" min="0" step="1" default="15"/>
+    </f:entry>
+
+    <f:entry title="${%Key Pair Name}" field="keyPairName">
+      <f:textbox />
+    </f:entry>
+    <f:entry field="useConfigDrive">
+      <f:checkbox title="${%Use config drive}"/>
+    </f:entry>
+    <f:entry field="assignPublicIp">
+      <f:checkbox title="${%Assign Public IP}" default="checked"/>
+    </f:entry>
+    <f:entry title="${%Preferred Address}" field="preferredAddress">
+      <f:textbox />
+    </f:entry>
+    <f:entry field="useJnlp">
+      <f:checkbox title="${%Use JNLP}"/>
+    </f:entry>
+    <f:entry field="jnlpProvision">
+      <f:checkbox title="${%Enable JNLP provisioning support}"/>
+    </f:entry>
+  </f:section>
+
   <st:once>
     <script type="text/javascript" src="${rootURL}/plugin/jclouds-jenkins/jclouds.js"/>
   </st:once>
 </j:jelly>
-

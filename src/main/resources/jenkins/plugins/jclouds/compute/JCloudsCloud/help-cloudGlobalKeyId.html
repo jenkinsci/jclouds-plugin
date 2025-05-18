@@ -1,4 +1,5 @@
 <div>
     An RSA private key, which you should have registered with your cloud provider. You need this key, if you want to connect to the agents using SSH.<br/>
   The derived public key will be provisioned on created agent instances in the default-user's authorized_keys file.
+  This can be overridden in agent templates. Furthermore, templates might ignore this completely, as they can be configured to not provision a public key at all.
 </div>

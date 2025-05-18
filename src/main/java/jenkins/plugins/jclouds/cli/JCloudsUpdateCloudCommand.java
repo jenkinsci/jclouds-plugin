@@ -84,7 +84,7 @@ public class JCloudsUpdateCloudCommand extends CLICommand {
             tpl.setCloud(nc);
         }
         if (keep) {
-            nc.templates.addAll(oc.getTemplates());
+            nc.setTemplates(oc.getTemplates());
         }
         Jenkins.get().clouds.replace(oc, nc);
         return 0;
