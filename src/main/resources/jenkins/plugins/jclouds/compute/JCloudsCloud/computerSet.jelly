@@ -38,7 +38,7 @@ limitations under the License.
               <f:form action="${rootURL}/${it.url}/provision" method="post" name="provision" id="${formId}">
                 <input name="tplname" type="hidden"/>
               </f:form>
-              <st:adjunct includes="jenkins.plugins.jclouds.compute.JCloudsCloud.provision"/>
+              <st:adjunct includes="jenkins.plugins.jclouds.provision"/>
             </td>
         </tr>
     </j:if>

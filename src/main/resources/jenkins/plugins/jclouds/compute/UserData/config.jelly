@@ -21,7 +21,7 @@ limitations under the License.
       <f:select field="fileId" clazz="jclouds" default=""/>
     </div>
     <div style="display:inline-block;" >
-      <button type="button" class="jenkins-button jclouds-showcf"
+      <button type="button" class="jenkins-button ignore-dirty jclouds-showcf"
         style="margin-left:10px"
         data-dlgtitle="${%Details of JClouds User Data}"
         disabled="${empty(instance.fileId)?'true':null}">${%Show content}</button>

@@ -75,6 +75,15 @@ public final class CredentialsHelper {
     }
 
 
+    public static boolean isRSACredential(final String id) {
+        try {
+            new CryptoHelper(id);
+        } catch (IllegalStateException x) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Use the ssh-slaves-plugin to retrieve a credentials object by its Id.
      *

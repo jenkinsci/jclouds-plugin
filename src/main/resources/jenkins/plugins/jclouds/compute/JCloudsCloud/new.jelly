@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout" xmlns:st="jelly:stapler">
+  <l:layout permission="${app.SYSTEM_READ}" title="${%New agent template}" type="one-column">
+    <j:set var="readOnlyMode" value="${!app.hasPermission(app.ADMINISTER)}"/>
+    <l:breadcrumb id="jclouds" title="${%Templates}" href="templates"/>
+    <st:adjunct includes="jenkins.plugins.jclouds.fix-breadcrumbs"/>
+    <l:breadcrumb title="${%New agent template}"/>
+    <l:main-panel>
+      <h1>${%New agent template}</h1>
+      <f:form method="post" action="create" name="config" class="jenkins-form">
+        <!-- main body of the configuration -->
+        <j:set var="descriptor" value="${it.descriptor}"/>
+        <f:invisibleEntry>
+          <f:readOnlyTextbox name="cloudName" value="${it.profile}"/>
+        </f:invisibleEntry>
+        <f:entry title="${%Name}" field="newTemplateName">
+          <f:textbox name="name"/>
+        </f:entry>
+        <j:if test="${!it.templates.isEmpty()}">
+          <f:optionalBlock title="${%Copy existing agent template}" name="mode">
+            <div class="jenkins-search">
+              <f:combobox clazz="jenkins-search__input copy-field" name="from" field="copyNewTemplateFrom"/>
+              <div class="jenkins-search__icon">
+                <l:icon src="symbol-search"/>
+              </div>
+            </div>
+          </f:optionalBlock>
+        </j:if>
+        <l:isAdmin>
+          <f:bottomButtonBar>
+            <f:submit value="${%Create}"/>
+          </f:bottomButtonBar>
+        </l:isAdmin>
+      </f:form>
+    </l:main-panel>
+  </l:layout>
+
+</j:jelly>

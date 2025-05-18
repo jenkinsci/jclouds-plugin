@@ -53,6 +53,6 @@ class JCloudsProfileTest {
                 "Some previously available providers are missing. Available Providers: "
                         + providers + ", Expected: " + Arrays.toString(ALL_COMPUTE_PROVIDERS));
 
-        assertEquals(ALL_COMPUTE_PROVIDERS.length, providers.size(), "The number of known Blob Store Providers has changed. Most likely new providers were added.");
+        assertEquals(ALL_COMPUTE_PROVIDERS.length, providers.size(), "The number of known Compute Providers has changed. Most likely new providers were added.");
     }
 }

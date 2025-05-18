@@ -34,7 +34,7 @@ import static hudson.util.ReflectionUtils.*;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
-import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
@@ -98,7 +98,7 @@ public final class UserData extends AbstractDescribableImpl<UserData> {
         }
 
         @NonNull
-        @RequirePOST
+        @POST
         public ListBoxModel doFillFileIdItems(@QueryParameter @Nullable final String currentValue) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             return ConfigHelper.doFillFileItems(currentValue);

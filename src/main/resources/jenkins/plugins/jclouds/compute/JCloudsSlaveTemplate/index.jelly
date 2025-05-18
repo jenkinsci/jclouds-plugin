@@ -1,0 +1,41 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:l="/lib/layout" xmlns:f="/lib/form">
+  <l:layout permission="${app.SYSTEM_READ}" title="${%Agent template}" type="one-column">
+    <l:breadcrumb id="jclouds" title="${%Templates}" href="../../templates"/>
+    <st:adjunct includes="jenkins.plugins.jclouds.fix-breadcrumbs"/>
+    <l:breadcrumb title="${it.name}"/>
+    <j:set var="readOnlyMode" value="${!app.hasPermission(app.ADMINISTER)}"/>
+    <l:main-panel>
+      <div class="jenkins-form">
+        <l:app-bar title="${%Agent template}">
+          <l:isAdmin>
+            <l:confirmationLink
+              class="jenkins-button jenkins-!-destructive-color"
+              href="doDelete"
+              message="${%delete.template(it.name)}"
+              destructive="true"
+              post="true">
+              <l:icon src="symbol-trash"/>
+              ${%Delete agent template}
+            </l:confirmationLink>
+          </l:isAdmin>
+        </l:app-bar>
+      </div>
+      <f:form method="post" action="configSubmit" name="config" class="jenkins-form">
+        <j:set var="instance" value="${it}"/>
+        <j:set var="descriptor" value="${instance.descriptor}"/>
+        <!-- main body of the configuration -->
+        <st:include it="${instance}" page="config.jelly"/>
+        <l:isAdmin>
+          <f:bottomButtonBar>
+            <f:submit value="${%Save}"/>
+            <f:apply/>
+          </f:bottomButtonBar>
+        </l:isAdmin>
+      </f:form>
+      <l:isAdmin>
+        <st:adjunct includes="lib.form.confirm"/>
+      </l:isAdmin>
+    </l:main-panel>
+  </l:layout>
+</j:jelly>

@@ -32,7 +32,7 @@ limitations under the License.
     <f:entry field="trustAll">
       <f:checkbox title="${%Relax security}"/>
     </f:entry>
-    <f:validateButton title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="providerName,credentialsId,endPointUrl,trustAll"/>
+    <f:validateButton clazz="ignore-dirty" title="${%Test Connection}" progress="${%Testing...}" method="testConnection" with="providerName,credentialsId,endPointUrl,trustAll"/>
     <f:entry title="">
       <div align="right">
         <f:repeatableDeleteButton/>
@@ -44,7 +44,7 @@ limitations under the License.
         <f:entry title="${%Location Id}" field="locationId">
           <f:select />
         </f:entry>
-        <f:validateButton title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
+        <f:validateButton clazz="ignore-dirty" title="${%Check Location Id}" progress="${%Checking...}" method="validateLocationId"
           with="providerName,credentialsId,endPointUrl,locationId"/>
       </f:block>
     </f:advanced>

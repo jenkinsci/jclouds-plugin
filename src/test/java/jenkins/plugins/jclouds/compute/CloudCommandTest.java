@@ -102,7 +102,7 @@ class CloudCommandTest {
 
     @Test
     void testCopyFooWithTemplate(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-copy-cloud").invokeWithArgs("foo", "bar");
         assertThat(res, succeededSilently());
@@ -131,24 +131,24 @@ class CloudCommandTest {
 
     @Test
     void testGetCloud(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-cloud").invokeWithArgs("foo");
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString(
-              "<cloudGlobalKeyId sha256=\"6ee3634c24bbd89de81712c476a58a233a4251507a7671ac9fabae5079d3e5ca\">"));
+              "<cloudGlobalKeyId sha256=\"db3976ffcd0f6cbce4f764285a7686106b50e347aa42299d4dfa4d42f37d5779\">test-rsa-key"));
         assertThat(res.stdout(), containsString(
               "<cloudCredentialsId sha256=\"6ee3634c24bbd89de81712c476a58a233a4251507a7671ac9fabae5079d3e5ca\">"));
     }
 
     @Test
     void testGetCloudFull(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-cloud").invokeWithArgs("foo", "--full");
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString(
-              "<cloudGlobalKeyId sha256=\"6ee3634c24bbd89de81712c476a58a233a4251507a7671ac9fabae5079d3e5ca\">"));
+              "<cloudGlobalKeyId sha256=\"db3976ffcd0f6cbce4f764285a7686106b50e347aa42299d4dfa4d42f37d5779\">test-rsa-key"));
         assertThat(res.stdout(), containsString(
               "<cloudCredentialsId sha256=\"6ee3634c24bbd89de81712c476a58a233a4251507a7671ac9fabae5079d3e5ca\">"));
         assertThat(res.stdout(), containsString("FooTemplate"));
@@ -158,7 +158,7 @@ class CloudCommandTest {
 
     @Test
     void testGetCloudFullReplacing(JenkinsRule j) throws Exception {
-        String id = createTestCloudWithTemplate(j, "foo");
+        String id = TestHelper.createTestCloudWithTemplate(j, "foo");
         String id2 = UUID.randomUUID().toString();
         String xml =
             String.format("<replacements><replacement from=\"%s\" to=\"%s\"/></replacements>", id, id2);
@@ -168,7 +168,7 @@ class CloudCommandTest {
             .withStdin(stdin).invokeWithArgs("foo", "--full", "--replace");
         assertThat(res, succeeded());
         String tag = String.format( "<%%s>%s", id2);
-        assertThat(res.stdout(), containsString(String.format(tag, "cloudGlobalKeyId")));
+        assertThat(res.stdout(), containsString(String.format("<%s sha256=\"db3976ffcd0f6cbce4f764285a7686106b50e347aa42299d4dfa4d42f37d5779\">test-rsa-key", "cloudGlobalKeyId")));
         assertThat(res.stdout(), containsString(String.format(tag, "cloudCredentialsId")));
         assertThat(res.stdout(), containsString("FooTemplate"));
         assertThat(res.stdout(), containsString(String.format(tag, "credentialsId")));
@@ -322,7 +322,7 @@ class CloudCommandTest {
 
     @Test
     void testUpdateCloudNoOptions(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
@@ -347,7 +347,7 @@ class CloudCommandTest {
 
     @Test
     void testUpdateCloudDeleteTemplates(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
@@ -376,7 +376,7 @@ class CloudCommandTest {
 
     @Test
     void testUpdateCloudKeepTemplates(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
@@ -405,8 +405,8 @@ class CloudCommandTest {
 
     @Test
     void testUpdateCloudRenameToExisting(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
-        createTestCloudWithTemplate(j, "graustack");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "graustack");
 
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
@@ -431,7 +431,7 @@ class CloudCommandTest {
 
     @Test
     void testUpdateCloudVerbose(JenkinsRule j) throws Exception {
-        createTestCloudWithTemplate(j, "foo");
+        TestHelper.createTestCloudWithTemplate(j, "foo");
 
         StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
                 CredentialsScope.SYSTEM, null, "WhateverDescription2", "CredUser1", "secretPassword1");
@@ -453,35 +453,6 @@ class CloudCommandTest {
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString(String.format("Validated cloudGlobalKeyId %s of cloud graustack", cid1)));
         assertThat(res.stdout(), containsString(String.format("Validated cloudCredentialsId %s of cloud graustack", cid2)));
-    }
-
-    private String createTestCloudWithTemplate(JenkinsRule j, String name) throws Exception {
-
-        StandardUsernameCredentials suc = new UsernamePasswordCredentialsImpl(
-                CredentialsScope.SYSTEM, null, "WhateverDescription", "CredUser", "secretPassword");
-        String cid = CredentialsHelper.storeCredentials(suc);
-
-        final JCloudsSlaveTemplate tpl = new JCloudsSlaveTemplate("FooTemplate", "imageId", null, "hardwareId",
-                1, 512, "osFamily", "osVersion", "locationId", "jclouds-slave-type1 jclouds-type2",
-                "Description", null /* initScripId */, 1 /* numExecutors */, false /* stopOnTerminate */,
-                "jvmOptions", false /* preExistingJenkinsUser */, null /* fsRoot */, false /* allowSudo */,
-                false /* installPrivateKey */, 5 /* overrideRetentionTime */, true /* hasOverrideRetentionTime */,
-                0 /* spoolDelayMs */, true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
-                null /* keyPairName */, true /* assignPublicIp */, "network1_id,network2_id",
-                "security_group1,security_group2", cid /* credentialsId */,
-                null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */,
-                false /* preemptible */, null /* configDataIds */, "192.168.1.0/24" /* preferredAddress */,
-                false /* useJnlp */, false /* jnlpProvisioning */);
-
-        List<JCloudsSlaveTemplate> templates = new ArrayList<>();
-        templates.add(tpl);
-
-        JCloudsCloud cloud = new JCloudsCloud(name, "aws-ec2", cid, cid,
-                "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
-                "foobar", true, templates);
-        j.jenkins.clouds.add(cloud);
-        return cid;
     }
 
 }

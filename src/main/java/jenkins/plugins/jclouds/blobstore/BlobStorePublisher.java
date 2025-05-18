@@ -35,7 +35,7 @@ import hudson.util.ListBoxModel;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest2;
-import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 import org.jclouds.rest.AuthorizationException;
 
@@ -297,7 +297,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
             return profiles != null && !profiles.isEmpty();
         }
 
-        @RequirePOST
+        @POST
         public ListBoxModel doFillProfileNameItems(@AncestorInPath AbstractProject project) {
             if (null == project) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);

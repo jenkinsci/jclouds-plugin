@@ -34,7 +34,7 @@ import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.interceptor.RequirePOST;
+import org.kohsuke.stapler.verb.POST;
 
 import org.jclouds.compute.domain.NodeMetadata;
 
@@ -92,7 +92,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
      * performed immediately.
      */
     @Override
-    @RequirePOST
+    @POST
     public HttpResponse doDoDelete() throws IOException {
         Jenkins.get().checkPermission(Cloud.PROVISION);
         recordTermination();
