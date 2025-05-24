@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.41 (not yet released)
+- Major rework of GUI. Inspired by similar changes in the [kubernetes](https://github.com/jenkinsci/kubernetes-plugin/pull/1443) and [azure](https://github.com/jenkinsci/kubernetes-plugin/pull/1443) plugins, template configurations are now on separate pages. This simplifies editing of templates so that you know exactly which one you are editing. It also improves the performance of the cloud configuration page. In the templates overview, templates can also reordered with DnD.
 ### Version 2.40 (May 17, 2025)
 - Major rework of CLI. Documentation [here](CLI.md)
 - Added support for ecdsa-sha2-nistp256 and ssh-ed25519 key types when provisioning ssh-keys on agent nodes
