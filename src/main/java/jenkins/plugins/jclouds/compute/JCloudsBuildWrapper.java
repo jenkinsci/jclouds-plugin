@@ -15,17 +15,22 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import com.google.common.base.Function;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterables;
+import com.google.common.util.concurrent.MoreExecutors;
 import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
+import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.slaves.Cloud;
 import hudson.tasks.BuildWrapperDescriptor;
-import hudson.Util;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
@@ -35,30 +40,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
-
 import jenkins.model.Jenkins;
-import jenkins.tasks.SimpleBuildWrapper;
-import org.jenkinsci.Symbol;
-
 import jenkins.plugins.jclouds.compute.internal.JCloudsNodeMetadata;
 import jenkins.plugins.jclouds.compute.internal.NodePlan;
 import jenkins.plugins.jclouds.compute.internal.ProvisionPlannedInstancesAndDestroyAllOnError;
 import jenkins.plugins.jclouds.compute.internal.RunningNode;
 import jenkins.plugins.jclouds.compute.internal.TerminateNodes;
 import jenkins.plugins.jclouds.internal.TaskListenerLogger;
-
+import jenkins.tasks.SimpleBuildWrapper;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
-
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.util.concurrent.MoreExecutors;
 
 public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializable {
 
@@ -131,7 +126,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         private final TerminateNodes terminateNodes;
         private final Set<String> waitingClouds;
 
-        JCloudsBuildWrapperDisposer(Iterable<RunningNode> runningNodes, TerminateNodes terminateNodes, Set<String> waitingClouds) {
+        JCloudsBuildWrapperDisposer(
+                Iterable<RunningNode> runningNodes, TerminateNodes terminateNodes, Set<String> waitingClouds) {
             this.runningNodes = runningNodes;
             this.waitingClouds = waitingClouds;
             this.terminateNodes = terminateNodes;
@@ -153,7 +149,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
     //
     @Override
-    public void setUp(Context context, Run<?,?> build, TaskListener listener, EnvVars initialEnvironment) throws IOException, InterruptedException {
+    public void setUp(Context context, Run<?, ?> build, TaskListener listener, EnvVars initialEnvironment)
+            throws IOException, InterruptedException {
 
         // Validate user-supplied input
         for (final InstancesToRun inst : instancesToRun) {
@@ -166,8 +163,9 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
                 throw new AbortException(String.format("The cloud named %s is not controlled by jclouds.", cn));
             }
             String tpln = initialEnvironment.expand(inst.getActualTemplateName());
-            if (null == ((JCloudsCloud)c).getTemplate(tpln)) {
-                throw new AbortException(String.format("The cloud named %s does not provide a template named %s.", cn, tpln));
+            if (null == ((JCloudsCloud) c).getTemplate(tpln)) {
+                throw new AbortException(
+                        String.format("The cloud named %s does not provide a template named %s.", cn, tpln));
             }
         }
         final String failedCloud = validateInstanceCaps();
@@ -180,10 +178,10 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
             public NodePlan apply(InstancesToRun instance) {
                 String cloudName = instance.cloudName;
                 String templateName = initialEnvironment.expand(instance.getActualTemplateName());
-                Supplier<JCloudsNodeMetadata> nodeSupplier = JCloudsCloud.getByName(cloudName).getTemplate(templateName);
+                Supplier<JCloudsNodeMetadata> nodeSupplier =
+                        JCloudsCloud.getByName(cloudName).getTemplate(templateName);
                 return new NodePlan(cloudName, templateName, instance.count, instance.shouldSuspend, nodeSupplier);
             }
-
         });
 
         final TaskListenerLogger logger = new TaskListenerLogger(listener);
@@ -210,15 +208,16 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
             final Set<String> cloudsToPossiblyAbortWaiting = new HashSet<>();
             // Optionally, wait for phone-home, blocks until all nodes have reported back availability or timeout.
             try {
-                final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams = waitPhoneHomeSetup(runningNodes, listener.getLogger());
+                final ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitParams =
+                        waitPhoneHomeSetup(runningNodes, listener.getLogger());
                 if (!waitParams.isEmpty()) {
                     for (Map.Entry<JCloudsCloud, List<PhoneHomeMonitor>> entry : waitParams.entrySet()) {
                         cloudsToPossiblyAbortWaiting.add(entry.getKey().getName());
                         try {
                             for (PhoneHomeMonitor phm : entry.getValue()) {
-                              phm.join();
-                              entry.getKey().unregisterPhoneHomeMonitor(phm);
-                          }
+                                phm.join();
+                                entry.getKey().unregisterPhoneHomeMonitor(phm);
+                            }
                         } catch (InterruptedException x) {
                             // abort all phone-home monitors that are still waiting
                             for (PhoneHomeMonitor phm : entry.getValue()) {
@@ -234,7 +233,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
 
             List<String> ips = getInstanceIPs(runningNodes, listener.getLogger());
             context.env(getEnvVarNameWithDefault(), ips.size() > 0 ? String.join(",", ips) : " ");
-            context.setDisposer(new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToPossiblyAbortWaiting));
+            context.setDisposer(
+                    new JCloudsBuildWrapperDisposer(runningNodes, terminateNodes, cloudsToPossiblyAbortWaiting));
         } else {
             context.env(getEnvVarNameWithDefault(), " ");
         }
@@ -244,7 +244,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         final Jenkins.CloudList cl = Jenkins.get().clouds;
         final Cloud c = cl.getByName(cloudName);
         if (null != c && c instanceof JCloudsCloud) {
-            JCloudsCloud jc = (JCloudsCloud)c;
+            JCloudsCloud jc = (JCloudsCloud) c;
             return jc.getRunningNodesCount() + numOfNewInstances >= jc.instanceCap;
         }
         return false;
@@ -258,7 +258,7 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
                 startPerCloud.put(inst.cloudName, old + Integer.valueOf(inst.count));
             }
         }
-        for (final Map.Entry<String,Integer> entry : startPerCloud.entrySet()) {
+        for (final Map.Entry<String, Integer> entry : startPerCloud.entrySet()) {
             final String cname = entry.getKey();
             if (isBeyondInstanceCap(cname, entry.getValue().intValue())) {
                 return cname;
@@ -267,7 +267,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         return null;
     }
 
-    private ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitPhoneHomeSetup(final Iterable<RunningNode> runningNodes, PrintStream logger) {
+    private ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> waitPhoneHomeSetup(
+            final Iterable<RunningNode> runningNodes, PrintStream logger) {
         ConcurrentMap<JCloudsCloud, List<PhoneHomeMonitor>> ret = new ConcurrentHashMap<>();
         ConcurrentMap<JCloudsCloud, ConcurrentMap<Integer, List<String>>> cloudWaitMap = new ConcurrentHashMap<>();
         for (RunningNode rn : runningNodes) {
@@ -275,7 +276,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
             if (null != c) {
                 JCloudsSlaveTemplate t = c.getTemplate(rn.getTemplateName());
                 if (null != t && t.waitPhoneHome && t.waitPhoneHomeTimeout > 0) {
-                    ConcurrentMap<Integer, List<String>> waitMap = cloudWaitMap.getOrDefault(c, new ConcurrentHashMap<>());
+                    ConcurrentMap<Integer, List<String>> waitMap =
+                            cloudWaitMap.getOrDefault(c, new ConcurrentHashMap<>());
                     Integer wto = Integer.valueOf(t.waitPhoneHomeTimeout);
                     List<String> hosts = waitMap.getOrDefault(wto, new ArrayList<>());
                     hosts.add(rn.getNodeName());
@@ -286,7 +288,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         }
         for (Map.Entry<JCloudsCloud, ConcurrentMap<Integer, List<String>>> cwMap : cloudWaitMap.entrySet()) {
             for (Map.Entry<Integer, List<String>> entry : cwMap.getValue().entrySet()) {
-                final PhoneHomeMonitor phm = new PhoneHomeMonitor(true, entry.getKey().intValue());
+                final PhoneHomeMonitor phm =
+                        new PhoneHomeMonitor(true, entry.getKey().intValue());
                 phm.waitForPhoneHomeMultiple(entry.getValue(), logger);
                 cwMap.getKey().registerPhoneHomeMonitor(phm);
                 List<PhoneHomeMonitor> phmList = ret.getOrDefault(cwMap.getKey(), new ArrayList<>());
@@ -310,7 +313,8 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
         return ips.build();
     }
 
-    @Extension @Symbol("withJclouds")
+    @Extension
+    @Symbol("withJclouds")
     public static final class DescriptorImpl extends BuildWrapperDescriptor {
         @Override
         public String getDisplayName() {
@@ -328,6 +332,5 @@ public class JCloudsBuildWrapper extends SimpleBuildWrapper implements Serializa
             }
             return false;
         }
-
     }
 }

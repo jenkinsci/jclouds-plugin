@@ -15,8 +15,8 @@
  */
 package jenkins.plugins.jclouds.config;
 
-import java.util.UUID;
 import hudson.Extension;
+import java.util.UUID;
 import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.UserData;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
@@ -32,8 +32,7 @@ public class UserDataPartHandler extends Config {
     }
 
     public UserDataPartHandler dup() {
-        UserDataPartHandler ret = new UserDataPartHandler(UUID.randomUUID().toString(),
-                name, comment, content);
+        UserDataPartHandler ret = new UserDataPartHandler(UUID.randomUUID().toString(), name, comment, content);
         String pid = getProviderId();
         if (null != pid) {
             ret.setProviderId(pid);
@@ -51,25 +50,24 @@ public class UserDataPartHandler extends Config {
     public static class UserDataPartHandlerProvider extends AbstractJCloudsConfigProviderImpl {
 
         private static final String SIGNATURE = "^#part-handler[\\r\\n]+";
-        private static final String DEFAULT_CONTENT = "#part-handler\n" +
-            "def list_types():\n" +
-            "   # return a list of mime-types that are handled by this module\n" +
-            "   return([\"text/go-cubs-go\"])\n\n" +
-            "def handle_part(data,ctype,filename,payload):\n" +
-            "   # data: the cloudinit object\n" +
-            "   # ctype: '__begin__', '__end__', or the specific mime-type of the part\n" +
-            "   # filename: the filename for the part, or dynamically generated part if\n" +
-            "   #           no filename is given attribute is present\n" +
-            "   # payload: the content of the part (empty for begin or end)\n" +
-            "   if ctype == \"__begin__\":\n" +
-            "       print \"my handler is beginning\"\n" +
-            "       return\n" +
-            "   if ctype == \"__end__\":\n" +
-            "       print \"my handler is ending\"\n" +
-            "       return\n\n" +
-            "   print \"==== received ctype=%s filename=%s ====\" % (ctype,filename)\n" +
-            "   print payload\n" +
-            "   print \"==== end ctype=%s filename=%s\" % (ctype, filename)\n";
+        private static final String DEFAULT_CONTENT = "#part-handler\n" + "def list_types():\n"
+                + "   # return a list of mime-types that are handled by this module\n"
+                + "   return([\"text/go-cubs-go\"])\n\n"
+                + "def handle_part(data,ctype,filename,payload):\n"
+                + "   # data: the cloudinit object\n"
+                + "   # ctype: '__begin__', '__end__', or the specific mime-type of the part\n"
+                + "   # filename: the filename for the part, or dynamically generated part if\n"
+                + "   #           no filename is given attribute is present\n"
+                + "   # payload: the content of the part (empty for begin or end)\n"
+                + "   if ctype == \"__begin__\":\n"
+                + "       print \"my handler is beginning\"\n"
+                + "       return\n"
+                + "   if ctype == \"__end__\":\n"
+                + "       print \"my handler is ending\"\n"
+                + "       return\n\n"
+                + "   print \"==== received ctype=%s filename=%s ====\" % (ctype,filename)\n"
+                + "   print payload\n"
+                + "   print \"==== end ctype=%s filename=%s\" % (ctype, filename)\n";
         private static final String DEFAULT_NAME = "jclouds.parthandler";
 
         public UserDataPartHandlerProvider() {

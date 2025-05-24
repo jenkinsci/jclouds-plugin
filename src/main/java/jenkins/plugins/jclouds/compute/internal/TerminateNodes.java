@@ -15,26 +15,22 @@
  */
 package jenkins.plugins.jclouds.compute.internal;
 
+import com.google.common.base.Function;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMultimap.Builder;
+import com.google.common.collect.Multimap;
+import hudson.XmlFile;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.logging.Logger;
-
 import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
-import hudson.XmlFile;
-
-
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
-
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap.Builder;
 
 public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Serializable {
 
@@ -49,7 +45,8 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
         private Multimap<String, String> nodesToSuspend;
         private Multimap<String, String> nodesToDestroy;
 
-        public Persistent(final String name, final Multimap<String, String> toSuspend, final Multimap<String, String> toDestroy) {
+        public Persistent(
+                final String name, final Multimap<String, String> toSuspend, final Multimap<String, String> toDestroy) {
             nodesToSuspend = toSuspend;
             nodesToDestroy = toDestroy;
             f = new File(Jenkins.get().getRootDir(), name + ".xml");
@@ -67,8 +64,8 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
             try {
                 xf.unmarshal(this);
             } catch (IOException x) {
-                nodesToSuspend =  ArrayListMultimap.create();
-                nodesToDestroy =  ArrayListMultimap.create();
+                nodesToSuspend = ArrayListMultimap.create();
+                nodesToDestroy = ArrayListMultimap.create();
                 LOGGER.warning(String.format("Failed to unmarshal %s: %s", f.getAbsolutePath(), x.getMessage()));
             }
         }
@@ -88,9 +85,7 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
         }
     }
 
-
-    public TerminateNodes() {
-    }
+    public TerminateNodes() {}
 
     private static ComputeService getCloudCompute(String cloud) {
         return ((JCloudsCloud) Jenkins.get().clouds.getByName(cloud)).getCompute();
@@ -142,10 +137,10 @@ public class TerminateNodes implements Function<Iterable<RunningNode>, Void>, Se
                     public boolean apply(NodeMetadata input) {
                         return null != input && nodesToSuspend.contains(input.getId());
                     }
-
                 });
             } catch (UnsupportedOperationException e) {
-                LOGGER.warning("Suspend unsupported on cloud: " + cloudToSuspend + "; affected nodes: " + nodesToSuspend + ": " + e);
+                LOGGER.warning("Suspend unsupported on cloud: " + cloudToSuspend + "; affected nodes: " + nodesToSuspend
+                        + ": " + e);
             }
         }
     }

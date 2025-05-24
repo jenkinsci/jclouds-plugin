@@ -15,16 +15,14 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import hudson.model.TaskListener;
 import hudson.model.Descriptor;
+import hudson.model.TaskListener;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.JNLPLauncher;
 import hudson.slaves.SlaveComputer;
-
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-
 import jenkins.model.Jenkins;
 
 /**
@@ -73,9 +71,12 @@ public class JCloudsJnlpLauncher extends JNLPLauncher {
         // return WebSockets.isSupported();
         try {
             Class<?> cl = Class.forName("jenkins.websocket.WebSockets");
-            Method m =  cl.getMethod("isSupported");
+            Method m = cl.getMethod("isSupported");
             return (boolean) m.invoke(null);
-        } catch (ClassNotFoundException|NoSuchMethodException|InvocationTargetException|IllegalAccessException x) {
+        } catch (ClassNotFoundException
+                | NoSuchMethodException
+                | InvocationTargetException
+                | IllegalAccessException x) {
             return false;
         }
     }

@@ -18,7 +18,6 @@ package jenkins.plugins.jclouds.cli;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
-
 import org.kohsuke.args4j.Localizable;
 
 /**
@@ -29,7 +28,7 @@ import org.kohsuke.args4j.Localizable;
  *
  * @author Fritz Elfert
  */
-public enum  CliMessages implements Localizable {
+public enum CliMessages implements Localizable {
     AMBIGUOUS_TEMPLATE,
     DELETED_CAUSE,
     INSTANCE_CAP_REACHED,
@@ -37,17 +36,15 @@ public enum  CliMessages implements Localizable {
     NO_SUCH_PROFILE_EXISTS,
     NO_SUCH_TEMPLATE_EXISTS,
     NODE_NOT_FROM_JCLOUDS,
-    ONE_OFF_CAUSE
-    ;
+    ONE_OFF_CAUSE;
 
-    public String formatWithLocale( Locale locale, Object... args ) {
+    public String formatWithLocale(Locale locale, Object... args) {
         ResourceBundle localized = ResourceBundle.getBundle(Messages.class.getName(), locale);
-        return MessageFormat.format(localized.getString(name()),args);
+        return MessageFormat.format(localized.getString(name()), args);
     }
 
-
-    public String format( Object... args ) {
-        return formatWithLocale(Locale.getDefault(),args);
+    public String format(Object... args) {
+        return formatWithLocale(Locale.getDefault(), args);
     }
 
     public String getText() {

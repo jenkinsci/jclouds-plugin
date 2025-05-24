@@ -1,8 +1,13 @@
 package jenkins.plugins.jclouds.compute;
 
-import java.util.ArrayList;
-import java.util.List;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
+import java.util.List;
 import org.htmlunit.html.HtmlAnchor;
 import org.htmlunit.html.HtmlButton;
 import org.htmlunit.html.HtmlDialog;
@@ -12,19 +17,9 @@ import org.htmlunit.html.HtmlFormUtil;
 import org.htmlunit.html.HtmlInput;
 import org.htmlunit.html.HtmlPage;
 import org.htmlunit.html.HtmlSelect;
-
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 
 /**
  * @author Vijay Kiran
@@ -33,6 +28,7 @@ import static org.hamcrest.Matchers.nullValue;
 class JCloudsSlaveTemplateTest {
 
     private static final String SSH_PROV_DEPRECATED = "Using SSH-based provisioning is deprecated";
+
     @Test
     void testCreate(JenkinsRule j) throws Exception {
         TestHelper.createTestCloud(j, "foo");
@@ -65,7 +61,8 @@ class JCloudsSlaveTemplateTest {
         assertThat(inp.getValue(), equalTo("whatever"));
         inp.setValue("what_ever");
         TestHelper.triggerValidation(inp);
-        assertThat(TestHelper.getFormError(p), containsString("Object 'what_ever' doesn't match dns naming constraints."));
+        assertThat(
+                TestHelper.getFormError(p), containsString("Object 'what_ever' doesn't match dns naming constraints."));
         inp.setValue("whatever");
         TestHelper.triggerValidation(inp);
 
@@ -164,7 +161,7 @@ class JCloudsSlaveTemplateTest {
         assertThat(TestHelper.getFormWarning(p), equalTo(""));
 
         String oldUrl = p.getUrl().toString();
-        p = (HtmlPage)HtmlFormUtil.submit(f);
+        p = (HtmlPage) HtmlFormUtil.submit(f);
         assertThat(p.getUrl().toString(), equalTo(oldUrl.replace("create", "templates")));
         List<JCloudsSlaveTemplate> tpls = JCloudsCloud.getByName("foo").getTemplates();
         assertThat(tpls, hasSize(1));
@@ -178,14 +175,17 @@ class JCloudsSlaveTemplateTest {
         final JCloudsCloud beforeCloud = JCloudsCloud.getByName("foo");
         final JCloudsSlaveTemplate beforeTemplate = beforeCloud.getTemplate("FooTemplate");
 
-        j.submit(j.createWebClient().goTo("manage/cloud/foo/template/FooTemplate").getFormByName("config"));
+        j.submit(j.createWebClient()
+                .goTo("manage/cloud/foo/template/FooTemplate")
+                .getFormByName("config"));
 
         final JCloudsCloud afterCloud = JCloudsCloud.getByName("foo");
         final JCloudsSlaveTemplate afterTemplate = afterCloud.getTemplate("FooTemplate");
 
-        j.assertEqualBeans(beforeCloud, afterCloud,
-                "profile,providerName,endPointUrl,trustAll,groupPrefix");
-        j.assertEqualBeans(beforeTemplate, afterTemplate,
+        j.assertEqualBeans(beforeCloud, afterCloud, "profile,providerName,endPointUrl,trustAll,groupPrefix");
+        j.assertEqualBeans(
+                beforeTemplate,
+                afterTemplate,
                 "name,cores,ram,osFamily,osVersion,labelString,description,numExecutors,stopOnTerminate,mode,useConfigDrive,isPreemptible,preferredAddress,useJnlp");
     }
 

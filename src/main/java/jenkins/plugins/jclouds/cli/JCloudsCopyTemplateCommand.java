@@ -16,16 +16,12 @@
 package jenkins.plugins.jclouds.cli;
 
 import com.thoughtworks.xstream.XStreamException;
-
 import hudson.Extension;
 import hudson.cli.CLICommand;
-
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
+import org.kohsuke.args4j.Argument;
 
 /**
  * Copies an existing JClouds template, to the same cloud with a different name.
@@ -45,9 +41,12 @@ public class JCloudsCopyTemplateCommand extends CLICommand {
     @Argument(metaVar = "TO-TEMPLATE", index = 1, usage = "Name of the new template to create.", required = true)
     public String to;
 
-    @Argument(required = false, metaVar = "PROFILE", index = 2, usage = "Name of jclouds profile. Required, if FROM-TEMPLATE is ambiguous.")
+    @Argument(
+            required = false,
+            metaVar = "PROFILE",
+            index = 2,
+            usage = "Name of jclouds profile. Required, if FROM-TEMPLATE is ambiguous.")
     public String profile = null;
-
 
     @Override
     protected int run() throws Exception {
@@ -65,7 +64,7 @@ public class JCloudsCopyTemplateCommand extends CLICommand {
         // Not great, but template name is final
         xml = xml.replaceFirst("<name>.*</name>", "<name>" + to + "</name>");
         try {
-            JCloudsSlaveTemplate tplTo = (JCloudsSlaveTemplate)Jenkins.XSTREAM.fromXML(xml);
+            JCloudsSlaveTemplate tplTo = (JCloudsSlaveTemplate) Jenkins.XSTREAM.fromXML(xml);
             c.addTemplate(tplTo);
         } catch (XStreamException e) {
             throw new IllegalStateException("Unable to copy " + e.toString());

@@ -20,13 +20,11 @@ import hudson.cli.CLICommand;
 import hudson.model.Computer;
 import hudson.model.Node;
 import jenkins.model.Jenkins;
-
+import jenkins.plugins.jclouds.compute.JCloudsComputer;
+import jenkins.plugins.jclouds.compute.JCloudsSlave;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
-
-import jenkins.plugins.jclouds.compute.JCloudsComputer;
-import jenkins.plugins.jclouds.compute.JCloudsSlave;
 
 /**
  * Expires a running JClouds node.
@@ -55,7 +53,7 @@ public class JCloudsExpireCommand extends CLICommand {
         }
         Computer c = n.toComputer();
         if (JCloudsComputer.class.isInstance(c)) {
-            final JCloudsSlave s = ((JCloudsComputer)c).getNode();
+            final JCloudsSlave s = ((JCloudsComputer) c).getNode();
             if (null != s) {
                 s.setOverrideRetentionTime(Integer.valueOf(0));
             } else {
@@ -66,5 +64,4 @@ public class JCloudsExpireCommand extends CLICommand {
         }
         return 0;
     }
-
 }

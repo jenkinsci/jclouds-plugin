@@ -15,6 +15,12 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
 import jenkins.plugins.jclouds.config.ConfigHelper;
 import jenkins.plugins.jclouds.config.UserDataBoothook.UserDataBoothookProvider;
 import jenkins.plugins.jclouds.config.UserDataInclude.UserDataIncludeProvider;
@@ -28,13 +34,6 @@ import org.jenkinsci.plugins.configfiles.ConfigFiles;
 import org.junit.jupiter.api.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @WithJenkins
 class UserDataConverterTest {
@@ -63,7 +62,8 @@ class UserDataConverterTest {
         UserData ud = UserData.createFromData(data, "test1.cfg");
         final Config c = ConfigFiles.getByIdOrNull(j.getInstance(), ud.fileId);
         ConfigProvider p = c.getProvider();
-        assertInstanceOf(UserDataIncludeOnceProvider.class, p, "Provider is an instance of UserDataIncludeOnceProvider");
+        assertInstanceOf(
+                UserDataIncludeOnceProvider.class, p, "Provider is an instance of UserDataIncludeOnceProvider");
     }
 
     @Test

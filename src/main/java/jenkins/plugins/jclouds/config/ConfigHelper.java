@@ -15,37 +15,13 @@
  */
 package jenkins.plugins.jclouds.config;
 
+import com.google.common.base.Joiner;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.util.ListBoxModel;
-
-import jenkins.model.Jenkins;
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.lib.configprovider.model.ContentType;
-import org.jenkinsci.lib.configprovider.ConfigProvider;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import java.util.zip.GZIPOutputStream;
-
 import jakarta.activation.DataHandler;
 import jakarta.activation.DataSource;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 import jakarta.mail.BodyPart;
 import jakarta.mail.MessagingException;
 import jakarta.mail.Multipart;
@@ -53,22 +29,37 @@ import jakarta.mail.Session;
 import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
 import jakarta.mail.internet.MimeMultipart;
-
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.zip.GZIPOutputStream;
+import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.UserData;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;
-
-import com.google.common.base.Joiner;
 
 public class ConfigHelper {
 
     private static final Logger LOGGER = Logger.getLogger(ConfigHelper.class.getName());
 
-    private ConfigHelper() {
-    }
+    private ConfigHelper() {}
 
     @NonNull
     public static String getConfig(@Nullable final String id) {
-        if(id != null) {
+        if (id != null) {
             final Config cfg = ConfigFiles.getByIdOrNull(Jenkins.get(), id);
             if (null != cfg && null != cfg.content) {
                 return cfg.content;
@@ -80,7 +71,7 @@ public class ConfigHelper {
     public static ContentType getRealContentType(@NonNull ConfigProvider p) {
         ContentType ct = p.getContentType();
         if (null == ct && p instanceof JCloudsConfig) {
-            ct = ((JCloudsConfig)p).getRealContentType();
+            ct = ((JCloudsConfig) p).getRealContentType();
         }
         return ct;
     }
@@ -95,8 +86,7 @@ public class ConfigHelper {
                 body.setDataHandler(new DataHandler(source));
                 body.setHeader("Content-Type", mime + "; charset=\"utf8\"");
                 if (mime.equals("text/cloud-config")) {
-                    body.setHeader("Merge-Type",
-                            "dict(allow_delete,recurse_array)+list(recurse_array,append)");
+                    body.setHeader("Merge-Type", "dict(allow_delete,recurse_array)+list(recurse_array,append)");
                 }
                 body.setFileName(source.getName());
                 return body;
@@ -124,10 +114,10 @@ public class ConfigHelper {
      * Therefore, we move the mandatory mime version header
      * after the Content-Type header.
      */
-    private static byte [] injectMimeVersion(@NonNull final byte [] msg) {
-        String [] lines = new String(msg, StandardCharsets.UTF_8).split("\n");
+    private static byte[] injectMimeVersion(@NonNull final byte[] msg) {
+        String[] lines = new String(msg, StandardCharsets.UTF_8).split("\n");
         if (3 < lines.length && lines[0].contains("multipart")) {
-            String [] ret = new String[lines.length + 1];
+            String[] ret = new String[lines.length + 1];
             System.arraycopy(lines, 0, ret, 0, 2);
             System.arraycopy(lines, 2, ret, 3, lines.length - 2);
             ret[2] = "MIME-Version: 1.0";
@@ -137,8 +127,9 @@ public class ConfigHelper {
     }
 
     @CheckForNull
-    public static byte [] buildUserData(@NonNull final List<String> configIds,
-            @Nullable Map<String, String> replacements, boolean gzip) throws IOException {
+    public static byte[] buildUserData(
+            @NonNull final List<String> configIds, @Nullable Map<String, String> replacements, boolean gzip)
+            throws IOException {
         List<Config> configs = getConfigs(configIds);
         if (configs.isEmpty()) {
             return null;
@@ -147,7 +138,7 @@ public class ConfigHelper {
             try (OutputStream os = gzip ? new GZIPOutputStream(baos) : baos) {
                 if (configs.size() > 1) {
                     try {
-                        final MimeMessage msg = new MimeMessage((Session)null);
+                        final MimeMessage msg = new MimeMessage((Session) null);
                         final Multipart multipart = new MimeMultipart();
                         for (final Config cfg : configs) {
                             BodyPart body = buildBody(cfg, replacements);
@@ -158,7 +149,7 @@ public class ConfigHelper {
                         msg.setContent(multipart);
                         // Yet another nested stream, as workaround for cloudbase-init
                         try (ByteArrayOutputStream tmpbaos = new ByteArrayOutputStream()) {
-                            msg.writeTo(tmpbaos, new String[]{"Date", "Message-ID", "MIME-Version"});
+                            msg.writeTo(tmpbaos, new String[] {"Date", "Message-ID", "MIME-Version"});
                             os.write(injectMimeVersion(tmpbaos.toByteArray()));
                         }
                     } catch (IOException | MessagingException e) {
@@ -177,8 +168,8 @@ public class ConfigHelper {
         }
     }
 
-    private static void appendItemsOfProvider(@NonNull ConfigProvider p, @NonNull ListBoxModel m,
-            @Nullable String currentValue) {
+    private static void appendItemsOfProvider(
+            @NonNull ConfigProvider p, @NonNull ListBoxModel m, @Nullable String currentValue) {
         StringBuffer sb = new StringBuffer();
         ConfigSuitableFor a = p.getClass().getAnnotation(ConfigSuitableFor.class);
         if (null != a && a.target() == UserData.class) {
@@ -191,9 +182,9 @@ public class ConfigHelper {
                 m.add(sb.toString(), cfg.id);
                 if (cfg.id.equals(currentValue)) {
                     m.get(m.size() - 1).selected = true;
-                 }
-             }
-         }
+                }
+            }
+        }
     }
 
     @NonNull
@@ -210,7 +201,7 @@ public class ConfigHelper {
     public static ListBoxModel doFillInitScriptItems(@Nullable final String currentValue) {
         ListBoxModel m = new ListBoxModel();
         m.add("- none -", "");
-        appendItemsOfProvider(new UserDataScript("-","","","").getProvider(), m, currentValue);
+        appendItemsOfProvider(new UserDataScript("-", "", "", "").getProvider(), m, currentValue);
         return m;
     }
 

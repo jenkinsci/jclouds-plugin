@@ -1,32 +1,26 @@
 /**
  * Misc. helper functions for testing
  */
-
 package jenkins.plugins.jclouds.compute;
-
-import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey.DirectEntryPrivateKeySource;
-
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
 import java.util.ArrayList;
 import java.util.List;
-
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
-
 import org.htmlunit.WebClientUtil;
 import org.htmlunit.html.HtmlDivision;
 import org.htmlunit.html.HtmlElement;
 import org.htmlunit.html.HtmlPage;
-
 import org.jvnet.hudson.test.JenkinsRule;
 
 class TestHelper {
 
     public static boolean findTemplate(JenkinsRule j, String cloud, String name) {
-        JCloudsCloud c = (JCloudsCloud)j.jenkins.clouds.getByName(cloud);
+        JCloudsCloud c = (JCloudsCloud) j.jenkins.clouds.getByName(cloud);
         if (null == c) {
             return false;
         }
@@ -36,7 +30,8 @@ class TestHelper {
         return true;
     }
 
-    private static final String RSA_PEM = """
+    private static final String RSA_PEM =
+            """
             -----BEGIN RSA PRIVATE KEY-----
             MIIEpQIBAAKCAQEAujBFmpi6nyHAK6RBaIkERTO/BGhgZ8h2zoqvT12+mSpjbNRF
             YN2oeMH1NsUMYLUdRzFlERqHo/U5pgS9SbXTvUujM153Voh6P+t4d822I2UN7vDc
@@ -66,7 +61,8 @@ class TestHelper {
             -----END RSA PRIVATE KEY-----
             """;
 
-    private static final String ECDSA_PEM = """
+    private static final String ECDSA_PEM =
+            """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
             1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQQL0Pqfy/oa5tr7GUl8WjHoWNnWozMV
@@ -79,25 +75,58 @@ class TestHelper {
             """;
 
     public static String createEcdsaCredential() throws Exception {
-        StandardUsernameCredentials suc = new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, "whocares",
-            new DirectEntryPrivateKeySource(ECDSA_PEM), "", "private ecdsa key for testing");
+        StandardUsernameCredentials suc = new BasicSSHUserPrivateKey(
+                CredentialsScope.SYSTEM,
+                null,
+                "whocares",
+                new DirectEntryPrivateKeySource(ECDSA_PEM),
+                "",
+                "private ecdsa key for testing");
         return CredentialsHelper.storeCredentials(suc);
     }
 
     public static void addTemplateToCloud(JenkinsRule j, String cloud, String name, String cid) {
-        JCloudsCloud c = (JCloudsCloud)j.jenkins.clouds.getByName(cloud);
+        JCloudsCloud c = (JCloudsCloud) j.jenkins.clouds.getByName(cloud);
         if (null != c) {
-            final JCloudsSlaveTemplate tpl = new JCloudsSlaveTemplate(name, "imageId", null, "hardwareId",
-                1, 512, "osFamily", "osVersion", "locationId", "jclouds-slave-type1 jclouds-type2",
-                "Description", null /* initScripId */, 1 /* numExecutors */, false /* stopOnTerminate */,
-                "jvmOptions", false /* preExistingJenkinsUser */, null /* fsRoot */, false /* allowSudo */,
-                false /* installPrivateKey */, 5 /* overrideRetentionTime */, true /* hasOverrideRetentionTime */,
-                0 /* spoolDelayMs */, true /* assignFloatingIp */, false /* waitPhoneHome */, 0 /* waitPhoneHomeTimeout */,
-                null /* keyPairName */, true /* assignPublicIp */, "network1_id,network2_id",
-                "security_group1,security_group2", cid /* credentialsId */,
-                null /* adminCredentialsId */, "NORMAL" /* mode */, true /* useConfigDrive */,
-                false /* preemptible */, null /* configDataIds */, "192.168.1.0/24" /* preferredAddress */,
-                false /* useJnlp */, false /* jnlpProvisioning */);
+            final JCloudsSlaveTemplate tpl = new JCloudsSlaveTemplate(
+                    name,
+                    "imageId",
+                    null,
+                    "hardwareId",
+                    1,
+                    512,
+                    "osFamily",
+                    "osVersion",
+                    "locationId",
+                    "jclouds-slave-type1 jclouds-type2",
+                    "Description",
+                    null /* initScripId */,
+                    1 /* numExecutors */,
+                    false /* stopOnTerminate */,
+                    "jvmOptions",
+                    false /* preExistingJenkinsUser */,
+                    null /* fsRoot */,
+                    false /* allowSudo */,
+                    false /* installPrivateKey */,
+                    5 /* overrideRetentionTime */,
+                    true /* hasOverrideRetentionTime */,
+                    0 /* spoolDelayMs */,
+                    true /* assignFloatingIp */,
+                    false /* waitPhoneHome */,
+                    0 /* waitPhoneHomeTimeout */,
+                    null /* keyPairName */,
+                    true /* assignPublicIp */,
+                    "network1_id,network2_id",
+                    "security_group1,security_group2",
+                    cid /* credentialsId */,
+                    null /* adminCredentialsId */,
+                    "NORMAL" /* mode */,
+                    true /* useConfigDrive */,
+                    false /* preemptible */,
+                    null /* configDataIds */,
+                    "192.168.1.0/24" /* preferredAddress */,
+                    false /* useJnlp */,
+                    false /* jnlpProvisioning */);
             c.addTemplate(tpl);
         }
     }
@@ -108,15 +137,31 @@ class TestHelper {
                 CredentialsScope.SYSTEM, null, "WhateverDescription", "CredUser", "secretPassword");
         String cid = CredentialsHelper.storeCredentials(suc);
 
-        suc = new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, "test-rsa-key", "whocares",
-            new DirectEntryPrivateKeySource(RSA_PEM), "", "private rsa key or testing");
+        suc = new BasicSSHUserPrivateKey(
+                CredentialsScope.SYSTEM,
+                "test-rsa-key",
+                "whocares",
+                new DirectEntryPrivateKeySource(RSA_PEM),
+                "",
+                "private rsa key or testing");
         String rid = CredentialsHelper.storeCredentials(suc);
 
         List<JCloudsSlaveTemplate> templates = new ArrayList<>();
-        JCloudsCloud cloud = new JCloudsCloud(name, "aws-ec2", cid, rid,
-                "http://localhost", 1, CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
-                CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES, 600 * 1000, 600 * 1000, null,
-                "foobar", true, templates);
+        JCloudsCloud cloud = new JCloudsCloud(
+                name,
+                "aws-ec2",
+                cid,
+                rid,
+                "http://localhost",
+                1,
+                CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES,
+                CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES,
+                600 * 1000,
+                600 * 1000,
+                null,
+                "foobar",
+                true,
+                templates);
         j.jenkins.clouds.add(cloud);
         return cid;
     }
@@ -139,6 +184,7 @@ class TestHelper {
         }
         return "";
     }
+
     public static String getFormWarning(HtmlPage p) {
         HtmlDivision div = p.querySelector("div.warning");
         if (null != div) {
@@ -146,4 +192,4 @@ class TestHelper {
         }
         return "";
     }
- }
+}

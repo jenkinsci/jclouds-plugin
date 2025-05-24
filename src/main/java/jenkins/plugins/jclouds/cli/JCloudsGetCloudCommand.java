@@ -15,22 +15,19 @@
  */
 package jenkins.plugins.jclouds.cli;
 
+import hudson.Extension;
+import hudson.cli.CLICommand;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.regex.Matcher;
-
-import hudson.Extension;
-import hudson.cli.CLICommand;
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.Option;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.Option;
 
 /**
  * Exports an existing jclouds cloud to xml on stdout
@@ -43,7 +40,11 @@ public class JCloudsGetCloudCommand extends CLICommand {
     @Argument(required = true, metaVar = "PROFILE", usage = "Name of jclouds profile to use.")
     public String profile = null;
 
-    @Option(required = false, name = "-f", aliases = "--full", usage = "Include all templates of this cloud in the export.")
+    @Option(
+            required = false,
+            name = "-f",
+            aliases = "--full",
+            usage = "Include all templates of this cloud in the export.")
     private boolean full;
 
     @Option(required = false, name = "-r", aliases = "--replace", usage = "Read replacements as XML from stdin.")

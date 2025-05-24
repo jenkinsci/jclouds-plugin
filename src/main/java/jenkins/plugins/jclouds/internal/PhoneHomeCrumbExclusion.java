@@ -17,28 +17,27 @@ package jenkins.plugins.jclouds.internal;
 
 import hudson.Extension;
 import hudson.security.csrf.CrumbExclusion;
-
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 import java.io.IOException;
 
 @Extension
 public class PhoneHomeCrumbExclusion extends CrumbExclusion {
 
-	@Override
-	public boolean process(HttpServletRequest req, HttpServletResponse resp, FilterChain chain) throws IOException, ServletException {
-		String pathInfo = req.getPathInfo();
-		if (pathInfo != null && pathInfo.equals(getExclusionPath())) {
-			chain.doFilter(req, resp);
-			return true;
-		}
-		return false;
-	}
+    @Override
+    public boolean process(HttpServletRequest req, HttpServletResponse resp, FilterChain chain)
+            throws IOException, ServletException {
+        String pathInfo = req.getPathInfo();
+        if (pathInfo != null && pathInfo.equals(getExclusionPath())) {
+            chain.doFilter(req, resp);
+            return true;
+        }
+        return false;
+    }
 
-	public String getExclusionPath() {
-		return "/" + PhoneHomeWebHook.URLNAME + "/";
-	}
+    public String getExclusionPath() {
+        return "/" + PhoneHomeWebHook.URLNAME + "/";
+    }
 }

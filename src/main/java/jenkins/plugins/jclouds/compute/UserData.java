@@ -15,34 +15,28 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import java.lang.reflect.Field;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
+import static hudson.util.ReflectionUtils.*;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-
+import edu.umd.cs.findbugs.annotations.Nullable;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
 import hudson.util.ListBoxModel;
-
-import static hudson.util.ReflectionUtils.*;
-
+import java.lang.reflect.Field;
+import java.util.UUID;
+import java.util.regex.Pattern;
+import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.config.ConfigHelper;
+import jenkins.plugins.jclouds.config.JCloudsConfig;
+import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
+import org.jenkinsci.lib.configprovider.ConfigProvider;
+import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.verb.POST;
-
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.lib.configprovider.ConfigProvider;
-
-import jenkins.model.Jenkins;
-import jenkins.plugins.jclouds.config.JCloudsConfig;
-import jenkins.plugins.jclouds.config.ConfigHelper;
-import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
 
 /**
  * A simple "bean" for user data entries.

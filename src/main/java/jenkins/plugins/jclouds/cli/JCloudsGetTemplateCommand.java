@@ -15,25 +15,21 @@
  */
 package jenkins.plugins.jclouds.cli;
 
+import hudson.Extension;
+import hudson.cli.CLICommand;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
-
-import hudson.Extension;
-import hudson.cli.CLICommand;
-
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-import org.kohsuke.args4j.CmdLineException;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 import jenkins.plugins.jclouds.config.ConfigHelper;
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.Option;
 
 /**
  * Exports an existing template to xml on stdout
@@ -43,14 +39,18 @@ import jenkins.plugins.jclouds.internal.CredentialsHelper;
 @Extension
 public class JCloudsGetTemplateCommand extends CLICommand {
 
-    @Argument(required = false, metaVar = "PROFILE", index = 1, usage = "Name of jclouds profile to use. Required, if TEMPLATE is ambiguous.")
-        public String profile = null;
+    @Argument(
+            required = false,
+            metaVar = "PROFILE",
+            index = 1,
+            usage = "Name of jclouds profile to use. Required, if TEMPLATE is ambiguous.")
+    public String profile = null;
 
     @Argument(required = true, metaVar = "TEMPLATE", index = 0, usage = "Name of template to export.")
-        public String tmpl;
+    public String tmpl;
 
     @Option(required = false, name = "-r", aliases = "--replace", usage = "Read replacements as XML from stdin.")
-        private boolean replace;
+    private boolean replace;
 
     @Override
     public String getShortDescription() {
@@ -68,14 +68,15 @@ public class JCloudsGetTemplateCommand extends CLICommand {
         return 0;
     }
 
-    static protected String getXmlWithHashes(JCloudsSlaveTemplate tpl) {
+    protected static String getXmlWithHashes(JCloudsSlaveTemplate tpl) {
         String xml = Jenkins.XSTREAM.toXML(tpl);
         try {
             String hash;
             String aid = tpl.getAdminCredentialsId();
             if (null != aid && aid.length() > 0) {
                 hash = CredentialsHelper.getCredentialsHash(aid);
-                xml = xml.replaceFirst("<adminCredentialsId>", String.format("<adminCredentialsId sha256=\"%s\">", hash));
+                xml = xml.replaceFirst(
+                        "<adminCredentialsId>", String.format("<adminCredentialsId sha256=\"%s\">", hash));
             }
             hash = CredentialsHelper.getCredentialsHash(tpl.getCredentialsId());
             xml = xml.replaceFirst("<credentialsId>", String.format("<credentialsId sha256=\"%s\">", hash));
@@ -90,18 +91,19 @@ public class JCloudsGetTemplateCommand extends CLICommand {
         return xml;
     }
 
-    static private String getUserDataHashes(JCloudsSlaveTemplate tpl, String xml) throws NoSuchAlgorithmException {
+    private static String getUserDataHashes(JCloudsSlaveTemplate tpl, String xml) throws NoSuchAlgorithmException {
         List<String> ids = tpl.getUserDataIds();
         Map<String, String> m = ConfigHelper.getUserDataHashes(ids);
         for (String id : ids) {
             String hash = m.get(id);
-            xml = xml.replaceFirst(String.format("<fileId>(%s)", id),String.format("<fileId sha256=\"%s\">$1", hash));
+            xml = xml.replaceFirst(String.format("<fileId>(%s)", id), String.format("<fileId sha256=\"%s\">$1", hash));
         }
         String sid = tpl.getInitScriptId();
         if (null != sid && !sid.isEmpty()) {
             m = ConfigHelper.getUserDataHashes(List.of(sid));
-            xml = xml.replaceFirst(String.format("<initScriptId>(%s)", sid),
-                String.format("<initScriptId sha256=\"%s\">$1", m.get(sid)));
+            xml = xml.replaceFirst(
+                    String.format("<initScriptId>(%s)", sid),
+                    String.format("<initScriptId sha256=\"%s\">$1", m.get(sid)));
         }
         return xml;
     }

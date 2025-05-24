@@ -16,25 +16,21 @@
 package jenkins.plugins.jclouds.cli;
 
 import com.thoughtworks.xstream.XStreamException;
-
 import hudson.Extension;
 import hudson.cli.CLICommand;
-
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
 
 /**
  * Updates an existing JCloudsCloud by reading stdin as a configuration XML file.
  *
  * @author Fritz Elfert
-*/
+ */
 @Extension
 public class JCloudsUpdateCloudCommand extends CLICommand {
     @Override
@@ -45,10 +41,18 @@ public class JCloudsUpdateCloudCommand extends CLICommand {
     @Argument(metaVar = "NAME", usage = "Name of the profile to update.", required = true)
     public String name;
 
-    @Option(required = false, name = "-v", aliases = "--verbose", usage = "Be verbose when validating references to credentials.")
+    @Option(
+            required = false,
+            name = "-v",
+            aliases = "--verbose",
+            usage = "Be verbose when validating references to credentials.")
     private boolean verbose;
 
-    @Option(required = false, name = "-d", aliases = "--delete-templates", usage = "Delete templates of target profile.")
+    @Option(
+            required = false,
+            name = "-d",
+            aliases = "--delete-templates",
+            usage = "Delete templates of target profile.")
     private boolean delete;
 
     @Option(required = false, name = "-k", aliases = "--keep-templates", usage = "Keep templates of target profile.")
@@ -75,7 +79,8 @@ public class JCloudsUpdateCloudCommand extends CLICommand {
                     String.format("Unable to rename cloud profile: A cloud with the name %s already exists", nc.name));
         }
         if (nc.getTemplates().size() == 0 && oc.getTemplates().size() > 0 && !keep && !delete) {
-            throw new IllegalStateException("Unable to update " + name + ": Need --delete-templates or --keep-templates");
+            throw new IllegalStateException(
+                    "Unable to update " + name + ": Need --delete-templates or --keep-templates");
         }
         PrintStream devnull = CliHelper.getDevNull();
         CliHelper.validateCloudCredentials(nc, xml, verbose ? stdout : devnull);

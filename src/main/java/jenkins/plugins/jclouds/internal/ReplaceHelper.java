@@ -15,11 +15,10 @@
  */
 package jenkins.plugins.jclouds.internal;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.NonNull;
 
 /**
  * Utility for replacing shell-like variable references using a map of key/value pairs.
@@ -42,7 +41,7 @@ public class ReplaceHelper {
         }
         for (Map.Entry e : rmap.entrySet()) {
             final String s = Pattern.quote("${" + e.getKey() + "}");
-            final String r = (String)e.getValue();
+            final String r = (String) e.getValue();
             ret = Pattern.compile(s, Pattern.DOTALL).matcher(ret).replaceAll(r);
         }
         return ret;

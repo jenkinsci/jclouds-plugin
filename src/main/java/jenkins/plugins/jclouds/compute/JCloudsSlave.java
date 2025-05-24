@@ -15,19 +15,19 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.Extension;
-import hudson.model.TaskListener;
 import hudson.model.Descriptor;
 import hudson.model.Node;
+import hudson.model.TaskListener;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.AbstractCloudSlave;
-import hudson.slaves.NodeProperty;
 import hudson.slaves.ComputerLauncher;
+import hudson.slaves.NodeProperty;
 import hudson.slaves.RetentionStrategy;
 import hudson.slaves.SlaveComputer;
-
-import jenkins.model.Jenkins;
-
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-
+import jenkins.model.Jenkins;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
 import org.jclouds.compute.ComputeService;
@@ -49,16 +49,12 @@ import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.DataBoundConstructor;
 
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 /**
  * Jenkins Slave node - managed by JClouds.
  *
  * @author Vijay Kiran
  */
-public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
+public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem {
 
     private static final long serialVersionUID = 42L;
 
@@ -73,9 +69,9 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     private boolean waitPhoneHome;
     private Integer overrideRetentionTime;
     private final int waitPhoneHomeTimeout;
-    private transient final String user;
-    private transient final String password;
-    private transient final String privateKey;
+    private final transient String user;
+    private final transient String password;
+    private final transient String privateKey;
     private final boolean authSudo;
     private final String jvmOptions;
     private final String credentialsId;
@@ -88,13 +84,32 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
 
     @DataBoundConstructor
     @SuppressWarnings("rawtypes")
-    public JCloudsSlave(String cloudName, String name, String nodeDescription, String remoteFS, String numExecutors, Mode mode, String labelString,
-            ComputerLauncher launcher, RetentionStrategy retentionStrategy, List<? extends NodeProperty<?>> nodeProperties, boolean stopOnTerminate,
-            Integer overrideRetentionTime, String user, String password, String privateKey, boolean authSudo, String jvmOptions, final boolean waitPhoneHome,
-            final int waitPhoneHomeTimeout, final String credentialsId, final String preferredAddress, final boolean useJnlp, final boolean jnlpProvisioning,
+    public JCloudsSlave(
+            String cloudName,
+            String name,
+            String nodeDescription,
+            String remoteFS,
+            String numExecutors,
+            Mode mode,
+            String labelString,
+            ComputerLauncher launcher,
+            RetentionStrategy retentionStrategy,
+            List<? extends NodeProperty<?>> nodeProperties,
+            boolean stopOnTerminate,
+            Integer overrideRetentionTime,
+            String user,
+            String password,
+            String privateKey,
+            boolean authSudo,
+            String jvmOptions,
+            final boolean waitPhoneHome,
+            final int waitPhoneHomeTimeout,
+            final String credentialsId,
+            final String preferredAddress,
+            final boolean useJnlp,
+            final boolean jnlpProvisioning,
             final String jnlpProvisioningNonce)
-        throws Descriptor.FormException, IOException
-    {
+            throws Descriptor.FormException, IOException {
         super(name, remoteFS, launcher);
         setLabelString(labelString);
         setNodeDescription(nodeDescription);
@@ -150,35 +165,97 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
      * @throws IOException if an error occurs.
      * @throws Descriptor.FormException if the form does not validate.
      */
-    public JCloudsSlave(final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
-            final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
-            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId,
-            final Mode mode, final String preferredAddress, boolean useJnlp, final boolean jnlpProvisioning, final String jnlpProvisioningNonce)
-            throws IOException, Descriptor.FormException
-        {
-            this(cloudName, uniqueName(metadata, cloudName), description, fsRoot, numExecutors, mode, labelString,
-                    useJnlp ? new JCloudsJnlpLauncher() : new JCloudsLauncher(), new JCloudsRetentionStrategy(),
-                    Collections.<NodeProperty<?>>emptyList(), stopOnTerminate, overrideRetentionTime, metadata.getCredentials().getUser(),
-                metadata.getCredentials().getOptionalPassword().orNull(), metadata.getCredentials().getOptionalPrivateKey().orNull(),
-                metadata.getCredentials().shouldAuthenticateSudo(), jvmOptions, waitPhoneHome, waitPhoneHomeTimeout, credentialsId,
-                preferredAddress, useJnlp, jnlpProvisioning, jnlpProvisioningNonce);
+    public JCloudsSlave(
+            final String cloudName,
+            final String fsRoot,
+            NodeMetadata metadata,
+            final String labelString,
+            final String description,
+            final String numExecutors,
+            final boolean stopOnTerminate,
+            final Integer overrideRetentionTime,
+            String jvmOptions,
+            final boolean waitPhoneHome,
+            final int waitPhoneHomeTimeout,
+            final String credentialsId,
+            final Mode mode,
+            final String preferredAddress,
+            boolean useJnlp,
+            final boolean jnlpProvisioning,
+            final String jnlpProvisioningNonce)
+            throws IOException, Descriptor.FormException {
+        this(
+                cloudName,
+                uniqueName(metadata, cloudName),
+                description,
+                fsRoot,
+                numExecutors,
+                mode,
+                labelString,
+                useJnlp ? new JCloudsJnlpLauncher() : new JCloudsLauncher(),
+                new JCloudsRetentionStrategy(),
+                Collections.<NodeProperty<?>>emptyList(),
+                stopOnTerminate,
+                overrideRetentionTime,
+                metadata.getCredentials().getUser(),
+                metadata.getCredentials().getOptionalPassword().orNull(),
+                metadata.getCredentials().getOptionalPrivateKey().orNull(),
+                metadata.getCredentials().shouldAuthenticateSudo(),
+                jvmOptions,
+                waitPhoneHome,
+                waitPhoneHomeTimeout,
+                credentialsId,
+                preferredAddress,
+                useJnlp,
+                jnlpProvisioning,
+                jnlpProvisioningNonce);
         this.nodeMetaData = metadata;
         this.nodeId = nodeMetaData.getId();
     }
 
-    public JCloudsSlave(ProvisioningActivity.Id provisioningId, final String cloudName, final String fsRoot, NodeMetadata metadata, final String labelString,
-            final String description, final String numExecutors, final boolean stopOnTerminate, final Integer overrideRetentionTime,
-            String jvmOptions, final boolean waitPhoneHome, final int waitPhoneHomeTimeout, final String credentialsId,
-            final Mode mode, final String preferredAddress, boolean useJnlp, final boolean jnlpProvisioning, final String jnlpProvisioningNonce)
-            throws IOException, Descriptor.FormException
-    {
-        this(cloudName, fsRoot, metadata, labelString, description, numExecutors,  stopOnTerminate, overrideRetentionTime,
-                jvmOptions,  waitPhoneHome, waitPhoneHomeTimeout, credentialsId, mode, preferredAddress,  useJnlp, jnlpProvisioning, jnlpProvisioningNonce);
+    public JCloudsSlave(
+            ProvisioningActivity.Id provisioningId,
+            final String cloudName,
+            final String fsRoot,
+            NodeMetadata metadata,
+            final String labelString,
+            final String description,
+            final String numExecutors,
+            final boolean stopOnTerminate,
+            final Integer overrideRetentionTime,
+            String jvmOptions,
+            final boolean waitPhoneHome,
+            final int waitPhoneHomeTimeout,
+            final String credentialsId,
+            final Mode mode,
+            final String preferredAddress,
+            boolean useJnlp,
+            final boolean jnlpProvisioning,
+            final String jnlpProvisioningNonce)
+            throws IOException, Descriptor.FormException {
+        this(
+                cloudName,
+                fsRoot,
+                metadata,
+                labelString,
+                description,
+                numExecutors,
+                stopOnTerminate,
+                overrideRetentionTime,
+                jvmOptions,
+                waitPhoneHome,
+                waitPhoneHomeTimeout,
+                credentialsId,
+                mode,
+                preferredAddress,
+                useJnlp,
+                jnlpProvisioning,
+                jnlpProvisioningNonce);
         this.provisioningId = provisioningId;
     }
 
     // JENKINS-19935 Instances on EC2 don't get random suffix
-    final static String uniqueName(final NodeMetadata md, final String cloudName) {
+    static final String uniqueName(final NodeMetadata md, final String cloudName) {
         JCloudsCloud c = JCloudsCloud.getByName(cloudName);
         if (c.providerName.equals("aws-ec2")) {
             return md.getName() + "-" + md.getProviderId();
@@ -198,7 +275,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         }
     }
 
-    private Map <String, String> getJnlpProperties() {
+    private Map<String, String> getJnlpProperties() {
         Map<String, String> ret = new HashMap();
         String rootUrl = Jenkins.get().getRootUrl();
         if (null == rootUrl) {
@@ -217,7 +294,7 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         return ret;
     }
 
-    private String ToJsonString(final Map <String, String> map) {
+    private String ToJsonString(final Map<String, String> map) {
         final JSONObject ret = new JSONObject();
         ret.putAll(map);
         return ret.toString();
@@ -282,7 +359,6 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         return jnlpProvisioning;
     }
 
-
     public boolean getUseJnlp() {
         return useJnlp;
     }
@@ -302,7 +378,12 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
         LoginCredentials credentials = getNodeMetaData().getCredentials();
         if (credentials == null) {
             LOGGER.info("Using credentials from CloudSlave instance");
-            credentials = LoginCredentials.builder().user(user).password(password).privateKey(privateKey).authenticateSudo(authSudo).build();
+            credentials = LoginCredentials.builder()
+                    .user(user)
+                    .password(password)
+                    .privateKey(privateKey)
+                    .authenticateSudo(authSudo)
+                    .build();
         } else {
             LOGGER.info("Using credentials from JClouds");
         }
@@ -326,7 +407,9 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
             return overrideRetentionTime.intValue();
         }
         final JCloudsCloud cloud = JCloudsCloud.getByName(cloudName);
-        return cloud == null ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : cloud.getRetentionTime();
+        return cloud == null
+                ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
+                : cloud.getRetentionTime();
     }
 
     /**
@@ -339,7 +422,9 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
      */
     int getErrorRetentionTime() {
         final JCloudsCloud cloud = JCloudsCloud.getByName(cloudName);
-        return cloud == null ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES : cloud.getErrorRetentionTime();
+        return cloud == null
+                ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES
+                : cloud.getErrorRetentionTime();
     }
 
     /**
@@ -369,9 +454,9 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     private void updateNode() {
         Node n = Jenkins.get().getNode(getNodeName());
         try {
-          if (!Jenkins.get().updateNode(n)) {
-            LOGGER.warning("Unable to update non-existing node " + getNodeName());
-          }
+            if (!Jenkins.get().updateNode(n)) {
+                LOGGER.warning("Unable to update non-existing node " + getNodeName());
+            }
         } catch (IOException e) {
             LOGGER.warning(e.getMessage());
         }
@@ -434,7 +519,8 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem{
     @Override
     protected void _terminate(TaskListener listener) throws IOException, InterruptedException {
         final ComputeService compute = JCloudsCloud.getByName(cloudName).getCompute();
-        if (compute.getNodeMetadata(nodeId) != null && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
+        if (compute.getNodeMetadata(nodeId) != null
+                && compute.getNodeMetadata(nodeId).getStatus().equals(NodeMetadata.Status.RUNNING)) {
             if (stopOnTerminate) {
                 LOGGER.info("Suspending node: " + getNodeName());
                 compute.suspendNode(nodeId);

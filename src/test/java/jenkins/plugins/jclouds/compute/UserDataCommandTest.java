@@ -1,54 +1,43 @@
 package jenkins.plugins.jclouds.compute;
 
-import org.junit.jupiter.api.Test;
-
-import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
-import org.jvnet.hudson.test.MockAuthorizationStrategy;
-
 import static hudson.cli.CLICommandInvoker.Matcher.failedWith;
-import static hudson.cli.CLICommandInvoker.Matcher.hasNoStandardOutput;
 import static hudson.cli.CLICommandInvoker.Matcher.succeeded;
 import static hudson.cli.CLICommandInvoker.Matcher.succeededSilently;
-
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.not;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey.DirectEntryPrivateKeySource;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey.DirectEntryPrivateKeySource;
-
+import hudson.cli.CLICommandInvoker;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-
-import hudson.cli.CLICommandInvoker;
 import jenkins.model.Jenkins;
-
+import jenkins.plugins.jclouds.config.ConfigHelper;
+import jenkins.plugins.jclouds.config.UserDataBoothook;
+import jenkins.plugins.jclouds.config.UserDataInclude;
+import jenkins.plugins.jclouds.config.UserDataIncludeOnce;
+import jenkins.plugins.jclouds.config.UserDataPartHandler;
+import jenkins.plugins.jclouds.config.UserDataScript;
+import jenkins.plugins.jclouds.config.UserDataUpstart;
+import jenkins.plugins.jclouds.config.UserDataYaml;
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.jenkinsci.plugins.configfiles.xml.XmlConfig;
-
-import jenkins.plugins.jclouds.config.ConfigHelper;
-import jenkins.plugins.jclouds.config.UserDataIncludeOnce;
-import jenkins.plugins.jclouds.config.UserDataBoothook;
-import jenkins.plugins.jclouds.config.UserDataPartHandler;
-import jenkins.plugins.jclouds.config.UserDataInclude;
-import jenkins.plugins.jclouds.config.UserDataUpstart;
-import jenkins.plugins.jclouds.config.UserDataScript;
-import jenkins.plugins.jclouds.config.UserDataYaml;
-import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.MockAuthorizationStrategy;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author Fritz Elfert
@@ -63,17 +52,21 @@ class UserDataCommandTest {
      * various crendential ids, created in createTestData()
      */
     private String upCredentialsId = "";
+
     private String rsaCredentialsId = "";
     private String ecdsaCredentialsId = "";
 
     // Why does this not work with @BeforeEach?
     public void setUp(JenkinsRule j) {
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
-        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy().
-            grant(Jenkins.ADMINISTER).everywhere().to(ADMIN).
-            grant(Jenkins.READ).everywhere().to(READER));
+        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .to(ADMIN)
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to(READER));
     }
-
 
     @Test
     void testGetUserDataNoParams(JenkinsRule j) throws Exception {
@@ -86,8 +79,10 @@ class UserDataCommandTest {
     void testGetUserDataNonexistingCredential(JenkinsRule j) throws Exception {
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo");
         assertThat(res, failedWith(4));
-        assertThat(res.stderr(),
-            containsString("Could not get keypair from credential: java.io.IOException: Credential foo is not available"));
+        assertThat(
+                res.stderr(),
+                containsString(
+                        "Could not get keypair from credential: java.io.IOException: Credential foo is not available"));
     }
 
     @Test
@@ -95,14 +90,18 @@ class UserDataCommandTest {
         createTestData(j, false);
         CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs(upCredentialsId);
         assertThat(res, failedWith(4));
-        assertThat(res.stderr(), containsString(String.format(
-                "Could not get keypair from credential: java.io.IOException: Credential %s is not available", upCredentialsId)));
+        assertThat(
+                res.stderr(),
+                containsString(String.format(
+                        "Could not get keypair from credential: java.io.IOException: Credential %s is not available",
+                        upCredentialsId)));
     }
 
     @Test
     void testGetUserDataWrongKeyType(JenkinsRule j) throws Exception {
         createTestData(j, false);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs(ecdsaCredentialsId);
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs(ecdsaCredentialsId);
         assertThat(res, failedWith(4));
         assertThat(res.stderr(), containsString("Invalid key type sun.security.ec.ECPrivateKeyImpl@"));
     }
@@ -110,7 +109,8 @@ class UserDataCommandTest {
     @Test
     void testGetUserDataEmpty(JenkinsRule j) throws Exception {
         createTestData(j, false);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs(rsaCredentialsId);
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs(rsaCredentialsId);
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString(String.format("<credentialsId>%s", rsaCredentialsId)));
         assertThat(res.stdout(), containsString("<encryptedConfigData>"));
@@ -118,7 +118,8 @@ class UserDataCommandTest {
 
     @Test
     void testGetUserDataUnencrypted(JenkinsRule j) throws Exception {
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString("<configData/>"));
     }
@@ -126,8 +127,8 @@ class UserDataCommandTest {
     @Test
     void testGetUserDataPermission(JenkinsRule j) throws Exception {
         setUp(j);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata")
-            .asUser(READER).invokeWithArgs("foo", "--force");
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").asUser(READER).invokeWithArgs("foo", "--force");
         assertThat(res, failedWith(6));
         assertThat(res.stderr(), containsString("reader is missing the Overall/Administer permission"));
     }
@@ -135,7 +136,8 @@ class UserDataCommandTest {
     @Test
     void testGetUserDataAllTypes(JenkinsRule j) throws Exception {
         createTestData(j, true);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString("<configData>"));
         assertThat(res.stdout(), containsString("<name>myUserDataBoothook</name>"));
@@ -151,7 +153,8 @@ class UserDataCommandTest {
     @Test
     void testCreateUserDataMerge(JenkinsRule j) throws Exception {
         createTestData(j, true);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
         assertThat(res, succeeded());
         String xml = res.stdout();
 
@@ -170,7 +173,9 @@ class UserDataCommandTest {
         }
 
         InputStream stdin = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
-        res = new CLICommandInvoker(j, "jclouds-create-userdata").withStdin(stdin).invokeWithArgs("--merge");
+        res = new CLICommandInvoker(j, "jclouds-create-userdata")
+                .withStdin(stdin)
+                .invokeWithArgs("--merge");
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString("<replacements>"));
 
@@ -189,14 +194,17 @@ class UserDataCommandTest {
     @Test
     void testCreateUserDataExisting(JenkinsRule j) throws Exception {
         createTestData(j, true);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
         assertThat(res, succeeded());
         String xml = res.stdout();
 
         List<Config> cfgs = ConfigHelper.getJCloudsConfigs();
 
         InputStream stdin = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
-        res = new CLICommandInvoker(j, "jclouds-create-userdata").withStdin(stdin).invoke();
+        res = new CLICommandInvoker(j, "jclouds-create-userdata")
+                .withStdin(stdin)
+                .invoke();
         assertThat(res, failedWith(4));
         for (Config cfg : cfgs) {
             assertThat(res.stderr(), containsString(String.format("Config data with id %s already exists", cfg.id)));
@@ -206,34 +214,43 @@ class UserDataCommandTest {
     @Test
     void testCreateUserDataOverwrite(JenkinsRule j) throws Exception {
         createTestData(j, true);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
         assertThat(res, succeeded());
         String xml = res.stdout();
 
         InputStream stdin = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
-        res = new CLICommandInvoker(j, "jclouds-create-userdata").withStdin(stdin).invokeWithArgs("--overwrite");
+        res = new CLICommandInvoker(j, "jclouds-create-userdata")
+                .withStdin(stdin)
+                .invokeWithArgs("--overwrite");
         assertThat(res, succeededSilently());
     }
 
     @Test
     void testCreateUserDataBothMergeAndOverwrite(JenkinsRule j) throws Exception {
         createTestData(j, true);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs("foo", "--force");
         assertThat(res, succeeded());
         String xml = res.stdout();
 
         InputStream stdin = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
-        res = new CLICommandInvoker(j, "jclouds-create-userdata").withStdin(stdin).invokeWithArgs("--merge", "--overwrite");
+        res = new CLICommandInvoker(j, "jclouds-create-userdata")
+                .withStdin(stdin)
+                .invokeWithArgs("--merge", "--overwrite");
         assertThat(res, failedWith(2));
-        assertThat(res.stderr(), anyOf(
-                containsString("ERROR: option \"--merge\" cannot be used with the option(s) [--overwrite]"),
-                containsString("ERROR: option \"--overwrite\" cannot be used with the option(s) [--merge]")));
+        assertThat(
+                res.stderr(),
+                anyOf(
+                        containsString("ERROR: option \"--merge\" cannot be used with the option(s) [--overwrite]"),
+                        containsString("ERROR: option \"--overwrite\" cannot be used with the option(s) [--merge]")));
     }
 
     @Test
     void testUserDataEncryptDecrypt(JenkinsRule j) throws Exception {
         createTestData(j, true);
-        CLICommandInvoker.Result res = new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs(rsaCredentialsId);
+        CLICommandInvoker.Result res =
+                new CLICommandInvoker(j, "jclouds-get-userdata").invokeWithArgs(rsaCredentialsId);
         assertThat(res, succeeded());
         assertThat(res.stdout(), containsString(String.format("<credentialsId>%s", rsaCredentialsId)));
         assertThat(res.stdout(), containsString("<encryptedConfigData>"));
@@ -249,7 +266,9 @@ class UserDataCommandTest {
         }
 
         InputStream stdin = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
-        res = new CLICommandInvoker(j, "jclouds-create-userdata").withStdin(stdin).invoke();
+        res = new CLICommandInvoker(j, "jclouds-create-userdata")
+                .withStdin(stdin)
+                .invoke();
         assertThat(res, succeededSilently());
 
         // Verify that we have regained all our original data
@@ -264,7 +283,8 @@ class UserDataCommandTest {
         assertThat(newCfgreps, equalTo(origCfgreps));
     }
 
-    private static final String RSA_PEM = """
+    private static final String RSA_PEM =
+            """
             -----BEGIN RSA PRIVATE KEY-----
             MIIEpQIBAAKCAQEAujBFmpi6nyHAK6RBaIkERTO/BGhgZ8h2zoqvT12+mSpjbNRF
             YN2oeMH1NsUMYLUdRzFlERqHo/U5pgS9SbXTvUujM153Voh6P+t4d822I2UN7vDc
@@ -294,7 +314,8 @@ class UserDataCommandTest {
             -----END RSA PRIVATE KEY-----
             """;
 
-    private static final String ECDSA_PEM = """
+    private static final String ECDSA_PEM =
+            """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
             1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQQL0Pqfy/oa5tr7GUl8WjHoWNnWozMV
@@ -311,49 +332,73 @@ class UserDataCommandTest {
                 CredentialsScope.SYSTEM, null, "A Username/Passowrd credential", "CredUser", "secretPassword");
         upCredentialsId = CredentialsHelper.storeCredentials(suc);
 
-        suc = new BasicSSHUserPrivateKey(CredentialsScope.GLOBAL,
-                null, "A RSA credential", new DirectEntryPrivateKeySource(RSA_PEM), "", "RSA key for testing");
+        suc = new BasicSSHUserPrivateKey(
+                CredentialsScope.GLOBAL,
+                null,
+                "A RSA credential",
+                new DirectEntryPrivateKeySource(RSA_PEM),
+                "",
+                "RSA key for testing");
         rsaCredentialsId = CredentialsHelper.storeCredentials(suc);
 
-        suc = new BasicSSHUserPrivateKey(CredentialsScope.GLOBAL, null, "whocares",
-                new DirectEntryPrivateKeySource(ECDSA_PEM), "", "Wrong private key type for testing");
+        suc = new BasicSSHUserPrivateKey(
+                CredentialsScope.GLOBAL,
+                null,
+                "whocares",
+                new DirectEntryPrivateKeySource(ECDSA_PEM),
+                "",
+                "Wrong private key type for testing");
         ecdsaCredentialsId = CredentialsHelper.storeCredentials(suc);
 
         if (full) {
-            Config cfg = new UserDataYaml(UUID.randomUUID().toString(), "myUserDataYaml",
-                    "A yaml file", "# Not really yaml content");
+            Config cfg = new UserDataYaml(
+                    UUID.randomUUID().toString(), "myUserDataYaml", "A yaml file", "# Not really yaml content");
             cfg.setProviderId(cfg.getClass().getName());
             GlobalConfigFiles.get().save(cfg);
-            cfg = new UserDataIncludeOnce(UUID.randomUUID().toString(), "myUserDataIncludeOnce",
-                    "An includeOnce file", "# Not really includeOnce content");
+            cfg = new UserDataIncludeOnce(
+                    UUID.randomUUID().toString(),
+                    "myUserDataIncludeOnce",
+                    "An includeOnce file",
+                    "# Not really includeOnce content");
             cfg.setProviderId(cfg.getClass().getName());
             GlobalConfigFiles.get().save(cfg);
-            cfg = new UserDataBoothook(UUID.randomUUID().toString(), "myUserDataBoothook",
-                    "A boothook file", "# Not really a boothook content");
+            cfg = new UserDataBoothook(
+                    UUID.randomUUID().toString(),
+                    "myUserDataBoothook",
+                    "A boothook file",
+                    "# Not really a boothook content");
             cfg.setProviderId(cfg.getClass().getName());
             GlobalConfigFiles.get().save(cfg);
-            cfg = new UserDataPartHandler(UUID.randomUUID().toString(), "myUserDataPartHandler",
-                    "A parthandler file", "# Not really parthandler content");
+            cfg = new UserDataPartHandler(
+                    UUID.randomUUID().toString(),
+                    "myUserDataPartHandler",
+                    "A parthandler file",
+                    "# Not really parthandler content");
             cfg.setProviderId(cfg.getClass().getName());
             GlobalConfigFiles.get().save(cfg);
-            cfg = new UserDataInclude(UUID.randomUUID().toString(), "myUserDataInclude",
-                    "An include file", "# Not really include content");
+            cfg = new UserDataInclude(
+                    UUID.randomUUID().toString(),
+                    "myUserDataInclude",
+                    "An include file",
+                    "# Not really include content");
             cfg.setProviderId(cfg.getClass().getName());
             GlobalConfigFiles.get().save(cfg);
-            cfg = new UserDataUpstart(UUID.randomUUID().toString(), "myUserDataUpstart",
-                    "An upstart file", "# Not really upstart content");
+            cfg = new UserDataUpstart(
+                    UUID.randomUUID().toString(),
+                    "myUserDataUpstart",
+                    "An upstart file",
+                    "# Not really upstart content");
             cfg.setProviderId(cfg.getClass().getName());
             GlobalConfigFiles.get().save(cfg);
-            cfg = new UserDataScript(UUID.randomUUID().toString(), "myUserDataScript",
-                    "A script file", "# Not really script content");
+            cfg = new UserDataScript(
+                    UUID.randomUUID().toString(), "myUserDataScript", "A script file", "# Not really script content");
             cfg.setProviderId(cfg.getClass().getName());
             GlobalConfigFiles.get().save(cfg);
 
             // Next one is not a JClouds config and therefore should not be exported
-            cfg = new XmlConfig(UUID.randomUUID().toString(), "notMyXmlConfig",
-                    "An xml file", "# Not really xml content");
+            cfg = new XmlConfig(
+                    UUID.randomUUID().toString(), "notMyXmlConfig", "An xml file", "# Not really xml content");
             GlobalConfigFiles.get().save(cfg);
         }
     }
-
 }

@@ -1,18 +1,18 @@
 package jenkins.plugins.jclouds.internal;
 
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.io.IOException;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author Fritz Elfert
  */
 class SSHPublicKeyExtractorTest {
 
-    private static final String RSA_PEM = """
+    private static final String RSA_PEM =
+            """
             -----BEGIN RSA PRIVATE KEY-----
             MIIEpQIBAAKCAQEAujBFmpi6nyHAK6RBaIkERTO/BGhgZ8h2zoqvT12+mSpjbNRF
             YN2oeMH1NsUMYLUdRzFlERqHo/U5pgS9SbXTvUujM153Voh6P+t4d822I2UN7vDc
@@ -50,7 +50,8 @@ class SSHPublicKeyExtractorTest {
             + "Q3UDT4XBZJrVoyXWiFTMRj6PqkifYB4IeAnb3RLERMZHMkEbavff/0wCdJxZ1OVqh6m"
             + "CenQgr4J9fMIf65";
 
-    private static final String DSA_PEM = """
+    private static final String DSA_PEM =
+            """
             -----BEGIN DSA PRIVATE KEY-----
             MIIBugIBAAKBgQCkmZ26oY3DJJ0cH/HVy65WNSMxk7cvNYq/AUvoXbgG/8S+2I70
             lamh6i0MvIYsUdPawJk8FIZPo+YNrR8kpVhOE9kWaJLLstSun2ieC1kjGbvUQxQK
@@ -76,7 +77,8 @@ class SSHPublicKeyExtractorTest {
             + "ntPGVE4WLGgrSjM+M06LIhNL/E3wu50YRBDvOdN/xusxDjOdAWyZh2qY/Z9CbVix7lwT"
             + "Qus1oEumEMQ==";
 
-    private static final String ECDSA_PEM = """
+    private static final String ECDSA_PEM =
+            """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
             1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQQL0Pqfy/oa5tr7GUl8WjHoWNnWozMV
@@ -91,7 +93,8 @@ class SSHPublicKeyExtractorTest {
             + "XNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAvQ+p/L+hrm2vsZSXxaMehY2dajM"
             + "xV/8yWeHsJ3Ht3ailUyORt5x8wBeiSBM5eyyltPVr402qq5v3i6UJFFadc=";
 
-    private static final String ED25519_PEM = """
+    private static final String ED25519_PEM =
+            """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAMwAAAAtzc2gtZW
             QyNTUxOQAAACBIfalPqPWFPLQNy37Jdc7lIVSu9stxBqDGEyZQe1xc7wAAAKAUZQXDFGUF
@@ -129,26 +132,28 @@ class SSHPublicKeyExtractorTest {
 
     @Test
     void testExtractInvalidPEM1() {
-        assertThrows(IOException.class, () ->
-                SSHPublicKeyExtractor.extract("", null));
+        assertThrows(IOException.class, () -> SSHPublicKeyExtractor.extract("", null));
     }
 
     @Test
     void testExtractInvalidPEM2() {
-        assertThrows(IOException.class, () ->
-                SSHPublicKeyExtractor.extract("-----BEGIN RSA PRIVATE KEY-----", null));
+        assertThrows(IOException.class, () -> SSHPublicKeyExtractor.extract("-----BEGIN RSA PRIVATE KEY-----", null));
     }
 
     @Test
     void testExtractInvalidPEM3() {
-        assertThrows(IOException.class, () ->
-                SSHPublicKeyExtractor.extract("-----BEGIN RSA PRIVATE KEY-----\nfoo\n-----END RSA PRIVATE KEY-----", null));
+        assertThrows(
+                IOException.class,
+                () -> SSHPublicKeyExtractor.extract(
+                        "-----BEGIN RSA PRIVATE KEY-----\nfoo\n-----END RSA PRIVATE KEY-----", null));
     }
 
     @Test
     void testExtractInvalidPEM4() {
-        assertThrows(IOException.class, () ->
-                SSHPublicKeyExtractor.extract("-----BEGIN RSA PRIVATE KEY-----\nVGhpcyBpcyBhIGpva2UhCg==\n-----END RSA PRIVATE KEY-----", null));
+        assertThrows(
+                IOException.class,
+                () -> SSHPublicKeyExtractor.extract(
+                        "-----BEGIN RSA PRIVATE KEY-----\nVGhpcyBpcyBhIGpva2UhCg==\n-----END RSA PRIVATE KEY-----",
+                        null));
     }
-
 }

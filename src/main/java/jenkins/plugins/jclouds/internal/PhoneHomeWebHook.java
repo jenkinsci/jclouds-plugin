@@ -22,18 +22,15 @@ import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
 import hudson.slaves.Cloud;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerRequest2;
-import org.kohsuke.stapler.StaplerResponse2;
-import org.kohsuke.stapler.interceptor.RequirePOST;
-
-import org.jclouds.compute.domain.NodeMetadata;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsComputer;
 import jenkins.plugins.jclouds.compute.JCloudsSlave;
-
-import java.util.logging.Logger;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * Receives phone home hook from slave.
@@ -66,7 +63,8 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
 
         String hostName = req.getParameter("hostname");
         if (null == hostName) {
-            throw new IllegalArgumentException("Not intended to be browsed interactively (must specify hostname parameter)");
+            throw new IllegalArgumentException(
+                    "Not intended to be browsed interactively (must specify hostname parameter)");
         }
         LOGGER.info("Received POST from " + hostName);
         // run in high privilege to see all the nodes anonymous users don't see.
@@ -84,7 +82,7 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
                 }
             }
             for (Cloud c : Jenkins.get().clouds) {
-                if (JCloudsCloud.class.isInstance(c) && ((JCloudsCloud)c).phoneHomeNotify(hostName)) {
+                if (JCloudsCloud.class.isInstance(c) && ((JCloudsCloud) c).phoneHomeNotify(hostName)) {
                     return;
                 }
             }
@@ -98,5 +96,4 @@ public class PhoneHomeWebHook implements UnprotectedRootAction {
     public static PhoneHomeWebHook get() {
         return Jenkins.get().getExtensionList(RootAction.class).get(PhoneHomeWebHook.class);
     }
-
 }

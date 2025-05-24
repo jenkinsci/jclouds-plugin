@@ -19,8 +19,13 @@ class BlobStoreProfileInsideJenkinsLiveTest {
         fixture.setUp();
 
         // TODO: this may need to vary per test
-        profile = new BlobStoreProfile(fixture.getProvider() + "-profile", fixture.getProvider(),
-                fixture.getCredentialsId(), fixture.getEndpoint(), null, true);
+        profile = new BlobStoreProfile(
+                fixture.getProvider() + "-profile",
+                fixture.getProvider(),
+                fixture.getCredentialsId(),
+                fixture.getEndpoint(),
+                null,
+                true);
     }
 
     @AfterEach
@@ -42,6 +47,4 @@ class BlobStoreProfileInsideJenkinsLiveTest {
             fixture.getBlobStore().deleteContainer(container);
         }
     }
-
-
 }

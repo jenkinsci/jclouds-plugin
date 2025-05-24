@@ -15,20 +15,16 @@
  */
 package jenkins.plugins.jclouds.credentials;
 
-import com.cloudbees.plugins.credentials.CredentialsScope;
-
 import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import hudson.Extension;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.Stapler;
-
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
 import org.apache.commons.fileupload2.core.FileItem;
-
-import com.google.gson.JsonParser;
-import com.google.gson.JsonObject;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.Stapler;
 
 /**
  * A simple wrapper for {@link com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey}
@@ -39,11 +35,20 @@ public class JCloudsUserWithKey extends BasicSSHUserPrivateKey {
     private static final Logger LOGGER = Logger.getLogger(JCloudsUserWithKey.class.getName());
 
     @DataBoundConstructor
-    public JCloudsUserWithKey(final CredentialsScope scope, final String id, final String description,
-            final String username, final String privateKey, final String jsonFile) {
-        super(scope, id, handleUser(jsonFile, username),
+    public JCloudsUserWithKey(
+            final CredentialsScope scope,
+            final String id,
+            final String description,
+            final String username,
+            final String privateKey,
+            final String jsonFile) {
+        super(
+                scope,
+                id,
+                handleUser(jsonFile, username),
                 handleKey(jsonFile, privateKey),
-                null, handleDescription(jsonFile, description));
+                null,
+                handleDescription(jsonFile, description));
     }
 
     /**

@@ -15,6 +15,12 @@
  */
 package jenkins.plugins.jclouds.internal;
 
+import com.trilead.ssh2.crypto.PEMDecoder;
+import com.trilead.ssh2.signature.DSAKeyAlgorithm;
+import com.trilead.ssh2.signature.ECDSAKeyAlgorithm.ECDSASha2Nistp256;
+import com.trilead.ssh2.signature.KeyAlgorithm;
+import com.trilead.ssh2.signature.KeyAlgorithmManager;
+import com.trilead.ssh2.signature.RSAKeyAlgorithm;
 import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
@@ -26,15 +32,7 @@ import java.security.interfaces.ECPublicKey;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
-
 import net.i2p.crypto.eddsa.EdDSAPrivateKey;
-
-import com.trilead.ssh2.crypto.PEMDecoder;
-import com.trilead.ssh2.signature.DSAKeyAlgorithm;
-import com.trilead.ssh2.signature.ECDSAKeyAlgorithm.ECDSASha2Nistp256;
-import com.trilead.ssh2.signature.RSAKeyAlgorithm;
-import com.trilead.ssh2.signature.KeyAlgorithm;
-import com.trilead.ssh2.signature.KeyAlgorithmManager;
 
 /**
  * Extracts a SSH public key from a SSH private key.
@@ -51,14 +49,19 @@ public final class SSHPublicKeyExtractor {
     public static String extract(final String pem, final String passPhrase) throws IOException {
         final KeyPair kp = PEMDecoder.decodeKeyPair(pem.toCharArray(), passPhrase);
         if (kp.getPrivate() instanceof RSAPrivateKey) {
-            return "ssh-rsa " + Base64.getEncoder().encodeToString(new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) kp.getPublic()));
+            return "ssh-rsa "
+                    + Base64.getEncoder()
+                            .encodeToString(new RSAKeyAlgorithm().encodePublicKey((RSAPublicKey) kp.getPublic()));
         }
         if (kp.getPrivate() instanceof DSAPrivateKey) {
-            return "ssh-dss " + Base64.getEncoder().encodeToString(new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) kp.getPublic()));
+            return "ssh-dss "
+                    + Base64.getEncoder()
+                            .encodeToString(new DSAKeyAlgorithm().encodePublicKey((DSAPublicKey) kp.getPublic()));
         }
         if (kp.getPrivate() instanceof ECPrivateKey) {
-            return "ecdsa-sha2-nistp256 " + Base64.getEncoder().encodeToString(
-                    new ECDSASha2Nistp256().encodePublicKey((ECPublicKey) kp.getPublic()));
+            return "ecdsa-sha2-nistp256 "
+                    + Base64.getEncoder()
+                            .encodeToString(new ECDSASha2Nistp256().encodePublicKey((ECPublicKey) kp.getPublic()));
         }
         if (kp.getPrivate() instanceof EdDSAPrivateKey) {
             for (KeyAlgorithm<PublicKey, PrivateKey> ka : KeyAlgorithmManager.getSupportedAlgorithms()) {

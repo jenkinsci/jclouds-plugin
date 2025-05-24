@@ -15,25 +15,20 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import hudson.model.TaskListener;
+import edazdarevic.commons.net.CIDRUtils;
 import hudson.model.Descriptor;
+import hudson.model.TaskListener;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.slaves.ComputerLauncher;
 import hudson.slaves.SlaveComputer;
-
 import java.io.IOException;
 import java.io.PrintStream;
-
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
 import org.jclouds.compute.domain.NodeMetadata;
-
-import edazdarevic.commons.net.CIDRUtils;
 
 /**
  * The launcher that launches the jenkins agent.jar on the Agent. Uses the SSHKeyPair configured in the cloud profile settings, and logs in to the server via
@@ -45,8 +40,13 @@ public class JCloudsLauncher extends ComputerLauncher {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsLauncher.class.getName());
 
-    private static void invokeSSHLauncher(final String address, final String credentialsId, final String jvmOptions,
-                                          SlaveComputer agent, TaskListener listener) throws IOException {
+    private static void invokeSSHLauncher(
+            final String address,
+            final String credentialsId,
+            final String jvmOptions,
+            SlaveComputer agent,
+            TaskListener listener)
+            throws IOException {
         try {
             SSHLauncher launcher = new SSHLauncher(address, 22, credentialsId);
             launcher.setJvmOptions(jvmOptions);
@@ -96,7 +96,8 @@ public class JCloudsLauncher extends ComputerLauncher {
      * @param preferredAddress An optional String, containing an address/prefix expression which will be used for matching.
      * @return A String containing the IP address to connect to.
      */
-    public static String getConnectionAddress(NodeMetadata nodeMetadata, PrintStream logger, final String preferredAddress) {
+    public static String getConnectionAddress(
+            NodeMetadata nodeMetadata, PrintStream logger, final String preferredAddress) {
         if (null != preferredAddress && !preferredAddress.isEmpty()) {
             LOGGER.info("preferredAddress is " + preferredAddress);
             try {
@@ -117,7 +118,8 @@ public class JCloudsLauncher extends ComputerLauncher {
                 }
             }
             if (null != logger) {
-                logger.println("Unable to match any address against " + preferredAddress + ". Falling back to simple selection.");
+                logger.println("Unable to match any address against " + preferredAddress
+                        + ". Falling back to simple selection.");
             }
         }
         if (nodeMetadata.getPublicAddresses().size() > 0) {
@@ -134,5 +136,4 @@ public class JCloudsLauncher extends ComputerLauncher {
     public Descriptor<ComputerLauncher> getDescriptor() {
         throw new UnsupportedOperationException();
     }
-
 }

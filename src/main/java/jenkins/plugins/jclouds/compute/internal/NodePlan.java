@@ -24,7 +24,12 @@ public class NodePlan {
     private final boolean shouldSuspend;
     private final Supplier<JCloudsNodeMetadata> nodeSupplier;
 
-    public NodePlan(String cloud, String template, int count, boolean shouldSuspend, Supplier<JCloudsNodeMetadata> nodeSupplier) {
+    public NodePlan(
+            String cloud,
+            String template,
+            int count,
+            boolean shouldSuspend,
+            Supplier<JCloudsNodeMetadata> nodeSupplier) {
         this.cloudName = cloud;
         this.templateName = template;
         this.count = count;

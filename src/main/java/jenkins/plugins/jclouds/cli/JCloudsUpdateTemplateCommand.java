@@ -16,19 +16,14 @@
 package jenkins.plugins.jclouds.cli;
 
 import com.thoughtworks.xstream.XStreamException;
-
 import hudson.Extension;
 import hudson.cli.CLICommand;
-
 import java.nio.charset.StandardCharsets;
-
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
 
 /**
  * Creates a new JCloudsCloud by reading stdin as a configuration XML file.
@@ -42,13 +37,21 @@ public class JCloudsUpdateTemplateCommand extends CLICommand {
         return Messages.UpdateTemplateCommand_shortDescription();
     }
 
-    @Argument(required = false, metaVar = "PROFILE", index = 1, usage = "Name of jclouds profile to use. Reqired, if TEMPLATE is ambiguous.")
+    @Argument(
+            required = false,
+            metaVar = "PROFILE",
+            index = 1,
+            usage = "Name of jclouds profile to use. Reqired, if TEMPLATE is ambiguous.")
     public String profile = null;
 
     @Argument(metaVar = "TEMPLATE", usage = "Name of the existing template to update.", required = true)
     public String name;
 
-    @Option(required = false, name = "-v", aliases = "--verbose", usage = "Be verbose when validating references to credentials and config files.")
+    @Option(
+            required = false,
+            name = "-v",
+            aliases = "--verbose",
+            usage = "Be verbose when validating references to credentials and config files.")
     private boolean verbose;
 
     @Override
@@ -60,7 +63,7 @@ public class JCloudsUpdateTemplateCommand extends CLICommand {
         String xml = new String(stdin.readAllBytes(), StandardCharsets.UTF_8);
         JCloudsSlaveTemplate ntpl = null;
         try {
-            ntpl = (JCloudsSlaveTemplate)Jenkins.XSTREAM.fromXML(xml);
+            ntpl = (JCloudsSlaveTemplate) Jenkins.XSTREAM.fromXML(xml);
         } catch (XStreamException e) {
             throw new IllegalStateException("Unable to parse input: " + e.toString());
         }

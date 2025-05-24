@@ -17,6 +17,48 @@ package jenkins.plugins.jclouds.compute;
 
 import static com.google.common.collect.Iterables.getOnlyElement;
 import static org.jclouds.scriptbuilder.domain.Statements.newStatementList;
+
+import au.com.bytecode.opencsv.CSVReader;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsMatcher;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
+import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
+import com.trilead.ssh2.Connection;
+import edazdarevic.commons.net.CIDRUtils;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.AbstractDescribableImpl;
+import hudson.model.AutoCompletionCandidates;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.ItemGroup;
+import hudson.model.Label;
+import hudson.model.Node.Mode;
+import hudson.model.TaskListener;
+import hudson.model.labels.LabelAtom;
+import hudson.plugins.sshslaves.SSHLauncher;
+import hudson.security.ACL;
+import hudson.security.AccessControlled;
+import hudson.util.FormApply;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.io.StringReader;
@@ -34,31 +76,13 @@ import java.util.Random;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.compute.internal.JCloudsNodeMetadata;
+import jenkins.plugins.jclouds.config.ConfigHelper;
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
-import hudson.Extension;
-import hudson.Util;
-import hudson.model.AbstractDescribableImpl;
-import hudson.model.AutoCompletionCandidates;
-import hudson.model.Computer;
-import hudson.model.Descriptor;
-import hudson.model.Label;
-import hudson.model.Node.Mode;
-import hudson.model.ItemGroup;
-import hudson.model.TaskListener;
-import hudson.model.labels.LabelAtom;
-import hudson.plugins.sshslaves.SSHLauncher;
-import hudson.security.ACL;
-import hudson.security.AccessControlled;
-import hudson.util.FormApply;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-
-import jenkins.model.Jenkins;
-
 import org.apache.commons.lang.StringUtils;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
@@ -69,9 +93,9 @@ import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.compute.options.TemplateOptions;
+import org.jclouds.digitalocean2.DigitalOcean2Api;
 import org.jclouds.digitalocean2.compute.options.DigitalOcean2TemplateOptions;
 import org.jclouds.digitalocean2.domain.Key;
-import org.jclouds.digitalocean2.DigitalOcean2Api;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.googlecomputeengine.compute.options.GoogleComputeEngineTemplateOptions;
 import org.jclouds.openstack.nova.v2_0.compute.options.NovaTemplateOptions;
@@ -80,50 +104,19 @@ import org.jclouds.scriptbuilder.domain.Statement;
 import org.jclouds.scriptbuilder.domain.Statements;
 import org.jclouds.scriptbuilder.statements.login.AdminAccess;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
-import org.kohsuke.stapler.HttpRedirect;
-import org.kohsuke.stapler.HttpResponse;
-import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.HttpRedirect;
+import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.verb.POST;
-
-import au.com.bytecode.opencsv.CSVReader;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableMap;
-
-import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.CredentialsMatcher;
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.domains.DomainRequirement;
-import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHAuthenticator;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
-import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-
-import com.trilead.ssh2.Connection;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
-import jenkins.plugins.jclouds.internal.CredentialsHelper;
-import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
-import jenkins.plugins.jclouds.compute.internal.JCloudsNodeMetadata;
-import jenkins.plugins.jclouds.config.ConfigHelper;
-
-import edazdarevic.commons.net.CIDRUtils;
 
 /**
  * @author Vijay Kiran
  */
-public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTemplate> implements Supplier<JCloudsNodeMetadata> {
+public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTemplate>
+        implements Supplier<JCloudsNodeMetadata> {
 
     private static final Logger LOGGER = Logger.getLogger(JCloudsSlaveTemplate.class.getName());
     private static final char SEPARATOR_CHAR = ',';
@@ -145,6 +138,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
     @Deprecated
     private transient String userData;
+
     public final int numExecutors;
     public final boolean stopOnTerminate;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
@@ -153,11 +147,13 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
     @Deprecated
     private transient String vmPassword;
+
     private final String jvmOptions;
     public final boolean preExistingJenkinsUser;
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
     @Deprecated
     private transient String jenkinsUser;
+
     private final String fsRoot;
     public final boolean allowSudo;
     public final boolean installPrivateKey;
@@ -167,6 +163,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
     /** @deprecated Not used anymore, but retained for backward compatibility during deserialization. */
     @Deprecated
     private transient Boolean assignFloatingIp;
+
     public final boolean waitPhoneHome;
     public final int waitPhoneHomeTimeout;
     public final String keyPairName;
@@ -224,17 +221,45 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
     }
 
     @DataBoundConstructor
-    public JCloudsSlaveTemplate(final String name, final String imageId, final String imageNameRegex,
-            final String hardwareId, final double cores, final int ram, final String osFamily, final String osVersion,
-            final String locationId, final String labelString, final String description, final String initScriptId,
-            final int numExecutors, final boolean stopOnTerminate, final String jvmOptions,
-            final boolean preExistingJenkinsUser, final String fsRoot, final boolean allowSudo,
-            final boolean installPrivateKey, final Integer overrideRetentionTime, final boolean hasOverrideRetentionTime,
-            final int spoolDelayMs, final boolean assignFloatingIp, final boolean waitPhoneHome, final int waitPhoneHomeTimeout,
-            final String keyPairName, final boolean assignPublicIp, final String networks,
-            final String securityGroups, final String credentialsId, final String adminCredentialsId,
-            final String mode, final boolean useConfigDrive, final boolean isPreemptible, final List<UserData> userDataEntries,
-            final String preferredAddress, final boolean useJnlp, final boolean jnlpProvision) {
+    public JCloudsSlaveTemplate(
+            final String name,
+            final String imageId,
+            final String imageNameRegex,
+            final String hardwareId,
+            final double cores,
+            final int ram,
+            final String osFamily,
+            final String osVersion,
+            final String locationId,
+            final String labelString,
+            final String description,
+            final String initScriptId,
+            final int numExecutors,
+            final boolean stopOnTerminate,
+            final String jvmOptions,
+            final boolean preExistingJenkinsUser,
+            final String fsRoot,
+            final boolean allowSudo,
+            final boolean installPrivateKey,
+            final Integer overrideRetentionTime,
+            final boolean hasOverrideRetentionTime,
+            final int spoolDelayMs,
+            final boolean assignFloatingIp,
+            final boolean waitPhoneHome,
+            final int waitPhoneHomeTimeout,
+            final String keyPairName,
+            final boolean assignPublicIp,
+            final String networks,
+            final String securityGroups,
+            final String credentialsId,
+            final String adminCredentialsId,
+            final String mode,
+            final boolean useConfigDrive,
+            final boolean isPreemptible,
+            final List<UserData> userDataEntries,
+            final String preferredAddress,
+            final boolean useJnlp,
+            final boolean jnlpProvision) {
 
         this.name = Util.fixEmptyAndTrim(name);
         this.imageId = Util.fixEmptyAndTrim(imageId);
@@ -368,19 +393,36 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         Random r = new Random(System.currentTimeMillis());
         StringBuilder ret = new StringBuilder();
         while (16 > ret.length()) {
-            char ch = (char)(97 + r.nextInt(26));
+            char ch = (char) (97 + r.nextInt(26));
             ret.append(ch);
         }
         return ret.toString();
     }
 
-    public JCloudsSlave provisionSlave(TaskListener listener, ProvisioningActivity.Id provisioningId) throws IOException {
+    public JCloudsSlave provisionSlave(TaskListener listener, ProvisioningActivity.Id provisioningId)
+            throws IOException {
         JCloudsNodeMetadata nmd = get();
 
         try {
-            return new JCloudsSlave(provisioningId , getCloud().getDisplayName(), getFsRoot(), nmd, labelString, description,
-                    Integer.toString(numExecutors), stopOnTerminate, overrideRetentionTime, getJvmOptions(), waitPhoneHome,
-                    waitPhoneHomeTimeout, credentialsId, mode, preferredAddress, useJnlp, jnlpProvision, nmd.getNonce());
+            return new JCloudsSlave(
+                    provisioningId,
+                    getCloud().getDisplayName(),
+                    getFsRoot(),
+                    nmd,
+                    labelString,
+                    description,
+                    Integer.toString(numExecutors),
+                    stopOnTerminate,
+                    overrideRetentionTime,
+                    getJvmOptions(),
+                    waitPhoneHome,
+                    waitPhoneHomeTimeout,
+                    credentialsId,
+                    mode,
+                    preferredAddress,
+                    useJnlp,
+                    jnlpProvision,
+                    nmd.getNonce());
         } catch (Descriptor.FormException e) {
             throw new AssertionError("Invalid configuration " + e.getMessage());
         }
@@ -399,8 +441,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
     private void setUserData(@NonNull final TemplateOptions options, @Nullable final byte[] udata, boolean isZipped) {
         if (null != udata) {
             final String sudata = new String(udata, StandardCharsets.UTF_8);
-            final String logdata = isZipped ?
-                String.format("<%d bytes of zip data>", Integer.valueOf(udata.length)) : sudata;
+            final String logdata =
+                    isZipped ? String.format("<%d bytes of zip data>", Integer.valueOf(udata.length)) : sudata;
             if (options instanceof GoogleComputeEngineTemplateOptions) {
                 LOGGER.finest("Setting userData to " + logdata);
                 options.userMetadata("user-data", sudata);
@@ -413,8 +455,11 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                     LOGGER.finest("Setting userData to " + logdata);
                     userDataMethod.invoke(options, udata);
                 } catch (ReflectiveOperationException e) {
-                    LOGGER.log(Level.WARNING,
-                            "userData is not supported by provider options class " + options.getClass().getName(), e);
+                    LOGGER.log(
+                            Level.WARNING,
+                            "userData is not supported by provider options class "
+                                    + options.getClass().getName(),
+                            e);
                 }
             }
         }
@@ -523,24 +568,23 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                     // They use key Ids (ints) and provide an api for listing them. So we have
                     // to find the named key in the list and use its numeric id.
                     try (DigitalOcean2Api do2api = getCloud().newApi(DigitalOcean2Api.class)) {
-                        Optional<Key> key = do2api.keyApi().list().concat().firstMatch(
-                                new Predicate<Key>() {
-                                    @Override
-                                    public boolean apply(final Key k) {
-                                        return null != k && keyPairName.equals(k.name());
-                                    }
-                                });
+                        Optional<Key> key = do2api.keyApi().list().concat().firstMatch(new Predicate<Key>() {
+                            @Override
+                            public boolean apply(final Key k) {
+                                return null != k && keyPairName.equals(k.name());
+                            }
+                        });
                         if (key.isPresent()) {
                             Key k = key.get();
-                            LOGGER.info(String.format("Setting DigitalOcean keyPairName to %s (%d)",
-                                        keyPairName, k.id()));
+                            LOGGER.info(
+                                    String.format("Setting DigitalOcean keyPairName to %s (%d)", keyPairName, k.id()));
                             List<Integer> kids = new ArrayList<>();
                             kids.add(Integer.valueOf(k.id()));
                             options.as(DigitalOcean2TemplateOptions.class)
-                                .sshKeyIds(kids).autoCreateKeyPair(false);
+                                    .sshKeyIds(kids)
+                                    .autoCreateKeyPair(false);
                         } else {
-                            LOGGER.warning(String.format("The specified keyPairName %s does not exist",
-                                        keyPairName));
+                            LOGGER.warning(String.format("The specified keyPairName %s does not exist", keyPairName));
                         }
                     } catch (IOException x) {
                         throw new IllegalArgumentException("Could not fetch list of keys", x);
@@ -573,13 +617,20 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                 if (null != c) {
                     if (c instanceof StandardUsernamePasswordCredentials) {
                         LOGGER.info("Using username/password as adminCredentials");
-                        String password = CredentialsHelper.getPassword(((StandardUsernamePasswordCredentials)c).getPassword());
-                        LoginCredentials lc = LoginCredentials.builder().user(adminUser).password(password).build();
+                        String password =
+                                CredentialsHelper.getPassword(((StandardUsernamePasswordCredentials) c).getPassword());
+                        LoginCredentials lc = LoginCredentials.builder()
+                                .user(adminUser)
+                                .password(password)
+                                .build();
                         options.overrideLoginCredentials(lc);
                     } else {
                         LOGGER.info("Using username/privatekey as adminCredentials");
-                        String privateKey = CredentialsHelper.getPrivateKey((SSHUserPrivateKey)c);
-                        LoginCredentials lc = LoginCredentials.builder().user(adminUser).privateKey(privateKey).build();
+                        String privateKey = CredentialsHelper.getPrivateKey((SSHUserPrivateKey) c);
+                        LoginCredentials lc = LoginCredentials.builder()
+                                .user(adminUser)
+                                .privateKey(privateKey)
+                                .build();
                         options.overrideLoginCredentials(lc);
                     }
                 }
@@ -588,7 +639,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             if (spoolDelayMs > 0) {
                 // (JENKINS-15970) Add optional delay before spooling. Author: Adam Rofer
                 synchronized (delayLockObject) {
-                    LOGGER.info("Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
+                    LOGGER.info(
+                            "Delaying " + spoolDelayMs + " milliseconds. Current ms -> " + System.currentTimeMillis());
                     try {
                         delayLockObject.wait(spoolDelayMs);
                     } catch (InterruptedException e) {
@@ -606,13 +658,18 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                 }
             } else {
                 // provision jenkins user
-                AdminAccess adminAccess = AdminAccess.builder().adminUsername(getJenkinsUser())
-                    .installAdminPrivateKey(installPrivateKey) // some VCS such as Git use SSH authentication
-                    .grantSudoToAdminUser(allowSudo) // no need
-                    .adminPrivateKey(getJenkinsPrivateKey()) // temporary due to jclouds bug
-                    .authorizeAdminPublicKey(true).adminPublicKey(getJenkinsPublicKey()).adminHome(getFsRoot()).build();
+                AdminAccess adminAccess = AdminAccess.builder()
+                        .adminUsername(getJenkinsUser())
+                        .installAdminPrivateKey(installPrivateKey) // some VCS such as Git use SSH authentication
+                        .grantSudoToAdminUser(allowSudo) // no need
+                        .adminPrivateKey(getJenkinsPrivateKey()) // temporary due to jclouds bug
+                        .authorizeAdminPublicKey(true)
+                        .adminPublicKey(getJenkinsPublicKey())
+                        .adminHome(getFsRoot())
+                        .build();
                 // Jenkins needs /jenkins dir.
-                Statement jenkinsDirStatement = newStatementList(Statements.exec("mkdir -p " + getFsRoot()),
+                Statement jenkinsDirStatement = newStatementList(
+                        Statements.exec("mkdir -p " + getFsRoot()),
                         Statements.exec("chown " + getJenkinsUser() + " " + getFsRoot()));
                 initStatement = newStatementList(adminAccess, jenkinsDirStatement, Statements.exec(initscript));
             }
@@ -622,7 +679,9 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                 if (!options.hasLoginPrivateKey()) {
                     LOGGER.info("Init script without private admin key. Falling back to jenkins user credentials");
                     LoginCredentials lc = LoginCredentials.builder()
-                        .user(getJenkinsUser()).privateKey(getJenkinsPrivateKey()).build();
+                            .user(getJenkinsUser())
+                            .privateKey(getJenkinsPrivateKey())
+                            .build();
                     options.overrideLoginCredentials(lc);
                 }
                 options.runScript(initStatement);
@@ -656,8 +715,11 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             }
 
             try {
-                nmd = JCloudsNodeMetadata.fromNodeMetadata(getOnlyElement(getCloud().getCompute()
-                        .createNodesInGroup(getCloud().prependGroupPrefix(name), 1, template)), nonce);
+                nmd = JCloudsNodeMetadata.fromNodeMetadata(
+                        getOnlyElement(getCloud()
+                                .getCompute()
+                                .createNodesInGroup(getCloud().prependGroupPrefix(name), 1, template)),
+                        nonce);
                 brokenImageCacheHasThrown = false;
             } catch (RunNodesException e) {
                 boolean throwNow = true;
@@ -685,7 +747,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
     }
 
     private void destroyBadNodes(RunNodesException e) {
-        for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError : e.getNodeErrors().entrySet()) {
+        for (Map.Entry<? extends NodeMetadata, ? extends Throwable> nodeError :
+                e.getNodeErrors().entrySet()) {
             getCloud().getCompute().destroyNode(nodeError.getKey().getId());
         }
     }
@@ -834,8 +897,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
 
         private FormValidation deprecatedSshProvisioning() {
             return FormValidation.warningWithMarkup(
-                    "Using SSH-based provisioning is deprecated and will be removed in a future version.<br/>" +
-                    "Please use cloud-init for provisioning a jenkins user");
+                    "Using SSH-based provisioning is deprecated and will be removed in a future version.<br/>"
+                            + "Please use cloud-init for provisioning a jenkins user");
         }
 
         @POST
@@ -844,8 +907,9 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         @POST
-        public FormValidation doCheckCredentialsId(@QueryParameter String value, @QueryParameter final boolean useJnlp) {
-            return useJnlp ?  FormValidation.ok() : FormValidation.validateRequired(value);
+        public FormValidation doCheckCredentialsId(
+                @QueryParameter String value, @QueryParameter final boolean useJnlp) {
+            return useJnlp ? FormValidation.ok() : FormValidation.validateRequired(value);
         }
 
         @POST
@@ -861,11 +925,13 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         @POST
-        public FormValidation doCheckPreExistingJenkinsUser(@QueryParameter final String value, @QueryParameter final String useJnlp) {
+        public FormValidation doCheckPreExistingJenkinsUser(
+                @QueryParameter final String value, @QueryParameter final String useJnlp) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (!Boolean.valueOf(Util.fixEmptyAndTrim(value)).booleanValue()) {
                 if (Boolean.valueOf(Util.fixEmptyAndTrim(useJnlp)).booleanValue()) {
-                    return FormValidation.error("Jenkins user provisioning relies on posix system, accessible via SSH.");
+                    return FormValidation.error(
+                            "Jenkins user provisioning relies on posix system, accessible via SSH.");
                 }
                 return deprecatedSshProvisioning();
             }
@@ -873,22 +939,32 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         @POST
-        public FormValidation doCheckUseJnlp(@QueryParameter final boolean value,
-            @QueryParameter final boolean preExistingJenkinsUser, @QueryParameter final String initScriptId) {
+        public FormValidation doCheckUseJnlp(
+                @QueryParameter final boolean value,
+                @QueryParameter final boolean preExistingJenkinsUser,
+                @QueryParameter final String initScriptId) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (value) {
-                if (null == Jenkins.get().getTcpSlaveAgentListener() || -1 == Jenkins.get().getSlaveAgentPort()) {
-                    return FormValidation.error("This feature cannot work, because the JNLP port is disabled in global security.");
+                if (null == Jenkins.get().getTcpSlaveAgentListener()
+                        || -1 == Jenkins.get().getSlaveAgentPort()) {
+                    return FormValidation.error(
+                            "This feature cannot work, because the JNLP port is disabled in global security.");
                 }
                 final Set<String> aps = Jenkins.get().getAgentProtocols();
-                if (!(aps.contains("JNLP-connect") || aps.contains("JNLP2-connect") || aps.contains("JNLP3-connect") || aps.contains("JNLP4-connect"))) {
-                    return FormValidation.error("This feature cannot work, because all JNLP protocols are disabled in global security.");
+                if (!(aps.contains("JNLP-connect")
+                        || aps.contains("JNLP2-connect")
+                        || aps.contains("JNLP3-connect")
+                        || aps.contains("JNLP4-connect"))) {
+                    return FormValidation.error(
+                            "This feature cannot work, because all JNLP protocols are disabled in global security.");
                 }
                 if (!preExistingJenkinsUser) {
-                    return FormValidation.error("Jenkins user provisioning relies on posix system, accessible via SSH.");
+                    return FormValidation.error(
+                            "Jenkins user provisioning relies on posix system, accessible via SSH.");
                 }
                 if (!ConfigHelper.getConfig(initScriptId).isEmpty()) {
-                    return FormValidation.error("Init script functionality relies on a posix system, accessible via SSH.");
+                    return FormValidation.error(
+                            "Init script functionality relies on a posix system, accessible via SSH.");
                 }
             }
             return FormValidation.ok();
@@ -918,9 +994,9 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             return deprecatedSshProvisioning();
         }
 
-
         @POST
-        public FormValidation doCheckFsRoot(@QueryParameter String value, @QueryParameter boolean preExistingJenkinsUser) {
+        public FormValidation doCheckFsRoot(
+                @QueryParameter String value, @QueryParameter boolean preExistingJenkinsUser) {
             if (preExistingJenkinsUser) {
                 return FormValidation.ok();
             }
@@ -938,7 +1014,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         @POST
-        public FormValidation doValidateImageNameRegex(@QueryParameter("cloudName") String cloudName, @QueryParameter String imageNameRegex) {
+        public FormValidation doValidateImageNameRegex(
+                @QueryParameter("cloudName") String cloudName, @QueryParameter String imageNameRegex) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             JCloudsCloud c = JCloudsCloud.getByName(cloudName);
             if (null == c) {
@@ -948,7 +1025,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         @POST
-        public FormValidation doValidateHardwareId(@QueryParameter String cloudName, @QueryParameter String hardwareId) {
+        public FormValidation doValidateHardwareId(
+                @QueryParameter String cloudName, @QueryParameter String hardwareId) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             JCloudsCloud c = JCloudsCloud.getByName(cloudName);
             if (null == c) {
@@ -958,7 +1036,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
 
         @POST
-        public FormValidation doValidateLocationId(@QueryParameter String cloudName, @QueryParameter String locationId) {
+        public FormValidation doValidateLocationId(
+                @QueryParameter String cloudName, @QueryParameter String locationId) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             JCloudsCloud c = JCloudsCloud.getByName(cloudName);
@@ -999,28 +1078,40 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             }
             c.fillLocationIdItems(m);
             return m;
-       }
-
-        @POST
-        public ListBoxModel doFillCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
-                return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
-            }
-            return new StandardUsernameListBoxModel().includeMatchingAs(
-                    ACL.SYSTEM2, context, StandardUsernameCredentials.class,
-                    Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
-                    SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
         }
 
         @POST
-        public ListBoxModel doFillAdminCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
+        public ListBoxModel doFillCredentialsIdItems(
+                @AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get())
+                    .hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
-            return new StandardUsernameListBoxModel().includeMatchingAs(
-                    ACL.SYSTEM2, context, StandardUsernameCredentials.class,
-                    Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
-                    SSHAuthenticator.matcher(Connection.class)).includeCurrentValue(currentValue);
+            return new StandardUsernameListBoxModel()
+                    .includeMatchingAs(
+                            ACL.SYSTEM2,
+                            context,
+                            StandardUsernameCredentials.class,
+                            Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
+                            SSHAuthenticator.matcher(Connection.class))
+                    .includeCurrentValue(currentValue);
+        }
+
+        @POST
+        public ListBoxModel doFillAdminCredentialsIdItems(
+                @AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get())
+                    .hasPermission(Computer.CONFIGURE)) {
+                return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
+            }
+            return new StandardUsernameListBoxModel()
+                    .includeMatchingAs(
+                            ACL.SYSTEM2,
+                            context,
+                            StandardUsernameCredentials.class,
+                            Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME),
+                            SSHAuthenticator.matcher(Connection.class))
+                    .includeCurrentValue(currentValue);
         }
 
         @NonNull
@@ -1066,7 +1157,9 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         }
     }
 
-    @SuppressFBWarnings(value={"REC_CATCH_EXCEPTION","NP_NULL_ON_SOME_PATH"}, justification="false positives")
+    @SuppressFBWarnings(
+            value = {"REC_CATCH_EXCEPTION", "NP_NULL_ON_SOME_PATH"},
+            justification = "false positives")
     boolean upgrade() {
         boolean any = false;
         try {
@@ -1080,7 +1173,9 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             String ju = getJenkinsUser();
             if (isNullOrEmpty(getCredentialsId()) && !isNullOrEmpty(ju)) {
                 LOGGER.info("Upgrading config data: jenkins credentals -> via credentials plugin");
-                setFinal("credentialsId", convertJenkinsUser(ju, description, getCloud().getGlobalPrivateKey()));
+                setFinal(
+                        "credentialsId",
+                        convertJenkinsUser(ju, description, getCloud().getGlobalPrivateKey()));
                 jenkinsUser = null; // Not used anymore, but retained for backward compatibility.
                 any = true;
             }
@@ -1093,13 +1188,17 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                     // otherwise create a separate SSHPrivateKey credential
                     if (!au.equals("root")) {
                         String privateKey = getCloud().getGlobalPrivateKey();
-                        u = new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, au,
-                                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
+                        u = new BasicSSHUserPrivateKey(
+                                CredentialsScope.SYSTEM,
+                                null,
+                                au,
+                                new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey),
+                                null,
+                                description);
                     }
                 } else {
                     // Create a Username/Password credential.
-                    u = new UsernamePasswordCredentialsImpl(
-                            CredentialsScope.SYSTEM, null, description, au, vmPassword);
+                    u = new UsernamePasswordCredentialsImpl(CredentialsScope.SYSTEM, null, description, au, vmPassword);
                 }
                 try {
                     setFinal("adminCredentialsId", CredentialsHelper.storeCredentials(u));
@@ -1110,8 +1209,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             }
             if (!isNullOrEmpty(userData)) {
                 LOGGER.info("Upgrading config data: userData -> via config-file-provider");
-                UserData ud = UserData.createFromData(userData,
-                        getCloud().name + "." + name + ".cfg");
+                UserData ud = UserData.createFromData(userData, getCloud().name + "." + name + ".cfg");
                 if (null == userDataEntries) {
                     setFinal("userDataEntries", new ArrayList<>());
                     any = true;
@@ -1121,8 +1219,9 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             }
             if (!isNullOrEmpty(initScript)) {
                 LOGGER.info("Upgrading config data: initScript -> via config-file-provider");
-                setFinal("initScriptId", UserData.createFromData(initScript,
-                        getCloud().name + "." + name + ".sh").fileId);
+                setFinal(
+                        "initScriptId",
+                        UserData.createFromData(initScript, getCloud().name + "." + name + ".sh").fileId);
                 any = true;
                 initScript = null;
             }
@@ -1141,11 +1240,16 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
      * @return The Id of the ssh-credential-plugin record (either newly created or already existing).
      */
     @CheckForNull
-    private String convertJenkinsUser(final String user, final String  description, final String privateKey) {
+    private String convertJenkinsUser(final String user, final String description, final String privateKey) {
         StandardUsernameCredentials u = retrieveExistingCredentials(user, privateKey);
         if (null == u) {
-            u = new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, user,
-                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
+            u = new BasicSSHUserPrivateKey(
+                    CredentialsScope.SYSTEM,
+                    null,
+                    user,
+                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey),
+                    null,
+                    description);
             try {
                 return CredentialsHelper.storeCredentials(u);
             } catch (IOException x) {
@@ -1157,18 +1261,22 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
     }
 
     private StandardUsernameCredentials retrieveExistingCredentials(final String username, final String privkey) {
-        return CredentialsMatchers.firstOrNull(CredentialsProvider.lookupCredentialsInItemGroup(SSHUserPrivateKey.class,
-                    null, null, Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME)),
-                    CredentialsMatchers.allOf(CredentialsMatchers.withUsername(username), new CredentialsMatcher() {
-                        public boolean matches(Credentials item) {
-                            for (String key : SSHUserPrivateKey.class.cast(item).getPrivateKeys()) {
-                                if (pemKeyEquals(key, privkey)) {
-                                    return true;
-                                }
+        return CredentialsMatchers.firstOrNull(
+                CredentialsProvider.lookupCredentialsInItemGroup(
+                        SSHUserPrivateKey.class,
+                        null,
+                        null,
+                        Collections.<DomainRequirement>singletonList(SSHLauncher.SSH_SCHEME)),
+                CredentialsMatchers.allOf(CredentialsMatchers.withUsername(username), new CredentialsMatcher() {
+                    public boolean matches(Credentials item) {
+                        for (String key : SSHUserPrivateKey.class.cast(item).getPrivateKeys()) {
+                            if (pemKeyEquals(key, privkey)) {
+                                return true;
                             }
-                            return false;
                         }
-                    }));
+                        return false;
+                    }
+                }));
     }
 
     /**
@@ -1185,7 +1293,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         key1 = StringUtils.trim(key1);
         key2 = StringUtils.trim(key2);
         return key1.replaceAll("\\s+", "").equals(key2.replace("\\s+", ""))
-            || Arrays.equals(quickNDirtyExtract(key1), quickNDirtyExtract(key2));
+                || Arrays.equals(quickNDirtyExtract(key1), quickNDirtyExtract(key2));
     }
 
     /**

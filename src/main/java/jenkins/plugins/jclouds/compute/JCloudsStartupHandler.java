@@ -15,29 +15,24 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Multimap;
+import hudson.Extension;
+import hudson.model.listeners.ItemListener;
+import java.nio.file.DirectoryIteratorException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.DirectoryIteratorException;
-import java.nio.file.DirectoryStream;
-
+import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.compute.internal.TerminateNodes.Persistent;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.domain.NodeMetadata;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Multimap;
-
-import hudson.Extension;
-import hudson.model.listeners.ItemListener;
-import jenkins.model.Jenkins;
-
-import jenkins.plugins.jclouds.compute.internal.TerminateNodes.Persistent;
 
 /**
  * Startup handler for JClouds.
@@ -55,7 +50,7 @@ import jenkins.plugins.jclouds.compute.internal.TerminateNodes.Persistent;
 @Extension
 public class JCloudsStartupHandler extends ItemListener {
     private static final Logger LOGGER = Logger.getLogger(JCloudsStartupHandler.class.getName());
-    private final static String STALE_PATTERN = "jenkins.plugins.jclouds.compute.internal.TerminateNodes@*.xml";
+    private static final String STALE_PATTERN = "jenkins.plugins.jclouds.compute.internal.TerminateNodes@*.xml";
 
     private final AtomicBoolean initial = new AtomicBoolean(true);
 
@@ -119,7 +114,7 @@ public class JCloudsStartupHandler extends ItemListener {
         List<Path> ret = new ArrayList<>();
         Path jroot = Jenkins.get().getRootDir().toPath();
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(jroot, STALE_PATTERN)) {
-            for (Path entry: ds) {
+            for (Path entry : ds) {
                 ret.add(entry);
             }
         } catch (Exception ex) {

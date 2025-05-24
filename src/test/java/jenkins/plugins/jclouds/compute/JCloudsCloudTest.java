@@ -1,14 +1,23 @@
 package jenkins.plugins.jclouds.compute;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import jenkins.model.Jenkins;
 import org.htmlunit.FailingHttpStatusCodeException;
-import org.htmlunit.Page;
 import org.htmlunit.WebAssert;
 import org.htmlunit.html.DomElement;
-import org.htmlunit.html.DomNode;
-import org.htmlunit.html.DomNodeList;
 import org.htmlunit.html.HtmlAnchor;
 import org.htmlunit.html.HtmlButton;
-import org.htmlunit.html.HtmlDialog;
 import org.htmlunit.html.HtmlDivision;
 import org.htmlunit.html.HtmlForm;
 import org.htmlunit.html.HtmlFormUtil;
@@ -16,37 +25,13 @@ import org.htmlunit.html.HtmlInput;
 import org.htmlunit.html.HtmlPage;
 import org.htmlunit.html.HtmlParagraph;
 import org.htmlunit.html.HtmlSelect;
-import org.htmlunit.html.HtmlTableBody;
 import org.htmlunit.html.HtmlTable;
 import org.htmlunit.html.HtmlTableCell;
 import org.htmlunit.html.HtmlTableRow;
 import org.junit.jupiter.api.Test;
-
 import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.JenkinsRule.WebClient;
-import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 import org.jvnet.hudson.test.MockAuthorizationStrategy;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-
-import jenkins.model.Jenkins;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.emptyCollectionOf;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author Vijay Kiran
@@ -60,44 +45,48 @@ class JCloudsCloudTest {
     // Why does this not work with @BeforeEach?
     public void setUp(JenkinsRule j) {
         j.jenkins.setSecurityRealm(j.createDummySecurityRealm());
-        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy().
-            grant(Jenkins.ADMINISTER).everywhere().to(ADMIN).
-            grant(Jenkins.READ).everywhere().to(READER));
+        j.jenkins.setAuthorizationStrategy(new MockAuthorizationStrategy()
+                .grant(Jenkins.ADMINISTER)
+                .everywhere()
+                .to(ADMIN)
+                .grant(Jenkins.READ)
+                .everywhere()
+                .to(READER));
     }
 
     @Test
     void testCloudEntryPagePermission(JenkinsRule j) throws Exception {
         setUp(j);
-        FailingHttpStatusCodeException thrown =
-                assertThrows(FailingHttpStatusCodeException.class, () ->
-                    j.createWebClient().login(READER). goTo("manage/cloud/aws-profile/"));
+        FailingHttpStatusCodeException thrown = assertThrows(
+                FailingHttpStatusCodeException.class,
+                () -> j.createWebClient().login(READER).goTo("manage/cloud/aws-profile/"));
         assertThat(thrown.getMessage(), containsString("403 Forbidden"));
     }
 
     @Test
     void testCloudNew2TemplatePagePermission(JenkinsRule j) throws Exception {
         setUp(j);
-        FailingHttpStatusCodeException thrown =
-                assertThrows(FailingHttpStatusCodeException.class, () ->
-                    j.createWebClient().login(READER). goTo("manage/cloud/aws-profile/_new"));
+        FailingHttpStatusCodeException thrown = assertThrows(
+                FailingHttpStatusCodeException.class,
+                () -> j.createWebClient().login(READER).goTo("manage/cloud/aws-profile/_new"));
         assertThat(thrown.getMessage(), containsString("403 Forbidden"));
     }
 
     @Test
     void testCloudNewTemplatePagePermission(JenkinsRule j) throws Exception {
         setUp(j);
-        FailingHttpStatusCodeException thrown =
-                assertThrows(FailingHttpStatusCodeException.class, () ->
-                    j.createWebClient().login(READER). goTo("manage/cloud/aws-profile/new"));
+        FailingHttpStatusCodeException thrown = assertThrows(
+                FailingHttpStatusCodeException.class,
+                () -> j.createWebClient().login(READER).goTo("manage/cloud/aws-profile/new"));
         assertThat(thrown.getMessage(), containsString("403 Forbidden"));
     }
 
     @Test
     void testTemplatesIndexPermission(JenkinsRule j) throws Exception {
         setUp(j);
-        FailingHttpStatusCodeException thrown =
-                assertThrows(FailingHttpStatusCodeException.class, () ->
-                    j.createWebClient().login(READER). goTo("manage/cloud/aws-profile/templates"));
+        FailingHttpStatusCodeException thrown = assertThrows(
+                FailingHttpStatusCodeException.class,
+                () -> j.createWebClient().login(READER).goTo("manage/cloud/aws-profile/templates"));
         assertThat(thrown.getMessage(), containsString("403 Forbidden"));
     }
 
@@ -155,10 +144,9 @@ class JCloudsCloudTest {
 
         inp.setValue("");
         FailingHttpStatusCodeException thrown =
-                assertThrows(FailingHttpStatusCodeException.class, () ->
-                    HtmlFormUtil.submit(f));
+                assertThrows(FailingHttpStatusCodeException.class, () -> HtmlFormUtil.submit(f));
         assertThat(thrown.getMessage(), containsString("400 Bad Request"));
-     }
+    }
 
     @Test
     void testTemplatesNewNoTemplates(JenkinsRule j) throws Exception {
@@ -182,7 +170,7 @@ class JCloudsCloudTest {
         HtmlPage p2 = (HtmlPage) HtmlFormUtil.submit(f);
         String p2url = p2.getUrl().toString();
         assertThat(purl.replace("new", "create"), equalTo(p2url));
-     }
+    }
 
     @Test
     void testTemplatesNewDuplicate(JenkinsRule j) throws Exception {
@@ -208,10 +196,9 @@ class JCloudsCloudTest {
         assertThat(TestHelper.getFormError(p), equalTo("A template named bar already exists"));
 
         FailingHttpStatusCodeException thrown =
-                assertThrows(FailingHttpStatusCodeException.class, () ->
-                    HtmlFormUtil.submit(f));
+                assertThrows(FailingHttpStatusCodeException.class, () -> HtmlFormUtil.submit(f));
         assertThat(thrown.getMessage(), containsString("400 Bad Request"));
-     }
+    }
 
     @Test
     void testTemplatesIndexEmpty(JenkinsRule j) throws Exception {
@@ -237,7 +224,8 @@ class JCloudsCloudTest {
         assertThat(a, notNullValue());
         assertThat(a.getHrefAttribute(), equalTo("new"));
         HtmlParagraph description = p.querySelector("p.description");
-        assertThat(description.getTextContent(),
+        assertThat(
+                description.getTextContent(),
                 equalTo("During node provisioning, templates are tried in the order they appear in this table."));
         HtmlTable tbl = p.querySelector("table.jenkins-table");
         assertThat(tbl, notNullValue());
@@ -250,7 +238,7 @@ class JCloudsCloudTest {
 
         HtmlButton reorder = p.querySelector("button#saveButton");
         assertThat(reorder, notNullValue());
-        assertThat(reorder.getAttribute("class") , containsString("jenkins-hidden"));
+        assertThat(reorder.getAttribute("class"), containsString("jenkins-hidden"));
 
         // reorder and submit
         HtmlForm f = p.getFormByName("config");
@@ -261,7 +249,7 @@ class JCloudsCloudTest {
         HtmlFormUtil.submit(f);
 
         // Check, that templates order has changed
-        JCloudsCloud c = (JCloudsCloud)j.jenkins.clouds.getByName("foo");
+        JCloudsCloud c = (JCloudsCloud) j.jenkins.clouds.getByName("foo");
         assertThat(c, notNullValue());
         List<JCloudsSlaveTemplate> templates = c.getTemplates();
         assertThat(templates, hasSize(2));
@@ -337,7 +325,9 @@ class JCloudsCloudTest {
         inp = p.getElementByName("_.groupPrefix");
         inp.setValue("Fritz");
         TestHelper.triggerValidation(inp);
-        assertThat(TestHelper.getFormError(p), equalTo("The group prefix may contain lowercase letters and numbers only."));
+        assertThat(
+                TestHelper.getFormError(p),
+                equalTo("The group prefix may contain lowercase letters and numbers only."));
         inp.setValue("abc1234");
         TestHelper.triggerValidation(inp);
         assertThat(TestHelper.getFormError(p), equalTo(""));
@@ -398,7 +388,7 @@ class JCloudsCloudTest {
         b = HtmlFormUtil.getButtonByCaption(f, "Apply");
         HtmlPage p2 = b.click();
         assertThat(p2, equalTo(p));
-        JCloudsCloud c = (JCloudsCloud)j.jenkins.clouds.getByName("aws-profile");
+        JCloudsCloud c = (JCloudsCloud) j.jenkins.clouds.getByName("aws-profile");
         assertThat(c, notNullValue());
         assertThat(c.endPointUrl, equalTo("http://some.where.else"));
 
@@ -408,9 +398,9 @@ class JCloudsCloudTest {
         p2 = b.click();
         assertThat(p2, not(p));
 
-        c = (JCloudsCloud)j.jenkins.clouds.getByName("aws-profile");
+        c = (JCloudsCloud) j.jenkins.clouds.getByName("aws-profile");
         assertThat(c, nullValue());
-        c = (JCloudsCloud)j.jenkins.clouds.getByName("aws-profile2");
+        c = (JCloudsCloud) j.jenkins.clouds.getByName("aws-profile2");
         assertThat(c, notNullValue());
 
         assertThat(c.instanceCap, equalTo(99));
@@ -429,9 +419,13 @@ class JCloudsCloudTest {
         final JCloudsCloud original = JCloudsCloud.getByName("foo");
 
         j.submit(j.createWebClient().goTo("manage/cloud/foo/configure").getFormByName("config"));
-        j.assertEqualBeans(original, j.getInstance().clouds.getByName("foo"),
+        j.assertEqualBeans(
+                original,
+                j.getInstance().clouds.getByName("foo"),
                 "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,errorRetentionTime,groupPrefix");
-        j.assertEqualBeans(original, JCloudsCloud.getByName("foo"),
+        j.assertEqualBeans(
+                original,
+                JCloudsCloud.getByName("foo"),
                 "profile,providerName,cloudCredentialsId,cloudGlobalKeyId,endPointUrl,instanceCap,retentionTime,errorRetentionTime,groupPrefix");
     }
 
@@ -455,5 +449,4 @@ class JCloudsCloudTest {
         final List<?> list = p.getByXPath(xpath);
         assertFalse(list.isEmpty(), "Unable to find an select element named '" + name + "'.");
     }
-
 }

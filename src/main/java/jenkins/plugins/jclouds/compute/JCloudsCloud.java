@@ -15,15 +15,55 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import com.google.common.base.Predicate;
+import static org.jclouds.reflect.Reflection2.typeToken;
 
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
+import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
+import com.cloudbees.plugins.credentials.CredentialsMatchers;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.CredentialsScope;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Iterables;
+import com.google.inject.Module;
+import com.thoughtworks.xstream.converters.UnmarshallingContext;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.Functions;
+import hudson.RelativePath;
+import hudson.Util;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
+import hudson.model.Computer;
+import hudson.model.Descriptor;
+import hudson.model.Failure;
+import hudson.model.ItemGroup;
+import hudson.model.Label;
+import hudson.model.Node;
+import hudson.model.Result;
+import hudson.model.Run;
+import hudson.security.ACL;
+import hudson.security.AccessControlled;
+import hudson.slaves.Cloud;
+import hudson.slaves.NodeProvisioner;
+import hudson.slaves.NodeProvisioner.PlannedNode;
+import hudson.util.ComboBoxModel;
+import hudson.util.FormApply;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+import hudson.util.Secret;
+import hudson.util.StreamTaskListener;
+import hudson.util.XStream2;
 import jakarta.servlet.ServletException;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -32,39 +72,21 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import com.google.inject.Module;
-import hudson.Extension;
-import hudson.Functions;
-import hudson.Util;
-import hudson.init.Initializer;
-import hudson.init.InitMilestone;
-import hudson.model.Computer;
-import hudson.model.Descriptor;
-import hudson.model.Failure;
-import hudson.model.ItemGroup;
-import hudson.model.Label;
-import hudson.model.Result;
-import hudson.model.Run;
-import hudson.model.Node;
-import hudson.slaves.Cloud;
-import hudson.slaves.NodeProvisioner;
-import hudson.slaves.NodeProvisioner.PlannedNode;
-import hudson.util.FormApply;
-import hudson.util.FormValidation;
-import hudson.util.ComboBoxModel;
-import hudson.util.ListBoxModel;
-import hudson.util.Secret;
-import hudson.util.StreamTaskListener;
 import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.cli.CliMessages;
+import jenkins.plugins.jclouds.compute.internal.RunningNode;
+import jenkins.plugins.jclouds.internal.CredentialsHelper;
+import jenkins.plugins.jclouds.internal.LocationHelper;
+import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
+import jenkins.plugins.jclouds.modules.JenkinsConfigurationModule;
 import net.sf.json.JSONObject;
 import org.jclouds.Constants;
 import org.jclouds.ContextBuilder;
@@ -82,50 +104,18 @@ import org.jclouds.location.reference.LocationConstants;
 import org.jclouds.logging.jdk.config.JDKLoggingModule;
 import org.jclouds.providers.Providers;
 import org.jclouds.sshj.config.SshjSshClientModule;
-
-import static org.jclouds.reflect.Reflection2.typeToken;
-
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedPlannedNode;
 import org.kohsuke.accmod.Restricted;
 import org.kohsuke.accmod.restrictions.DoNotUse;
 import org.kohsuke.accmod.restrictions.NoExternalUse;
-
-import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
 import org.kohsuke.stapler.verb.POST;
-
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterables;
-
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernameListBoxModel;
-import com.cloudbees.plugins.credentials.CredentialsScope;
-import com.cloudbees.plugins.credentials.CredentialsMatchers;
-import com.cloudbees.plugins.credentials.CredentialsProvider;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
-import com.cloudbees.jenkins.plugins.sshcredentials.impl.BasicSSHUserPrivateKey;
-
-import hudson.RelativePath;
-import hudson.security.ACL;
-import hudson.security.AccessControlled;
-
-
-import jenkins.plugins.jclouds.cli.CliMessages;
-import jenkins.plugins.jclouds.compute.internal.RunningNode;
-import jenkins.plugins.jclouds.internal.LocationHelper;
-import jenkins.plugins.jclouds.internal.CredentialsHelper;
-import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
-import jenkins.plugins.jclouds.modules.JenkinsConfigurationModule;
-
-import hudson.util.XStream2;
-import com.thoughtworks.xstream.converters.UnmarshallingContext;
 
 /**
  * The JClouds version of the Jenkins Cloud.
@@ -311,14 +301,17 @@ public class JCloudsCloud extends Cloud {
             for (Location location : locations) {
                 if (!location.getId().equals(locationId)) {
                     if (location.getId().contains(locationId)) {
-                        return FormValidation.warning("Sorry cannot find the location id, " + "Did you mean: " + location.getId() + "?\n" + location);
+                        return FormValidation.warning("Sorry cannot find the location id, " + "Did you mean: "
+                                + location.getId() + "?\n" + location);
                     }
                 } else {
                     return FormValidation.ok("Location Id is valid.");
                 }
             }
         } catch (Exception ex) {
-            result = FormValidation.error("Unable to check the location id, " + "please check if the credentials you provided are correct.", ex);
+            result = FormValidation.error(
+                    "Unable to check the location id, " + "please check if the credentials you provided are correct.",
+                    ex);
         }
         return result;
     }
@@ -336,19 +329,21 @@ public class JCloudsCloud extends Cloud {
         imageId = Util.fixEmptyAndTrim(imageId);
         try (ComputeServiceContext ctx = ctx(providerName, cloudCredentialsId, endPointUrl, zones, trustAll)) {
             final Set<? extends Image> images = ctx.getComputeService().listImages();
-                if (images != null) {
-                    for (final Image image : images) {
-                        if (!image.getId().equals(imageId)) {
-                            if (image.getId().contains(imageId)) {
-                                return FormValidation.warning("Sorry cannot find the image id, " + "Did you mean: " + image.getId() + "?\n" + image);
-                            }
-                        } else {
-                            return FormValidation.ok("Image Id is valid.");
+            if (images != null) {
+                for (final Image image : images) {
+                    if (!image.getId().equals(imageId)) {
+                        if (image.getId().contains(imageId)) {
+                            return FormValidation.warning("Sorry cannot find the image id, " + "Did you mean: "
+                                    + image.getId() + "?\n" + image);
                         }
+                    } else {
+                        return FormValidation.ok("Image Id is valid.");
                     }
                 }
+            }
         } catch (Exception ex) {
-            return FormValidation.error("Unable to check the image id, " + "please check if the clouds credentials.", ex);
+            return FormValidation.error(
+                    "Unable to check the image id, " + "please check if the clouds credentials.", ex);
         }
         return FormValidation.error("Invalid Image Id, please check the value and try again.");
     }
@@ -371,14 +366,16 @@ public class JCloudsCloud extends Cloud {
             for (Hardware hardware : hardwareProfiles) {
                 if (!hardware.getId().equals(hardwareId)) {
                     if (hardware.getId().contains(hardwareId)) {
-                        return FormValidation.warning("Sorry cannot find the hardware id, " + "Did you mean: " + hardware.getId() + "?\n" + hardware);
+                        return FormValidation.warning("Sorry cannot find the hardware id, " + "Did you mean: "
+                                + hardware.getId() + "?\n" + hardware);
                     }
                 } else {
                     return FormValidation.ok("Hardware Id is valid.");
                 }
             }
         } catch (Exception ex) {
-            result = FormValidation.error("Unable to check the hardware id, " + "please check if the clouds credentials.", ex);
+            result = FormValidation.error(
+                    "Unable to check the hardware id, " + "please check if the clouds credentials.", ex);
         }
         return result;
     }
@@ -410,13 +407,16 @@ public class JCloudsCloud extends Cloud {
                     return FormValidation.ok("No images available to check against.");
                 }
             } catch (Exception ex) {
-                return FormValidation.error("Unable to check the image name regex, please check if the credentials you provided are correct.", ex);
+                return FormValidation.error(
+                        "Unable to check the image name regex, please check if the credentials you provided are correct.",
+                        ex);
             }
             if (1 == matchcount) {
                 return FormValidation.ok("Image name regex matches exactly one image.");
             }
             if (1 < matchcount) {
-                return FormValidation.error("Ambiguous image name regex matches multiple images, please check the value and try again.");
+                return FormValidation.error(
+                        "Ambiguous image name regex matches multiple images, please check the value and try again.");
             }
         } catch (PatternSyntaxException ex) {
             return FormValidation.error("Invalid image name regex syntax.");
@@ -447,9 +447,21 @@ public class JCloudsCloud extends Cloud {
     }
 
     @DataBoundConstructor
-    public JCloudsCloud(final String profile, final String providerName, final String cloudCredentialsId, final String cloudGlobalKeyId,
-            final String endPointUrl, final int instanceCap, final int retentionTime, final int errorRetentionTime, final int scriptTimeout,
-            final int startTimeout, final String zones, final String groupPrefix, final boolean trustAll, final List<JCloudsSlaveTemplate> templates) {
+    public JCloudsCloud(
+            final String profile,
+            final String providerName,
+            final String cloudCredentialsId,
+            final String cloudGlobalKeyId,
+            final String endPointUrl,
+            final int instanceCap,
+            final int retentionTime,
+            final int errorRetentionTime,
+            final int scriptTimeout,
+            final int startTimeout,
+            final String zones,
+            final String groupPrefix,
+            final boolean trustAll,
+            final List<JCloudsSlaveTemplate> templates) {
         super(Util.fixEmptyAndTrim(profile));
         this.profile = Util.fixEmptyAndTrim(profile);
         this.providerName = Util.fixEmptyAndTrim(providerName);
@@ -512,19 +524,25 @@ public class JCloudsCloud extends Cloud {
         return errorRetentionTime;
     }
 
-    private static final Iterable<Module> MODULES = ImmutableSet.<Module>of(new SshjSshClientModule(), new JDKLoggingModule() {
-        @Override
-        public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
-            return new ComputeLogger.Factory();
-        }
-    }, new JenkinsConfigurationModule());
+    private static final Iterable<Module> MODULES = ImmutableSet.<Module>of(
+            new SshjSshClientModule(),
+            new JDKLoggingModule() {
+                @Override
+                public org.jclouds.logging.Logger.LoggerFactory createLoggerFactory() {
+                    return new ComputeLogger.Factory();
+                }
+            },
+            new JenkinsConfigurationModule());
 
-    private static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final Properties overrides) {
+    private static <A extends Closeable> A api(
+            Class<A> apitype, final String provider, final String credId, final Properties overrides) {
         // correct the classloader so that extensions can be found
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
         CredentialsHelper.setProject(credId, overrides);
         return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
-            .overrides(overrides).modules(MODULES).buildApi(typeToken(apitype));
+                .overrides(overrides)
+                .modules(MODULES)
+                .buildApi(typeToken(apitype));
     }
 
     private static Properties buildJcloudsOverrides(final String url, final String zones, boolean trustAll) {
@@ -542,13 +560,18 @@ public class JCloudsCloud extends Cloud {
         return ret;
     }
 
-    static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final String url,
-            final String zones) {
+    static <A extends Closeable> A api(
+            Class<A> apitype, final String provider, final String credId, final String url, final String zones) {
         return api(apitype, provider, credId, buildJcloudsOverrides(url, zones, false));
     }
 
-    static <A extends Closeable> A api(Class<A> apitype, final String provider, final String credId, final String url,
-            final String zones, final boolean trustAll) {
+    static <A extends Closeable> A api(
+            Class<A> apitype,
+            final String provider,
+            final String credId,
+            final String url,
+            final String zones,
+            final boolean trustAll) {
         return api(apitype, provider, credId, buildJcloudsOverrides(url, zones, trustAll));
     }
 
@@ -568,15 +591,17 @@ public class JCloudsCloud extends Cloud {
         Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
         CredentialsHelper.setProject(credId, overrides);
         return CredentialsHelper.setCredentials(ContextBuilder.newBuilder(provider), credId)
-            .overrides(overrides).modules(MODULES).buildView(ComputeServiceContext.class);
+                .overrides(overrides)
+                .modules(MODULES)
+                .buildView(ComputeServiceContext.class);
     }
 
     static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones) {
         return ctx(provider, credId, buildJcloudsOverrides(url, zones, false));
     }
 
-    static ComputeServiceContext ctx(final String provider, final String credId, final String url, final String zones,
-            final boolean trustAll) {
+    static ComputeServiceContext ctx(
+            final String provider, final String credId, final String url, final String zones, final boolean trustAll) {
         return ctx(provider, credId, buildJcloudsOverrides(url, zones, trustAll));
     }
 
@@ -622,37 +647,41 @@ public class JCloudsCloud extends Cloud {
         final JCloudsSlaveTemplate tpl = getTemplate(label);
         List<PlannedNode> plannedNodeList = new ArrayList<PlannedNode>();
 
-        while (excessWorkload > 0 && !Jenkins.get().isQuietingDown() && !Jenkins.get().isTerminating()) {
+        while (excessWorkload > 0
+                && !Jenkins.get().isQuietingDown()
+                && !Jenkins.get().isTerminating()) {
 
             if ((getRunningNodesCount() + plannedNodeList.size() + pendingNodes) >= instanceCap) {
-                LOGGER.info(String.format("Instance cap of %s reached while adding capacity for label %s",
-                                          getName(), (label != null) ? label.toString() : "null"));
+                LOGGER.info(String.format(
+                        "Instance cap of %s reached while adding capacity for label %s",
+                        getName(), (label != null) ? label.toString() : "null"));
                 break; // maxed out
             }
 
             final ProvisioningActivity.Id provisioningId = new ProvisioningActivity.Id(this.name, tpl.name);
 
-            plannedNodeList.add(new TrackedPlannedNode(provisioningId, tpl.getNumExecutors(), Computer.threadPoolForRemoting.submit(new Callable<Node>() {
-                public Node call() throws Exception {
-                    // TODO: record the output somewhere
-                    JCloudsSlave jcloudsSlave;
-                    pendingNodes++;
-                    try {
-                        jcloudsSlave = tpl.provisionSlave(StreamTaskListener.fromStdout(), provisioningId);
-                    } finally {
-                        pendingNodes--;
-                    }
-                    Jenkins.get().addNode(jcloudsSlave);
+            plannedNodeList.add(new TrackedPlannedNode(
+                    provisioningId, tpl.getNumExecutors(), Computer.threadPoolForRemoting.submit(new Callable<Node>() {
+                        public Node call() throws Exception {
+                            // TODO: record the output somewhere
+                            JCloudsSlave jcloudsSlave;
+                            pendingNodes++;
+                            try {
+                                jcloudsSlave = tpl.provisionSlave(StreamTaskListener.fromStdout(), provisioningId);
+                            } finally {
+                                pendingNodes--;
+                            }
+                            Jenkins.get().addNode(jcloudsSlave);
 
-                    /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
-                       without the connect operation, NodeProvisioner may decide that it still wants one more instance,
-                       because it sees that (1) all the slaves are offline (because it's still being launched) and (2)
-                       there's no capacity provisioned yet. Deferring the completion of provisioning until the launch goes
-                       successful prevents this problem.  */
-                    ensureLaunched(jcloudsSlave);
-                    return jcloudsSlave;
-                }
-            })));
+                            /* Cloud instances may have a long init script. If we declare the provisioning complete by returning
+                            without the connect operation, NodeProvisioner may decide that it still wants one more instance,
+                            because it sees that (1) all the slaves are offline (because it's still being launched) and (2)
+                            there's no capacity provisioned yet. Deferring the completion of provisioning until the launch goes
+                            successful prevents this problem.  */
+                            ensureLaunched(jcloudsSlave);
+                            return jcloudsSlave;
+                        }
+                    })));
             excessWorkload -= tpl.getNumExecutors();
         }
         return plannedNodeList;
@@ -680,7 +709,8 @@ public class JCloudsCloud extends Cloud {
             }
 
             if ((System.currentTimeMillis() - startMoment) > 1000l * launchTimeoutSec) {
-                String msg = String.format("Failed to connect to %s within %d sec.", jcloudsSlave.getDisplayName(), launchTimeoutSec);
+                String msg = String.format(
+                        "Failed to connect to %s within %d sec.", jcloudsSlave.getDisplayName(), launchTimeoutSec);
                 LOGGER.warning(msg);
                 throw new ExecutionException(new Throwable(msg));
             }
@@ -693,9 +723,7 @@ public class JCloudsCloud extends Cloud {
     }
 
     public JCloudsSlaveTemplate getTemplate(String name) {
-        for (JCloudsSlaveTemplate t : templates)
-            if (t.name.equals(name))
-                return t;
+        for (JCloudsSlaveTemplate t : templates) if (t.name.equals(name)) return t;
         return null;
     }
 
@@ -705,9 +733,7 @@ public class JCloudsCloud extends Cloud {
      * @return The slave template or {@code null} if the specified label did not match.
      */
     JCloudsSlaveTemplate getTemplate(Label label) {
-        for (JCloudsSlaveTemplate t : templates)
-            if (label == null || label.matches(t.getLabelSet()))
-                return t;
+        for (JCloudsSlaveTemplate t : templates) if (label == null || label.matches(t.getLabelSet())) return t;
         return null;
     }
 
@@ -717,7 +743,7 @@ public class JCloudsCloud extends Cloud {
     }
 
     private String checkNewTemplateName(String name) {
-        String ret =  Util.fixEmptyAndTrim(name);
+        String ret = Util.fixEmptyAndTrim(name);
         if (null == ret) {
             throw new Failure("New template name must not be empty");
         }
@@ -749,9 +775,13 @@ public class JCloudsCloud extends Cloud {
     }
 
     @POST
-    public synchronized void doCreate(StaplerRequest2 req, StaplerResponse2 rsp,
-            @QueryParameter String name, @QueryParameter String mode,
-            @QueryParameter String from) throws IOException, ServletException {
+    public synchronized void doCreate(
+            StaplerRequest2 req,
+            StaplerResponse2 rsp,
+            @QueryParameter String name,
+            @QueryParameter String mode,
+            @QueryParameter String from)
+            throws IOException, ServletException {
         Jenkins.get().checkPermission(Jenkins.ADMINISTER);
         if (mode != null && mode.equals("on")) {
             name = checkNewTemplateName(name);
@@ -763,7 +793,7 @@ public class JCloudsCloud extends Cloud {
             String xml = Jenkins.XSTREAM.toXML(fromTpl);
             // Not great, but template name is final
             xml = xml.replaceFirst("<name>.*</name>", "<name>" + name + "</name>");
-            JCloudsSlaveTemplate tplTo = (JCloudsSlaveTemplate)Jenkins.XSTREAM.fromXML(xml);
+            JCloudsSlaveTemplate tplTo = (JCloudsSlaveTemplate) Jenkins.XSTREAM.fromXML(xml);
             addTemplate(tplTo);
             // send the browser to the config page
             rsp.sendRedirect2(Functions.getNearestAncestorUrl(req, this) + "/" + tplTo.getUrl());
@@ -771,7 +801,6 @@ public class JCloudsCloud extends Cloud {
             handleNewSlaveTemplatePage(name, req, rsp);
         }
     }
-
 
     @POST
     public HttpResponse doDoCreate(StaplerRequest2 req) throws Descriptor.FormException, IOException, ServletException {
@@ -800,11 +829,10 @@ public class JCloudsCloud extends Cloud {
         req.getView(this, "_new.jelly").forward(req, rsp);
     }
 
-    
     @Override
     public Cloud reconfigure(@NonNull StaplerRequest2 req, JSONObject form) throws Descriptor.FormException {
         // cloud configuration does not contain templates anymore, so just keep existing ones.
-        var newInstance = (JCloudsCloud)super.reconfigure(req, form);
+        var newInstance = (JCloudsCloud) super.reconfigure(req, form);
         newInstance.setTemplates(templates);
         return newInstance;
     }
@@ -834,30 +862,30 @@ public class JCloudsCloud extends Cloud {
      * @throws Descriptor.FormException if the form does not validate.
      */
     @POST
-    public void doProvision(StaplerRequest2 req, StaplerResponse2 rsp, @QueryParameter String tplname) throws ServletException, IOException,
-           Descriptor.FormException {
-               checkPermission(PROVISION);
-               if (tplname == null) {
-                   sendError("The agent template name query parameter is missing", req, rsp);
-                   return;
-               }
-               JCloudsSlaveTemplate t = getTemplate(tplname);
-               if (t == null) {
-                   sendError("No such agent template with name : " + tplname, req, rsp);
-                   return;
-               }
+    public void doProvision(StaplerRequest2 req, StaplerResponse2 rsp, @QueryParameter String tplname)
+            throws ServletException, IOException, Descriptor.FormException {
+        checkPermission(PROVISION);
+        if (tplname == null) {
+            sendError("The agent template name query parameter is missing", req, rsp);
+            return;
+        }
+        JCloudsSlaveTemplate t = getTemplate(tplname);
+        if (t == null) {
+            sendError("No such agent template with name : " + tplname, req, rsp);
+            return;
+        }
 
-               if (getRunningNodesCount() + pendingNodes < instanceCap) {
-                   try {
-                      pendingNodes++;
-                      JCloudsSlave node = doProvisionFromTemplate(t);
-                      rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
-                   } finally {
-                      pendingNodes--;
-                   }
-               } else {
-                   sendError(String.format("Instance cap of %s reached", getName()), req, rsp);
-               }
+        if (getRunningNodesCount() + pendingNodes < instanceCap) {
+            try {
+                pendingNodes++;
+                JCloudsSlave node = doProvisionFromTemplate(t);
+                rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
+            } finally {
+                pendingNodes--;
+            }
+        } else {
+            sendError(String.format("Instance cap of %s reached", getName()), req, rsp);
+        }
     }
 
     /**
@@ -872,7 +900,8 @@ public class JCloudsCloud extends Cloud {
                 NodeMetadata nm = (NodeMetadata) cm;
                 String nodeGroup = removeGroupPrefix(nm.getGroup());
 
-                if (getTemplate(nodeGroup) != null && !nm.getStatus().equals(NodeMetadata.Status.SUSPENDED)
+                if (getTemplate(nodeGroup) != null
+                        && !nm.getStatus().equals(NodeMetadata.Status.SUSPENDED)
                         && !nm.getStatus().equals(NodeMetadata.Status.TERMINATED)) {
                     nodeCount++;
                 }
@@ -891,7 +920,7 @@ public class JCloudsCloud extends Cloud {
         phms.add(monitor);
     }
 
-    public void unregisterPhoneHomeMonitor (final PhoneHomeMonitor monitor) {
+    public void unregisterPhoneHomeMonitor(final PhoneHomeMonitor monitor) {
         if (null == monitor) {
             throw new IllegalArgumentException("monitor may not be null");
         }
@@ -911,7 +940,8 @@ public class JCloudsCloud extends Cloud {
         return false;
     }
 
-    private static final Set<String> CONFIRMED_GZIP_SUPPORTERS = ImmutableSet.<String>of("aws-ec2", "openstack-nova", "openstack-nova-ec2");
+    private static final Set<String> CONFIRMED_GZIP_SUPPORTERS =
+            ImmutableSet.<String>of("aws-ec2", "openstack-nova", "openstack-nova-ec2");
 
     public boolean allowGzippedUserData() {
         return !isNullOrEmpty(providerName) && CONFIRMED_GZIP_SUPPORTERS.contains(providerName);
@@ -933,9 +963,14 @@ public class JCloudsCloud extends Cloud {
         }
 
         @POST
-        public FormValidation doTestConnection(@QueryParameter String providerName, @QueryParameter String cloudCredentialsId,
-                @QueryParameter String cloudGlobalKeyId, @QueryParameter String endPointUrl, @QueryParameter String zones,
-                @QueryParameter boolean trustAll) throws IOException {
+        public FormValidation doTestConnection(
+                @QueryParameter String providerName,
+                @QueryParameter String cloudCredentialsId,
+                @QueryParameter String cloudGlobalKeyId,
+                @QueryParameter String endPointUrl,
+                @QueryParameter String zones,
+                @QueryParameter boolean trustAll)
+                throws IOException {
 
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             if (null == Util.fixEmptyAndTrim(cloudCredentialsId)) {
@@ -954,14 +989,15 @@ public class JCloudsCloud extends Cloud {
             try (ComputeServiceContext ctx = ctx(providerName, cloudCredentialsId, endPointUrl, zones, trustAll)) {
                 ctx.getComputeService().listNodes();
             } catch (Exception ex) {
-                result = FormValidation.error("Cannot connect to specified cloud, please check the credentials: " + ex.getMessage());
+                result = FormValidation.error(
+                        "Cannot connect to specified cloud, please check the credentials: " + ex.getMessage());
             }
             return result;
         }
 
         @POST
         public FormValidation doCheckCloudGlobalKeyId(@QueryParameter String value) {
-            FormValidation ret =  FormValidation.validateRequired(value);
+            FormValidation ret = FormValidation.validateRequired(value);
             if (ret.equals(FormValidation.ok())) {
                 StandardUsernameCredentials suc = CredentialsHelper.getCredentialsById(value);
                 if (null == suc) {
@@ -978,10 +1014,10 @@ public class JCloudsCloud extends Cloud {
             Thread.currentThread().setContextClassLoader(Apis.class.getClassLoader());
             // TODO: apis need endpoints, providers don't; do something smarter
             // with this stuff :)
-            Builder<String> builder = ImmutableSet.<String> builder();
+            Builder<String> builder = ImmutableSet.<String>builder();
             builder.addAll(Iterables.transform(Apis.viewableAs(ComputeServiceContext.class), Apis.idFunction()));
-            builder.addAll(Iterables.transform(Providers.viewableAs(ComputeServiceContext.class),
-                        Providers.idFunction()));
+            builder.addAll(
+                    Iterables.transform(Providers.viewableAs(ComputeServiceContext.class), Providers.idFunction()));
             return ImmutableSortedSet.copyOf(builder.build());
         }
 
@@ -1003,25 +1039,27 @@ public class JCloudsCloud extends Cloud {
         }
 
         @POST
-        public ListBoxModel  doFillCloudCredentialsIdItems(@AncestorInPath ItemGroup context, @QueryParameter
-                String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context :
-                        Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
+        public ListBoxModel doFillCloudCredentialsIdItems(
+                @AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get())
+                    .hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
-                .includeAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class).includeCurrentValue(currentValue);
+                    .includeAs(ACL.SYSTEM2, context, StandardUsernameCredentials.class)
+                    .includeCurrentValue(currentValue);
         }
 
         @POST
-        public ListBoxModel  doFillCloudGlobalKeyIdItems(@AncestorInPath ItemGroup context, @QueryParameter
-                String currentValue) {
-            if (!(context instanceof AccessControlled ? (AccessControlled) context :
-                        Jenkins.get()).hasPermission(Computer.CONFIGURE)) {
+        public ListBoxModel doFillCloudGlobalKeyIdItems(
+                @AncestorInPath ItemGroup context, @QueryParameter String currentValue) {
+            if (!(context instanceof AccessControlled ? (AccessControlled) context : Jenkins.get())
+                    .hasPermission(Computer.CONFIGURE)) {
                 return new StandardUsernameListBoxModel().includeCurrentValue(currentValue);
             }
             return new StandardUsernameListBoxModel()
-                .includeAs(ACL.SYSTEM2, context, SSHUserPrivateKey.class).includeCurrentValue(currentValue);
+                    .includeAs(ACL.SYSTEM2, context, SSHUserPrivateKey.class)
+                    .includeCurrentValue(currentValue);
         }
 
         @POST
@@ -1038,8 +1076,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         @POST
-        public FormValidation doCheckNewTemplateName(@QueryParameter String cloudName,
-                @QueryParameter String value) {
+        public FormValidation doCheckNewTemplateName(@QueryParameter String cloudName, @QueryParameter String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             JCloudsCloud c = getByName(cloudName);
             if (null != c && null != c.getTemplate(value)) {
@@ -1049,8 +1086,7 @@ public class JCloudsCloud extends Cloud {
         }
 
         @POST
-        public FormValidation doCheckProfile(@QueryParameter String initialName,
-                @QueryParameter String value) {
+        public FormValidation doCheckProfile(@QueryParameter String initialName, @QueryParameter String value) {
             Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             try {
                 Jenkins.checkGoodName(value);
@@ -1116,7 +1152,7 @@ public class JCloudsCloud extends Cloud {
             return FormValidation.ok();
         }
 
-        @Initializer(after=InitMilestone.JOB_LOADED)
+        @Initializer(after = InitMilestone.JOB_LOADED)
         public static void completed() throws IOException {
             if (needSave) {
                 needSave = false;
@@ -1130,7 +1166,6 @@ public class JCloudsCloud extends Cloud {
     public static class ConverterImpl extends XStream2.PassthruConverter<JCloudsCloud> {
 
         static final Logger LOGGER = Logger.getLogger(ConverterImpl.class.getName());
-
 
         public ConverterImpl(XStream2 xstream) {
             super(xstream);
@@ -1157,7 +1192,7 @@ public class JCloudsCloud extends Cloud {
             }
             if (any) {
                 LOGGER.info(String.format(">>>>>> cloud %s needs saving migrated config data", c.name));
-                ((JCloudsCloud.DescriptorImpl)c.getDescriptor()).needSave = true;
+                ((JCloudsCloud.DescriptorImpl) c.getDescriptor()).needSave = true;
             }
         }
 
@@ -1170,9 +1205,13 @@ public class JCloudsCloud extends Cloud {
          */
         private String convertCloudPrivateKey(final String name, final String privateKey) {
             final String description = "JClouds cloud " + name + " - auto-migrated";
-            StandardUsernameCredentials u =
-                new BasicSSHUserPrivateKey(CredentialsScope.SYSTEM, null, "Global key",
-                        new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey), null, description);
+            StandardUsernameCredentials u = new BasicSSHUserPrivateKey(
+                    CredentialsScope.SYSTEM,
+                    null,
+                    "Global key",
+                    new BasicSSHUserPrivateKey.DirectEntryPrivateKeySource(privateKey),
+                    null,
+                    description);
             try {
                 return CredentialsHelper.storeCredentials(u);
             } catch (IOException e) {
@@ -1182,13 +1221,14 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-    private static final ConcurrentMap<Run<?,?>, List<RunningNode>> supplementalsToCheck = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<Run<?, ?>, List<RunningNode>> supplementalsToCheck = new ConcurrentHashMap<>();
 
     static void cleanupSupplementalNodes() {
-        for (Map.Entry<Run<?,?>, List<RunningNode>> entry : supplementalsToCheck.entrySet()) {
+        for (Map.Entry<Run<?, ?>, List<RunningNode>> entry : supplementalsToCheck.entrySet()) {
             Result result = entry.getKey().getResult();
             if (null != result && result == Result.ABORTED) {
-                LOGGER.info("job \"" + entry.getKey().getFullDisplayName() + "\"was aborted, cleaning up supplemental nodes");
+                LOGGER.info("job \"" + entry.getKey().getFullDisplayName()
+                        + "\"was aborted, cleaning up supplemental nodes");
                 for (RunningNode rn : entry.getValue()) {
                     JCloudsCloud c = getByName(rn.getCloudName());
                     if (null != c) {
@@ -1223,7 +1263,7 @@ public class JCloudsCloud extends Cloud {
      *
      * @param nodes The supplemental nodes to be modified.
      */
-    static synchronized void publishMetadata(Iterable<RunningNode> nodes, Map<String,String> data, String indexName) {
+    static synchronized void publishMetadata(Iterable<RunningNode> nodes, Map<String, String> data, String indexName) {
         int idx = 0;
         for (RunningNode rn : nodes) {
             String nid = rn.getNodeId();
@@ -1242,7 +1282,7 @@ public class JCloudsCloud extends Cloud {
      * @param build The build that lounched the nodes.
      * @param nodes The supplemental nodes to be cleaned up
      */
-    static synchronized void registerSupplementalCleanup(Run<?,?> build, Iterable<RunningNode> nodes) {
+    static synchronized void registerSupplementalCleanup(Run<?, ?> build, Iterable<RunningNode> nodes) {
         LOGGER.fine("Registering build \"" + build.getFullDisplayName() + "\" for cleanup");
         List<RunningNode> newList = new ArrayList<>();
         for (RunningNode rn : nodes) {
@@ -1255,7 +1295,7 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
-    static void unregisterSupplementalCleanup(Run<?,?> build) {
+    static void unregisterSupplementalCleanup(Run<?, ?> build) {
         LOGGER.fine("Unregistering build \"" + build.getFullDisplayName() + "\" from cleanup");
         supplementalsToCheck.remove(build);
     }

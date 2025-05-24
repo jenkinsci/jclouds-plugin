@@ -60,6 +60,7 @@ limitations under the License.
     <jenkins.baseline>2.492</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
+    <spotless.check.skip>false</spotless.check.skip>
   </properties>
 
   <developers>

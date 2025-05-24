@@ -27,8 +27,7 @@ public abstract class AbstractJCloudsConfigProviderImpl extends AbstractConfigPr
         return getContentType();
     }
 
-    public AbstractJCloudsConfigProviderImpl() {
-    }
+    public AbstractJCloudsConfigProviderImpl() {}
 
     /*
      * jclouds plugin currently does not support configuration files on folder scope

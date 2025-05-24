@@ -17,9 +17,8 @@ public class JenkinsConfigurationModule extends ExecutorServiceModule {
 
     @Override
     protected void configure() {
-       bind(Crypto.class).to(JenkinsBouncyCastleCrypto.class);
-       install(new JodaDateServiceModule());
-       install(new NettyPayloadModule());
+        bind(Crypto.class).to(JenkinsBouncyCastleCrypto.class);
+        install(new JodaDateServiceModule());
+        install(new NettyPayloadModule());
     }
-
 }

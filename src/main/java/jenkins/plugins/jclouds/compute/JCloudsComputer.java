@@ -15,32 +15,26 @@
  */
 package jenkins.plugins.jclouds.compute;
 
+import com.google.common.collect.ImmutableSet;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 import hudson.remoting.VirtualChannel;
 import hudson.slaves.AbstractCloudComputer;
 import hudson.slaves.Cloud;
 import hudson.slaves.OfflineCause;
 import hudson.slaves.SlaveComputer;
-import jenkins.model.Jenkins;
-
 import java.io.IOException;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.Nullable;
-
+import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.cli.Messages;
+import org.jclouds.compute.domain.NodeMetadata;
 import org.jenkinsci.plugins.cloudstats.ProvisioningActivity;
 import org.jenkinsci.plugins.cloudstats.TrackedItem;
 import org.kohsuke.stapler.HttpRedirect;
 import org.kohsuke.stapler.HttpResponse;
 import org.kohsuke.stapler.verb.POST;
-
-import org.jclouds.compute.domain.NodeMetadata;
-
-import com.google.common.collect.ImmutableSet;
-
-import jenkins.plugins.jclouds.cli.Messages;
 
 /**
  * JClouds version of Jenkins {@link SlaveComputer} - responsible for terminating an instance.
@@ -62,15 +56,18 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
         return getName();
     }
 
-
     public int getRetentionTime() {
         final JCloudsSlave node = getNode();
-        return null == node ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES : node.getRetentionTime();
+        return null == node
+                ? CloudInstanceDefaults.DEFAULT_INSTANCE_RETENTION_TIME_IN_MINUTES
+                : node.getRetentionTime();
     }
 
     int getErrorRetentionTime() {
         final JCloudsSlave node = getNode();
-        return null == node ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES : node.getErrorRetentionTime();
+        return null == node
+                ? CloudInstanceDefaults.DEFAULT_ERROR_RETENTION_TIME_IN_MINUTES
+                : node.getErrorRetentionTime();
     }
 
     public boolean getIsPendingDelete() {
@@ -124,7 +121,7 @@ public class JCloudsComputer extends AbstractCloudComputer<JCloudsSlave> impleme
         if (isIdle()) { // Fixes JENKINS-27471
             LOGGER.info("Deleting agent: " + getName());
             JCloudsSlave slave = getNode();
-            if (null != slave ) {
+            if (null != slave) {
                 final VirtualChannel ch = slave.getChannel();
                 if (null != ch) {
                     ch.close();

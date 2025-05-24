@@ -15,10 +15,6 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,6 +24,9 @@ import hudson.Extension;
 import hudson.model.AsyncPeriodicWork;
 import hudson.model.Computer;
 import hudson.model.TaskListener;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.model.Jenkins;
 
 @Extension
@@ -59,9 +58,11 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
 
     @Override
     protected void execute(TaskListener listener) {
-        final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder = ImmutableList.<ListenableFuture<?>>builder();
+        final ImmutableList.Builder<ListenableFuture<?>> deletedNodesBuilder =
+                ImmutableList.<ListenableFuture<?>>builder();
         ListeningExecutorService executor = MoreExecutors.listeningDecorator(Computer.threadPoolForRemoting);
-        final ImmutableList.Builder<JCloudsComputer> computersToDeleteBuilder = ImmutableList.<JCloudsComputer>builder();
+        final ImmutableList.Builder<JCloudsComputer> computersToDeleteBuilder =
+                ImmutableList.<JCloudsComputer>builder();
 
         for (final Computer c : Jenkins.get().getComputers()) {
             if (JCloudsComputer.class.isInstance(c)) {
@@ -75,9 +76,13 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
                             try {
                                 node.terminate();
                             } catch (IOException e) {
-                                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                                LOGGER.log(
+                                        Level.WARNING,
+                                        "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
                             } catch (InterruptedException e) {
-                                LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
+                                LOGGER.log(
+                                        Level.WARNING,
+                                        "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
                             }
                         }
                     });
@@ -96,7 +101,6 @@ public final class JCloudsCleanupThread extends AsyncPeriodicWork {
             } catch (InterruptedException e) {
                 LOGGER.log(Level.WARNING, "Failed to disconnect and delete " + c.getName() + ": " + e.getMessage());
             }
-
         }
         JCloudsCloud.cleanupSupplementalNodes();
     }

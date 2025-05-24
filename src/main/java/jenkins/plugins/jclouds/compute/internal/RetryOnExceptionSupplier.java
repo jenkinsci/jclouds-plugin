@@ -15,11 +15,9 @@
  */
 package jenkins.plugins.jclouds.compute.internal;
 
-import java.util.concurrent.Callable;
-
-import org.jclouds.logging.Logger;
-
 import com.google.common.base.Supplier;
+import java.util.concurrent.Callable;
+import org.jclouds.logging.Logger;
 
 class RetryOnExceptionSupplier implements Callable<JCloudsNodeMetadata> {
     private static final int MAX_ATTEMPTS = 5;

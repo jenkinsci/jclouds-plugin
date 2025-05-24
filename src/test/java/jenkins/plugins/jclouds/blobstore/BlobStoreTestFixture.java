@@ -1,20 +1,19 @@
 package jenkins.plugins.jclouds.blobstore;
 
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 import hudson.util.Secret;
+import java.util.Map;
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import org.jclouds.apis.BaseViewLiveTest;
 import org.jclouds.blobstore.BlobStore;
 import org.jclouds.blobstore.BlobStoreContext;
 import org.jclouds.util.Maps2;
-
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @SuppressWarnings("unchecked")
 public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
@@ -42,14 +41,13 @@ public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
     static {
         PROVIDER = System.getProperty("test.jenkins.blobstore.provider");
         SKIPIT = Strings.isNullOrEmpty(PROVIDER);
-        Map<String, String> filtered = Maps.filterKeys((Map) System.getProperties(),
-                Predicates.containsPattern("^test\\.jenkins\\.blobstore"));
+        Map<String, String> filtered = Maps.filterKeys(
+                (Map) System.getProperties(), Predicates.containsPattern("^test\\.jenkins\\.blobstore"));
         Map<String, String> transformed = Maps2.transformKeys(filtered, new Function<>() {
 
             public String apply(String arg0) {
                 return arg0.replaceAll("test.jenkins.blobstore", "test." + (SKIPIT ? "" : PROVIDER));
             }
-
         });
         System.getProperties().putAll(transformed);
     }
@@ -99,5 +97,4 @@ public class BlobStoreTestFixture extends BaseViewLiveTest<BlobStoreContext> {
     protected TypeToken<BlobStoreContext> viewType() {
         return TypeToken.of(BlobStoreContext.class);
     }
-
 }

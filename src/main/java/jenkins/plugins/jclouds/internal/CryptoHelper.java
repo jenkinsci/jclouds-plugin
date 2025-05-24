@@ -15,31 +15,27 @@
  */
 package jenkins.plugins.jclouds.internal;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
-import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAKey;
-
+import java.security.interfaces.RSAPrivateKey;
 import java.util.Arrays;
 import java.util.Base64;
-
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
 
 /**
  * An RSA blockcipher for arbitrary data lenght using an SSHPrivateKey credential.
  */
 public class CryptoHelper {
 
-    private static final byte[] LF = new byte[] { (byte)0x0a };
+    private static final byte[] LF = new byte[] {(byte) 0x0a};
     private final Cipher cipher;
     private final KeyPair keypair;
     private final int decryptBlockLen;
@@ -54,16 +50,17 @@ public class CryptoHelper {
             throw new IllegalStateException("Could not get keypair from credential: " + e.toString());
         }
         if (keypair.getPrivate() instanceof RSAPrivateKey) {
-            RSAKey k = (RSAKey)keypair.getPublic();
+            RSAKey k = (RSAKey) keypair.getPublic();
             int bitLen = k.getModulus().bitLength();
             decryptBlockLen = bitLen / 8 + (((bitLen % 8) != 0) ? 1 : 0);
             try {
                 cipher = Cipher.getInstance("RSA");
-            } catch (NoSuchAlgorithmException|NoSuchPaddingException e) {
+            } catch (NoSuchAlgorithmException | NoSuchPaddingException e) {
                 throw new IllegalStateException("Could not get RSA cipher: " + e.toString());
             }
         } else {
-            throw new IllegalStateException("Invalid key type " + keypair.getPrivate().toString());
+            throw new IllegalStateException(
+                    "Invalid key type " + keypair.getPrivate().toString());
         }
     }
 
@@ -72,8 +69,8 @@ public class CryptoHelper {
             cipher.init(Cipher.ENCRYPT_MODE, keypair.getPublic());
             byte[] crypted = blockCipher(plaintext.getBytes(StandardCharsets.UTF_8), Cipher.ENCRYPT_MODE);
             return Base64.getMimeEncoder(80, LF).encodeToString(crypted);
-        } catch (InvalidKeyException|IllegalBlockSizeException|BadPaddingException e) {
-              throw new IllegalStateException("Could not encrypt: " + e.toString());
+        } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            throw new IllegalStateException("Could not encrypt: " + e.toString());
         }
     }
 
@@ -82,8 +79,8 @@ public class CryptoHelper {
             cipher.init(Cipher.DECRYPT_MODE, keypair.getPrivate());
             byte[] crypted = Base64.getMimeDecoder().decode(base64);
             return new String(blockCipher(crypted, Cipher.DECRYPT_MODE), StandardCharsets.UTF_8);
-        } catch (InvalidKeyException|IllegalBlockSizeException|BadPaddingException e) {
-              throw new IllegalStateException("Could not decrypt: " + e.toString());
+        } catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+            throw new IllegalStateException("Could not decrypt: " + e.toString());
         }
     }
 
@@ -113,5 +110,4 @@ public class CryptoHelper {
         System.arraycopy(second, 0, result, first.length, second.length);
         return result;
     }
-
 }

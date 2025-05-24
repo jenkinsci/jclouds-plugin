@@ -1,14 +1,12 @@
 package jenkins.plugins.jclouds.modules;
 
+import jakarta.inject.Singleton;
 import java.security.NoSuchAlgorithmException;
 import java.security.Provider;
 import java.security.Security;
 import java.security.cert.CertificateException;
-
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
-import jakarta.inject.Singleton;
-
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jclouds.crypto.Crypto;
 import org.jclouds.encryption.bouncycastle.BouncyCastleCrypto;
@@ -25,6 +23,7 @@ public class JenkinsBouncyCastleCrypto extends JCECrypto {
      * It may even be an already registered instance (Jenkins adds one on startup,
      * when initializing the bouncycastle-api plugin). */
     private static final BouncyCastleProvider BC_PROVIDER;
+
     static {
         final BouncyCastleProvider myBCProvider = new BouncyCastleProvider();
         final Provider installedProvider = Security.getProvider(myBCProvider.getName());
@@ -46,5 +45,4 @@ public class JenkinsBouncyCastleCrypto extends JCECrypto {
     public Cipher cipher(String algorithm) throws NoSuchAlgorithmException, NoSuchPaddingException {
         return super.cipher("RSA".equals(algorithm) ? "RSA/NONE/PKCS1Padding" : algorithm);
     }
-
 }

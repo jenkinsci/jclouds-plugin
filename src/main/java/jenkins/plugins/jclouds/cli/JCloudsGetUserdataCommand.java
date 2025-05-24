@@ -15,23 +15,19 @@
  */
 package jenkins.plugins.jclouds.cli;
 
+import hudson.Extension;
+import hudson.cli.CLICommand;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
-
-import hudson.Extension;
-import hudson.cli.CLICommand;
-
 import jenkins.model.Jenkins;
-
+import jenkins.plugins.jclouds.config.ConfigExport;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.kohsuke.args4j.ParserProperties;
 import org.kohsuke.args4j.spi.OptionHandler;
-
-import jenkins.plugins.jclouds.config.ConfigExport;
 
 /**
  * Exports an all jclouds UserData to xml on stdout
@@ -44,7 +40,10 @@ public class JCloudsGetUserdataCommand extends CLICommand {
     @Option(hidden = true, name = "--force", usage = "Force unencrypted export.")
     private boolean force;
 
-    @Argument(required = true, metaVar = "CREDENTIAL", usage = "ID of credential (Must be a RSA SSH credential) to encrypt data.")
+    @Argument(
+            required = true,
+            metaVar = "CREDENTIAL",
+            usage = "ID of credential (Must be a RSA SSH credential) to encrypt data.")
     public String cred = null;
 
     @Override
@@ -68,7 +67,7 @@ public class JCloudsGetUserdataCommand extends CLICommand {
      * hidden option/arguments.
      */
     @Override
-    protected  void printUsage(PrintStream stderr, CmdLineParser p) {
+    protected void printUsage(PrintStream stderr, CmdLineParser p) {
         stderr.print("java -jar jenkins-cli.jar " + getName());
         new UsageHelper(p).printSingleLineUsage(stderr);
         stderr.println();
@@ -114,5 +113,4 @@ public class JCloudsGetUserdataCommand extends CLICommand {
             }
         }
     }
-
 }

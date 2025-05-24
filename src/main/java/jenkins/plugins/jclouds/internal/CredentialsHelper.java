@@ -15,26 +15,21 @@
  */
 package jenkins.plugins.jclouds.internal;
 
-import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
-import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
-import com.cloudbees.plugins.credentials.domains.Domain;
+import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
 import com.cloudbees.plugins.credentials.CredentialsMatchers;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.CredentialsStore;
+import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
+import com.cloudbees.plugins.credentials.common.StandardUsernamePasswordCredentials;
+import com.cloudbees.plugins.credentials.domains.Domain;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-import com.cloudbees.jenkins.plugins.sshcredentials.SSHUserPrivateKey;
-
 import com.trilead.ssh2.crypto.PEMDecoder;
-
 import hudson.model.Descriptor.FormException;
 import hudson.plugins.sshslaves.SSHLauncher;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
 import hudson.util.Secret;
-
-import jenkins.model.Jenkins;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
@@ -44,10 +39,10 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Logger;
-
+import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.credentials.OpenstackKeystoneV3;
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.keystone.config.KeystoneProperties;
-import jenkins.plugins.jclouds.credentials.OpenstackKeystoneV3;
 
 /**
  * Helper for dealing with credentials.
@@ -66,14 +61,15 @@ public final class CredentialsHelper {
     public static String storeCredentials(final StandardUsernameCredentials u) throws IOException {
         if (null != u) {
             try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) { // NOPMD - unused local variable
-                final CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.get()).iterator().next();
+                final CredentialsStore s = CredentialsProvider.lookupStores(Jenkins.get())
+                        .iterator()
+                        .next();
                 s.addCredentials(Domain.global(), u);
                 return u.getId();
             }
         }
         return null;
     }
-
 
     public static boolean isRSACredential(final String id) {
         try {
@@ -107,9 +103,9 @@ public final class CredentialsHelper {
     public static String convertCredentials(final String description, final String identity, final Secret credential) {
         try {
             StandardUsernameCredentials u = new UsernamePasswordCredentialsImpl(
-                CredentialsScope.SYSTEM, null, description, identity, Secret.toString(credential));
+                    CredentialsScope.SYSTEM, null, description, identity, Secret.toString(credential));
             return storeCredentials(u);
-        } catch (IOException|FormException e) {
+        } catch (IOException | FormException e) {
             LOGGER.warning(String.format("Error while migrating identity/credentials: %s", e.getMessage()));
         }
         return null;
@@ -123,7 +119,7 @@ public final class CredentialsHelper {
         if (null != u) {
             if (u instanceof OpenstackKeystoneV3) {
                 overrides.put(KeystoneProperties.KEYSTONE_VERSION, "3");
-                OpenstackKeystoneV3 ok3 = (OpenstackKeystoneV3)u;
+                OpenstackKeystoneV3 ok3 = (OpenstackKeystoneV3) u;
                 if (!ok3.getProject().isEmpty()) {
                     overrides.put(KeystoneProperties.SCOPE, "project:" + ok3.getProject());
                 }
@@ -148,14 +144,14 @@ public final class CredentialsHelper {
         StandardUsernameCredentials u = getCredentialsById(id);
         if (null != u) {
             if (u instanceof OpenstackKeystoneV3) {
-                OpenstackKeystoneV3 ok3 = (OpenstackKeystoneV3)u;
+                OpenstackKeystoneV3 ok3 = (OpenstackKeystoneV3) u;
                 String domainname = ok3.getDomain().isEmpty() ? "default" : ok3.getDomain();
                 return cb.credentials(domainname + ":" + ok3.getUsername(), getPassword(ok3.getPassword()));
             } else if (u instanceof StandardUsernamePasswordCredentials) {
-                StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
+                StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials) u;
                 return cb.credentials(up.getUsername(), getPassword(up.getPassword()));
             } else if (u instanceof SSHUserPrivateKey) {
-                SSHUserPrivateKey up = (SSHUserPrivateKey)u;
+                SSHUserPrivateKey up = (SSHUserPrivateKey) u;
                 return cb.credentials(up.getUsername(), getPrivateKey(up));
             }
             throw new RuntimeException("invalid credentials type");
@@ -195,7 +191,6 @@ public final class CredentialsHelper {
      *  </ul>
      *
      */
-
     public static String getCredentialsHash(final String id) throws NoSuchAlgorithmException {
         StandardUsernameCredentials u = getCredentialsById(id);
         if (null != u) {
@@ -203,20 +198,23 @@ public final class CredentialsHelper {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
 
             if (u instanceof OpenstackKeystoneV3) {
-                OpenstackKeystoneV3 ok3 = (OpenstackKeystoneV3)u;
+                OpenstackKeystoneV3 ok3 = (OpenstackKeystoneV3) u;
                 md.update(ok3.getDomain().getBytes(StandardCharsets.UTF_8));
                 md.update(ok3.getProject().getBytes(StandardCharsets.UTF_8));
                 md.update(ok3.getUsername().getBytes(StandardCharsets.UTF_8));
-                return hex.formatHex(md.digest(getPasswordOrEmpty(ok3.getPassword()).getBytes(StandardCharsets.UTF_8)));
+                return hex.formatHex(
+                        md.digest(getPasswordOrEmpty(ok3.getPassword()).getBytes(StandardCharsets.UTF_8)));
             } else if (u instanceof StandardUsernamePasswordCredentials) {
-                StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials)u;
+                StandardUsernamePasswordCredentials up = (StandardUsernamePasswordCredentials) u;
                 md.update(up.getUsername().getBytes(StandardCharsets.UTF_8));
-                return hex.formatHex(md.digest(getPasswordOrEmpty(up.getPassword()).getBytes(StandardCharsets.UTF_8)));
+                return hex.formatHex(
+                        md.digest(getPasswordOrEmpty(up.getPassword()).getBytes(StandardCharsets.UTF_8)));
             } else if (u instanceof SSHUserPrivateKey) {
-                SSHUserPrivateKey up = (SSHUserPrivateKey)u;
+                SSHUserPrivateKey up = (SSHUserPrivateKey) u;
                 md.update(getPasswordOrEmpty(up.getPassphrase()).getBytes(StandardCharsets.UTF_8));
                 md.update(up.getUsername().getBytes(StandardCharsets.UTF_8));
-                return hex.formatHex(md.digest(String.join("", up.getPrivateKeys()).getBytes(StandardCharsets.UTF_8)));
+                return hex.formatHex(
+                        md.digest(String.join("", up.getPrivateKeys()).getBytes(StandardCharsets.UTF_8)));
             }
             throw new RuntimeException("invalid credentials type");
         }
@@ -256,4 +254,3 @@ public final class CredentialsHelper {
         return null;
     }
 }
-

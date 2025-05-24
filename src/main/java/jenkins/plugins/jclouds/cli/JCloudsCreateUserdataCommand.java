@@ -16,20 +16,17 @@
 package jenkins.plugins.jclouds.cli;
 
 import com.thoughtworks.xstream.XStreamException;
-
+import hudson.Extension;
+import hudson.cli.CLICommand;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import hudson.Extension;
-import hudson.cli.CLICommand;
-
 import jenkins.model.Jenkins;
-
 import jenkins.plugins.jclouds.config.ConfigExport;
+import jenkins.plugins.jclouds.config.ConfigHelper;
 import jenkins.plugins.jclouds.config.UserDataBoothook;
 import jenkins.plugins.jclouds.config.UserDataInclude;
 import jenkins.plugins.jclouds.config.UserDataIncludeOnce;
@@ -38,17 +35,13 @@ import jenkins.plugins.jclouds.config.UserDataScript;
 import jenkins.plugins.jclouds.config.UserDataUpstart;
 import jenkins.plugins.jclouds.config.UserDataYaml;
 import jenkins.plugins.jclouds.internal.CryptoHelper;
-
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.plugins.configfiles.ConfigFileStore;
+import org.jenkinsci.plugins.configfiles.ConfigFiles;
+import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.Option;
-
-import org.jenkinsci.plugins.configfiles.ConfigFiles;
-import org.jenkinsci.plugins.configfiles.ConfigFileStore;
-import org.jenkinsci.plugins.configfiles.GlobalConfigFiles;
-import org.jenkinsci.lib.configprovider.model.Config;
-
-import jenkins.plugins.jclouds.config.ConfigHelper;
 
 /**
  * Imports an all jclouds UserData from XML supplied on stdin
@@ -58,15 +51,25 @@ import jenkins.plugins.jclouds.config.ConfigHelper;
 @Extension
 public class JCloudsCreateUserdataCommand extends CLICommand {
 
-    private final static String REPL_FMT = "  <replacement old=\"%s\" new=\"%s\"/>%n";
+    private static final String REPL_FMT = "  <replacement old=\"%s\" new=\"%s\"/>%n";
 
-    @Option(name = "--overwrite", forbids={"--merge"}, usage = "Overwrite existing userdata files.")
+    @Option(
+            name = "--overwrite",
+            forbids = {"--merge"},
+            usage = "Overwrite existing userdata files.")
     private boolean overwrite;
 
-    @Option(name = "--merge", forbids={"--overwrite"}, usage = "Generate new Ids for imported userdata files if the id already exists and references different user data.")
+    @Option(
+            name = "--merge",
+            forbids = {"--overwrite"},
+            usage =
+                    "Generate new Ids for imported userdata files if the id already exists and references different user data.")
     private boolean merge;
 
-    @Argument(required = false, metaVar = "CREDENTIAL", usage = "ID of credential (Must be an RSA SSH credential) to encrypt data. Default: Taken from input XML.")
+    @Argument(
+            required = false,
+            metaVar = "CREDENTIAL",
+            usage = "ID of credential (Must be an RSA SSH credential) to encrypt data. Default: Taken from input XML.")
     private String cred = null;
 
     @Override
@@ -81,7 +84,7 @@ public class JCloudsCreateUserdataCommand extends CLICommand {
         String xml = new String(stdin.readAllBytes(), StandardCharsets.UTF_8);
         ConfigExport ce;
         try {
-            ce = (ConfigExport)Jenkins.XSTREAM.fromXML(xml);
+            ce = (ConfigExport) Jenkins.XSTREAM.fromXML(xml);
         } catch (XStreamException e) {
             throw new IllegalStateException("Unable to parse input: " + e.toString());
         }
@@ -93,7 +96,7 @@ public class JCloudsCreateUserdataCommand extends CLICommand {
             CryptoHelper ch = new CryptoHelper(cred);
             xml = ch.decrypt(ce.getEncryptedConfigData());
             try {
-                cfgs = (List<Config>)Jenkins.XSTREAM.fromXML(xml);
+                cfgs = (List<Config>) Jenkins.XSTREAM.fromXML(xml);
             } catch (XStreamException e) {
                 throw new IllegalStateException("Unable to parse input: " + e.toString());
             }
@@ -102,7 +105,7 @@ public class JCloudsCreateUserdataCommand extends CLICommand {
         if (merge) {
             try {
                 Map<String, String> existingHashes =
-                      ConfigHelper.getUserDataHashesFromConfigs(ConfigHelper.getJCloudsConfigs());
+                        ConfigHelper.getUserDataHashesFromConfigs(ConfigHelper.getJCloudsConfigs());
                 Map<String, String> newHashes = ConfigHelper.getUserDataHashesFromConfigs(cfgs);
                 // Merge goes as follows:
                 // For each of the new configs to import (cfgs)
@@ -133,7 +136,7 @@ public class JCloudsCreateUserdataCommand extends CLICommand {
                     if (null == oHash) {
                         for (Map.Entry<String, String> entry : existingHashes.entrySet()) {
                             if (entry.getValue().equals(nHash)) {
-                                repl.append( String.format(REPL_FMT, cfg.id, entry.getKey()));
+                                repl.append(String.format(REPL_FMT, cfg.id, entry.getKey()));
                                 break;
                             }
                         }
@@ -175,31 +178,30 @@ public class JCloudsCreateUserdataCommand extends CLICommand {
     private Config dupCfg(Config cfg) {
         Config ncfg = null;
         if (cfg instanceof UserDataBoothook) {
-            ncfg = ((UserDataBoothook)cfg).dup();
+            ncfg = ((UserDataBoothook) cfg).dup();
         }
         if (cfg instanceof UserDataInclude) {
-            ncfg = ((UserDataInclude)cfg).dup();
+            ncfg = ((UserDataInclude) cfg).dup();
         }
         if (cfg instanceof UserDataIncludeOnce) {
-            ncfg = ((UserDataIncludeOnce)cfg).dup();
+            ncfg = ((UserDataIncludeOnce) cfg).dup();
         }
         if (cfg instanceof UserDataPartHandler) {
-            ncfg = ((UserDataPartHandler)cfg).dup();
+            ncfg = ((UserDataPartHandler) cfg).dup();
         }
         if (cfg instanceof UserDataScript) {
-            ncfg = ((UserDataScript)cfg).dup();
+            ncfg = ((UserDataScript) cfg).dup();
         }
         if (cfg instanceof UserDataUpstart) {
-            ncfg = ((UserDataUpstart)cfg).dup();
+            ncfg = ((UserDataUpstart) cfg).dup();
         }
         if (cfg instanceof UserDataYaml) {
-            ncfg = ((UserDataYaml)cfg).dup();
+            ncfg = ((UserDataYaml) cfg).dup();
         }
         if (null == ncfg) {
             throw new IllegalStateException(
-                String.format("Invalid config type! Please report BUG at %s", Messages.BUGURL()));
+                    String.format("Invalid config type! Please report BUG at %s", Messages.BUGURL()));
         }
         return ncfg;
     }
-
 }

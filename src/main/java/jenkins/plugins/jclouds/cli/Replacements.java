@@ -18,12 +18,10 @@ package jenkins.plugins.jclouds.cli;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
+import java.util.regex.Pattern;
 import jenkins.model.Jenkins;
 
 class Replacements {
@@ -38,7 +36,7 @@ class Replacements {
         XStream xstream = Jenkins.XSTREAM;
         xstream.processAnnotations(Replacement.class);
         xstream.alias("replacements", List.class);
-        replacements = (List<Replacement>)xstream.fromXML(xml);
+        replacements = (List<Replacement>) xstream.fromXML(xml);
     }
 
     String toXML() {
@@ -54,12 +52,12 @@ class Replacements {
 
     String replace(String xml) {
         for (Replacement r : replacements) {
-            Pattern p = Pattern.compile(String.format(
-                "^(\\s*<\\w+)\s+sha256=\"[0-9a-fA-F]+\">%s(<.*)$", Pattern.quote(r.getFrom())),
-                Pattern.MULTILINE);
+            Pattern p = Pattern.compile(
+                    String.format("^(\\s*<\\w+)\s+sha256=\"[0-9a-fA-F]+\">%s(<.*)$", Pattern.quote(r.getFrom())),
+                    Pattern.MULTILINE);
             xml = p.matcher(xml)
-                .replaceAll(String.format("$1>%s$2", Matcher.quoteReplacement(r.getTo())))
-                .replace(r.getFrom(), r.getTo());
+                    .replaceAll(String.format("$1>%s$2", Matcher.quoteReplacement(r.getTo())))
+                    .replace(r.getFrom(), r.getTo());
         }
         return xml;
     }
@@ -69,6 +67,7 @@ class Replacements {
 
         @XStreamAsAttribute
         private String from;
+
         @XStreamAsAttribute
         private String to;
 

@@ -15,15 +15,14 @@
  */
 package jenkins.plugins.jclouds.config;
 
-import java.util.UUID;
 import hudson.Extension;
+import java.util.UUID;
 import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.compute.UserData;
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.lib.configprovider.model.ContentType;
 import org.kohsuke.stapler.DataBoundConstructor;
-
-import jenkins.plugins.jclouds.compute.UserData;
 
 public class UserDataInclude extends Config {
 
@@ -33,8 +32,7 @@ public class UserDataInclude extends Config {
     }
 
     public UserDataInclude dup() {
-        UserDataInclude ret = new UserDataInclude(UUID.randomUUID().toString(),
-                name, comment, content);
+        UserDataInclude ret = new UserDataInclude(UUID.randomUUID().toString(), name, comment, content);
         String pid = getProviderId();
         if (null != pid) {
             ret.setProviderId(pid);

@@ -15,22 +15,19 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import java.util.Map;
+import static org.jclouds.domain.LocationScope.*;
 
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LocationScope;
-import static org.jclouds.domain.LocationScope.*;
-
-import org.jclouds.openstack.nova.v2_0.NovaApi;
-import org.jclouds.openstack.nova.v2_0.features.ServerApi;
-
 import org.jclouds.googlecomputeengine.GoogleComputeEngineApi;
 import org.jclouds.googlecomputeengine.domain.Metadata;
 import org.jclouds.googlecomputeengine.features.InstanceApi;
-
-import java.util.logging.Logger;
-import java.util.logging.Level;
+import org.jclouds.openstack.nova.v2_0.NovaApi;
+import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 
 /**
  * Publish metadata to VMs.
@@ -59,8 +56,7 @@ public class MetaDataPublisher {
         return (null != loc) ? loc.getId() : "";
     }
 
-
-    public void publish(String nodeId, String msg, Map<String,String> data) {
+    public void publish(String nodeId, String msg, Map<String, String> data) {
 
         NodeMetadata nmd = c.getCompute().getNodeMetadata(nodeId);
         final String providerName = c.providerName;
@@ -90,7 +86,7 @@ public class MetaDataPublisher {
             LOGGER.log(Level.WARNING, "Failed to set JNLP properties", x);
             return;
         }
-        LOGGER.info("Updating custom metadata not implemented for cloud %s (provider: %s)."
-                .format(c.name, providerName));
+        LOGGER.info(
+                "Updating custom metadata not implemented for cloud %s (provider: %s).".format(c.name, providerName));
     }
 }

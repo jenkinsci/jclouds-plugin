@@ -1,15 +1,13 @@
 package jenkins.plugins.jclouds.cli;
 
-import org.junit.jupiter.api.Test;
-import org.jvnet.hudson.test.JenkinsRule;
-import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
-
 import static hudson.cli.CLICommandInvoker.Matcher.succeeded;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 
 import hudson.cli.CLICommandInvoker;
+import org.junit.jupiter.api.Test;
+import org.jvnet.hudson.test.JenkinsRule;
+import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 
 /**
  * @author Fritz Elfert
@@ -33,5 +31,4 @@ class BasicCommandTest {
         assertThat(res.stderr(), containsString("jclouds-provision"));
         assertThat(res.stderr(), containsString("jclouds-templates"));
     }
-
 }

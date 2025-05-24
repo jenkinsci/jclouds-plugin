@@ -31,22 +31,17 @@ import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.CopyOnWriteList;
 import hudson.util.ListBoxModel;
-
-import org.kohsuke.stapler.AncestorInPath;
-import org.kohsuke.stapler.DataBoundConstructor;
-import org.kohsuke.stapler.StaplerRequest2;
-import org.kohsuke.stapler.verb.POST;
-
-import org.jclouds.rest.AuthorizationException;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
-
 import jenkins.model.Jenkins;
-
 import net.sf.json.JSONObject;
+import org.jclouds.rest.AuthorizationException;
+import org.kohsuke.stapler.AncestorInPath;
+import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.verb.POST;
 
 /**
  * Publishes artifacts to Blobstore configured using JClouds
@@ -61,6 +56,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
 
     @Extension
     public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
+
     private final List<BlobStoreEntry> entries;
 
     /**
@@ -75,8 +71,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
         if (profileName == null) {
             // defaults to the first one
             BlobStoreProfile[] sites = DESCRIPTOR.getProfiles();
-            if (sites.length > 0)
-                profileName = sites[0].getProfileName();
+            if (sites.length > 0) profileName = sites[0].getProfileName();
         }
         this.entries = entries;
         this.profileName = profileName;
@@ -102,8 +97,7 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
             return profiles[0];
 
         for (BlobStoreProfile profile : profiles) {
-            if (profile.getProfileName().equals(profileName))
-                return profile;
+            if (profile.getProfileName().equals(profileName)) return profile;
         }
         return null;
     }
@@ -136,7 +130,8 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
      * @throws IOException if an IO error occurs.
      */
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener)
+            throws InterruptedException, IOException {
 
         BlobStoreProfile blobStoreProfile = getProfile();
         if (blobStoreProfile == null) {
@@ -174,8 +169,11 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
                     }
                     for (FilePath src : paths) {
                         String xPath = getDestinationPath(bse.path, bse.keepHierarchy, wsPath, src, envVars);
-                        log(listener, String.format("Publishing \"%s\" to container \"%s\", path \"%s\"",
-                                    src.getName(), xContainer, xPath));
+                        log(
+                                listener,
+                                String.format(
+                                        "Publishing \"%s\" to container \"%s\", path \"%s\"",
+                                        src.getName(), xContainer, xPath));
                         blobStoreProfile.upload(xContainer, xPath, src);
                     }
                 } else {
@@ -185,7 +183,8 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
             }
         } catch (AuthorizationException e) {
             LOGGER.severe("Failed to upload files to Blob Store due to authorization exception.");
-            RuntimeException overrideException = new RuntimeException("Failed to publish files due to authorization exception.");
+            RuntimeException overrideException =
+                    new RuntimeException("Failed to publish files due to authorization exception.");
             overrideException.printStackTrace(listener.error("Failed to publish files"));
             build.setResult(Result.FAILURE);
         } catch (IOException e) {
@@ -197,14 +196,15 @@ public class BlobStorePublisher extends Recorder implements Describable<Publishe
         return true;
     }
 
-    private String getDestinationPath(String path, boolean appendFilePath, String wsPath, FilePath file, Map<String, String> envVars) {
+    private String getDestinationPath(
+            String path, boolean appendFilePath, String wsPath, FilePath file, Map<String, String> envVars) {
         String resultPath;
         String expandedPath = "";
         String relativeFilePath = "";
         FilePath parent = file.getParent();
         if (parent == null) {
-            throw new IllegalStateException("No parent directory to workspace, " +
-                    "normally occurs if the workspace is set to the root of the file system, don't do this...");
+            throw new IllegalStateException("No parent directory to workspace, "
+                    + "normally occurs if the workspace is set to the root of the file system, don't do this...");
         }
         String fileFullPath = parent.getRemote();
         if (path != null && !path.equals("")) {

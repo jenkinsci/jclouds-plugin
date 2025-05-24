@@ -21,13 +21,10 @@ import java.io.ObjectOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.logging.Logger;
-
 import jenkins.model.Jenkins;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
-import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 import jenkins.plugins.jclouds.compute.JCloudsLauncher;
-
+import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 import org.jclouds.compute.domain.NodeMetadata;
 
 public class RunningNode implements Serializable {
@@ -69,7 +66,7 @@ public class RunningNode implements Serializable {
                 }
             }
             if (null != c) {
-                NodeMetadata md =  c.getCompute().getNodeMetadata(nodeId);
+                NodeMetadata md = c.getCompute().getNodeMetadata(nodeId);
                 nodeInstanceAddress = JCloudsLauncher.getConnectionAddress(md, logger, preferredAddress);
             } else {
                 LOGGER.severe("Should not happen: No cloud named \"%s\" found".format(cloud));

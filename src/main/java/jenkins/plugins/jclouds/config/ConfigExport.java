@@ -15,17 +15,14 @@
  */
 package jenkins.plugins.jclouds.config;
 
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
-
-import edu.umd.cs.findbugs.annotations.CheckForNull;
-import edu.umd.cs.findbugs.annotations.NonNull;
-
 import jenkins.model.Jenkins;
 import jenkins.plugins.jclouds.compute.UserData;
 import jenkins.plugins.jclouds.internal.CryptoHelper;
-
 import org.jenkinsci.lib.configprovider.ConfigProvider;
 import org.jenkinsci.lib.configprovider.model.Config;
 import org.jenkinsci.plugins.configfiles.ConfigFiles;

@@ -15,8 +15,8 @@
  */
 package jenkins.plugins.jclouds.internal;
 
-import java.io.Serializable;
 import hudson.model.TaskListener;
+import java.io.Serializable;
 
 public class TaskListenerLogger implements org.jclouds.logging.Logger, Serializable {
 
@@ -68,8 +68,7 @@ public class TaskListenerLogger implements org.jclouds.logging.Logger, Serializa
         return true;
     }
 
-    public void trace(String message, Object... args) {
-    }
+    public void trace(String message, Object... args) {}
 
     public void warn(String message, Object... args) {
         listener.error(String.format(message, args));
@@ -78,5 +77,4 @@ public class TaskListenerLogger implements org.jclouds.logging.Logger, Serializa
     public void warn(Throwable throwable, String message, Object... args) {
         listener.error(String.format(message, args) + ": " + throwable.getCause());
     }
-
 }

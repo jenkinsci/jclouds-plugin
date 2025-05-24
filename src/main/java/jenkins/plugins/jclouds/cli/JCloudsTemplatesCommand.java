@@ -15,12 +15,10 @@
  */
 package jenkins.plugins.jclouds.cli;
 
-import java.io.IOException;
-
 import hudson.Extension;
 import hudson.cli.CLICommand;
 import hudson.security.Permission;
-
+import java.io.IOException;
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 
@@ -31,9 +29,9 @@ import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
  */
 @Extension
 public class JCloudsTemplatesCommand extends CLICommand {
-    final static String PROFILE = "Profile";
-    final static String LABEL = "Label";
-    final static String NAME = "Name";
+    static final String PROFILE = "Profile";
+    static final String LABEL = "Label";
+    static final String NAME = "Name";
 
     @Override
     public String getShortDescription() {
@@ -72,8 +70,9 @@ public class JCloudsTemplatesCommand extends CLICommand {
                 maxTemplateLen = LABEL.length();
             }
             final String fmt = "%-" + maxProfileLen + "s %-" + maxTemplateLen + "s %-" + maxLabelLen + "s %s%n";
-            stdout.printf(fmt, PROFILE, NAME, LABEL,  "Description");
-            stdout.println(String.format("%-" + (maxProfileLen + maxTemplateLen + maxLabelLen + 14) + "s", " ").replaceAll(" ", "="));
+            stdout.printf(fmt, PROFILE, NAME, LABEL, "Description");
+            stdout.println(String.format("%-" + (maxProfileLen + maxTemplateLen + maxLabelLen + 14) + "s", " ")
+                    .replaceAll(" ", "="));
             final String indent = String.format("%-" + (maxProfileLen + maxTemplateLen + maxLabelLen + 4) + "s", "\n");
             for (final JCloudsCloud c : CliHelper.getAllJCloudClouds()) {
                 for (final JCloudsSlaveTemplate t : c.getTemplates()) {
@@ -83,5 +82,4 @@ public class JCloudsTemplatesCommand extends CLICommand {
         }
         return 0;
     }
-
 }

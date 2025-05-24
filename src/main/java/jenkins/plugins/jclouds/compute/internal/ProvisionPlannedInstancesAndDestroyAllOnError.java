@@ -15,26 +15,27 @@
  */
 package jenkins.plugins.jclouds.compute.internal;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.jclouds.logging.Logger;
-
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
+import org.jclouds.logging.Logger;
 
-public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<Iterable<NodePlan>, Iterable<RunningNode>> {
+public class ProvisionPlannedInstancesAndDestroyAllOnError
+        implements Function<Iterable<NodePlan>, Iterable<RunningNode>> {
 
-    static final java.util.logging.Logger LOGGER = java.util.logging.Logger.getLogger(ProvisionPlannedInstancesAndDestroyAllOnError.class.getName());
+    static final java.util.logging.Logger LOGGER =
+            java.util.logging.Logger.getLogger(ProvisionPlannedInstancesAndDestroyAllOnError.class.getName());
 
     private final ListeningExecutorService executor;
     private final Logger logger;
     private final Function<Iterable<RunningNode>, Void> terminateNodes;
 
-    public ProvisionPlannedInstancesAndDestroyAllOnError(ListeningExecutorService executor, Logger logger, Function<Iterable<RunningNode>, Void> terminateNodes) {
+    public ProvisionPlannedInstancesAndDestroyAllOnError(
+            ListeningExecutorService executor, Logger logger, Function<Iterable<RunningNode>, Void> terminateNodes) {
         this.executor = executor;
         this.logger = logger;
         this.terminateNodes = terminateNodes;
@@ -53,37 +54,59 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
                 if (nodePlan.getCount() > 0) {
                     totalCount.addAndGet(nodePlan.getCount());
                     String plural = nodePlan.getCount() > 1 ? "s" : "";
-                    LOGGER.info(String.format("Launching %d supplemental node%s from template %s in cloud %s", nodePlan.getCount(), plural,
-                        nodePlan.getTemplateName(), nodePlan.getCloudName()));
-                    logger.info("Launching %d supplemental node%s from template %s in cloud %s", nodePlan.getCount(), plural,
-                        nodePlan.getTemplateName(), nodePlan.getCloudName());
+                    LOGGER.info(String.format(
+                            "Launching %d supplemental node%s from template %s in cloud %s",
+                            nodePlan.getCount(), plural, nodePlan.getTemplateName(), nodePlan.getCloudName()));
+                    logger.info(
+                            "Launching %d supplemental node%s from template %s in cloud %s",
+                            nodePlan.getCount(), plural, nodePlan.getTemplateName(), nodePlan.getCloudName());
                     for (int i = 0; i < nodePlan.getCount(); i++) {
                         final int index = i;
-                        ListenableFuture<JCloudsNodeMetadata> provisionTemplate = executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
+                        ListenableFuture<JCloudsNodeMetadata> provisionTemplate =
+                                executor.submit(new RetryOnExceptionSupplier(nodePlan.getNodeSupplier(), logger));
 
-                        Futures.addCallback(provisionTemplate, new FutureCallback<JCloudsNodeMetadata>() {
-                            public void onSuccess(JCloudsNodeMetadata result) {
-                                if (result != null) {
-                                    synchronized(nodeBuilder) {
-                                      RunningNode rn = new RunningNode(nodePlan.getCloudName(), nodePlan.getTemplateName(), nodePlan.getShouldSuspend(), result);
-                                      nodeBuilder.add(rn);
-                                      successCount.incrementAndGet();
+                        Futures.addCallback(
+                                provisionTemplate,
+                                new FutureCallback<JCloudsNodeMetadata>() {
+                                    public void onSuccess(JCloudsNodeMetadata result) {
+                                        if (result != null) {
+                                            synchronized (nodeBuilder) {
+                                                RunningNode rn = new RunningNode(
+                                                        nodePlan.getCloudName(),
+                                                        nodePlan.getTemplateName(),
+                                                        nodePlan.getShouldSuspend(),
+                                                        result);
+                                                nodeBuilder.add(rn);
+                                                successCount.incrementAndGet();
+                                            }
+                                        } else {
+                                            failedCount.incrementAndGet();
+                                        }
                                     }
-                                } else {
-                                    failedCount.incrementAndGet();
-                                }
-                            }
 
-                            public void onFailure(Throwable t) {
-                                failedCount.incrementAndGet();
-                                LOGGER.log(java.util.logging.Level.WARNING,
-                                    String.format("Error launching supplemental node #%d of %d from template %s in cloud %s", index, nodePlan.getCount(), plural,
-                                    nodePlan.getTemplateName(), nodePlan.getCloudName()), t);
-                                logger.warn(t, "Error launching supplemental node #%d of %d from template %s in cloud %s", index, nodePlan.getCount(), plural,
-                                    nodePlan.getTemplateName(), nodePlan.getCloudName());
-                            }
-                        }, executor);
-
+                                    public void onFailure(Throwable t) {
+                                        failedCount.incrementAndGet();
+                                        LOGGER.log(
+                                                java.util.logging.Level.WARNING,
+                                                String.format(
+                                                        "Error launching supplemental node #%d of %d from template %s in cloud %s",
+                                                        index,
+                                                        nodePlan.getCount(),
+                                                        plural,
+                                                        nodePlan.getTemplateName(),
+                                                        nodePlan.getCloudName()),
+                                                t);
+                                        logger.warn(
+                                                t,
+                                                "Error launching supplemental node #%d of %d from template %s in cloud %s",
+                                                index,
+                                                nodePlan.getCount(),
+                                                plural,
+                                                nodePlan.getTemplateName(),
+                                                nodePlan.getCloudName());
+                                    }
+                                },
+                                executor);
                     }
                 }
             }
@@ -112,5 +135,4 @@ public class ProvisionPlannedInstancesAndDestroyAllOnError implements Function<I
         }
         return nodeBuilder.build();
     }
-
 }

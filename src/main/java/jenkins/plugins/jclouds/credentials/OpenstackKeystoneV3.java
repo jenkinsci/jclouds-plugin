@@ -18,14 +18,12 @@ package jenkins.plugins.jclouds.credentials;
 import com.cloudbees.plugins.credentials.CredentialsScope;
 import com.cloudbees.plugins.credentials.common.StandardUsernameCredentials;
 import com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl;
-
-import hudson.model.Descriptor.FormException;
-import hudson.Extension;
-import hudson.Util;
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import hudson.Extension;
+import hudson.Util;
+import hudson.model.Descriptor.FormException;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * Extends Username/Password with Openstack project and domain.
@@ -45,9 +43,15 @@ public class OpenstackKeystoneV3 extends UsernamePasswordCredentialsImpl impleme
     private final String project;
 
     @DataBoundConstructor
-    public OpenstackKeystoneV3(final @CheckForNull CredentialsScope scope, final @CheckForNull String id,
-            final @CheckForNull String description, final @CheckForNull String username, final @CheckForNull String password,
-            final @CheckForNull String domain, final @CheckForNull String project) throws FormException {
+    public OpenstackKeystoneV3(
+            final @CheckForNull CredentialsScope scope,
+            final @CheckForNull String id,
+            final @CheckForNull String description,
+            final @CheckForNull String username,
+            final @CheckForNull String password,
+            final @CheckForNull String domain,
+            final @CheckForNull String project)
+            throws FormException {
         super(scope, id, description, username, password);
         this.domain = Util.fixNull(domain);
         this.project = Util.fixNull(project);
@@ -78,5 +82,4 @@ public class OpenstackKeystoneV3 extends UsernamePasswordCredentialsImpl impleme
             return "Openstack Keystone V3 credentials";
         }
     }
-
 }

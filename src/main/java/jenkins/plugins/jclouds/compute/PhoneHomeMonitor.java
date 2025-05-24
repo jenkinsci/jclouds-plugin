@@ -18,10 +18,10 @@ package jenkins.plugins.jclouds.compute;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -49,7 +49,7 @@ final class PhoneHomeMonitor {
         if (null != waitThread) {
             waitThread.join();
         }
-   }
+    }
 
     synchronized boolean ring(final String who) {
         boolean ret = targets.remove(who);
@@ -151,8 +151,8 @@ final class PhoneHomeMonitor {
                 hasWaitedAtAll = true;
                 final String tgs = getTargetString();
                 if (!tgs.isEmpty()) {
-                    final String msg = "Waiting for " + tgs +
-                        " to phone home. " + tdif / 1000 + " seconds until timeout.";
+                    final String msg =
+                            "Waiting for " + tgs + " to phone home. " + tdif / 1000 + " seconds until timeout.";
                     LOGGER.info(msg);
                     if (null != logger) {
                         logger.println(msg);

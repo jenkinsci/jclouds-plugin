@@ -16,15 +16,11 @@
 package jenkins.plugins.jclouds.cli;
 
 import com.thoughtworks.xstream.XStreamException;
-
 import hudson.Extension;
 import hudson.cli.CLICommand;
-
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
+import org.kohsuke.args4j.Argument;
 
 /**
  * Copies an existing JClouds cloud, to a different name.
@@ -38,7 +34,11 @@ public class JCloudsCopyCloudCommand extends CLICommand {
         return Messages.CopyCloudCommand_shortDescription();
     }
 
-    @Argument(metaVar = "FROM-CLOUD", index = 0, usage = "Name of the existing jclouds profile to copy.", required = true)
+    @Argument(
+            metaVar = "FROM-CLOUD",
+            index = 0,
+            usage = "Name of the existing jclouds profile to copy.",
+            required = true)
     public String from;
 
     @Argument(metaVar = "TO-CLOUD", index = 1, usage = "Name of the new jclouds profile to create.", required = true)
@@ -58,7 +58,7 @@ public class JCloudsCopyCloudCommand extends CLICommand {
         // Not great, but template name is final
         xml = xml.replaceFirst("<name>.*</name>", "<name>" + to + "</name>");
         try {
-            JCloudsCloud cTo = (JCloudsCloud)Jenkins.XSTREAM.fromXML(xml);
+            JCloudsCloud cTo = (JCloudsCloud) Jenkins.XSTREAM.fromXML(xml);
             Jenkins.get().clouds.add(cTo);
         } catch (XStreamException e) {
             throw new IllegalStateException("Unable to copy " + e.toString());

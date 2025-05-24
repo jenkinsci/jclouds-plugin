@@ -18,7 +18,6 @@ package jenkins.plugins.jclouds.blobstore;
 import hudson.Extension;
 import hudson.model.AbstractDescribableImpl;
 import hudson.model.Descriptor;
-
 import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
@@ -59,8 +58,13 @@ public final class BlobStoreEntry extends AbstractDescribableImpl<BlobStoreEntry
     public final boolean onlyIfSuccessful;
 
     @DataBoundConstructor
-    public BlobStoreEntry(final String container, final String path, final String sourceFile,
-            final boolean keepHierarchy, final boolean allowEmptyFileset, final boolean onlyIfSuccessful) {
+    public BlobStoreEntry(
+            final String container,
+            final String path,
+            final String sourceFile,
+            final boolean keepHierarchy,
+            final boolean allowEmptyFileset,
+            final boolean onlyIfSuccessful) {
         this.container = container;
         this.path = path;
         this.sourceFile = sourceFile;

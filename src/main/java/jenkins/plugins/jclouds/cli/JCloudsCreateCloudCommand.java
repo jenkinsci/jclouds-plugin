@@ -16,25 +16,21 @@
 package jenkins.plugins.jclouds.cli;
 
 import com.thoughtworks.xstream.XStreamException;
-
 import hudson.Extension;
 import hudson.cli.CLICommand;
-
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.Option;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.Option;
 
 /**
  * Creates a new JCloudsCloud by reading stdin as a configuration XML file.
  *
  * @author Fritz Elfert
-*/
+ */
 @Extension
 public class JCloudsCreateCloudCommand extends CLICommand {
     @Override
@@ -45,7 +41,11 @@ public class JCloudsCreateCloudCommand extends CLICommand {
     @Argument(metaVar = "NAME", usage = "Name of the new jclouds profile to create.", required = true)
     public String name;
 
-    @Option(required = false, name = "-v", aliases = "--verbose", usage = "Be verbose when validating references to credentials and config files.")
+    @Option(
+            required = false,
+            name = "-v",
+            aliases = "--verbose",
+            usage = "Be verbose when validating references to credentials and config files.")
     private boolean verbose;
 
     @Override
@@ -61,7 +61,7 @@ public class JCloudsCreateCloudCommand extends CLICommand {
         xml = xml.replaceFirst("<name>.*</name>", "<name>" + name + "</name>");
         JCloudsCloud c = null;
         try {
-          c = (JCloudsCloud) Jenkins.XSTREAM.fromXML(xml);
+            c = (JCloudsCloud) Jenkins.XSTREAM.fromXML(xml);
         } catch (XStreamException e) {
             throw new IllegalStateException("Unable to parse input: " + e.toString());
         }

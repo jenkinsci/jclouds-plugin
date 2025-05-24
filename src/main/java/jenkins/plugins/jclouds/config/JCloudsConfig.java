@@ -19,5 +19,6 @@ import org.jenkinsci.lib.configprovider.model.ContentType;
 
 public interface JCloudsConfig {
     String getSignature();
+
     ContentType getRealContentType();
 }

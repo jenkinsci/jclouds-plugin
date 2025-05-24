@@ -15,24 +15,20 @@
  */
 package jenkins.plugins.jclouds.cli;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
 import hudson.Extension;
 import hudson.cli.CLICommand;
 import hudson.slaves.Cloud;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import jenkins.model.Jenkins;
-
-import org.kohsuke.args4j.Argument;
-import org.kohsuke.args4j.CmdLineException;
-import org.kohsuke.args4j.Option;
-
-import org.jclouds.compute.domain.NodeMetadata;
-
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlave;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.Option;
 
 /**
  * Provisions a slave.
@@ -42,16 +38,28 @@ import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
 @Extension
 public class JCloudsProvisionCommand extends CLICommand {
 
-    enum OutputFormat { HUMAN, JSON, PROPERTIES }
+    enum OutputFormat {
+        HUMAN,
+        JSON,
+        PROPERTIES
+    }
 
-    @Argument(required = false, metaVar = "PROFILE", index = 1, usage = "Name of jclouds profile to use. Mandatory, if the TEMPLATE is ambiguous.")
-        public String profile = null;
+    @Argument(
+            required = false,
+            metaVar = "PROFILE",
+            index = 1,
+            usage = "Name of jclouds profile to use. Mandatory, if the TEMPLATE is ambiguous.")
+    public String profile = null;
 
     @Argument(required = true, metaVar = "TEMPLATE", index = 0, usage = "Name of template to use.")
-        public String tmpl;
+    public String tmpl;
 
-    @Option(required = false, name = "-f", aliases = "--format", usage = "Output format of provisioned agent properties.")
-        public OutputFormat format = OutputFormat.HUMAN;
+    @Option(
+            required = false,
+            name = "-f",
+            aliases = "--format",
+            usage = "Output format of provisioned agent properties.")
+    public OutputFormat format = OutputFormat.HUMAN;
 
     @Override
     public String getShortDescription() {
@@ -95,5 +103,4 @@ public class JCloudsProvisionCommand extends CLICommand {
         }
         return 0;
     }
-
 }

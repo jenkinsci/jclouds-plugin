@@ -18,14 +18,11 @@ package jenkins.plugins.jclouds.compute;
 import hudson.model.Descriptor;
 import hudson.slaves.OfflineCause;
 import hudson.slaves.RetentionStrategy;
-
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
-
-import org.kohsuke.stapler.DataBoundConstructor;
-
 import jenkins.plugins.jclouds.cli.Messages;
+import org.kohsuke.stapler.DataBoundConstructor;
 
 /**
  * @author Vijay Kiran
@@ -69,18 +66,23 @@ public class JCloudsRetentionStrategy extends RetentionStrategy<JCloudsComputer>
                             if (errorRetentionTime >= 0) {
                                 final long failedMilliseconds = System.currentTimeMillis() - oc.getTimestamp();
                                 if (failedMilliseconds > TimeUnit.MINUTES.toMillis(errorRetentionTime)) {
-                                    LOGGER.info(String.format("Error retention time of %d min for %s has expired.", errorRetentionTime, c.getName()));
+                                    LOGGER.info(String.format(
+                                            "Error retention time of %d min for %s has expired.",
+                                            errorRetentionTime, c.getName()));
                                     node.setPendingDelete(true);
                                     fastTerminate(c);
                                 }
                             }
                         } else {
-                            // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs to.
+                            // Get the retention time, in minutes, from the JCloudsCloud this JCloudsComputer belongs
+                            // to.
                             final int retentionTime = c.getRetentionTime();
                             if (retentionTime > -1) {
                                 final long idleMilliseconds = System.currentTimeMillis() - c.getIdleStartMilliseconds();
                                 if (idleMilliseconds > TimeUnit.MINUTES.toMillis(retentionTime)) {
-                                    LOGGER.info(String.format("Retention time of %d min for %s has expired.", retentionTime, c.getName()));
+                                    LOGGER.info(String.format(
+                                            "Retention time of %d min for %s has expired.",
+                                            retentionTime, c.getName()));
                                     node.setPendingDelete(true);
                                     fastTerminate(c);
                                 }

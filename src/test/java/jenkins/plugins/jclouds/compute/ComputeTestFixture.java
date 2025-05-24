@@ -1,20 +1,19 @@
 package jenkins.plugins.jclouds.compute;
 
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.inject.Module;
 import hudson.util.Secret;
+import java.util.Map;
 import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.internal.BaseComputeServiceContextLiveTest;
 import org.jclouds.sshj.config.SshjSshClientModule;
 import org.jclouds.util.Maps2;
-
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 @SuppressWarnings("unchecked")
 public class ComputeTestFixture extends BaseComputeServiceContextLiveTest {
@@ -42,13 +41,13 @@ public class ComputeTestFixture extends BaseComputeServiceContextLiveTest {
     static {
         PROVIDER = System.getProperty("test.jenkins.compute.provider");
         SKIPIT = Strings.isNullOrEmpty(PROVIDER);
-        Map<String, String> filtered = Maps.filterKeys((Map) System.getProperties(), Predicates.containsPattern("^test\\.jenkins\\.compute"));
+        Map<String, String> filtered =
+                Maps.filterKeys((Map) System.getProperties(), Predicates.containsPattern("^test\\.jenkins\\.compute"));
         Map<String, String> transformed = Maps2.transformKeys(filtered, new Function<>() {
 
             public String apply(String arg0) {
                 return arg0.replaceAll("test.jenkins.compute", "test." + (SKIPIT ? "" : PROVIDER));
             }
-
         });
         System.getProperties().putAll(transformed);
     }
@@ -90,5 +89,4 @@ public class ComputeTestFixture extends BaseComputeServiceContextLiveTest {
             super.tearDownContext();
         }
     }
-
 }

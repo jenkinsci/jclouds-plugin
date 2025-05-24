@@ -15,26 +15,21 @@
  */
 package jenkins.plugins.jclouds.config;
 
-import java.io.IOException;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import jakarta.activation.DataSource;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import jakarta.activation.DataSource;
-
-import org.jenkinsci.lib.configprovider.model.Config;
-import org.jenkinsci.lib.configprovider.model.ContentType;
-
 import jenkins.plugins.jclouds.config.UserDataScript.UserDataScriptProvider;
 import jenkins.plugins.jclouds.internal.ReplaceHelper;
-
 import org.jenkinsci.lib.configprovider.ConfigProvider;
-
-import edu.umd.cs.findbugs.annotations.Nullable;
-import edu.umd.cs.findbugs.annotations.NonNull;
+import org.jenkinsci.lib.configprovider.model.Config;
+import org.jenkinsci.lib.configprovider.model.ContentType;
 
 /**
  * A readonly DataSource, backed by a {@link Config}.
@@ -43,7 +38,7 @@ public class ConfigDataSource implements DataSource {
 
     private final Config cfg;
     private final boolean stripSignature;
-    private final Map<String, String>replaceMap;
+    private final Map<String, String> replaceMap;
 
     /**
      * Creates a new instance from the supplied config.
@@ -52,8 +47,8 @@ public class ConfigDataSource implements DataSource {
      * @param replacements If non-null, specifies mappings of VARIABLENAME to value which
      *                     will be replaced in the content
      */
-    public ConfigDataSource(@NonNull final Config config, final boolean strip,
-            @Nullable final Map<String, String> replacements) {
+    public ConfigDataSource(
+            @NonNull final Config config, final boolean strip, @Nullable final Map<String, String> replacements) {
         cfg = config;
         stripSignature = strip;
         replaceMap = replacements;
@@ -67,7 +62,7 @@ public class ConfigDataSource implements DataSource {
         if (stripSignature) {
             ConfigProvider p = cfg.getProvider();
             if (p instanceof JCloudsConfig && !(p instanceof UserDataScriptProvider)) {
-                String sig = ((JCloudsConfig)p).getSignature();
+                String sig = ((JCloudsConfig) p).getSignature();
                 content = Pattern.compile(sig, Pattern.DOTALL).matcher(content).replaceFirst("");
             }
         }

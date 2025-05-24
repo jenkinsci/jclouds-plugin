@@ -15,28 +15,26 @@
  */
 package jenkins.plugins.jclouds.internal;
 
+import static java.util.logging.Level.*;
+import static org.kohsuke.stapler.StaplerResponse2.SC_BAD_REQUEST;
+import static org.kohsuke.stapler.StaplerResponse2.SC_FORBIDDEN;
+import static org.kohsuke.stapler.StaplerResponse2.SC_UNAUTHORIZED;
+
 import hudson.Extension;
 import hudson.model.Computer;
 import hudson.model.RootAction;
 import hudson.model.UnprotectedRootAction;
 import hudson.security.ACL;
 import hudson.security.ACLContext;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.StaplerRequest2;
-import org.kohsuke.stapler.StaplerResponse2;
-import org.kohsuke.stapler.interceptor.RequirePOST;
-
-import jenkins.plugins.jclouds.compute.JCloudsComputer;
-import jenkins.plugins.jclouds.compute.JCloudsSlave;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Logger;
-
-import static java.util.logging.Level.*;
-import static org.kohsuke.stapler.StaplerResponse2.SC_UNAUTHORIZED;
-import static org.kohsuke.stapler.StaplerResponse2.SC_BAD_REQUEST;
-import static org.kohsuke.stapler.StaplerResponse2.SC_FORBIDDEN;
+import jenkins.model.Jenkins;
+import jenkins.plugins.jclouds.compute.JCloudsComputer;
+import jenkins.plugins.jclouds.compute.JCloudsSlave;
+import org.kohsuke.stapler.StaplerRequest2;
+import org.kohsuke.stapler.StaplerResponse2;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 /**
  * Receives phone home hook from slave.
@@ -94,9 +92,9 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
                             return;
                         }
                         final ByteArrayInputStream str =
-                            new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
+                                new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
                         try {
-                            rsp.serveFile(req, str, 0, (long)result.length(), "response.json");
+                            rsp.serveFile(req, str, 0, (long) result.length(), "response.json");
                         } catch (Exception x) {
                             LOGGER.log(WARNING, "Could not send response:", x);
                         }
@@ -115,5 +113,4 @@ public class JnlpProvisionWebHook implements UnprotectedRootAction {
     public static JnlpProvisionWebHook get() {
         return Jenkins.get().getExtensionList(RootAction.class).get(JnlpProvisionWebHook.class);
     }
-
 }

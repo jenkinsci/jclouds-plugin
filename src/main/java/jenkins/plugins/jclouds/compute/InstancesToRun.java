@@ -15,20 +15,18 @@
  */
 package jenkins.plugins.jclouds.compute;
 
-import java.io.Serializable;
-
 import hudson.Extension;
 import hudson.Util;
-import hudson.model.AbstractProject;
 import hudson.model.AbstractDescribableImpl;
+import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.security.Permission;
 import hudson.slaves.Cloud;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import java.io.Serializable;
 import jenkins.model.Jenkins;
 import org.jenkinsci.Symbol;
-
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -45,7 +43,8 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
     public final boolean shouldSuspend;
 
     @DataBoundConstructor
-    public InstancesToRun(String cloudName, String templateName, String manualTemplateName, int count, boolean shouldSuspend) {
+    public InstancesToRun(
+            String cloudName, String templateName, String manualTemplateName, int count, boolean shouldSuspend) {
         this.cloudName = Util.fixEmptyAndTrim(cloudName);
         this.templateName = Util.fixEmptyAndTrim(templateName);
         this.manualTemplateName = Util.fixEmptyAndTrim(manualTemplateName);
@@ -69,7 +68,8 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
         }
     }
 
-    @Extension @Symbol("instances")
+    @Extension
+    @Symbol("instances")
     public static class DescriptorImpl extends Descriptor<InstancesToRun> {
         public String defaultCloudName() {
             for (String name : JCloudsCloud.getCloudNames()) {
@@ -101,7 +101,8 @@ public final class InstancesToRun extends AbstractDescribableImpl<InstancesToRun
         }
 
         @POST
-        public ListBoxModel doFillTemplateNameItems(@AncestorInPath AbstractProject project, @QueryParameter("cloudName") String cname) {
+        public ListBoxModel doFillTemplateNameItems(
+                @AncestorInPath AbstractProject project, @QueryParameter("cloudName") String cname) {
             if (null == project) {
                 Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             } else {

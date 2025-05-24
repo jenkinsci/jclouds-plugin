@@ -16,39 +16,28 @@
 package jenkins.plugins.jclouds.compute;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
-
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Util;
-
 import hudson.console.ModelHyperlinkNote;
-
 import hudson.model.AbstractProject;
 import hudson.model.Computer;
 import hudson.model.Node;
 import hudson.model.Result;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-
-import hudson.slaves.OfflineCause;
-
 import hudson.security.Permission;
-
+import hudson.slaves.OfflineCause;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
-
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-
 import java.io.IOException;
-
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
-
 import org.jenkinsci.Symbol;
-
 import org.kohsuke.stapler.AncestorInPath;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -96,7 +85,8 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
     }
 
     @Override
-    public void perform(@NonNull Run<?, ?> run, @NonNull EnvVars env, @NonNull TaskListener tl) throws InterruptedException, IOException {
+    public void perform(@NonNull Run<?, ?> run, @NonNull EnvVars env, @NonNull TaskListener tl)
+            throws InterruptedException, IOException {
         Result result = run.getResult();
         if (null == result) {
             tl.getLogger().append("NOTICE: ").println("Build has not (yet) a result");
@@ -116,7 +106,9 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
                 Computer c = node.toComputer();
                 if (null != c) {
                     if (JCloudsComputer.class.isInstance(c)) {
-                        tl.getLogger().append("NOTICE: ").println("Setting node " + ModelHyperlinkNote.encodeTo(node) + " offline");
+                        tl.getLogger()
+                                .append("NOTICE: ")
+                                .println("Setting node " + ModelHyperlinkNote.encodeTo(node) + " offline");
                         OfflineCause oc = new OfflineCause.UserCause(null, causemsg);
                         c.setTemporaryOfflineCause(oc);
                         return;
@@ -133,10 +125,12 @@ public class JCloudsOfflineStep extends Recorder implements SimpleBuildStep {
         tl.getLogger().append("WARNING: ").println("Unable to set empty node offline");
     }
 
-    @Extension @Symbol("jcloudsTakeOffline")
+    @Extension
+    @Symbol("jcloudsTakeOffline")
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-        @NonNull @Override
+        @NonNull
+        @Override
         public String getDisplayName() {
             return "Take current JClouds agent offline conditionally";
         }
