@@ -40,11 +40,11 @@ all the fields (The Domain usually is named `Default`)
     -   RSA Private Key/Public Key: Like with the credentials, simply
 use a "SSH Username with private key" credential. The public key
 is derived automatically from that.
-    -   Click on \`Test Connection\` to validate the cloud settings.
--   Add Cloud Instance Template by clicking on the Add button
+    -   Click on `Test Connection` to validate the cloud settings, finally save it.
+-   Back in the list of clouds, click on the newly created cloud, then select `Templates` on the left.
+-   Click on `Add an agent template`, enter the name of the new template, then click `Create`
 -   Fill in configuration options:
-    -   Name : the name of the instance template e.g.
-        `aws-jenkins-agent`
+    -   Name : the name of the instance template should already be set.
     -   Number of Executors: How many executors each agent created from
         this template should have.
     -   Description: notes/comments for your reference.
@@ -77,7 +77,8 @@ searches for matching images and if there are ambiguties, a  message is shown li
 
 ### Executing build on the agent
 
--   To run your build on the newly configured agent, just
+#### In a freestyle project:
+- To run your build on the newly configured agent, just
     enable the \`Restrict where this project can be run\` option in the
     build configuration page.
 -   Enter the label which you choose for the instance template in the
@@ -90,6 +91,9 @@ searches for matching images and if there are ambiguties, a  message is shown li
     you can enable the checkbox "JClouds Single-use-agent" which
     destroys the provisioned  
     VM after the build job has finished (with a small delay of \~ 1min).
+#### In a pipeline
+-   Use the `label` parameter in the [agent section](https://www.jenkins.io/doc/book/pipeline/syntax/#agent)
+-   More jclouds pipeline support is documented [here](https://www.jenkins.io/doc/pipeline/steps/jclouds-jenkins/).
 
 ## Adding a Blobstore Profile for storing build artifacts
 
@@ -174,5 +178,7 @@ invoke the webhook before launching the ssh remote connection.
 
 ## Using JNLP
 
-Information about using JNLP instead of ssh (primarily for Windows-based agents, but works for Unix agents too)
-can be found [here](JNLPPROVISIONING.md)
+Information about using JNLP instead of ssh (primarily for Windows-based agents, but works for Unix agents too) can be found [here](JNLPPROVISIONING.md)
+
+## Using the CLI
+The plugin provides several [CLI](https://www.jenkins.io/doc/book/managing/cli/) commands. Those are documented [here](CLI.md).
