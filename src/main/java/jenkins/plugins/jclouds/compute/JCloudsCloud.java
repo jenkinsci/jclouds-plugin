@@ -997,6 +997,7 @@ public class JCloudsCloud extends Cloud {
 
         @POST
         public FormValidation doCheckCloudGlobalKeyId(@QueryParameter String value) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             FormValidation ret = FormValidation.validateRequired(value);
             if (ret.equals(FormValidation.ok())) {
                 StandardUsernameCredentials suc = CredentialsHelper.getCredentialsById(value);

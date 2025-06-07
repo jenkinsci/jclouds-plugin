@@ -848,7 +848,9 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             }
         }
 
+        @POST
         public FormValidation doCheckCores(@QueryParameter String value) {
+            Jenkins.get().checkPermission(Jenkins.ADMINISTER);
             FormValidation ret = FormValidation.validateRequired(value);
             if (ret == FormValidation.ok()) {
                 try {
@@ -877,6 +879,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             return ret;
         }
 
+        @POST
         public FormValidation doCheckRam(@QueryParameter String value) {
             return FormValidation.validateNonNegativeInteger(value);
         }
