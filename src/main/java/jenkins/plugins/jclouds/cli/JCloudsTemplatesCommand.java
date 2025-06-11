@@ -16,11 +16,14 @@
 package jenkins.plugins.jclouds.cli;
 
 import hudson.Extension;
+import hudson.Util;
 import hudson.cli.CLICommand;
+import hudson.model.Label;
 import hudson.security.Permission;
 import java.io.IOException;
 import jenkins.plugins.jclouds.compute.JCloudsCloud;
 import jenkins.plugins.jclouds.compute.JCloudsSlaveTemplate;
+import org.kohsuke.args4j.Option;
 
 /**
  * Provisions an agent.
@@ -38,22 +41,34 @@ public class JCloudsTemplatesCommand extends CLICommand {
         return Messages.TemplatesCommand_shortDescription();
     }
 
+    @Option(
+            required = false,
+            metaVar = "EXPR",
+            name = "-l",
+            aliases = "--labelmatch",
+            usage = "List templates that satisfy the specified label expression.")
+    private String labelExpr;
+
     @Override
     protected int run() throws IOException {
         int maxProfileLen = 0;
         int maxTemplateLen = 0;
         int maxLabelLen = 0;
+        labelExpr = Util.fixEmptyAndTrim(labelExpr);
+        Label label = null == labelExpr ? null : Label.parseExpression(labelExpr);
         for (final JCloudsCloud c : CliHelper.getAllJCloudClouds()) {
             if (c.hasPermission(Permission.READ)) {
                 if (c.profile.length() > maxProfileLen) {
                     maxProfileLen = c.profile.length();
                 }
                 for (final JCloudsSlaveTemplate t : c.getTemplates()) {
-                    if (t.name.length() > maxTemplateLen) {
-                        maxTemplateLen = t.name.length();
-                    }
-                    if (t.labelString.length() > maxLabelLen) {
-                        maxLabelLen = t.labelString.length();
+                    if (label == null || label.matches(t.getLabelSet())) {
+                        if (t.name.length() > maxTemplateLen) {
+                            maxTemplateLen = t.name.length();
+                        }
+                        if (t.labelString.length() > maxLabelLen) {
+                            maxLabelLen = t.labelString.length();
+                        }
                     }
                 }
             }
@@ -76,7 +91,9 @@ public class JCloudsTemplatesCommand extends CLICommand {
             final String indent = String.format("%-" + (maxProfileLen + maxTemplateLen + maxLabelLen + 4) + "s", "\n");
             for (final JCloudsCloud c : CliHelper.getAllJCloudClouds()) {
                 for (final JCloudsSlaveTemplate t : c.getTemplates()) {
-                    stdout.printf(fmt, c.profile, t.name, t.labelString, t.description.replaceAll("\n", indent));
+                    if (label == null || label.matches(t.getLabelSet())) {
+                        stdout.printf(fmt, c.profile, t.name, t.labelString, t.description.replaceAll("\n", indent));
+                    }
                 }
             }
         }

@@ -24,7 +24,12 @@ The following CLI commands are provided by the jclouds-plugin:
 <a name="jclouds-templates"></a>
 ### jclouds-templates
 SYNTAX:
-```java -jar jenkins-cli.jar jclouds-templates ```
+```
+java -jar jenkins-cli.jar jclouds-templates [-l (--labelmatch) EXPR]
+List all JClouds templates.
+ -l (--labelmatch) EXPR : List templates that satisfy the specified label
+                          expression.
+```
 
 With this command you can list all configured JClouds templates on the controller.
 A typical output is shown here:
@@ -58,6 +63,7 @@ google       bh-stretch-64                                                      
 DigitalOcean dub2204             dub2204
 DigitalOcean dub2004jnlp         dub2004jnlp
 ```
+By specifying a [`label expression`](https://www.jenkins.io/doc/pipeline/steps/workflow-durable-task-step/#node-allocate-node), you can find out, which templates would satisfy that expression. Of course the label expression usually should be quoted, so that your shell does not try to interpret it.
 <a name="jclouds-provision"></a>
 ### jclouds-provision
 SYNTAX:
