@@ -55,7 +55,7 @@ limitations under the License.
     <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
     <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
 
-    <jclouds.version>2.5.0</jclouds.version>
+    <jclouds.version>2.7.4</jclouds.version>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
     <jenkins.baseline>2.492</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
@@ -178,9 +178,8 @@ limitations under the License.
       <artifactId>cloud-stats</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>2.8.9</version>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>gson-api</artifactId>
     </dependency>
     <dependency>
       <groupId>io.jenkins.plugins</groupId>
@@ -191,10 +190,14 @@ limitations under the License.
       <artifactId>jakarta-mail-api</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds</groupId>
+      <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-core</artifactId>
       <version>${jclouds.version}</version>
       <exclusions>
+        <exclusion>
+          <groupId>com.google.code.gson</groupId>
+          <artifactId>gson</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>com.google.guava</groupId>
           <artifactId>guava</artifactId>
@@ -210,30 +213,17 @@ limitations under the License.
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds</groupId>
+      <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-allcompute</artifactId>
       <version>${jclouds.version}</version>
-      <exclusions>
-        <!-- exclude broken digitalocean2 ... -->
-        <exclusion>
-          <groupId>org.apache.jclouds.provider</groupId>
-          <artifactId>digitalocean2</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <!-- ... and use our backported fix instead -->
-    <dependency>
-      <groupId>com.github.felfert</groupId>
-      <artifactId>digitalocean2-fixed</artifactId>
-      <version>2.5.1</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds</groupId>
+      <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-allblobstore</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds.driver</groupId>
+      <groupId>com.github.felfert.jclouds.driver</groupId>
       <artifactId>jclouds-enterprise</artifactId>
       <version>${jclouds.version}</version>
       <exclusions>
@@ -244,7 +234,7 @@ limitations under the License.
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds.driver</groupId>
+      <groupId>com.github.felfert.jclouds.driver</groupId>
       <artifactId>jclouds-sshj</artifactId>
       <version>${jclouds.version}</version>
       <exclusions>
@@ -255,17 +245,17 @@ limitations under the License.
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds</groupId>
+      <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-scriptbuilder</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds.driver</groupId>
+      <groupId>com.github.felfert.jclouds.driver</groupId>
       <artifactId>jclouds-jsch</artifactId>
       <version>${jclouds.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds</groupId>
+      <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-core</artifactId>
       <version>${jclouds.version}</version>
       <classifier>tests</classifier>
@@ -278,14 +268,14 @@ limitations under the License.
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds</groupId>
+      <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-compute</artifactId>
       <version>${jclouds.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.jclouds</groupId>
+      <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-blobstore</artifactId>
       <version>${jclouds.version}</version>
       <classifier>tests</classifier>
@@ -297,32 +287,13 @@ limitations under the License.
   <build>
     <finalName>${project.artifactId}</finalName>
     <plugins>
-    
-      <plugin>
-        <artifactId>maven-enforcer-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>display-info</id>
-            <configuration>
-              <rules>
-                <requireUpperBoundDeps>
-                  <excludes combine.children="append">
-                    <exclude>com.google.code.gson:gson</exclude>
-                  </excludes>
-                </requireUpperBoundDeps>
-              </rules>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-
       <plugin>
         <artifactId>maven-javadoc-plugin</artifactId>
         <configuration>
           <links>
             <link>https://javadoc.jenkins.io</link>
-            <link>https://jclouds.apache.org/reference/javadoc/2.0.x</link>
-            <link>https://google.github.io/guice/api-docs/4.0/javadoc</link>
+            <link>https://javadoc.io/doc/com.github.felfert.jclouds/jclouds/latest</link>
+            <link>https://google.github.io/guice/api-docs/6.0.0/javadoc</link>
             <link>https://javadoc.jenkins.io/component/stapler</link>
             <link>https://javaee.github.io/javaee-spec/javadocs</link>
           </links>
@@ -335,8 +306,6 @@ limitations under the License.
         <extensions>true</extensions>
         <configuration>
           <compatibleSinceVersion>2.9</compatibleSinceVersion>
-          <!-- Workaround for https://issues.jenkins.io/browse/JENKINS-72475 -->
-          <maskClasses>com.google.gson.</maskClasses>
         </configuration>
       </plugin>
 
