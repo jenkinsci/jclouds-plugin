@@ -4,7 +4,6 @@ import org.jclouds.concurrent.config.ConfiguresExecutorService;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
 import org.jclouds.crypto.Crypto;
 import org.jclouds.date.joda.config.JodaDateServiceModule;
-import org.jclouds.netty.config.NettyPayloadModule;
 
 /**
  * Similar to <code>{@link org.jclouds.enterprise.config.EnterpriseConfigurationModule}</code>,
@@ -19,6 +18,5 @@ public class JenkinsConfigurationModule extends ExecutorServiceModule {
     protected void configure() {
         bind(Crypto.class).to(JenkinsBouncyCastleCrypto.class);
         install(new JodaDateServiceModule());
-        install(new NettyPayloadModule());
     }
 }
