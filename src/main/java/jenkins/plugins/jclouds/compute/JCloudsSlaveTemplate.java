@@ -83,7 +83,6 @@ import jenkins.plugins.jclouds.internal.CredentialsHelper;
 import jenkins.plugins.jclouds.internal.SSHPublicKeyExtractor;
 import net.sf.json.JSONObject;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.StringUtils;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.RunNodesException;
@@ -890,7 +889,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
             OsFamily[] osFamilies = OsFamily.values();
             AutoCompletionCandidates candidates = new AutoCompletionCandidates();
             for (OsFamily osFamily : osFamilies) {
-                if (StringUtils.containsIgnoreCase(osFamily.toString(), value)) {
+                if (osFamily.toString().matches("(?i).*\\Q" + value + "\\E.*")) {
                     // note: string form of osFamily is lower-hyphen
                     candidates.add(osFamily.toString());
                 }
@@ -1293,8 +1292,8 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
      * @return {@code true} if they two keys are the same.
      */
     private boolean pemKeyEquals(String key1, String key2) {
-        key1 = StringUtils.trim(key1);
-        key2 = StringUtils.trim(key2);
+        key1 = key1.trim();
+        key2 = key2.trim();
         return key1.replaceAll("\\s+", "").equals(key2.replace("\\s+", ""))
                 || Arrays.equals(quickNDirtyExtract(key1), quickNDirtyExtract(key2));
     }
@@ -1311,7 +1310,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
         StringBuilder builder = new StringBuilder(key.length());
         boolean begin = false;
         boolean header = false;
-        for (String line : StringUtils.split(key, "\n")) {
+        for (String line : key.split("\\n")) {
             line = line.trim();
             if (line.startsWith("---") && line.endsWith("---")) {
                 if (begin && line.contains("---END")) {
@@ -1323,7 +1322,7 @@ public class JCloudsSlaveTemplate extends AbstractDescribableImpl<JCloudsSlaveTe
                     continue;
                 }
             }
-            if (StringUtils.isBlank(line)) {
+            if (line == null || line.isBlank()) {
                 header = false;
                 continue;
             }
