@@ -1,5 +1,8 @@
 ## Changelog
 
+### Version 2.42 (TBD)
+- After retirement of apache-jclouds, switch to own jclouds maintained by myself at https://github.com/felfert/jclouds
+- Remove usages of Commons Lang 2
 ### Version 2.41 (May 28, 2025)
 - Enable source formatting with spotless
 - Major rework of GUI. Inspired by similar changes in the [kubernetes](https://github.com/jenkinsci/kubernetes-plugin/pull/1443) and [azure](https://github.com/jenkinsci/kubernetes-plugin/pull/1443) plugins, template configurations are now on separate pages. This simplifies editing of templates so that you know exactly which one you are editing. It also improves the performance of the cloud configuration page. In the templates overview, templates can also reordered with DnD.
