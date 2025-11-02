@@ -22,8 +22,7 @@ class ReplacementsTest {
 
     @Test
     void testIn() throws Exception {
-        String rxml =
-                """
+        String rxml = """
             <replacements>
                 <replacement from="from" to="to" />
                 <replacement from="yes" to="no" />
@@ -39,8 +38,7 @@ class ReplacementsTest {
 
     @Test
     void testReplace() throws Exception {
-        String rxml =
-                """
+        String rxml = """
             <replacements>
                 <replacement from="from" to="to" />
                 <replacement from="yes" to="no" />
@@ -55,8 +53,7 @@ class ReplacementsTest {
 
     @Test
     void testReplaceXml() throws Exception {
-        String rxml =
-                """
+        String rxml = """
             <replacements>
                 <replacement from="bd5f7094-d7c8-4bdf-8cd7-cce2e96c4bfb" to="00000000-d7c8-4bdf-8cd7-000000004bfb" />
                 <replacement from="14ddac16-775e-4240-a3fe-b240b721a5d6" to="00000000-775e-4240-a3fe-00000000a5d6" />
