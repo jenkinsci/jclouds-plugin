@@ -22,8 +22,7 @@ import org.jvnet.hudson.test.junit.jupiter.WithJenkins;
 @WithJenkins
 class CryptoHelperTest {
 
-    private static final String RSA_2048_PEM =
-            """
+    private static final String RSA_2048_PEM = """
             -----BEGIN RSA PRIVATE KEY-----
             MIIEpQIBAAKCAQEAujBFmpi6nyHAK6RBaIkERTO/BGhgZ8h2zoqvT12+mSpjbNRF
             YN2oeMH1NsUMYLUdRzFlERqHo/U5pgS9SbXTvUujM153Voh6P+t4d822I2UN7vDc
@@ -53,8 +52,7 @@ class CryptoHelperTest {
             -----END RSA PRIVATE KEY-----
             """;
 
-    private static final String RSA_3072_PEM =
-            """
+    private static final String RSA_3072_PEM = """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
             NhAAAAAwEAAQAAAYEAkDhQoShgSFvCfNQIgwYVbGYSmxPD/3/7q8L83GSxmCxeei0dj4Ao
@@ -94,8 +92,7 @@ class CryptoHelperTest {
             weutDFT4xIYu8AAAAWZmVsZmVydEBmcml0ei5mZS50aGluawECAwQF
             -----END OPENSSH PRIVATE KEY-----
             """;
-    private static final String RSA_4096_PEM =
-            """
+    private static final String RSA_4096_PEM = """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn
             NhAAAAAwEAAQAAAgEA2P8WQIfUf5C3XF269HrU8S/ahoBRofQePlqAQDyRQc/8nNEsnDPD
@@ -147,8 +144,7 @@ class CryptoHelperTest {
             -----END OPENSSH PRIVATE KEY-----
             """;
 
-    private static final String ECDSA_PEM =
-            """
+    private static final String ECDSA_PEM = """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
             1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQQL0Pqfy/oa5tr7GUl8WjHoWNnWozMV

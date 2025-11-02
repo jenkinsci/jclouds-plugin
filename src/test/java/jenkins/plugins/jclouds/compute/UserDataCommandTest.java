@@ -283,8 +283,7 @@ class UserDataCommandTest {
         assertThat(newCfgreps, equalTo(origCfgreps));
     }
 
-    private static final String RSA_PEM =
-            """
+    private static final String RSA_PEM = """
             -----BEGIN RSA PRIVATE KEY-----
             MIIEpQIBAAKCAQEAujBFmpi6nyHAK6RBaIkERTO/BGhgZ8h2zoqvT12+mSpjbNRF
             YN2oeMH1NsUMYLUdRzFlERqHo/U5pgS9SbXTvUujM153Voh6P+t4d822I2UN7vDc
@@ -314,8 +313,7 @@ class UserDataCommandTest {
             -----END RSA PRIVATE KEY-----
             """;
 
-    private static final String ECDSA_PEM =
-            """
+    private static final String ECDSA_PEM = """
             -----BEGIN OPENSSH PRIVATE KEY-----
             b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAaAAAABNlY2RzYS
             1zaGEyLW5pc3RwMjU2AAAACG5pc3RwMjU2AAAAQQQL0Pqfy/oa5tr7GUl8WjHoWNnWozMV
