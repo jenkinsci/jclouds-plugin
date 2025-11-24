@@ -62,6 +62,9 @@ limitations under the License.
     <gitHubRepo>jenkinsci/jclouds-plugin</gitHubRepo>
     <spotless.check.skip>false</spotless.check.skip>
     <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
+    <!-- https://www.jenkins.io/doc/developer/plugin-development/dependencies-and-class-loading/#bundling-third-party-libraries -->
+    <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
+    <hpi.bundledArtifacts>annotations,atmos,aws-ec2,aws-s3,azureblob,azurecompute-arm,b2,bcprov-ext-jdk18on,byon,cidrutils,cloudstack,digitalocean2,docker,ec2,eddsa,elastichosts-lon-b,elastichosts-lon-p,elastichosts-sat-p,elasticstack,error_prone_annotations,glacier,go2cloud-jhb1,gogrid,google-cloud-storage,google-compute-engine,googlecloud,guice-assistedinject,istack-commons-runtime,jakarta.annotation-api,jakarta.inject-api,jakarta.ws.rs-api,jakarta.xml.bind-api,jaxb-core,jaxb-runtime,jclouds-allblobstore,jclouds-allcompute,jclouds-blobstore,jclouds-bouncycastle,jclouds-compute,jclouds-core,jclouds-enterprise,jclouds-joda,jclouds-jsch,jclouds-okhttp,jclouds-scriptbuilder,jclouds-slf4j,jclouds-sshj,jna-platform,joda-time,jsch,jsch.agentproxy.connector-factory,jsch.agentproxy.core,jsch.agentproxy.jsch,jsch.agentproxy.pageant,jsch.agentproxy.sshagent,jsch.agentproxy.sshj,jsch.agentproxy.usocket-jna,jsch.agentproxy.usocket-nc,kotlin-stdlib,kotlin-stdlib-common,kotlin-stdlib-jdk7,kotlin-stdlib-jdk8,oauth,okhttp,okio,okio-jvm,opencsv,openhosting-east1,openstack-keystone,openstack-neutron,openstack-nova,openstack-nova-ec2,openstack-swift,packet,profitbricks,rackspace-cloudfiles,rackspace-cloudfiles-uk,rackspace-cloudfiles-us,rackspace-cloudidentity,rackspace-cloudservers-uk,rackspace-cloudservers-us,s3,serverlove-z1-man,skalicloud-sdg-my,slf4j-api,snakeyaml,softlayer,sshj,sts,txw2</hpi.bundledArtifacts>
   </properties>
 
   <developers>
