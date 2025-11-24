@@ -76,6 +76,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -142,7 +143,7 @@ public class JCloudsCloud extends Cloud {
     @Deprecated
     private final transient String publicKey; // NOPMD - unused private member
 
-    private transient int pendingNodes;
+    private transient AtomicInteger pendingNodes;
 
     public final String endPointUrl;
     public final String profile;
@@ -446,6 +447,12 @@ public class JCloudsCloud extends Cloud {
         }
     }
 
+    private synchronized void initPendingNodes() {
+        if (null == pendingNodes) {
+            pendingNodes = new AtomicInteger(0);
+        }
+    }
+
     @DataBoundConstructor
     public JCloudsCloud(
             final String profile,
@@ -482,7 +489,7 @@ public class JCloudsCloud extends Cloud {
         this.trustAll = trustAll;
         this.groupPrefix = groupPrefix;
         readResolve();
-        this.pendingNodes = 0;
+        initPendingNodes();
     }
 
     protected Object readResolve() {
@@ -651,7 +658,8 @@ public class JCloudsCloud extends Cloud {
                 && !Jenkins.get().isQuietingDown()
                 && !Jenkins.get().isTerminating()) {
 
-            if ((getRunningNodesCount() + plannedNodeList.size() + pendingNodes) >= instanceCap) {
+            initPendingNodes();
+            if ((getRunningNodesCount() + plannedNodeList.size() + pendingNodes.intValue()) >= instanceCap) {
                 LOGGER.info(String.format(
                         "Instance cap of %s reached while adding capacity for label %s",
                         getName(), (label != null) ? label.toString() : "null"));
@@ -665,11 +673,11 @@ public class JCloudsCloud extends Cloud {
                         public Node call() throws Exception {
                             // TODO: record the output somewhere
                             JCloudsSlave jcloudsSlave;
-                            pendingNodes++;
+                            pendingNodes.incrementAndGet();
                             try {
                                 jcloudsSlave = tpl.provisionSlave(StreamTaskListener.fromStdout(), provisioningId);
                             } finally {
-                                pendingNodes--;
+                                pendingNodes.decrementAndGet();
                             }
                             Jenkins.get().addNode(jcloudsSlave);
 
@@ -875,13 +883,14 @@ public class JCloudsCloud extends Cloud {
             return;
         }
 
-        if (getRunningNodesCount() + pendingNodes < instanceCap) {
+        initPendingNodes();
+        if (getRunningNodesCount() + pendingNodes.intValue() < instanceCap) {
             try {
-                pendingNodes++;
+                pendingNodes.incrementAndGet();
                 JCloudsSlave node = doProvisionFromTemplate(t);
                 rsp.sendRedirect2(req.getContextPath() + "/computer/" + node.getNodeName());
             } finally {
-                pendingNodes--;
+                pendingNodes.decrementAndGet();
             }
         } else {
             sendError(String.format("Instance cap of %s reached", getName()), req, rsp);

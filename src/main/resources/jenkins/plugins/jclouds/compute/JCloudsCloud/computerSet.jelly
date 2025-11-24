@@ -22,7 +22,7 @@ limitations under the License.
         <tr>
             <td colspan="${monitors.size()+2}">
               <l:overflowButton icon="symbol-add"
-                                text="${%Provision via Provision via JClouds} - ${it.name}"
+                                text="${%Provision via JClouds} - ${it.name}"
                                 tooltip="${null}"
                                 clazz="jenkins-!-margin-top-2">
                 <j:forEach var="t" items="${it.templates}">
