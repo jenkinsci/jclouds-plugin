@@ -1,5 +1,7 @@
 ## Changelog
 
+### Version 2.43 (TBD)
+- Fixed a potential race in provisioning (thanks to Mike Bayer)
 ### Version 2.42 (Aug 2, 2025)
 - After retirement of apache-jclouds, switch to own jclouds maintained by myself at https://github.com/felfert/jclouds
 - Remove usages of Commons Lang 2
