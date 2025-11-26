@@ -8,9 +8,9 @@ JClouds Plugin for Jenkins
 
 ## About this plugin
 
-This plugin uses [JClouds](http://jclouds.org/) to
-provide agent launching on most of the currently usable Cloud
-infrastructures [supported](http://jclouds.apache.org/reference/providers/#compute-providers) by JClouds.
+This plugin uses [JClouds](https://jclouds.org/) to provide agent launching on most of the currently usable Cloud infrastructures [supported](http://jclouds.apache.org/reference/providers/#compute-providers) by JClouds.
+
+**Note**: Since June 2025, the original upstream has been retired without ever releasing already merged patches by myself and others. Therefore, I forked the latest upstream, started maintaining [that fork](https://github.com/felfert/jclouds) and using it it with this plugin.
 
 ## Adding a new Cloud Provider
 
