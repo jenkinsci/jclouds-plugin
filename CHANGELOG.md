@@ -1,6 +1,7 @@
 ## Changelog
 
-### Version 2.43 (TBD)
+### Version 2.43 (Nov 29, 2025)
+- Upgrade jclouds to 2.7.5
 - Fixed a potential race in provisioning (thanks to Mike Bayer)
 ### Version 2.42 (Aug 2, 2025)
 - After retirement of apache-jclouds, switch to own jclouds maintained by myself at https://github.com/felfert/jclouds
