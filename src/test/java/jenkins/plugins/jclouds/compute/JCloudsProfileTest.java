@@ -21,7 +21,6 @@ class JCloudsProfileTest {
         "byon",
         "cloudstack",
         "digitalocean2",
-        "docker",
         "ec2",
         "elastichosts-lon-b",
         "elastichosts-lon-p",

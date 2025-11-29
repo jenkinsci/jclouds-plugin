@@ -55,7 +55,7 @@ limitations under the License.
     <test.jenkins.blobstore.identity>FIXME_IDENTITY</test.jenkins.blobstore.identity>
     <test.jenkins.blobstore.credential>FIXME_CREDENTIALS</test.jenkins.blobstore.credential>
 
-    <jclouds.version>2.7.4</jclouds.version>
+    <jclouds.version>2.7.5</jclouds.version>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
     <jenkins.baseline>2.492</jenkins.baseline>
     <jenkins.version>${jenkins.baseline}.3</jenkins.version>
@@ -64,7 +64,7 @@ limitations under the License.
     <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
     <!-- https://www.jenkins.io/doc/developer/plugin-development/dependencies-and-class-loading/#bundling-third-party-libraries -->
     <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
-    <hpi.bundledArtifacts>annotations,atmos,aws-ec2,aws-s3,azureblob,azurecompute-arm,b2,bcprov-ext-jdk18on,byon,cidrutils,cloudstack,digitalocean2,docker,ec2,eddsa,elastichosts-lon-b,elastichosts-lon-p,elastichosts-sat-p,elasticstack,error_prone_annotations,glacier,go2cloud-jhb1,gogrid,google-cloud-storage,google-compute-engine,googlecloud,guice-assistedinject,istack-commons-runtime,jakarta.annotation-api,jakarta.inject-api,jakarta.ws.rs-api,jakarta.xml.bind-api,jaxb-core,jaxb-runtime,jclouds-allblobstore,jclouds-allcompute,jclouds-blobstore,jclouds-bouncycastle,jclouds-compute,jclouds-core,jclouds-enterprise,jclouds-joda,jclouds-jsch,jclouds-okhttp,jclouds-scriptbuilder,jclouds-slf4j,jclouds-sshj,jna-platform,joda-time,jsch,jsch.agentproxy.connector-factory,jsch.agentproxy.core,jsch.agentproxy.jsch,jsch.agentproxy.pageant,jsch.agentproxy.sshagent,jsch.agentproxy.sshj,jsch.agentproxy.usocket-jna,jsch.agentproxy.usocket-nc,kotlin-stdlib,kotlin-stdlib-common,kotlin-stdlib-jdk7,kotlin-stdlib-jdk8,oauth,okhttp,okio,okio-jvm,opencsv,openhosting-east1,openstack-keystone,openstack-neutron,openstack-nova,openstack-nova-ec2,openstack-swift,packet,profitbricks,rackspace-cloudfiles,rackspace-cloudfiles-uk,rackspace-cloudfiles-us,rackspace-cloudidentity,rackspace-cloudservers-uk,rackspace-cloudservers-us,s3,serverlove-z1-man,skalicloud-sdg-my,slf4j-api,snakeyaml,softlayer,sshj,sts,txw2</hpi.bundledArtifacts>
+    <hpi.bundledArtifacts>annotations,atmos,aws-ec2,aws-s3,azureblob,azurecompute-arm,b2,byon,cidrutils,cloudstack,digitalocean2,ec2,eddsa,elastichosts-lon-b,elastichosts-lon-p,elastichosts-sat-p,elasticstack,error_prone_annotations,glacier,go2cloud-jhb1,gogrid,google-cloud-storage,google-compute-engine,googlecloud,guice-assistedinject,istack-commons-runtime,jakarta.annotation-api,jakarta.inject-api,jakarta.ws.rs-api,jakarta.xml.bind-api,jaxb-core,jaxb-runtime,jclouds-allblobstore,jclouds-allcompute,jclouds-blobstore,jclouds-bouncycastle,jclouds-compute,jclouds-core,jclouds-enterprise,jclouds-joda,jclouds-jsch,jclouds-okhttp,jclouds-scriptbuilder,jclouds-slf4j,jclouds-sshj,jna-platform,joda-time,jsch,jsch.agentproxy.connector-factory,jsch.agentproxy.core,jsch.agentproxy.jsch,jsch.agentproxy.pageant,jsch.agentproxy.sshagent,jsch.agentproxy.sshj,jsch.agentproxy.usocket-jna,jsch.agentproxy.usocket-nc,kotlin-stdlib,oauth,okhttp,okio,okio-jvm,opencsv,openhosting-east1,openstack-keystone,openstack-neutron,openstack-nova,openstack-nova-ec2,openstack-swift,packet,profitbricks,rackspace-cloudfiles,rackspace-cloudfiles-uk,rackspace-cloudfiles-us,rackspace-cloudidentity,rackspace-cloudservers-uk,rackspace-cloudservers-us,s3,serverlove-z1-man,skalicloud-sdg-my,slf4j-api,softlayer,sshj,sts,txw2</hpi.bundledArtifacts>
   </properties>
 
   <developers>
@@ -194,6 +194,11 @@ limitations under the License.
       <artifactId>jakarta-mail-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>io.jenkins.plugins</groupId>
+      <artifactId>snakeyaml-api</artifactId>
+      <version>2.5-143.v93b_c004f89de</version>
+    </dependency>
+    <dependency>
       <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-core</artifactId>
       <version>${jclouds.version}</version>
@@ -220,6 +225,16 @@ limitations under the License.
       <groupId>com.github.felfert.jclouds</groupId>
       <artifactId>jclouds-allcompute</artifactId>
       <version>${jclouds.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.github.felfert.jclouds.api</groupId>
+          <artifactId>docker</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.yaml</groupId>
+          <artifactId>snakeyaml</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.github.felfert.jclouds</groupId>
