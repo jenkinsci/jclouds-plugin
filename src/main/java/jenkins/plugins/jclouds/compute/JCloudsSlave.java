@@ -135,11 +135,12 @@ public class JCloudsSlave extends AbstractCloudSlave implements TrackedItem {
         phm = new PhoneHomeMonitor(waitPhoneHome, waitPhoneHomeTimeout);
     }
 
+    @Override
     protected Object readResolve() {
         if (null == phm) {
             phm = new PhoneHomeMonitor(waitPhoneHome, waitPhoneHomeTimeout);
         }
-        return this;
+        return super.readResolve();
     }
 
     /**
