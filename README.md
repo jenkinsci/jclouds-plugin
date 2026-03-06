@@ -4,7 +4,7 @@ JClouds Plugin for Jenkins
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/jclouds-jenkins.svg)](https://plugins.jenkins.io/jclouds-jenkins)
 [![Changelog](https://img.shields.io/jenkins/plugin/v/jclouds-jenkins.svg?label=changelog)](https://github.com/jenkinsci/jclouds-plugin/blob/master/CHANGELOG.md#changelog)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/jclouds-jenkins.svg?color=blue)](https://plugins.jenkins.io/jclouds-jenkins)
-[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins/jclouds-plugin/master)](https://ci.jenkins.io/job/Plugins/job/jclouds-plugin/job/master/)
+[![Build Status](https://ci.jenkins.io/buildStatus/icon?job=Plugins%2Fjclouds-plugin%2Fmaster)](https://ci.jenkins.io/job/Plugins/job/jclouds-plugin/job/master/)
 
 ## About this plugin
 
