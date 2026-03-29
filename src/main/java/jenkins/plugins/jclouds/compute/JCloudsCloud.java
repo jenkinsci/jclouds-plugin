@@ -429,7 +429,12 @@ public class JCloudsCloud extends Cloud {
     void fillHardwareIdItems(ListBoxModel m) {
         try (ComputeServiceContext ctx = ctx(providerName, cloudCredentialsId, endPointUrl, zones, trustAll)) {
             List<Hardware> hws = new ArrayList<>(ctx.getComputeService().listHardwareProfiles());
-            Collections.sort(hws);
+            Collections.sort(hws, new Comparator<Hardware>() {
+                @Override
+                public int compare(Hardware a, Hardware b) {
+                    return a.getId().compareTo(b.getId());
+                }
+            });
             for (Hardware hardware : hws) {
                 m.add(String.format("%s (%s)", hardware.getId(), hardware.getName()), hardware.getId());
             }
