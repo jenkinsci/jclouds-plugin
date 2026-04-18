@@ -6,8 +6,8 @@
 
     <l:isAdmin>
       <l:header>
-        <script src="${resURL}/jsbundles/pages/cloud-set.js" type="text/javascript" />
-        <link rel="stylesheet" href="${resURL}/jsbundles/pages/cloud-set.css" type="text/css" />
+        <script src="${rootURL}/plugin/jclouds-jenkins/templates.js" type="text/javascript" />
+        <link rel="stylesheet" href="${rootURL}/plugin/jclouds-jenkins/templates.css" type="text/css" />
       </l:header>
     </l:isAdmin>
 
