@@ -1,7 +1,7 @@
 ## Changelog
 
-### Version 2.45 (TBD)
-- Fixed compatibility with jenkins > 2.541.3 (#224)
+### Version 2.45 (Apr 18, 2026)
+- Fixed compatibility with jenkins > 2.541.3 ([#224](https://github.com/jenkinsci/jclouds-plugin/pull/224))
 ### Version 2.44 (Mar 05, 2026)
 - Fixed a NPE when deleting a JClouds agent that was picked up after a jenkins restart
 ### Version 2.43 (Nov 29, 2025)
