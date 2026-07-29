@@ -76,7 +76,7 @@ Updates an existing JClouds profile by reading XML from stdin.
  -v (--verbose)          : Be verbose when validating references to
                            credentials. (default: false)
 ```
-With this command, you can create new VM (agent node) in the cloud. The profile parameter is require only, if you have multiple profiles and each of them contains a template with the name you specified. The command blocks, until the cloud has created the VM instance or an error occured. The name of the agent node is taken from the name of the template with a uniqe suffix appended. This suffix depends on which cloud
+With this command, you can create new VM (agent node) in the cloud. The profile parameter is require only, if you have multiple profiles and each of them contains a template with the name you specified. The command blocks, until the cloud has created the VM instance or an error occurred. The name of the agent node is taken from the name of the template with a uniqe suffix appended. This suffix depends on which cloud
 is used.
 A typical output is shown here:
 ```
